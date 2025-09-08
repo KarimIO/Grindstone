@@ -27,6 +27,15 @@ namespace Grindstone::Plugins {
 		virtual void QueueUninstall(std::string pluginName);
 		virtual void ProcessQueuedPluginInstallsAndUninstalls();
 
+		using Iterator = std::vector<Grindstone::Plugins::MetaData>::iterator;
+		using ConstIterator = std::vector<Grindstone::Plugins::MetaData>::const_iterator;
+
+		Iterator begin() noexcept;
+		ConstIterator begin() const noexcept;
+
+		Iterator end() noexcept;
+		ConstIterator end() const noexcept;
+
 	protected:
 		bool LoadModule(const std::filesystem::path& path);
 		void UnloadModule(const std::filesystem::path& path);

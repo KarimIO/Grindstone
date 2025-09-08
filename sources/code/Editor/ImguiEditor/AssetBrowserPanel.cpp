@@ -12,6 +12,7 @@
 #include <Common/Window/WindowManager.hpp>
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
 #include <Editor/EditorManager.hpp>
+#include <Editor/PluginSystem/EditorPluginManager.hpp>
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
@@ -43,17 +44,30 @@ static std::filesystem::path GetNewDefaultPath(const std::filesystem::path& base
 	}
 }
 
+static void RenderAssetElement(bool isSelected, const char* buttonString, float cursorX, ImTextureID icon) {
+	ImVec4 mainColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_Button] : ImVec4(1.f, 1.f, 1.f, 0.f);
+	ImVec4 hoveredColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered] : ImVec4(1.f, 1.f, 1.f, 0.05f);
+	ImVec4 activeColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonActive] : ImVec4(1.f, 1.f, 1.f, 0.1f);
+	ImGui::PushStyleColor(ImGuiCol_Button, mainColor);
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoveredColor);
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, activeColor);
+	ImGui::PushID(buttonString);
+	ImGui::SetCursorPosX(cursorX + THUMBNAIL_SPACING);
+	ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
+	ImGui::PopID();
+	ImGui::PopStyleColor(3);
+}
+
 AssetBrowserPanel::AssetBrowserPanel(
 	ImguiRenderer* imguiRenderer,
 	EngineCore* engineCore,
 	ImguiEditor* editor
 ) : editor(editor),
-engineCore(engineCore) {
+	engineCore(engineCore),
+	assetBrowserInspectType(AssetBrowserInspectType::All)
+{
 	auto& fileManager = Editor::Manager::GetFileManager();
-	auto& primaryMountPoint = fileManager.GetPrimaryMountPoint();
-	std::filesystem::directory_entry directoryEntry =
-		std::filesystem::directory_entry(primaryMountPoint.path);
-	SetCurrentAssetDirectory(directoryEntry);
+	SetAllPlugins();
 	indexToRename = SIZE_MAX;
 
 	iconIds.folderIcon = imguiRenderer->CreateTexture("assetIcons/Folder");
@@ -109,7 +123,29 @@ void AssetBrowserPanel::AddFilePath(const std::filesystem::directory_entry& file
 		}
 	}
 }
+
+void AssetBrowserPanel::SetAllPlugins() {
+	assetBrowserInspectType = AssetBrowserInspectType::All;
+	currentMountingPoint = nullptr;
+	currentDirectory = std::filesystem::directory_entry();
+	searchText = "";
+	Editor::Manager::GetInstance().GetSelection().ClearFiles();
+	folders.clear();
+	files.clear();
+}
+
+void AssetBrowserPanel::SetCurrentPlugin(const std::string& pluginName) {
+	assetBrowserInspectType = AssetBrowserInspectType::Plugin;
+	currentMountingPoint = nullptr;
+	currentDirectory = std::filesystem::directory_entry(pluginName);
+	searchText = "";
+	Editor::Manager::GetInstance().GetSelection().ClearFiles();
+	folders.clear();
+	files.clear();
+}
+
 void AssetBrowserPanel::SetCurrentAssetDirectory(const std::filesystem::path& path) {
+	assetBrowserInspectType = AssetBrowserInspectType::Directory;
 	Editor::FileManager& fileManager = Editor::Manager::GetInstance().GetFileManager();
 	const Editor::FileManager::MountPoint* newMountPoint = nullptr;
 	for (const Editor::FileManager::MountPoint& mountPoint : fileManager.GetMountedDirectories()) {
@@ -201,6 +237,10 @@ void AssetBrowserPanel::ProcessFileClicks(AssetBrowserItem& item) {
 }
 
 void AssetBrowserPanel::RenderTopBar() {
+	if (assetBrowserInspectType != AssetBrowserInspectType::Directory) {
+		return;
+	}
+
 	ImGui::BeginChildFrame(ImGui::GetID("#assetpathbar"), ImVec2(0, 32), ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground);
 	
 	RenderPath();
@@ -540,6 +580,77 @@ void AssetBrowserPanel::TryRenameFile() {
 	}
 }
 
+void AssetBrowserPanel::RenderAllPlugins() {
+	EngineCore& engineCore = EngineCore::GetInstance();
+	Grindstone::Plugins::EditorPluginManager& pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager&>(*engineCore.GetPluginManager());
+
+	for (Grindstone::Plugins::MetaData& plugin : pluginManager) {
+		ImGui::TableNextColumn();
+
+		std::string buttonString = plugin.name + "##AssetButton";
+
+		float cursorX = ImGui::GetCursorPosX();
+		ImTextureID icon = iconIds.folderIcon;
+		RenderAssetElement(false, buttonString.c_str(), cursorX, icon);
+		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+			SetCurrentPlugin(plugin.name);
+		}
+		ImGui::TextWrapped(plugin.name.c_str());
+	}
+}
+
+void AssetBrowserPanel::RenderPlugins() {
+	EngineCore& engineCore = EngineCore::GetInstance();
+	Grindstone::Plugins::EditorPluginManager& pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager&>(*engineCore.GetPluginManager());
+
+	for (Grindstone::Plugins::MetaData& plugin : pluginManager) {
+		// TODO: String comparison is slow, don't do that.
+		if (plugin.name != currentDirectory.path().string()) {
+			continue;
+		}
+
+		for (Grindstone::Plugins::MetaData::AssetDirectory& asset : plugin.assetDirectories) {
+			ImGui::TableNextColumn();
+
+			std::string assetDirectoryString = asset.assetDirectoryRelativePath.string();
+			std::string buttonString = assetDirectoryString + "##AssetButton";
+			RenderAssetElement(false, buttonString.c_str(), ImGui::GetCursorPosX(), iconIds.fileIcons[0]);
+			if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+				std::filesystem::path path(plugin.pluginResolvedPath / asset.assetDirectoryRelativePath);
+				SetCurrentAssetDirectory(path);
+			}
+			ImGui::TextWrapped(assetDirectoryString.c_str());
+		}
+
+		for (Grindstone::Plugins::MetaData::Binary& binary : plugin.binaries) {
+			ImGui::TableNextColumn();
+
+			std::filesystem::path path(plugin.pluginResolvedPath / binary.libraryRelativePath);
+			std::filesystem::directory_entry directoryEntry(path);
+
+			ImTextureID icon = iconIds.fileIcons[1];
+			switch (binary.buildType) {
+			default:
+			case Plugins::MetaData::BinaryBuildType::NoBuild:
+				icon = iconIds.fileIcons[1];
+				break;
+			case Plugins::MetaData::BinaryBuildType::Dotnet:
+				icon = iconIds.fileIcons[2];
+				break;
+			case Plugins::MetaData::BinaryBuildType::Cmake:
+				icon = iconIds.fileIcons[3];
+				break;
+			}
+
+			std::string buttonString = binary.buildTarget + "##AssetButton";
+			RenderAssetElement(false, buttonString.c_str(), ImGui::GetCursorPosX(), icon);
+			ImGui::TextWrapped(binary.buildTarget.c_str());
+		}
+
+		return;
+	}
+}
+
 void AssetBrowserPanel::RenderFolders() {
 	for (size_t folderIndex = 0; folderIndex < folders.size(); ++folderIndex) {
 		const std::filesystem::path& path = folders[folderIndex];
@@ -549,23 +660,12 @@ void AssetBrowserPanel::RenderFolders() {
 		std::string buttonString = filenameString + "##AssetButton";
 
 		bool isSelected = Editor::Manager::GetInstance().GetSelection().IsFileSelected(path);
-		ImVec4 mainColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_Button] : ImVec4(1.f, 1.f, 1.f, 0.f);
-		ImVec4 hoveredColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered] : ImVec4(1.f, 1.f, 1.f, 0.05f);
-		ImVec4 activeColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonActive] : ImVec4(1.f, 1.f, 1.f, 0.1f);
-		ImGui::PushStyleColor(ImGuiCol_Button, mainColor);
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoveredColor);
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, activeColor);
-
+		float cursorX = ImGui::GetCursorPosX();
 		ImTextureID icon = iconIds.folderIcon;
-		ImGui::PushID(buttonString.c_str());
-		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
-		ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
-		ImGui::PopID();
+		RenderAssetElement(isSelected, buttonString.c_str(), cursorX, icon);
 
 		RenderAssetContextMenu(true, path, folderIndex);
 		ProcessFolderClicks(path);
-
-		ImGui::PopStyleColor(3);
 
 
 		if (isRenamingFolder && indexToRename == folderIndex) {
@@ -595,25 +695,13 @@ void AssetBrowserPanel::RenderFile(size_t fileIndex) {
 	std::string buttonString = filename + "##AssetButton";
 
 	bool isSelected = Editor::Manager::GetInstance().GetSelection().IsFileSelected(item.filepath);
-	ImVec4 mainColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_Button] : ImVec4(1.f, 1.f, 1.f, 0.f);
-	ImVec4 hoveredColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered] : ImVec4(1.f, 1.f, 1.f, 0.05f);
-	ImVec4 activeColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonActive] : ImVec4(1.f, 1.f, 1.f, 0.1f);
-	ImGui::PushStyleColor(ImGuiCol_Button, mainColor);
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoveredColor);
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, activeColor);
 
 	float cursorX = ImGui::GetCursorPosX();
 	float cursorY = ImGui::GetCursorPosY();
-
 	AssetType assetType = item.defaultAssetType;
 	ImTextureID icon = GetIcon(assetType);
-	ImGui::PushID(buttonString.c_str());
-	ImGui::SetCursorPosX(cursorX + THUMBNAIL_SPACING);
-	ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
-	ImVec2 rectMin = ImGui::GetItemRectMin();
-	ImVec2 rectMax = ImGui::GetItemRectMin();
-	ImGui::PopID();
 
+	RenderAssetElement(isSelected, buttonString.c_str(), cursorX, icon);
 	RenderAssetContextMenu(false, item.filepath, fileIndex);
 	ProcessFileClicks(item);
 
@@ -624,8 +712,6 @@ void AssetBrowserPanel::RenderFile(size_t fileIndex) {
 		ImGui::Text("%s\n%s\n%s", item.defaultAssetName.c_str(), filename.c_str(), assetTypeStr.c_str());
 		ImGui::EndDragDropSource();
 	}
-
-	ImGui::PopStyleColor(3);
 
 	if (!isRenamingFolder && indexToRename == fileIndex) {
 		ImGui::PushItemWidth(ENTRY_SIZE);
@@ -696,7 +782,7 @@ void AssetBrowserPanel::RenderAssets(float height) {
 	ImGui::BeginChildFrame(assetPanel, ImVec2(0, height), ImGuiWindowFlags_NoBackground);
 	RenderCurrentDirectoryContextMenu();
 
-	if (folders.empty() && files.empty()) {
+	if (assetBrowserInspectType == AssetBrowserInspectType::Directory && folders.empty() && files.empty()) {
 		if (!searchText.empty()) {
 			ImGui::Text("Search could not find any results.");
 		}
@@ -705,8 +791,18 @@ void AssetBrowserPanel::RenderAssets(float height) {
 		}
 	}
 	else if (ImGui::BeginTable("##assetTable", columnCount, ImGuiTableFlags_NoSavedSettings)) {
-		RenderFolders();
-		RenderFiles();
+		switch (assetBrowserInspectType) {
+		case AssetBrowserInspectType::All:
+			RenderAllPlugins();
+			break;
+		case AssetBrowserInspectType::Plugin:
+			RenderPlugins();
+			break;
+		case AssetBrowserInspectType::Directory:
+			RenderFolders();
+			RenderFiles();
+			break;
+		}
 
 		ImGui::EndTable();
 	}
@@ -737,14 +833,46 @@ void AssetBrowserPanel::RenderSidebar(float height) {
 		ImGui::Text("This folder is empty.");
 	}
 
-	for (const FileManager::MountPoint& mountPoint : mountPoints) {
-		std::filesystem::path directory = mountPoint.path;
+	EngineCore& engineCore = EngineCore::GetInstance();
+	Grindstone::Plugins::EditorPluginManager& pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager&>(*engineCore.GetPluginManager());
+	for (Grindstone::Plugins::MetaData& plugin : pluginManager) {
+		ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow;
 
-		if (directory.empty()) {
-			ImGui::Text("This folder is empty.");
+		bool hasChildren = !plugin.assetDirectories.empty() || !plugin.binaries.empty();
+
+		if (!hasChildren) {
+			nodeFlags |= ImGuiTreeNodeFlags_Leaf;
 		}
-		else {
-			RenderSidebarSubdirectory(std::filesystem::directory_entry(directory));
+
+		if (currentDirectory.path().string() == plugin.name) {
+			nodeFlags |= ImGuiTreeNodeFlags_Selected;
+		}
+
+		if (ImGui::TreeNodeEx(plugin.name.c_str(), nodeFlags)) {
+			if (ImGui::IsItemClicked()) {
+				SetCurrentPlugin(plugin.name);
+			}
+
+			for (Grindstone::Plugins::MetaData::AssetDirectory& asset : plugin.assetDirectories) {
+				std::filesystem::path path(plugin.pluginResolvedPath / asset.assetDirectoryRelativePath);
+				std::filesystem::directory_entry directoryEntry(path);
+				RenderSidebarSubdirectory(directoryEntry);
+			}
+
+			for (Grindstone::Plugins::MetaData::Binary& binary : plugin.binaries) {
+				std::filesystem::path path(plugin.pluginResolvedPath / binary.libraryRelativePath);
+				std::filesystem::directory_entry directoryEntry(path);
+
+				ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_Leaf;
+				if (ImGui::TreeNodeEx(binary.buildTarget.c_str(), nodeFlags)) {
+					ImGui::TreePop();
+				}
+			}
+
+			ImGui::TreePop();
+		}
+		else if (ImGui::IsItemClicked()) {
+			SetCurrentPlugin(plugin.name);
 		}
 	}
 
@@ -822,7 +950,7 @@ void AssetBrowserPanel::FilterSearch() {
 	// - it to search potentially a lot of files. We can search N amount of
 	// - files, and every N files we push the files to the vectors until
 	// - everything is processed
-	indexToRename = SIZE_MAX;
+	indexToRename = std::numeric_limits<size_t>().max();
 	folders.clear();
 	files.clear();
 	for (const auto& entry : std::filesystem::recursive_directory_iterator(currentDirectory)) {

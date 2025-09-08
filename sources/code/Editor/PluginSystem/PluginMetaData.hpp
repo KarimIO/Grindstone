@@ -35,6 +35,7 @@ namespace Grindstone::Plugins {
 		std::string version;
 		std::string description;
 		std::string author;
+		std::filesystem::path pluginResolvedPath;
 		bool isRestartRequired = false;
 		std::vector<AssetDirectory> assetDirectories;
 		std::vector<Dependency> dependencies;

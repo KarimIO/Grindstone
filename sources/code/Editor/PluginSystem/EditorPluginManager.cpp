@@ -222,18 +222,18 @@ void EditorPluginManager::UnloadPluginsByStage(std::string_view stageName) {
 
 	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
 		std::filesystem::path pluginPath = basePath / metaData.name;
-		for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
-			if (binary.loadStage == stageName) {
-				std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
-				UnloadModule(binaryPath);
-			}
-		}
-
 		for (Grindstone::Plugins::MetaData::AssetDirectory& assetDir : metaData.assetDirectories) {
 			if (assetDir.loadStage == stageName) {
 				std::filesystem::path assetsPath = pluginPath / assetDir.assetDirectoryRelativePath;
 				Editor::FileManager& fileManager = editorManager.GetFileManager();
-				fileManager.UnmountDirectory(assetDir.loadStage);
+				fileManager.UnmountDirectory(assetDir.mountPoint);
+			}
+		}
+
+		for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
+			if (binary.loadStage == stageName) {
+				std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
+				UnloadModule(binaryPath);
 			}
 		}
 	}
@@ -415,4 +415,20 @@ void EditorPluginManager::ProcessQueuedPluginInstallsAndUninstalls() {
 
 		queuedInstalls.clear();
 	}
+}
+
+EditorPluginManager::Iterator EditorPluginManager::begin() noexcept {
+	return resolvedPluginManifest.begin();
+}
+
+EditorPluginManager::ConstIterator EditorPluginManager::begin() const noexcept {
+	return resolvedPluginManifest.begin();
+}
+
+EditorPluginManager::Iterator EditorPluginManager::end() noexcept {
+	return resolvedPluginManifest.end();
+}
+
+EditorPluginManager::ConstIterator EditorPluginManager::end() const noexcept {
+	return resolvedPluginManifest.end();
 }
