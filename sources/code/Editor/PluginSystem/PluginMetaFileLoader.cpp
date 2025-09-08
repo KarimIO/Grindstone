@@ -17,6 +17,8 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 		return false;
 	}
 
+	metaData.pluginResolvedPath = metaDataFilePath.parent_path();
+
 	std::string pathString = metaDataFilePath.string();
 	const char* pathCstr = pathString.c_str();
 	std::string metaFileContents = Grindstone::Utils::LoadFileText(pathCstr);

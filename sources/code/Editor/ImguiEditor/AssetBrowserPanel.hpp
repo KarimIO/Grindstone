@@ -42,8 +42,16 @@ namespace Grindstone::Editor::ImguiEditor {
 			std::vector<Subasset> subassets;
 		};
 
+		enum class AssetBrowserInspectType {
+			All,
+			Plugin,
+			Directory,
+		};
+
 		void AddFilePath(const std::filesystem::directory_entry& file);
 
+		void SetAllPlugins();
+		void SetCurrentPlugin(const std::string& pluginName);
 		void SetCurrentAssetDirectory(const std::filesystem::path& path);
 		void SetFilesFromCurrentDirectory();
 		void ProcessFolderClicks(const std::filesystem::path& path);
@@ -57,6 +65,8 @@ namespace Grindstone::Editor::ImguiEditor {
 		void RenderAssetTemplates(const std::filesystem::path& path);
 		size_t SortFile(bool isFolder, size_t indexToSort);
 		void TryRenameFile();
+		void RenderAllPlugins();
+		void RenderPlugins();
 		void RenderFolders();
 		void RenderFiles();
 		void RenderAssets(float height);
@@ -67,6 +77,7 @@ namespace Grindstone::Editor::ImguiEditor {
 		void AfterCreate(const std::filesystem::path& path);
 		ImTextureID GetIcon(const AssetType assetType) const;
 	private:
+		AssetBrowserInspectType assetBrowserInspectType;
 		std::filesystem::directory_entry currentDirectory;
 		// TODO: Handle when the current mounting point
 		const Grindstone::Editor::FileManager::MountPoint* currentMountingPoint = nullptr;
