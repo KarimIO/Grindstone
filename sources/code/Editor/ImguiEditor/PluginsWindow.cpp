@@ -165,7 +165,7 @@ static void OnRenderPluginPageSuccess(std::vector<PluginListElement>& pluginsLis
 			}
 			else {
 				Grindstone::Plugins::EditorPluginManager* pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager*>(Grindstone::EngineCore::GetInstance().GetPluginManager());
-				pluginManager->QueueInstall(pluginManifestCache.metaData.name);
+				pluginManager->QueueInstall(pluginManifestCache.metaData.pluginResolvedPath);
 			}
 		}
 		break;
@@ -179,7 +179,7 @@ static void OnRenderPluginPageSuccess(std::vector<PluginListElement>& pluginsLis
 			}
 			else {
 				Grindstone::Plugins::EditorPluginManager* pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager*>(Grindstone::EngineCore::GetInstance().GetPluginManager());
-				pluginManager->QueueUninstall(pluginManifestCache.metaData.name);
+				pluginManager->QueueUninstall(pluginManifestCache.metaData.pluginResolvedPath);
 			}
 		}
 		break;
@@ -256,27 +256,31 @@ void PluginsWindow::SelectPlugin(size_t newSelectedIndex) {
 	currentSelectedPlugin = newSelectedIndex;
 	pluginSelectionState = PluginSelectionState::Ready;
 	const std::string& pluginName = pluginCacheList[newSelectedIndex].metaData.name;
-	std::filesystem::path pathToReadme = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins" / pluginName / "README.md";
+	std::filesystem::path pathToReadme = pluginCacheList[newSelectedIndex].metaData.pluginResolvedPath / "README.md";
 	currentPluginData.readmeData = Utils::LoadFileText(pathToReadme.string().c_str());
 }
 
 void PluginsWindow::LoadPluginsManifest() {
 	pluginCacheList.clear();
 
-	std::filesystem::path pluginsPath = Editor::Manager::GetInstance().GetEngineBinariesPath().parent_path() / "plugins";
-	for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(pluginsPath)) {
-		if (!entry.is_directory()) {
-			continue;
-		}
+	auto pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager*>(Grindstone::EngineCore::GetInstance().GetPluginManager());
+	const std::vector<std::filesystem::path>& pluginsFolders = pluginManager->GetPluginsFolders();
 
-		const std::filesystem::path& pluginFolderPath = entry.path();
-		std::filesystem::path metaFilePath = pluginFolderPath / "plugin.meta.json";
-		Grindstone::Plugins::MetaData metaData;
-		if (!ReadMetaFile(metaFilePath, metaData)) {
-			continue;
-		}
+	for (const std::filesystem::path& pluginsPath : pluginsFolders) {
+		for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(pluginsPath)) {
+			if (!entry.is_directory()) {
+				continue;
+			}
 
-		pluginCacheList.emplace_back(metaData, Grindstone::Editor::ImguiEditor::PluginInstallationState::NotInstalled);
+			const std::filesystem::path& pluginFolderPath = entry.path();
+			std::filesystem::path metaFilePath = pluginFolderPath / "plugin.meta.json";
+			Grindstone::Plugins::MetaData metaData;
+			if (!ReadMetaFile(metaFilePath, metaData)) {
+				continue;
+			}
+
+			pluginCacheList.emplace_back(metaData, Grindstone::Editor::ImguiEditor::PluginInstallationState::NotInstalled);
+		}
 	}
 
 	std::vector<std::string> usedPlugins;

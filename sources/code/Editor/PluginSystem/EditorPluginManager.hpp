@@ -18,13 +18,16 @@ namespace Grindstone::Plugins {
 	class EditorPluginManager : public IPluginManager {
 	public:
 		virtual ~EditorPluginManager();
-			
+
 		virtual bool PreprocessPlugins() override;
 		virtual void LoadPluginsByStage(std::string_view stageName) override;
 		virtual void UnloadPluginsByStage(std::string_view stageName) override;
 		virtual std::filesystem::path GetLibraryPath(std::string_view pluginName, std::string_view libraryName) override;
-		virtual void QueueInstall(std::string pluginName);
-		virtual void QueueUninstall(std::string pluginName);
+
+		const std::vector<std::filesystem::path>& GetPluginsFolders();
+		virtual void AddPluginsFolder(const std::filesystem::path& path);
+		virtual void QueueInstall(const std::filesystem::path& path);
+		virtual void QueueUninstall(const std::filesystem::path& path);
 		virtual void ProcessQueuedPluginInstallsAndUninstalls();
 
 		using Iterator = std::vector<Grindstone::Plugins::MetaData>::iterator;
@@ -42,8 +45,9 @@ namespace Grindstone::Plugins {
 		void ResolvePlugins(std::vector<Grindstone::Plugins::ManifestData>& manifestResults);
 
 		std::map<std::filesystem::path, Utilities::Modules::Handle> pluginModules;
-		std::set<std::string> queuedInstalls{};
-		std::set<std::string> queuedUninstalls{};
+		std::set<std::filesystem::path> queuedInstalls{};
+		std::set<std::filesystem::path> queuedUninstalls{};
 		std::vector<Grindstone::Plugins::MetaData> resolvedPluginManifest{};
+		std::vector<std::filesystem::path> pluginsFolders{};
 	};
 }
