@@ -116,9 +116,6 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAssetImportEarly");
 	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAssetImportLate");
 
-	fileManager.MountDirectory("ASSETS", assetsPath);
-	fileManager.MountDirectory("ENGINE", engineBinariesPath.parent_path() / "engineassets");
-
 	while (taskSystem.HasRunningTasks()) {
 		Sleep(100);
 	}
@@ -305,15 +302,18 @@ bool Manager::LoadEngine() {
 	}
 
 	Plugins::Interface* pluginInterface = engineCore->GetPluginInterface();
-	pluginInterface->SetEditorInterface(new Grindstone::Plugins::EditorPluginInterface());
+	Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
+	pluginInterface->SetEditorInterface(Grindstone::Memory::AllocatorCore::Allocate<Grindstone::Plugins::EditorPluginInterface>());
 	Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
 	Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
-	Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
 
 	EngineCore::LateCreateInfo lateCreateInfo;
-	lateCreateInfo.assetLoader = new Assets::FileAssetLoader();
-	lateCreateInfo.pluginManagerOverride = new Grindstone::Plugins::EditorPluginManager();
-
+	lateCreateInfo.assetLoader = Grindstone::Memory::AllocatorCore::Allocate<Assets::FileAssetLoader>();
+	Grindstone::Plugins::EditorPluginManager* pluginManager = Grindstone::Memory::AllocatorCore::Allocate<Grindstone::Plugins::EditorPluginManager>();
+	lateCreateInfo.pluginManagerOverride = pluginManager;
+	pluginManager->AddPluginsFolder(Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins");
+	pluginManager->AddPluginsFolder(Grindstone::Editor::Manager::GetInstance().GetProjectPath() / "plugins");
+	
 	if (!engineCore->Initialize(lateCreateInfo)) {
 		return false;
 	}

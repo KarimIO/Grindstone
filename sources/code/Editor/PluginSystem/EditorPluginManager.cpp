@@ -113,6 +113,14 @@ static bool RunDotnetCommand(const std::vector<std::string>& dotnetTargets) {
 	return RunCommand(commandLine.data(), workingDirectory.empty() ? nullptr : workingDirectory.c_str());
 }
 
+const std::vector<std::filesystem::path>& EditorPluginManager::GetPluginsFolders() {
+	return pluginsFolders;
+}
+
+void EditorPluginManager::AddPluginsFolder(const std::filesystem::path& path) {
+	pluginsFolders.emplace_back(path);
+}
+
 void EditorPluginManager::ResolvePlugins(std::vector<Grindstone::Plugins::ManifestData>& manifestResults) {
 	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path();
 
@@ -192,13 +200,10 @@ bool EditorPluginManager::PreprocessPlugins() {
 
 void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
-	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins";
-
 	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
-		std::filesystem::path pluginPath = basePath / metaData.name;
 		for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
 			if (binary.loadStage == stageName) {
-				std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
+				std::filesystem::path binaryPath = metaData.pluginResolvedPath / binary.libraryRelativePath;
 				std::filesystem::path parentPath = binaryPath.parent_path();
 				DLL_DIRECTORY_COOKIE dllCookie = AddDllDirectory(parentPath.wstring().c_str());
 				LoadModule(binaryPath);
@@ -208,7 +213,7 @@ void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
 
 		for (Grindstone::Plugins::MetaData::AssetDirectory& assetDir : metaData.assetDirectories) {
 			if (assetDir.loadStage == stageName) {
-				std::filesystem::path assetsPath = pluginPath / assetDir.assetDirectoryRelativePath;
+				std::filesystem::path assetsPath = metaData.pluginResolvedPath / assetDir.assetDirectoryRelativePath;
 				Editor::FileManager& fileManager = editorManager.GetFileManager();
 				fileManager.MountDirectory(assetDir.mountPoint, assetsPath);
 			}
@@ -218,10 +223,8 @@ void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
 
 void EditorPluginManager::UnloadPluginsByStage(std::string_view stageName) {
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
-	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins";
-
 	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
-		std::filesystem::path pluginPath = basePath / metaData.name;
+		std::filesystem::path pluginPath = metaData.pluginResolvedPath;
 		for (Grindstone::Plugins::MetaData::AssetDirectory& assetDir : metaData.assetDirectories) {
 			if (assetDir.loadStage == stageName) {
 				std::filesystem::path assetsPath = pluginPath / assetDir.assetDirectoryRelativePath;
@@ -240,15 +243,13 @@ void EditorPluginManager::UnloadPluginsByStage(std::string_view stageName) {
 }
 
 std::filesystem::path Grindstone::Plugins::EditorPluginManager::GetLibraryPath(std::string_view pluginName, std::string_view libraryName) {
-	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins";
-
 	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
 		if (metaData.name == pluginName) {
 			for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
 				std::filesystem::path filename = binary.libraryRelativePath.filename();
 				filename.replace_extension();
 				if (filename.string() == libraryName) {
-					filename = basePath / metaData.name / binary.libraryRelativePath;
+					filename = metaData.pluginResolvedPath / binary.libraryRelativePath;
 					filename.replace_extension("dll");
 					return filename;
 				}
@@ -334,34 +335,33 @@ void EditorPluginManager::UnloadModule(const std::filesystem::path& path) {
 	pluginModules.erase(it);
 }
 
-void EditorPluginManager::QueueInstall(std::string pluginName) {
-	queuedInstalls.insert(pluginName);
+void EditorPluginManager::QueueInstall(const std::filesystem::path& pluginPath) {
+	queuedInstalls.insert(pluginPath);
 
-	if (queuedUninstalls.contains(pluginName)) {
-		queuedUninstalls.erase(pluginName);
+	if (queuedUninstalls.contains(pluginPath)) {
+		queuedUninstalls.erase(pluginPath);
 	}
 }
 
-void EditorPluginManager::QueueUninstall(std::string pluginName) {
-	queuedUninstalls.insert(pluginName);
+void EditorPluginManager::QueueUninstall(const std::filesystem::path& pluginPath) {
+	queuedUninstalls.insert(pluginPath);
 
-	if (queuedInstalls.contains(pluginName)) {
-		queuedInstalls.erase(pluginName);
+	if (queuedInstalls.contains(pluginPath)) {
+		queuedInstalls.erase(pluginPath);
 	}
 }
 
 void EditorPluginManager::ProcessQueuedPluginInstallsAndUninstalls() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
-	std::filesystem::path basePath = engineCore.GetEngineBinaryPath().parent_path() / "plugins";
 
 	if (!queuedUninstalls.empty()) {
 		engineCore.GetGraphicsCore()->WaitUntilIdle();
 
-		for (const std::string& plugin : queuedUninstalls) {
+		for (const std::filesystem::path& plugin : queuedUninstalls) {
 			for (size_t metaDataIndex = 0; metaDataIndex < resolvedPluginManifest.size(); ++metaDataIndex) {
 				Grindstone::Plugins::MetaData& metaData = resolvedPluginManifest[metaDataIndex];
-				if (metaData.name == plugin) {
-					std::filesystem::path pluginPath = basePath / metaData.name;
+				if (metaData.pluginResolvedPath == plugin) {
+					std::filesystem::path pluginPath = metaData.pluginResolvedPath;
 					for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
 						std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
 						UnloadModule(binaryPath);
@@ -376,22 +376,22 @@ void EditorPluginManager::ProcessQueuedPluginInstallsAndUninstalls() {
 	}
 
 	if (!queuedInstalls.empty()) {
-		std::filesystem::path basePluginsRelativePath("plugins");
 		std::vector<ManifestData> pluginsToInstall;
-		for (const std::string& plugin : queuedInstalls) {
+		for (const std::filesystem::path& pluginPath : queuedInstalls) {
 			pluginsToInstall.emplace_back(
 				ManifestData{
-					.pluginName = plugin.c_str(),
+					.pluginName = pluginPath.filename().string().c_str(),
 					.semanticVersioning = ">0.0.1",
-					.path = basePluginsRelativePath / plugin
+					.path = pluginPath
 				}
 			);
 		}
+
 		ResolvePlugins(pluginsToInstall);
 
 		for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
 			bool toInstall = false;
-			for (const std::string& pluginToInstall : queuedInstalls) {
+			for (const std::filesystem::path& pluginToInstall : queuedInstalls) {
 				if (metaData.name == pluginToInstall) {
 					toInstall = true;
 				}
@@ -402,7 +402,7 @@ void EditorPluginManager::ProcessQueuedPluginInstallsAndUninstalls() {
 				continue;
 			}
 
-			std::filesystem::path pluginPath = basePath / metaData.name;
+			std::filesystem::path pluginPath = metaData.pluginResolvedPath;
 
 			for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
 				std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
