@@ -1,0 +1,17 @@
+{
+	"name": "Grindstone.Editor.Assets",
+	"displayName": "Editor Assets",
+	"version": "0.3.0",
+	"description": "Editor UI Fonts and Icons.",
+	"author": "Grindstone Foundation",
+	"assetDirectories": [
+		{
+			"path": "assets",
+			"mountPoint": "GRINDSTONE.EDITOR.ASSETS",
+			"loadStage": "EditorAssetImportEarly"
+		}
+	],
+	"dependencies": [],
+	"binaries": [],
+	"cmake": ""
+}

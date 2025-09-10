@@ -1,0 +1,129 @@
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/matrixTransformations.gpset"
+
+pipelineSet "Grid" {
+	configuration "main" {
+		pass "main" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+			renderQueue: "Editor"
+
+			properties {
+				cull: back
+				depthBias: false
+				depthWrite: false
+				depthTest: true
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: {
+					colorMask: rgba
+					blendPreset: translucent
+				}
+			}
+
+			requiresBlocks [
+				GsInvertMatrix,
+				GsComputeDepth,
+				GsLinearizeDepthFromNearFar
+			]
+
+			shaderHlsl {
+				static const float3 gridVertices[6] = {
+					float3( 1,  1, 0),
+					float3(-1, -1, 0),
+					float3(-1,  1, 0),
+					float3(-1, -1, 0),
+					float3( 1,  1, 0),
+					float3( 1, -1, 0)
+				};
+
+				struct GridUbo {
+					float4x4 projectionMatrix;
+					float4x4 viewMatrix;
+					float4x4 inverseProjectionMatrix;
+					float4x4 inverseViewMatrix;
+					float4 colorXAxis;
+					float4 colorZAxis;
+					float4 colorMinor;
+					float4 colorMajor;
+					float2 renderScale;
+					float fadeDistanceMultiplier;
+					float nearDistance;
+					float farDistance;
+				};
+
+				ConstantBuffer<GridUbo> gridUbo : register(b0, space2);
+
+				float3 UnprojectPoint(float x, float y, float z) {
+					float4 unprojectedPoint =  mul(gridUbo.inverseViewMatrix, mul(gridUbo.inverseProjectionMatrix, float4(x, y, z, 1.0)));
+					return unprojectedPoint.xyz / unprojectedPoint.w;
+				}
+
+				struct VertexToFragment {
+					float4 position : SV_Position;
+					[[vk::location(0)]] float3 nearPoint : POSITION0;
+					[[vk::location(1)]] float3 farPoint : POSITION1;
+				};
+
+				VertexToFragment mainVertex(uint vertexId : SV_VertexID) {
+					VertexToFragment output = (VertexToFragment)0;
+					float3 vertexPosition = gridVertices[vertexId];
+					output.nearPoint = UnprojectPoint(vertexPosition.x, vertexPosition.y, 0.0);
+					output.farPoint = UnprojectPoint(vertexPosition.x, vertexPosition.y, 1.0);
+					output.position = float4(vertexPosition, 1.0);
+					return output;
+				}
+
+				float4 GetGridColor(float3 fragPos3D, float scale, float4 gridColor) {
+					float2 coord = fragPos3D.xz * scale;
+					float2 derivative = fwidth(coord);
+					float2 grid = abs(frac(coord - 0.5) - 0.5) / derivative;
+					float lineColor = min(grid.x, grid.y);
+					float2 minimum = min(derivative, 1);
+					float colorFade = 1.0 - min(lineColor, 1.0);
+
+					float4 color = gridColor;
+
+					if(fragPos3D.x > -0.1 * minimum.x && fragPos3D.x < 0.1 * minimum.x) {
+						color = gridUbo.colorXAxis;
+					}
+
+					if(fragPos3D.z > -0.1 * minimum.y && fragPos3D.z < 0.1 * minimum.y) {
+						color = gridUbo.colorZAxis;
+					}
+
+					color.a *= colorFade;
+
+					return color;
+				}
+
+				float ComputeDepth(float3 pos) {
+					float4 clipSpacePos = mul(gridUbo.projectionMatrix, mul(gridUbo.viewMatrix, float4(pos.xyz, 1.0)));
+					return (clipSpacePos.z / clipSpacePos.w);
+				}
+
+				struct FragmentOutput {
+					float4 color : SV_Target;
+					float depth : SV_Depth;
+				};
+
+				FragmentOutput mainFragment(VertexToFragment input) {
+					FragmentOutput output = (FragmentOutput)0;
+					float t = -input.nearPoint.y / (input.farPoint.y - input.nearPoint.y);
+					float3 fragPos3D = input.nearPoint + t * (input.farPoint - input.nearPoint);
+
+					float depth = ComputeDepth(fragPos3D);
+					output.depth = depth;
+
+					float linearDepth = LinearizeDepthFromNearFar01(gridUbo.nearDistance, gridUbo.farDistance, depth);
+					float fading = clamp(1 - linearDepth, 0, 1);
+
+					float4 gridColor = (GetGridColor(fragPos3D, 10, gridUbo.colorMinor) + GetGridColor(fragPos3D, 1, gridUbo.colorMajor)) / 2;
+					output.color = gridColor * float(t > 0);
+					output.color.a *= fading;
+
+					return output;
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,59 @@
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/matrixTransformations.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/postProcessingTemplate.gpset"
+
+pipelineSet "Depth of Field (Combine)" inherits "PostProcessing" {
+	configuration "main" {
+		pass "main" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+			renderQueue: "DofBlurAndCombination"
+
+			properties {
+				cull: back
+				depthBias: false
+				depthWrite: false
+				depthTest: false
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: {
+					colorMask: rgba
+					blendPreset: opaque
+				}
+			}
+
+			shaderHlsl {
+				[[vk::binding(0, 0)]] SamplerState gbufferSampler : register(s0, space2);
+				Texture2D<float4> depthTexture : register(t0,  space1);
+				Texture2D<float4> litSceneTexture : register(t1,  space1);
+				Texture2D<float4> nearTexture : register(t2,  space1);
+				Texture2D<float4> farTexture : register(t3,  space1);
+
+				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
+					float depthFromTexture = depthTexture.Sample(gbufferSampler, input.scaledFragmentTexCoord).x;
+					float m34 = rendererUbo.projectionMatrix[2].w;
+					float m33 = rendererUbo.projectionMatrix[2].z;
+					float near = m34 / (m33 - 1.0);
+					float far = m34 / (m33 + 1.0);
+					float ndc = (depthFromTexture * 2.0) - 1.0;
+					float linearDepth = ((2.0 * near) * far) / ((far + near) - (ndc * (far - near)));
+					float apertureF = 2.0;
+					float focalLength = 0.0500000007450580596923828125;
+					float apertureSize = focalLength / apertureF;
+					float focalDistance = 8.0;
+					float sensorHeight = 0.0024000001139938831329345703125;
+					float coc = ((-apertureSize) * (focalLength * (focalDistance - linearDepth))) / (linearDepth * (focalDistance - focalLength));
+					coc /= sensorHeight;
+
+					float4 unblurredColor = litSceneTexture.Sample(gbufferSampler, input.scaledFragmentTexCoord);
+					return float4(unblurredColor.rgb, 1);
+
+					float4 nearColor = nearTexture.Sample(gbufferSampler, input.scaledFragmentTexCoord * 2);
+					float3 farColor = farTexture.Sample(gbufferSampler, input.scaledFragmentTexCoord * 2).xyz;
+					float cocClamped = saturate(coc);
+					float3 focusedFarMix = lerp(unblurredColor.xyz, farColor, float3(cocClamped, cocClamped, cocClamped));
+					return float4(lerp(focusedFarMix, nearColor.xyz, float3(nearColor.www)), unblurredColor.w);
+				}
+			}
+		}
+	}
+}
