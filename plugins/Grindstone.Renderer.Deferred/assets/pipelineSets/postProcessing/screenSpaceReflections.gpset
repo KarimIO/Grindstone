@@ -1,0 +1,147 @@
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/matrixTransformations.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/rendererUniform.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/defaultSampler.gpset"
+
+computeSet "Screen-Space Reflections" {
+	shaderEntrypoint: compute main
+
+	requiresBlocks [
+		GsViewNormal,
+		GsComputeClipSpacePosition,
+		GsComputeViewSpacePosition,
+		GsViewSpaceToScreenSpace,
+		GsRendererUniform,
+		GsDefaultSampler
+	]
+
+	shaderHlsl {
+		RWTexture2D<float4> outImage : register(u0,  space2);
+		Texture2D<float4> colorImage : register(t2,  space2);
+		Texture2D<float4> gbufferDepth : register(t3,  space2);
+		Texture2D<float4> gbufferNormal : register(t4,  space2);
+		Texture2D<float4> gbufferSpecularRoughness : register(t5,  space2);
+
+		float4 GetPosition(float2 texCoords) {
+			float depthFromTexture = gbufferDepth.SampleLevel(defaultSampler, texCoords * rendererUbo.renderScale, 0).x;
+			float3 position = ComputeViewSpacePosition(rendererUbo.inverseProjectionMatrix, texCoords, depthFromTexture);
+			return float4(position, 1);
+		}
+
+		float3 GetNormal(float2 texCoords) {
+			return normalize(ViewNormal(rendererUbo.viewMatrix, gbufferNormal.SampleLevel(defaultSampler, texCoords, 0).rgb));
+		}
+
+		static const float maxDistance = 15;
+		static const float resolution  = 0.3;
+		static const int   maxSteps    = 5;
+		static const float thickness   = 0.5;
+
+		float4 ReflectRay(float4 positionFrom, float3 pivot) {
+			float2 pixelSize = rendererUbo.renderResolution;
+
+			float4 startPosViewSpace = float4(positionFrom.xyz + (pivot *         0.0), 1.0);
+			float4 endPosViewSpace   = float4(positionFrom.xyz + (pivot * maxDistance), 1.0);
+			float4 positionTo = positionFrom;
+
+			float4 startPosPixelSpace = ViewSpaceToScreenSpace(rendererUbo.projectionMatrix, startPosViewSpace, pixelSize);
+			float2 currPosPixelSpace = startPosPixelSpace.xy;
+
+			float2 uv = currPosPixelSpace / pixelSize;
+			float4 endPosPixelSpace = ViewSpaceToScreenSpace(rendererUbo.projectionMatrix, endPosViewSpace, pixelSize);
+
+			float searchStart = 0;
+			float searchEnd = 0;
+
+			float2 delta = endPosPixelSpace.xy - startPosPixelSpace.xy;
+			float useX = abs(delta.x) >= abs(delta.y) ? 1.0 : 0.0;
+			float deltaMax = lerp(abs(delta.y), abs(delta.x), useX) * clamp(resolution, 0.0, 1.0);
+			float2 increment = float2(delta.x, delta.y) / max(deltaMax, 0.001);
+
+			int hitInitialPass = 0;
+			int hitBinarySearchPass = 0;
+
+			float viewDistance = startPosViewSpace.z;
+			float deltaDepth = thickness;
+
+			int i = 0;
+			for (i = 0; i < int(deltaMax); ++i) {
+				currPosPixelSpace += increment;
+				uv = currPosPixelSpace.xy / pixelSize;
+				positionTo = GetPosition(uv);
+
+				searchEnd =
+					lerp(
+						(currPosPixelSpace.y - startPosPixelSpace.y) / delta.y,
+						(currPosPixelSpace.x - startPosPixelSpace.x) / delta.x,
+						useX
+					);
+
+				searchEnd = clamp(searchEnd, 0.0, 1.0);
+
+				viewDistance = (endPosViewSpace.z * startPosViewSpace.z) / lerp(endPosViewSpace.z, startPosViewSpace.z, searchEnd);
+				deltaDepth = viewDistance - positionTo.z;
+
+				if (deltaDepth > 0 && deltaDepth < thickness) {
+					hitInitialPass = 1;
+					break;
+				}
+				else {
+					searchStart = searchEnd;
+				}
+			}
+		/*
+			searchEnd = searchStart + ((searchEnd - searchStart) / 2.0);
+			static const int steps = maxSteps * hitInitialPass;
+
+			for (i = 0; i < steps; ++i) {
+				currPosPixelSpace = lerp(startPosPixelSpace.xy, endPosPixelSpace.xy, searchEnd);
+				uv.xy = currPosPixelSpace.xy / pixelSize;
+				positionTo = GetPosition(uv);
+
+				viewDistance = (endPosViewSpace.z * startPosViewSpace.z) / lerp(endPosViewSpace.z, startPosViewSpace.z, searchEnd);
+				deltaDepth = viewDistance - positionTo.z;
+
+				if (deltaDepth > 0 && deltaDepth < thickness) {
+					hitBinarySearchPass = 1;
+					searchEnd = searchStart + ((searchEnd - searchStart) / 2);
+				} else {
+					float currentEnd = searchEnd;
+					searchEnd = searchEnd + ((searchEnd - searchStart) / 2);
+					searchStart = currentEnd;
+				}
+			}
+		*/
+
+			float distanceFromReflToTarget = length(positionTo - positionFrom);
+
+			float visibility = hitInitialPass
+				* positionTo.w
+				* ( 1 - max( dot(-normalize(positionFrom.xyz), pivot), 0))
+				* ( 1 - clamp( deltaDepth / thickness, 0, 1))
+				* ( 1 - clamp(distanceFromReflToTarget / maxDistance, 0, 1))
+				* ((uv.x < 0 || uv.x > 1 || uv.y < 0 || uv.y > 1) ? 0 : 1);
+
+			visibility = clamp(visibility, 0, 1);
+
+			return float4(uv, 0, visibility);
+		}
+
+		[numthreads(1, 1, 1)]
+		void main(uint3 dispatchThreadID : SV_DispatchThreadID) {
+			float2 texCoords = float2(dispatchThreadID.x / rendererUbo.framebufferResolution.x, dispatchThreadID.y / rendererUbo.framebufferResolution.y);
+
+			float4 positionViewSpace = GetPosition(texCoords / rendererUbo.renderScale);
+			float3 normal = GetNormal(texCoords);
+			float3 reflectedRay = normalize(reflect(normalize(positionViewSpace.xyz), normal));
+
+			float4 specRough = gbufferSpecularRoughness.SampleLevel(defaultSampler, texCoords, 0);
+			float3 specular = specRough.rgb;
+			float roughness = specRough.a * specRough.a;
+
+			float4 reflCoords = ReflectRay(positionViewSpace, reflectedRay);
+			float4 color = float4(colorImage.SampleLevel(defaultSampler, reflCoords.xy * rendererUbo.renderScale, 0).xyz * reflCoords.a, reflCoords.a);
+
+			outImage[dispatchThreadID.xy] = color;
+		}
+	}
+}

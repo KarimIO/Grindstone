@@ -1,0 +1,51 @@
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/matrixTransformations.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/postProcessingTemplate.gpset"
+
+pipelineSet "Ambient Occlusion Blur" inherits "PostProcessing" {
+	configuration "main" {
+		pass "main" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+			renderQueue: "Ssao"
+
+			properties {
+				cull: back
+				depthBias: false
+				depthWrite: false
+				depthTest: false
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: {
+					colorMask: rgba
+					blendPreset: opaque
+				}
+			}
+
+			requiresBlocks [
+				GsInvertMatrix,
+				GsViewNormal,
+				GsComputeClipSpacePosition,
+				GsComputeViewSpacePosition
+			]
+
+			shaderHlsl {
+				SamplerState aoSampler : register(s0, space1);
+				Texture2D<float> aoImage : register(t1, space1);
+
+				float mainFragment(VertexToFragment input) : SV_TARGET0 {
+					float2 texelSize = float2(1 / rendererUbo.renderResolution.x, 1 / rendererUbo.renderResolution.y);
+
+					float result = 0.0;
+					for (int x = -2; x < 2; ++x)  {
+						for (int y = -2; y < 2; ++y)  {
+							float2 offset = float2(float(x), float(y)) * texelSize;
+							result += aoImage.Sample(aoSampler, input.scaledFragmentTexCoord + offset).r;
+						}
+					}
+					
+					return result / (4.0f * 4.0f);
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,76 @@
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/meshRenderer.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/matrixTransformations.gpset"
+
+pipelineSet "Skybox (Spherical Map)" {
+	parameters {
+		Texture skybox : Texture2D.missingCheckerboard
+	}
+
+	configuration "main" {
+		rendererTags: "deferred"
+
+		pass "main" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+			renderQueue: "GeometrySky"
+
+			properties {
+				cull: back
+				depthBias: 1.25, 1.75, 0.0
+				depthWrite: true
+				depthTest: true
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: {
+					colorMask: rgba
+					blendPreset: opaque
+				}
+			}
+
+			requiresBlocks [
+				GsRendererUniform,
+				GsPadFloat33ToFloat44
+			]
+
+			shaderHlsl {
+				SamplerState textureSampler : register(s1, space1);
+				Texture2D<float4> skybox : register(t2, space1);
+
+				struct VertexInput {
+					[[vk::location(0)]] float4 position : POSITION0;
+				};
+
+				struct VertexToFragment {
+					float4 position : SV_Position;
+					[[vk::location(0)]] float3 texCoord : TEXCOORD0;
+				};
+
+				VertexToFragment mainVertex(VertexInput input) {
+					VertexToFragment output;
+
+					output.texCoord = normalize(input.position.xyz);
+
+					float4x4 viewMatrixWithoutPos = PadFloat33ToFloat44((float3x3)rendererUbo.viewMatrix);
+					output.position = mul(mul(float4(output.texCoord, 1.0), viewMatrixWithoutPos), rendererUbo.projectionMatrix);
+					output.position = output.position.xyww;
+					return output;
+				}
+
+
+				static const float2 invAtan = float2(0.1591, 0.3183);
+				float2 SampleSphericalMap(float3 v) {
+					float2 uv = float2(atan2(v.x, v.z), asin(v.y));
+					uv *= invAtan;
+					uv += 0.5;
+					uv.y = -uv.y;
+					return uv;
+				}
+
+				float4 mainFragment(VertexToFragment input) : SV_TARGET {
+					float2 sphericalCoord = SampleSphericalMap(input.texCoord);
+    				return skybox.SampleLevel(textureSampler, sphericalCoord, 0);
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,133 @@
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/meshRenderer.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/matrixTransformations.gpset"
+
+pipelineSet "lit.default" {
+	parameters {
+		Color materialInstanceUbo.color : Color.white,
+		Texture albedoTexture : Texture2D.missingCheckerboard,
+		Texture normalTexture : Texture2D.missingNormal,
+		Texture metalnessTexture : Texture2D.black,
+		Texture roughnessTexture : Texture2D.black
+	}
+
+	configuration "main" {
+		rendererTags: "deferred"
+
+		pass "main" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+			renderQueue: "GeometryOpaque"
+
+			properties {
+				cull: back
+				depthWrite: true
+				depthTest: true
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: [
+					{
+						colorMask: rgba
+						blendPreset: opaque
+					},
+					{
+						colorMask: rgba
+						blendPreset: opaque
+					},
+					{
+						colorMask: rgba
+						blendPreset: opaque
+					}
+				]
+			}
+
+			requiresBlocks [
+				GsMeshRendererVertex,
+				GsTransformNormalToWorldSpace
+			]
+
+			shaderHlsl {
+				/*
+				TODO: Shifted samplers and textures up, need to revert.
+				struct MaterialInstanceUBO {
+					float4 color;
+				};
+
+				ConstantBuffer<MaterialInstanceUBO> materialInstanceUbo : register(b0, space1);
+				*/
+
+				SamplerState textureSampler : register(s0, space1);
+				Texture2D<float4> albedoTexture : register(t1, space1);
+				Texture2D<float4> normalTexture : register(t2, space1);
+				Texture2D<float4> metalnessTexture : register(t3, space1);
+				Texture2D<float4> roughnessTexture : register(t4, space1);
+
+				struct FragmentOutput {
+					[[vk::location(0)]] float4 gbufferAlbedoMatID : SV_TARGET0;
+					[[vk::location(1)]] float4 gbufferNormal : SV_TARGET1;
+					[[vk::location(2)]] float4 gbufferSpecularRoughness : SV_TARGET2;
+				};
+
+				FragmentOutput mainFragment(VertexToFragment input) {
+					float4 albedo = albedoTexture.Sample(textureSampler, input.texCoord0);
+
+					float3 textureSpaceNormal = normalTexture.Sample(textureSampler, input.texCoord0).rgb;
+					float metalness = metalnessTexture.Sample(textureSampler, input.texCoord0).r;
+					float roughness = roughnessTexture.Sample(textureSampler, input.texCoord0).r;
+
+					float3 specular = lerp(float3(0.04, 0.04, 0.04), albedo.rgb, metalness);
+					float3 worldSpaceNormal = TransformNormalToWorldSpace(input.normal, textureSpaceNormal, input.tangent);
+
+					FragmentOutput output = (FragmentOutput)0;
+					output.gbufferAlbedoMatID = albedo;
+					output.gbufferNormal = float4(worldSpaceNormal, 1);
+					output.gbufferSpecularRoughness = float4(specular, roughness);
+					return output;
+				}
+			}
+		}
+
+		pass "shadowMap" {
+			shaderEntrypoint: vertex mainShadowVertex
+			shaderEntrypoint: fragment mainShadowFragment
+			renderQueue: "ShadowMap"
+
+			properties {
+				cull: none
+				depthBias: 0.1, 1.0, 0.0
+				depthWrite: true
+				depthTest: true
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: []
+			}
+
+			requiresBlocks [
+				GsShadowRenderer
+			]
+		}
+
+		pass "mousePick" {
+			shaderEntrypoint: vertex mainMousePickVertex
+			shaderEntrypoint: fragment mainMousePickFragment
+			renderQueue: "MousePick"
+
+			properties {
+				cull: back
+				depthWrite: true
+				depthTest: true
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: [
+					{
+						colorMask: rgba
+						blendPreset: opaque
+					}
+				]
+			}
+
+			requiresBlocks [
+				GsMousePickRenderer
+			]
+		}
+	}
+}

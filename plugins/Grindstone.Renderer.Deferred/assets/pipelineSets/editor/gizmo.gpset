@@ -1,0 +1,65 @@
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/rendererUniform.gpset"
+
+pipelineSet "Gizmo" {
+	configuration "main" {
+		pass "main" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+			renderQueue: "Gizmo"
+
+			properties {
+				cull: none
+				geometryType: lines
+				fillMode: line
+				depthBias: false
+				depthWrite: false
+				depthTest: false
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: {
+					colorMask: rgba
+					blendPreset: opaque
+				}
+			}
+
+			requiresBlocks [
+				GsRendererUniform
+			]
+
+			shaderHlsl {
+				struct Element {
+					column_major float4x4 matrix;
+					float4 color;
+				};
+
+				#define maxObjects 500
+				
+				struct GizmoUbo {
+					Element elements[maxObjects];
+				};
+
+				ConstantBuffer<GizmoUbo> elementsBuffer : register(b0, space2);
+
+				struct VertexInput {
+					[[vk::location(0)]] float3 position : POSITION0;
+				};
+
+				struct VertexToFragment {
+					float4 position : SV_Position;
+					[[vk::location(0)]] float4 color : COLOR0;
+				};
+
+				VertexToFragment mainVertex(VertexInput input, [[vk::builtin("BaseInstance")]] uint baseInstance : BASEINSTANCE) {
+					VertexToFragment output = (VertexToFragment)0;
+					output.position = mul(elementsBuffer.elements[baseInstance].matrix, float4(input.position, 1.0));
+					output.color = elementsBuffer.elements[baseInstance].color;
+					return output;
+				}
+
+				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
+					return input.color;
+				}
+			}
+		}
+	}
+}

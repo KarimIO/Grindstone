@@ -1,0 +1,87 @@
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/matrixTransformations.gpset"
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/postProcessingTemplate.gpset"
+
+pipelineSet "Screen-Space Ambient Occlusion" inherits "PostProcessing" {
+	configuration "main" {
+		pass "main" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+			renderQueue: "Ssao"
+
+			properties {
+				cull: back
+				depthBias: false
+				depthWrite: false
+				depthTest: false
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: {
+					colorMask: rgba
+					blendPreset: opaque
+				}
+			}
+
+			requiresBlocks [
+				GsInvertMatrix,
+				GsViewNormal,
+				GsComputeClipSpacePosition,
+				GsComputeViewSpacePosition
+			]
+
+			shaderHlsl {
+				static const int kernelSize = 64;
+
+				SamplerState gbufferSampler : register(s0, space1);
+				Texture2D<float> depthTexture : register(t1, space1);
+				Texture2D<float4> gbufferNormals : register(t2, space1);
+
+				struct SSAOBufferObject {
+					float4 kernels[kernelSize];
+					float radius;
+					float bias;
+				};
+
+				SamplerState ssaoNoiseSampler : register(s0, space2);
+				Texture2D<float4> ssaoNoise : register(t1, space2);
+				ConstantBuffer<SSAOBufferObject> ssaoUbo : register(b2, space2);
+
+				float mainFragment(VertexToFragment input) : SV_TARGET0 {
+					float2 roundedResolution = floor(rendererUbo.renderResolution / 4.0f) * 4.0f;
+					float2 noiseScale = ceil(roundedResolution / 4.0f);
+
+					float depthFromTexture = depthTexture.Sample(gbufferSampler, input.scaledFragmentTexCoord).x;
+					float3 position = ComputeViewSpacePosition(rendererUbo.inverseProjectionMatrix, input.fragmentTexCoord, depthFromTexture).rgb;
+					float2 noise = ssaoNoise.Sample(ssaoNoiseSampler, input.fragmentTexCoord * noiseScale).rg;
+					float3 normal = normalize(ViewNormal(rendererUbo.viewMatrix, gbufferNormals.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb));
+					float3 randomVec  = float3(noise, 0);
+
+					float3 tangent   = normalize(randomVec - normal * dot(randomVec, normal));
+					float3 bitangent = cross(tangent, normal);
+					float3x3 TBN       = float3x3(tangent, bitangent, normal);
+
+					float occlusion = 0.0;
+
+					float radius = ssaoUbo.radius;
+					float bias = ssaoUbo.bias;
+
+					for(int i = 0; i < kernelSize; i++) {
+						float3 sampleKernel = mul(TBN, ssaoUbo.kernels[i].xyz);
+						sampleKernel = position + sampleKernel * radius;
+
+						float4 offset = float4(sampleKernel, 1.0);
+						offset      = mul(rendererUbo.projectionMatrix, offset);// from view to clip-space
+						offset.xyz /= offset.w;									// perspective divide
+						offset.xyz  = float3(offset.x * 0.5 + 0.5, offset.y * 0.5 + 0.5, offset.z * 0.5 + 0.5);	// transform to range 0.0 - 1.0
+
+						float sampleDepth = depthTexture.Sample(gbufferSampler, offset.xy * rendererUbo.renderScale).x;
+						float sampleDepthLinear = ComputeViewSpacePosition(rendererUbo.inverseProjectionMatrix, offset.xy, sampleDepth).z;
+						float rangeCheck = smoothstep(0.0, 1.0, radius / abs(position.z - sampleDepthLinear));
+						occlusion += (sampleDepthLinear >= sampleKernel.z + bias ? 1.0 : 0.0) * rangeCheck;
+					}
+
+					return 1.0 - (occlusion / kernelSize);
+				}
+			}
+		}
+	}
+}

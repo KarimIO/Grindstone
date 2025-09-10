@@ -1,0 +1,127 @@
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/deferredPipeline/lightingTemplate.gpset"
+
+pipelineSet "Directional Light" inherits "DeferredLighting" {
+	configuration "main" {
+		pass "main" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+
+			requiresBlocks [
+				GsRendererUniform,
+				CommonConstants,
+				poissonDisk,
+				BSDF,
+				LightGbufferUniforms,
+				DiffuseDisney,
+				GsComputeWorldSpacePosition
+			]
+
+			shaderHlsl {
+				struct LightUbo {
+					float4x4 shadowMatrix;
+					float3 color;
+					float sourceRadius;
+					float3 direction;
+					float intensity;
+					float shadowResolution;
+				};
+
+				ConstantBuffer<LightUbo> light : register(b0, space2);
+				Texture2D<float4> shadowMap : register(t1,  space2);
+
+				float3 LightDirCalc(
+					in float3 albedo,
+					in float3 position,
+					in float3 specularTexture,
+					in float roughness,
+					in float3 normal,
+					in float3 lightDir,
+					in float3 lightColor,
+					in float3 eyePos
+				) {
+					float lightDistance	= length(lightDir);
+
+					float3 eyeDir		= normalize(eyePos - position);
+					float3 eyeReflect = reflect(-eyeDir, normal);
+
+					lightDir		= -normalize(lightDir);
+
+					float alpha = roughness * roughness;
+					float alphaSqr = alpha * alpha;
+
+					float NL = clamp(dot(normal, lightDir), 0, 1);
+
+					float3 H = normalize(eyeDir + lightDir);
+
+					float NV = abs(dot(normal, eyeDir)) + 0.00001;
+					float NH = clamp(dot(normal, H), 0, 1);
+					float LH = clamp(dot(lightDir, H), 0, 1);
+					float VH = clamp(dot(eyeDir, H), 0, 1);
+
+					float3 specular = BSDF(NV, NL, LH, NH, alpha, specularTexture.rgb);
+					float diffDisney = DiffuseDisney(NV, NL, LH, roughness);
+					float3 diffuse = albedo.rgb * float3(diffDisney, diffDisney, diffDisney) / PI;
+
+					float3 BSDFValue = diffuse + specular;
+					return float3(NL * BSDFValue * lightColor.xyz);
+				}
+
+				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
+					float4 gbufferSpecularRoughnessValue = gbufferSpecularRoughness.Sample(gbufferSampler, input.scaledFragmentTexCoord);
+
+					float depth = gbufferDepth.Sample(gbufferSampler, input.scaledFragmentTexCoord).r;
+					float3 position = ComputeWorldSpacePosition(rendererUbo.inverseProjectionMatrix, rendererUbo.inverseViewMatrix, input.fragmentTexCoord, depth);
+					float3 albedo = gbufferAlbedo.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb;
+					float3 normal = gbufferNormals.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb;
+					float3 specular = gbufferSpecularRoughnessValue.rgb;
+					float roughness = gbufferSpecularRoughnessValue.a;
+
+					float3 lightPow = light.color * light.intensity;
+
+					float3 litValues = LightDirCalc(
+						albedo,
+						position,
+						specular,
+						roughness,
+						normal,
+						light.direction,
+						lightPow,
+						rendererUbo.eyePos
+					);
+
+					float nl = dot(light.direction, normal);
+					float4 lightSpacePos = mul(light.shadowMatrix, float4(position, 1));
+					float3 projCoords = lightSpacePos.xyz / lightSpacePos.w;
+					float pixelDepth = projCoords.z;
+
+					float2 resolution;
+					float levels;
+					shadowMap.GetDimensions(0, resolution.x, resolution.y, levels);
+					float2 texelSize = 1.0f / resolution;
+					static const float pcfKernelSize = 1.0f;
+					float shadow = 0.0f;
+
+					for (int i = 0; i < 16; ++i) {
+						float randomAngle = ShadowRandom(float4(floor(position.xyz * 1000.0f), i));
+						float2 rotation = float2(cos(randomAngle) * 0.5f + 0.5f, sin(randomAngle) * 0.5f + 0.5f);
+						float2 offset = float2(
+							rotation.x * poissonDisk[i].x - rotation.y * poissonDisk[i].y,
+							rotation.y * poissonDisk[i].x + rotation.x * poissonDisk[i].y
+						);
+
+						float pcfDepth = shadowMap.Sample(gbufferSampler, projCoords.xy + offset * texelSize * 4.0f).r;
+						bool isInLight = pcfDepth + 0.05f >= pixelDepth;
+						shadow += isInLight ? 1.0f : 0.0f;
+					}
+
+					shadow = shadow / 16;
+
+					bool isInMap = projCoords.z >= 0 && projCoords.z <= 1;
+					float isInLightMap = (isInMap) ? shadow : 0.0f;
+
+					return float4(float3(isInLightMap, isInLightMap, isInLightMap) * litValues, 1);
+				}
+			}
+		}
+	}
+}
