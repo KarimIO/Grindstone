@@ -705,7 +705,7 @@ void AssetBrowserPanel::RenderFile(size_t fileIndex) {
 	RenderAssetContextMenu(false, item.filepath, fileIndex);
 	ProcessFileClicks(item);
 
-	if (ImGui::BeginDragDropSource() && item.defaultUuid.IsValid()) {
+	if (item.defaultUuid.IsValid() && ImGui::BeginDragDropSource()) {
 		std::string myUuidAsString = item.defaultUuid.ToString();
 		std::string assetTypeStr = GetAssetTypeToString(assetType);
 		ImGui::SetDragDropPayload(assetTypeStr.c_str(), &item.defaultUuid, sizeof(Grindstone::Uuid));
