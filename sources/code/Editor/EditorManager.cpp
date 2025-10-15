@@ -19,6 +19,7 @@
 #include <Editor/PluginSystem/EditorPluginInterface.hpp>
 #include <Editor/PluginSystem/EditorPluginManager.hpp>
 #include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
@@ -339,6 +340,8 @@ Manager::~Manager() {
 		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAssetImportLate");
 		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAssetImportEarly");
 		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorEarly");
+
+		engineCore->GetSceneManager()->CloseActiveScenes();
 
 		Grindstone::WorldContextManager* cxtManager = engineCore->GetWorldContextManager();
 		if (cxtManager) {
