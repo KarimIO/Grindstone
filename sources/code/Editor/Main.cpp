@@ -59,40 +59,111 @@ static std::filesystem::path FindFolder() {
 	return outPath;
 }
 
-static std::filesystem::path CreateNewProject() {
-	std::filesystem::path basePath;
+static bool CreateNewProject(const std::filesystem::path& basePath) {
+	const std::string folderName = basePath.filename().string();
 
-	do {
-		basePath = FindFolder();
+	// Quit if the base folder doesn't exist and we can't create it.
+	if (!std::filesystem::exists(basePath) && !std::filesystem::create_directories(basePath)) {
+		return false;
+	}
 
-		if (basePath.empty()) {
-			return basePath;
-		}
-	} while (!std::filesystem::is_empty(basePath));
-
-	std::filesystem::create_directories(basePath / "assets");
+	// Create default folders.
 	std::filesystem::create_directories(basePath / "log");
 	std::filesystem::create_directories(basePath / "buildSettings");
 	std::filesystem::create_directories(basePath / "compiledAssets");
+	std::filesystem::create_directories(basePath / "plugins");
 	std::filesystem::create_directories(basePath / "userSettings");
-	std::string defaultPlugins = "PluginEditorAudioImporter\n\
-PluginEditorMaterialImporter\n\
-PluginEditorModelImporter\n\
-PluginEditorPipelineSetImporter\n\
-PluginEditorTextureImporter\n\
-PluginBulletPhysics\n\
-PluginRenderables3D\n\
-PluginRendererDeferred\n";
 
-	std::ofstream outputPlugins(basePath / "buildSettings" / "pluginsManifest.txt");
-	outputPlugins.write(defaultPlugins.c_str(), defaultPlugins.size());
-	outputPlugins.close();
+	// Create the plugins file (in the future, based on a template).
+	{
+		std::ofstream outputPluginsFile(basePath / "buildSettings" / "pluginsManifest.txt");
+		if (outputPluginsFile.fail()) {
+			return false;
+		}
 
-	return basePath;
+		// PluginManifestFileLoader.cpp has an output system but that's a backup.
+		// Here is where we should build the default plugins depending on templates
+		// when we implement those.
+		const std::string defaultProjectPluginName = folderName + ".Main";
+		const std::string defaultPlugins = std::string("Grindstone.Editor.Assets\n\
+Grindstone.Editor.AudioImporter\n\
+Grindstone.Editor.MaterialImporter\n\
+Grindstone.Editor.ModelImporter\n\
+Grindstone.Editor.PipelineSetImporter\n\
+Grindstone.Editor.TextureImporter\n\
+Grindstone.Physics.Bullet\n\
+Grindstone.Renderables.3D\n\
+Grindstone.Renderer.Deferred\n\
+Grindstone.RHI.Vulkan\n\
+Grindstone.Script.CSharp\n")
++ defaultProjectPluginName + "\n";
+
+		outputPluginsFile.write(defaultPlugins.c_str(), defaultPlugins.size());
+		outputPluginsFile.close();
+
+		std::filesystem::path defaultProjectPluginPath = basePath / "plugins" / defaultProjectPluginName;
+		if (!std::filesystem::exists(defaultProjectPluginPath)) {
+			std::filesystem::create_directory(defaultProjectPluginPath);
+		}
+
+		std::filesystem::path defaultProjectPluginAssetsPath = defaultProjectPluginPath / "assets";
+		if (!std::filesystem::exists(defaultProjectPluginAssetsPath)) {
+			std::filesystem::create_directory(defaultProjectPluginAssetsPath);
+		}
+
+		std::filesystem::path defaultProjectPluginMetaFilePath = defaultProjectPluginPath / "plugin.meta.json";
+		if (!std::filesystem::exists(defaultProjectPluginMetaFilePath)) {
+			std::ofstream outputPluginsFile(defaultProjectPluginMetaFilePath);
+			if (outputPluginsFile.is_open()) {
+				std::string folderNameToUpper = folderName;
+				std::transform(folderNameToUpper.begin(), folderNameToUpper.end(), folderNameToUpper.begin(), ::toupper);
+
+				const std::string defaultPlugins = std::string("{\n\
+		\"name\": \"" + defaultProjectPluginName + "\",\n\
+		\"displayName\" : \"" + folderName + " Main plugin\",\n\
+		\"version\" : \"0.0.1\",\n\
+		\"description\" : \"The main plugin of the your project.\",\n\
+		\"author\" : \"\",\n\
+		\"assetDirectories\" : [\n\
+			{\n\
+				\"path\": \"assets\",\n\
+					\"mountPoint\" : \"" + folderNameToUpper + ".MAIN\", \n\
+					\"loadStage\" : \"EditorAssetImportEarly\"\n\
+			}\n\
+		], \n\
+		\"dependencies\": [],\n\
+		\"binaries\" : [],\n\
+		\"cmake\": \"\"\n\
+	}\n\
+	");
+
+				outputPluginsFile.write(defaultPlugins.c_str(), defaultPlugins.size());
+				outputPluginsFile.close();
+			}
+		}
+	}
+
+	return true;
 }
 
-static std::filesystem::path OpenExistingProject() {
-	return FindFolder();
+static std::filesystem::path CreateOrOpenExistingProject() {
+	std::filesystem::path basePath = FindFolder();
+
+	// Empty path means cancelled, so return.
+	if (basePath.empty()) {
+		return basePath;
+	}
+
+	// Empty folder or nonexistant folder means that there is no existing project, so try create one.
+	if (!std::filesystem::exists(basePath) || std::filesystem::is_empty(basePath)) {
+		// If we failed to create the project, quit out.
+		if (!CreateNewProject(basePath)) {
+			return "";
+		}
+	}
+	// Non-empty folder means that the folder already exists so skip creating it and just try open it.
+
+	return basePath;
 }
 #endif
 
@@ -106,24 +177,7 @@ int main(int argc, char* argv[]) {
 
 		if (projectPath.empty()) {
 	#if _WIN32
-			int msgboxID = MessageBox(
-				NULL,
-				"Do you want to create a new project? Press no to open an existing project.",
-				"Project Setup",
-				MB_ICONEXCLAMATION | MB_YESNOCANCEL
-			);
-
-			switch (msgboxID) {
-			case IDYES:
-				projectPath = CreateNewProject();
-				break;
-			case IDNO:
-				projectPath = OpenExistingProject();
-				break;
-			case IDCANCEL:
-				return 1;
-			}
-
+			projectPath = CreateOrOpenExistingProject();
 			if (projectPath.empty()) {
 				std::cerr << "Unable to launch Grindstone Editor - no path set." << std::endl;
 				return 1;
