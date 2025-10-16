@@ -31,8 +31,8 @@ bool EngineCore::EarlyInitialize(EarlyCreateInfo& createInfo) {
 	isEditor = createInfo.isEditor;
 	projectPath = createInfo.projectPath;
 	engineBinaryPath = createInfo.engineBinaryPath;
-	binaryPath = projectPath / "bin/";
-	assetsPath = projectPath / "compiledAssets/";
+	binaryPath = projectPath / "bin";
+	assetsPath = projectPath / "compiledAssets";
 	engineAssetsPath = engineBinaryPath.parent_path() / "engineassets";
 
 	const size_t megabytesInGig = 1024u;
