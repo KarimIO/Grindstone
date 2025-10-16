@@ -299,8 +299,14 @@ void CSharpManager::Initialize() {
 		return;
 	}
 
-	auto rootBinPath = engineCore.GetBinaryPath().string();
-	csharpGlobals.CreateAppDomain((void*)rootBinPath.c_str());
+	std::filesystem::path rootBinPath = engineCore.GetBinaryPath();
+	std::string rootBinPathStr = rootBinPath.string();
+	if (!std::filesystem::exists(rootBinPath) && !std::filesystem::create_directories(rootBinPath)) {
+		GPRINT_ERROR_V(LogSource::Scripting, "Failed to create directory: '{}'.", rootBinPathStr.c_str());
+		return;
+	}
+
+	csharpGlobals.CreateAppDomain((void*)rootBinPathStr.c_str());
 
 	LoadAssemblyClasses();
 	RegisterComponents();
