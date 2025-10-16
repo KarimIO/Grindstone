@@ -614,7 +614,7 @@ void AssetBrowserPanel::RenderPlugins() {
 
 			std::string assetDirectoryString = asset.assetDirectoryRelativePath.string();
 			std::string buttonString = assetDirectoryString + "##AssetButton";
-			RenderAssetElement(false, buttonString.c_str(), ImGui::GetCursorPosX(), iconIds.fileIcons[0]);
+			RenderAssetElement(false, buttonString.c_str(), ImGui::GetCursorPosX(), iconIds.folderIcon);
 			if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 				std::filesystem::path path(plugin.pluginResolvedPath / asset.assetDirectoryRelativePath);
 				SetCurrentAssetDirectory(path);
@@ -628,7 +628,7 @@ void AssetBrowserPanel::RenderPlugins() {
 			std::filesystem::path path(plugin.pluginResolvedPath / binary.libraryRelativePath);
 			std::filesystem::directory_entry directoryEntry(path);
 
-			ImTextureID icon = iconIds.fileIcons[1];
+			ImTextureID icon = iconIds.fileIcons[0];
 			switch (binary.buildType) {
 			default:
 			case Plugins::MetaData::BinaryBuildType::NoBuild:
