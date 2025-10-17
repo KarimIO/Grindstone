@@ -1,0 +1,15 @@
+{
+    "assetImporterVersion": 1,
+    "metaFileVersion": 1,
+    "defaultUuid": "853fd426-951a-4e84-8b6b-1943f8591311",
+    "subassets": [
+        {
+            "displayName": "CMake",
+            "address": "@EDITOR_ICONS/assetIcons/Cmake",
+            "subassetIdentifier": "CMake",
+            "uuid": "853fd426-951a-4e84-8b6b-1943f8591311",
+            "type": "Texture"
+        }
+    ],
+    "importerSettings": {}
+}

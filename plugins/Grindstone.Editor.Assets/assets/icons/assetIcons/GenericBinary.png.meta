@@ -1,0 +1,15 @@
+{
+    "assetImporterVersion": 1,
+    "metaFileVersion": 1,
+    "defaultUuid": "f4e0eae4-a399-488a-9f12-e7e76620b72f",
+    "subassets": [
+        {
+            "displayName": "GenericBinary",
+            "address": "@EDITOR_ICONS/assetIcons/GenericBinary",
+            "subassetIdentifier": "GenericBinary",
+            "uuid": "f4e0eae4-a399-488a-9f12-e7e76620b72f",
+            "type": "Texture"
+        }
+    ],
+    "importerSettings": {}
+}

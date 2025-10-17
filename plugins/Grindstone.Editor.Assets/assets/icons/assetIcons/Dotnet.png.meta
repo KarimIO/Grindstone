@@ -1,0 +1,15 @@
+{
+    "assetImporterVersion": 1,
+    "metaFileVersion": 1,
+    "defaultUuid": "5fc5b9e6-5054-48d4-811d-1fd735514e01",
+    "subassets": [
+        {
+            "displayName": "Dotnet",
+            "address": "@EDITOR_ICONS/assetIcons/Dotnet",
+            "subassetIdentifier": "Dotnet",
+            "uuid": "5fc5b9e6-5054-48d4-811d-1fd735514e01",
+            "type": "Texture"
+        }
+    ],
+    "importerSettings": {}
+}
