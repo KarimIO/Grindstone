@@ -1,0 +1,15 @@
+{
+    "assetImporterVersion": 1,
+    "metaFileVersion": 1,
+    "defaultUuid": "aedb7253-b5a0-4091-ad2f-01ad0d411e1e",
+    "subassets": [
+        {
+            "displayName": "Font",
+            "address": "@EDITOR_ICONS/assetIcons/Font",
+            "subassetIdentifier": "Font",
+            "uuid": "aedb7253-b5a0-4091-ad2f-01ad0d411e1e",
+            "type": "Texture"
+        }
+    ],
+    "importerSettings": {}
+}

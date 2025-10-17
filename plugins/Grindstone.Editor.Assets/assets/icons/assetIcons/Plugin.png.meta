@@ -1,0 +1,15 @@
+{
+    "assetImporterVersion": 1,
+    "metaFileVersion": 1,
+    "defaultUuid": "697114d2-db91-4856-a73d-94046f2f68cd",
+    "subassets": [
+        {
+            "displayName": "Plugin",
+            "address": "@EDITOR_ICONS/assetIcons/Plugin",
+            "subassetIdentifier": "Plugin",
+            "uuid": "697114d2-db91-4856-a73d-94046f2f68cd",
+            "type": "Texture"
+        }
+    ],
+    "importerSettings": {}
+}

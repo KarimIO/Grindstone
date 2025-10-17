@@ -71,6 +71,10 @@ AssetBrowserPanel::AssetBrowserPanel(
 	indexToRename = SIZE_MAX;
 
 	iconIds.folderIcon = imguiRenderer->CreateTexture("assetIcons/Folder");
+	iconIds.genericBinaryIcon = imguiRenderer->CreateTexture("assetIcons/GenericBinary");
+	iconIds.dotnetIcon = imguiRenderer->CreateTexture("assetIcons/Dotnet");
+	iconIds.cmakeIcon = imguiRenderer->CreateTexture("assetIcons/CMake");
+	iconIds.pluginIcon = imguiRenderer->CreateTexture("assetIcons/Plugin");
 
 	for (uint16_t i = 0; i < static_cast<uint16_t>(AssetType::Count); ++i) {
 		AssetType assetType = static_cast<AssetType>(i);
@@ -590,7 +594,7 @@ void AssetBrowserPanel::RenderAllPlugins() {
 		std::string buttonString = plugin.name + "##AssetButton";
 
 		float cursorX = ImGui::GetCursorPosX();
-		ImTextureID icon = iconIds.folderIcon;
+		ImTextureID icon = iconIds.pluginIcon;
 		RenderAssetElement(false, buttonString.c_str(), cursorX, icon);
 		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 			SetCurrentPlugin(plugin.name);
@@ -632,13 +636,13 @@ void AssetBrowserPanel::RenderPlugins() {
 			switch (binary.buildType) {
 			default:
 			case Plugins::MetaData::BinaryBuildType::NoBuild:
-				icon = iconIds.fileIcons[1];
+				icon = iconIds.genericBinaryIcon;
 				break;
 			case Plugins::MetaData::BinaryBuildType::Dotnet:
-				icon = iconIds.fileIcons[2];
+				icon = iconIds.dotnetIcon;
 				break;
 			case Plugins::MetaData::BinaryBuildType::Cmake:
-				icon = iconIds.fileIcons[3];
+				icon = iconIds.cmakeIcon;
 				break;
 			}
 

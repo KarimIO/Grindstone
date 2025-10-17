@@ -84,6 +84,10 @@ namespace Grindstone::Editor::ImguiEditor {
 
 		struct IconsIds {
 			ImTextureID folderIcon;
+			ImTextureID genericBinaryIcon;
+			ImTextureID pluginIcon;
+			ImTextureID dotnetIcon;
+			ImTextureID cmakeIcon;
 			ImTextureID fileIcons[static_cast<uint16_t>(AssetType::Count)];
 		} iconIds;
 
