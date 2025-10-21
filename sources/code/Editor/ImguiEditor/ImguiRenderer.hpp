@@ -19,6 +19,7 @@ namespace Grindstone {
 			virtual void PostRender() = 0;
 			virtual void Resize() = 0;
 			virtual ImTextureID CreateTexture(std::filesystem::path path) = 0;
+			virtual ImTextureID GetThumbnailAtlas() = 0;
 		};
 	}
 }

@@ -44,7 +44,7 @@ static std::filesystem::path GetNewDefaultPath(const std::filesystem::path& base
 	}
 }
 
-static void RenderAssetElement(bool isSelected, const char* buttonString, float cursorX, ImTextureID icon) {
+static void RenderAssetElement(bool isSelected, const char* buttonString, float cursorX, Editor::ThumbnailManager::AtlasCoords atlasCoords) {
 	ImVec4 mainColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_Button] : ImVec4(1.f, 1.f, 1.f, 0.f);
 	ImVec4 hoveredColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered] : ImVec4(1.f, 1.f, 1.f, 0.05f);
 	ImVec4 activeColor = isSelected ? ImGui::GetStyle().Colors[ImGuiCol_ButtonActive] : ImVec4(1.f, 1.f, 1.f, 0.1f);
@@ -53,7 +53,15 @@ static void RenderAssetElement(bool isSelected, const char* buttonString, float 
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, activeColor);
 	ImGui::PushID(buttonString);
 	ImGui::SetCursorPosX(cursorX + THUMBNAIL_SPACING);
-	ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
+
+	ImTextureID textureIcon = Editor::Manager::GetInstance().GetImguiEditor().GetImguiRenderer().GetThumbnailAtlas();
+	ImGui::ImageButton(
+		textureIcon,
+		ImVec2{ THUMBNAIL_SIZE, THUMBNAIL_SIZE },
+		ImVec2{ atlasCoords.uv0x, atlasCoords.uv0y },
+		ImVec2{ atlasCoords.uv1x, atlasCoords.uv1y },
+		(int)THUMBNAIL_PADDING
+	);
 	ImGui::PopID();
 	ImGui::PopStyleColor(3);
 }
@@ -69,27 +77,6 @@ AssetBrowserPanel::AssetBrowserPanel(
 	auto& fileManager = Editor::Manager::GetFileManager();
 	SetAllPlugins();
 	indexToRename = SIZE_MAX;
-
-	iconIds.folderIcon = imguiRenderer->CreateTexture("assetIcons/Folder");
-	iconIds.genericBinaryIcon = imguiRenderer->CreateTexture("assetIcons/GenericBinary");
-	iconIds.dotnetIcon = imguiRenderer->CreateTexture("assetIcons/Dotnet");
-	iconIds.cmakeIcon = imguiRenderer->CreateTexture("assetIcons/CMake");
-	iconIds.pluginIcon = imguiRenderer->CreateTexture("assetIcons/Plugin");
-
-	for (uint16_t i = 0; i < static_cast<uint16_t>(AssetType::Count); ++i) {
-		AssetType assetType = static_cast<AssetType>(i);
-
-		iconIds.fileIcons[i] = imguiRenderer->CreateTexture(std::string("assetIcons/") + std::string(GetAssetTypeToString(assetType)));
-	}
-}
-
-ImTextureID AssetBrowserPanel::GetIcon(const AssetType assetType) const {
-	uint16_t uintType = static_cast<uint16_t>(assetType);
-	if (uintType >= static_cast<uint16_t>(AssetType::Count)) {
-		return iconIds.fileIcons[static_cast<uint16_t>(AssetType::Undefined)];
-	}
-
-	return iconIds.fileIcons[uintType];
 }
 
 void AssetBrowserPanel::AddFilePath(const std::filesystem::directory_entry& file) {
@@ -104,7 +91,7 @@ void AssetBrowserPanel::AddFilePath(const std::filesystem::directory_entry& file
 		if (registry.TryGetAssetDataFromAbsolutePath(path, outEntry)) {
 			assetType = outEntry.assetType;
 		}
-		ImTextureID icon = GetIcon(assetType);
+
 		Grindstone::Editor::MetaFile metaFile(registry, path);
 		Uuid defaultSubassetUuid;
 		AssetType defaultSubassetType = AssetType::Undefined;
@@ -594,8 +581,8 @@ void AssetBrowserPanel::RenderAllPlugins() {
 		std::string buttonString = plugin.name + "##AssetButton";
 
 		float cursorX = ImGui::GetCursorPosX();
-		ImTextureID icon = iconIds.pluginIcon;
-		RenderAssetElement(false, buttonString.c_str(), cursorX, icon);
+		auto iconCoords = Editor::Manager::GetInstance().GetThumbnailManager().GetPluginIconCoords();
+		RenderAssetElement(false, buttonString.c_str(), cursorX, iconCoords);
 		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 			SetCurrentPlugin(plugin.name);
 		}
@@ -605,6 +592,8 @@ void AssetBrowserPanel::RenderAllPlugins() {
 
 void AssetBrowserPanel::RenderPlugins() {
 	EngineCore& engineCore = EngineCore::GetInstance();
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
+	Editor::ThumbnailManager& thumbnailManager = editorManager.GetThumbnailManager();
 	Grindstone::Plugins::EditorPluginManager& pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager&>(*engineCore.GetPluginManager());
 
 	for (Grindstone::Plugins::MetaData& plugin : pluginManager) {
@@ -618,7 +607,8 @@ void AssetBrowserPanel::RenderPlugins() {
 
 			std::string assetDirectoryString = asset.assetDirectoryRelativePath.string();
 			std::string buttonString = assetDirectoryString + "##AssetButton";
-			RenderAssetElement(false, buttonString.c_str(), ImGui::GetCursorPosX(), iconIds.folderIcon);
+			auto iconCoords = thumbnailManager.GetFolderIconCoords();
+			RenderAssetElement(false, buttonString.c_str(), ImGui::GetCursorPosX(), iconCoords);
 			if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 				std::filesystem::path path(plugin.pluginResolvedPath / asset.assetDirectoryRelativePath);
 				SetCurrentAssetDirectory(path);
@@ -632,22 +622,22 @@ void AssetBrowserPanel::RenderPlugins() {
 			std::filesystem::path path(plugin.pluginResolvedPath / binary.libraryRelativePath);
 			std::filesystem::directory_entry directoryEntry(path);
 
-			ImTextureID icon = iconIds.fileIcons[0];
+			auto iconCoords = thumbnailManager.GetGenericBinaryIconCoords();
 			switch (binary.buildType) {
 			default:
 			case Plugins::MetaData::BinaryBuildType::NoBuild:
-				icon = iconIds.genericBinaryIcon;
+				iconCoords = thumbnailManager.GetGenericBinaryIconCoords();
 				break;
 			case Plugins::MetaData::BinaryBuildType::Dotnet:
-				icon = iconIds.dotnetIcon;
+				iconCoords = thumbnailManager.GetDotnetIconCoords();
 				break;
 			case Plugins::MetaData::BinaryBuildType::Cmake:
-				icon = iconIds.cmakeIcon;
+				iconCoords = thumbnailManager.GetCmakeIconCoords();
 				break;
 			}
 
 			std::string buttonString = binary.buildTarget + "##AssetButton";
-			RenderAssetElement(false, buttonString.c_str(), ImGui::GetCursorPosX(), icon);
+			RenderAssetElement(false, buttonString.c_str(), ImGui::GetCursorPosX(), iconCoords);
 			ImGui::TextWrapped(binary.buildTarget.c_str());
 		}
 
@@ -665,8 +655,8 @@ void AssetBrowserPanel::RenderFolders() {
 
 		bool isSelected = Editor::Manager::GetInstance().GetSelection().IsFileSelected(path);
 		float cursorX = ImGui::GetCursorPosX();
-		ImTextureID icon = iconIds.folderIcon;
-		RenderAssetElement(isSelected, buttonString.c_str(), cursorX, icon);
+		auto iconCoords = Grindstone::Editor::Manager::GetInstance().GetThumbnailManager().GetFolderIconCoords();
+		RenderAssetElement(isSelected, buttonString.c_str(), cursorX, iconCoords);
 
 		RenderAssetContextMenu(true, path, folderIndex);
 		ProcessFolderClicks(path);
@@ -692,20 +682,24 @@ void AssetBrowserPanel::RenderFiles() {
 }
 
 void AssetBrowserPanel::RenderFile(size_t fileIndex) {
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
+	Editor::ThumbnailManager& thumbnailManager = editorManager.GetThumbnailManager();
+
 	ImGui::TableNextColumn();
 	AssetBrowserItem& item = files[fileIndex];
 
 	std::string filename = item.filename.string();
 	std::string buttonString = filename + "##AssetButton";
 
-	bool isSelected = Editor::Manager::GetInstance().GetSelection().IsFileSelected(item.filepath);
+	bool isSelected = editorManager.GetSelection().IsFileSelected(item.filepath);
 
 	float cursorX = ImGui::GetCursorPosX();
 	float cursorY = ImGui::GetCursorPosY();
 	AssetType assetType = item.defaultAssetType;
-	ImTextureID icon = GetIcon(assetType);
 
-	RenderAssetElement(isSelected, buttonString.c_str(), cursorX, icon);
+	auto iconCoords = thumbnailManager.GetThumbnailCoordsFromCache(assetType, item.defaultUuid);
+
+	RenderAssetElement(isSelected, buttonString.c_str(), cursorX, iconCoords);
 	RenderAssetContextMenu(false, item.filepath, fileIndex);
 	ProcessFileClicks(item);
 
@@ -750,11 +744,17 @@ void AssetBrowserPanel::RenderFile(size_t fileIndex) {
 		if (isExpanded) {
 			for (const AssetBrowserItem::Subasset& subasset : item.subassets) {
 				ImGui::TableNextColumn();
-				ImTextureID icon = GetIcon(subasset.assetType);
+				auto iconCoords = thumbnailManager.GetThumbnailCoordsFromCache(subasset.assetType, subasset.uuid);
 				buttonString = item.filepath.string() + subasset.uuid.ToString();
 				ImGui::PushID(buttonString.c_str());
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
-				ImGui::ImageButton(icon, { THUMBNAIL_SIZE, THUMBNAIL_SIZE }, ImVec2{ 0,0 }, ImVec2{ 1,1 }, (int)THUMBNAIL_PADDING);
+				ImGui::ImageButton(
+					(ImTextureID)(uint64_t)thumbnailManager.GetAtlasTextureDescriptorSet(), // TODO: We may not want to pass DescriptorSets for non-Vulkan builds
+					ImVec2{ THUMBNAIL_SIZE, THUMBNAIL_SIZE },
+					ImVec2{ iconCoords.uv0x, iconCoords.uv0y },
+					ImVec2{ iconCoords.uv1x, iconCoords.uv1y },
+					(int)THUMBNAIL_PADDING
+				);
 				ImGui::PopID();
 
 				if (ImGui::BeginDragDropSource()) {

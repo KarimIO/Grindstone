@@ -277,7 +277,16 @@ ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
 
 	auto descriptor = static_cast<Vulkan::DescriptorSet*>(dset)->GetDescriptorSet();
 
-	return (ImTextureID)(uint64_t)descriptor;
+	return (ImTextureID)(uintptr_t)descriptor;
+}
+
+ImTextureID ImguiRendererVulkan::GetThumbnailAtlas() {
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
+	Grindstone::Editor::ThumbnailManager& thumbnailManager = editorManager.GetThumbnailManager();
+	Grindstone::GraphicsAPI::DescriptorSet* dset = thumbnailManager.GetAtlasTextureDescriptorSet();
+	Grindstone::GraphicsAPI::Vulkan::DescriptorSet* vkDset = static_cast<GraphicsAPI::Vulkan::DescriptorSet*>(dset);
+	
+	return (ImTextureID)(uintptr_t)vkDset->GetDescriptorSet();
 }
 
 void ImguiRendererVulkan::CreateOrResizeWindow(

@@ -429,6 +429,83 @@ void Vulkan::Image::UploadData(const char* data, uint64_t dataSize) {
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 }
 
+void Vulkan::Image::UploadDataRegions(void* buffer, size_t bufferSize, ImageRegion* regions, uint32_t regionCount) {
+	VkDevice device = Vulkan::Core::Get().GetDevice();
+
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	CreateBuffer(
+		imageName.c_str(),
+		bufferSize,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		stagingBuffer,
+		stagingBufferMemory
+	);
+
+	void* mappedData;
+	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &mappedData);
+	memcpy(mappedData, buffer, static_cast<size_t>(bufferSize));
+	vkUnmapMemory(device, stagingBufferMemory);
+
+	TransitionImageLayout(
+		image,
+		vkFormat,
+		aspect,
+		VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		mipLevels,
+		arrayLayers
+	);
+
+	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+	uint64_t offset = 0;
+
+	std::vector<VkBufferImageCopy> vkRegions;
+	vkRegions.reserve(static_cast<size_t>(regionCount));
+
+	for (uint32_t regionIndex = 0; regionIndex < regionCount; ++regionIndex) {
+		Image::ImageRegion& srcRegion = regions[regionIndex];
+		VkBufferImageCopy& vkRegion = vkRegions.emplace_back(
+			VkBufferImageCopy{
+				.bufferOffset = srcRegion.bufferOffset,
+				.bufferRowLength = srcRegion.bufferRowLength,
+				.bufferImageHeight = srcRegion.bufferImageHeight,
+				.imageSubresource = {
+					.aspectMask = aspect,
+					.mipLevel = srcRegion.mipLevel,
+					.baseArrayLayer = srcRegion.baseArrayLayer,
+					.layerCount = srcRegion.arrayLayerCount,
+				},
+				.imageOffset = {
+					.x = srcRegion.x,
+					.y = srcRegion.y,
+					.z = srcRegion.z
+				},
+				.imageExtent = {
+					.width = srcRegion.width,
+					.height = srcRegion.height,
+					.depth = srcRegion.depth
+				},
+			}
+		);
+	}
+
+	vkCmdCopyBufferToImage(
+		commandBuffer,
+		stagingBuffer,
+		image,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		regionCount,
+		vkRegions.data()
+	);
+
+	EndSingleTimeCommands(commandBuffer);
+
+	vkDestroyBuffer(device, stagingBuffer, nullptr);
+	vkFreeMemory(device, stagingBufferMemory, nullptr);
+}
+
 VkImage Vulkan::Image::GetImage() const {
 	return image;
 }

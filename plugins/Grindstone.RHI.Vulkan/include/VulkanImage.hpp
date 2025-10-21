@@ -26,6 +26,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 			const char* data,
 			uint64_t dataSize
 		) override;
+		virtual void UploadDataRegions(void* buffer, size_t bufferSize, ImageRegion* regions, uint32_t regionCount) override;
 	private:
 		void CreateImage();
 

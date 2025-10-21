@@ -34,12 +34,14 @@ namespace Grindstone::Containers {
 			contents = other.contents;
 		}
 
-		Span& operator=(Span&& other) {
+		Span& operator=(Span&& other) noexcept {
 			size = other.size;
 			contents = other.contents;
 
 			other.size = 0;
 			other.contents = nullptr;
+
+			return *this;
 		}
 
 		~Span() {

@@ -63,7 +63,32 @@ namespace Grindstone::GraphicsAPI {
 			uint64_t initialDataSize = 0;
 		};
 
+		// ImageRegions are used to map regions to a buffer thatis passed in, and mapping specific parts of memory to
+		// coordinates, dimensions, array layers, and mip levels of the image. It is used with UploadDataRegions.
+		struct ImageRegion {
+			uint64_t bufferOffset = 0;
+			uint32_t bufferRowLength = 0;
+			uint32_t bufferImageHeight = 0;
+			int32_t x = 0;
+			int32_t y = 0;
+			int32_t z = 0;
+			uint32_t width = 1;
+			uint32_t height = 1;
+			uint32_t depth = 1;
+			uint32_t mipLevel = 0;
+			uint32_t baseArrayLayer = 0;
+			uint32_t arrayLayerCount = 1;
+		};
+
+		// Discards the previous image and creates a new image of a certain size, useful for RenderTargets.
 		virtual void Resize(uint32_t width, uint32_t height) = 0;
+
+		// Upload data to the entire image based on the data from the CreateInfo.
 		virtual void UploadData(const char* data, uint64_t dataSize) = 0;
+
+		// Upload data to specific regions for more control, used especially for creating Texture Atlases or other
+		// more specific graphical techniques. A buffer is passed in, and regions map specific parts of memory to
+		// coordinates, dimensions, array layers, and mip levels of the image.
+		virtual void UploadDataRegions(void* buffer, size_t bufferSize, ImageRegion* regions, uint32_t regionCount) = 0;
 	};
 }

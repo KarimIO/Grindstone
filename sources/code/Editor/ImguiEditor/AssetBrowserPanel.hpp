@@ -75,21 +75,11 @@ namespace Grindstone::Editor::ImguiEditor {
 		void RenderFile(size_t fileIndex);
 		void FilterSearch();
 		void AfterCreate(const std::filesystem::path& path);
-		ImTextureID GetIcon(const AssetType assetType) const;
 	private:
 		AssetBrowserInspectType assetBrowserInspectType;
 		std::filesystem::directory_entry currentDirectory;
 		// TODO: Handle when the current mounting point
 		const Grindstone::Editor::FileManager::MountPoint* currentMountingPoint = nullptr;
-
-		struct IconsIds {
-			ImTextureID folderIcon;
-			ImTextureID genericBinaryIcon;
-			ImTextureID pluginIcon;
-			ImTextureID dotnetIcon;
-			ImTextureID cmakeIcon;
-			ImTextureID fileIcons[static_cast<uint16_t>(AssetType::Count)];
-		} iconIds;
 
 		bool isShowingPanel = true;
 		EngineCore* engineCore = nullptr;

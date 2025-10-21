@@ -20,6 +20,7 @@ file(GLOB_RECURSE SOURCE_MAIN
 	TaskSystem.cpp TaskSystem.hpp
 	FileAssetLoader.cpp FileAssetLoader.hpp
 	AssetTemplateRegistry.cpp AssetTemplateRegistry.hpp
+	ThumbnailManager.cpp ThumbnailManager.hpp
 	${CORE_UTILS}
 )
 
