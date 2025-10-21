@@ -74,6 +74,10 @@ AssetTemplateRegistry& Manager::GetAssetTemplateRegistry() {
 	return assetTemplateRegistry;
 }
 
+Grindstone::Editor::ThumbnailManager& Manager::GetThumbnailManager() {
+	return thumbnailManager;
+}
+
 FileManager& Manager::GetFileManager() {
 	return GetInstance().fileManager;
 }
@@ -115,6 +119,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	importerManager.Initialize();
 
 	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAssetImportEarly");
+	thumbnailManager.Initialize();
 	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAssetImportLate");
 
 	while (taskSystem.HasRunningTasks()) {

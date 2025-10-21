@@ -54,6 +54,10 @@ namespace Grindstone {
 			return { targetPtr, segmentSize };
 		}
 
+		[[nodiscard]] virtual Grindstone::Containers::BufferSpan GetSpan() {
+			return { bufferPtr, capacity };
+		}
+
 		template<typename T>
 		[[nodiscard]] Grindstone::Containers::Span<T> GetSpan(uint64_t offset, uint64_t count) {
 			Byte* bytePtr = bufferPtr + offset;

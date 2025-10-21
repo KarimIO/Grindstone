@@ -16,6 +16,7 @@
 #include "GitManager.hpp"
 #include "Selection.hpp"
 #include "TaskSystem.hpp"
+#include "ThumbnailManager.hpp"
 
 namespace Grindstone {
 	class WorldContextSet;
@@ -57,6 +58,7 @@ namespace Grindstone::Editor {
 		virtual Selection& GetSelection();
 		virtual TaskSystem& GetTaskSystem();
 		virtual AssetTemplateRegistry& GetAssetTemplateRegistry();
+		virtual Grindstone::Editor::ThumbnailManager& GetThumbnailManager();
 		ScriptBuilder::CSharpBuildManager& GetCSharpBuildManager();
 		static FileManager& GetFileManager();
 		static EngineCore& GetEngineCore();
@@ -106,5 +108,6 @@ namespace Grindstone::Editor {
 		Grindstone::Importers::ImporterManager importerManager;
 		Grindstone::WorldContextSet* runtimeWorldContext = nullptr;
 		Grindstone::WorldContextSet* editorWorldContext = nullptr;
+		Grindstone::Editor::ThumbnailManager thumbnailManager;
 	};
 }

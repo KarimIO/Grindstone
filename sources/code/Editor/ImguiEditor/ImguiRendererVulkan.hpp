@@ -24,6 +24,7 @@ namespace Grindstone::Editor::ImguiEditor {
 		virtual void PostRender() override;
 		virtual void Resize() override;
 		virtual ImTextureID CreateTexture(std::filesystem::path path) override;
+		virtual ImTextureID GetThumbnailAtlas() override;
 	private:
 		void WaitForResizeAndRecreateSwapchain();
 		void SetupVulkanWindow(

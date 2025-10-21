@@ -343,6 +343,10 @@ const ImGui::MarkdownConfig& Grindstone::Editor::ImguiEditor::ImguiEditor::GetMa
 	return markdownConfig;
 }
 
+ImguiRenderer& Grindstone::Editor::ImguiEditor::ImguiEditor::GetImguiRenderer() {
+	return *imguiRenderer;
+}
+
 ImFont* Grindstone::Editor::ImguiEditor::ImguiEditor::GetFont(FontType type) const {
 	size_t index = static_cast<size_t>(type);
 	return fonts[index];

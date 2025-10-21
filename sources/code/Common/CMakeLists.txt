@@ -125,7 +125,7 @@ set_property(TARGET Common PROPERTY COMPILE_WARNING_AS_ERROR ON)
 target_compile_features(Common PRIVATE cxx_std_20)
 target_link_libraries(Common glfw)
 
-target_include_directories(Common PUBLIC ${CODE_DIR} ${PLUGIN_DIR})
+target_include_directories(Common PUBLIC ${COMMON_DIR} ${CODE_DIR} ${PLUGIN_DIR})
 
 message(STATUS
 "Common provides CMake targets:

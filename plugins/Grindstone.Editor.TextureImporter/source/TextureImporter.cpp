@@ -338,15 +338,15 @@ void TextureImporter::OutputDds(uint8_t* outData, uint64_t contentSize) {
 	default:
 	case OutputFormat::BC1:
 		outHeader.dwPitchOrLinearSize = texWidth * texHeight / 2;
-		outHeader.ddspf.dwFourCC = FOURCC_DXT1;
+		outHeader.ddspf.dwFourCC = FOURCC_BC1_UNORM;
 		break;
 	case OutputFormat::BC3:
 		outHeader.dwPitchOrLinearSize = texWidth * texHeight;
-		outHeader.ddspf.dwFourCC = FOURCC_DXT5;
+		outHeader.ddspf.dwFourCC = FOURCC_BC3_UNORM;
 		break;
 	case OutputFormat::BC4:
 		outHeader.dwPitchOrLinearSize = texWidth * texHeight / 2;
-		outHeader.ddspf.dwFourCC = FOURCC_BC4;
+		outHeader.ddspf.dwFourCC = FOURCC_BC4_UNORM;
 		break;
 	case OutputFormat::BC6H:
 		outHeader.dwPitchOrLinearSize = texWidth * texHeight;
