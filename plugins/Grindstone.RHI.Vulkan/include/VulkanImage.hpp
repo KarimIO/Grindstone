@@ -27,19 +27,13 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 			uint64_t dataSize
 		) override;
 		virtual void UploadDataRegions(void* buffer, size_t bufferSize, ImageRegion* regions, uint32_t regionCount) override;
+		virtual void* MapMemory(uint64_t dataSize = MAPPED_MEMORY_ENTIRE_BUFFER, uint64_t dataOffset = 0) override;
+		virtual void UnmapMemory() override;
+		virtual Grindstone::Buffer ReadbackMemory() override;
 	private:
 		void CreateImage();
 
 		std::string imageName;
-		uint32_t width;
-		uint32_t height;
-		uint32_t depth;
-		uint32_t mipLevels;
-		uint32_t arrayLayers;
-		GraphicsAPI::ImageDimension imageDimension;
-		uint64_t maxImageSize;
-		GraphicsAPI::Format format;
-		Grindstone::Containers::BitsetFlags<GraphicsAPI::ImageUsageFlags> imageUsage;
 		VkImageAspectFlags aspect;
 		VkImageViewType imageViewType;
 		VkDeviceMemory imageMemory = nullptr;

@@ -1,0 +1,52 @@
+pipelineSet "Editor Texture Thumbnail Generator" {
+	configuration "main" {
+		pass "main" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+			renderQueue: "ThumbnailGenerator"
+
+			properties {
+				cull: none
+				depthWrite: true
+				depthTest: true
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: {
+					colorMask: rgba
+					blendPreset: opaque
+				}
+			}
+
+			shaderHlsl {
+				SamplerState convertSampler : register(s0, space0);
+				Texture2D<float4> convertTexture : register(t1, space0);
+
+				const static float3 vertPos[] = {
+					float3( 1,  1, 0),
+					float3(-1, -1, 0),
+					float3(-1,  1, 0),
+					float3(-1, -1, 0),
+					float3( 1,  1, 0),
+					float3( 1, -1, 0)
+				};
+
+				struct VertexToFragment {
+					float4 position : SV_Position;
+					[[vk::location(0)]] float2 uv : TEXCOORD0;
+				};
+
+				VertexToFragment mainVertex(uint vertexId : SV_VertexID) {
+					VertexToFragment output = (VertexToFragment)0;
+					output.position = float4(vertPos[vertexId], 1.0f);
+					output.uv = vertPos[vertexId] * 0.5f + float2(0.5f, 0.5f);
+					return output;
+				}
+
+				float4 mainFragment(VertexToFragment inStruct) : SV_TARGET0 {
+					float2 uv = inStruct.uv;
+					return convertTexture.Sample(convertSampler, uv);
+				}
+			}
+		}
+	}
+}

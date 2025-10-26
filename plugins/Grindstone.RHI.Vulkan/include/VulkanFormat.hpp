@@ -12,6 +12,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 	VkSamplerAddressMode TranslateWrapToVulkan(TextureWrapMode);
 	VkFormat TranslateFormatToVulkan(Format format);
 	Format TranslateFormatFromVulkan(VkFormat format);
+	VkMemoryPropertyFlags TranslateMemoryUsageToVulkan(MemoryUsage memUsage);
 	VkCullModeFlags TranslateCullModeToVulkan(CullMode cullMode);
 	VkColorComponentFlags TranslateColorMaskToVulkan(ColorMask colorMask);
 	VkPolygonMode TranslatePolygonModeToVulkan(PolygonFillMode mode);

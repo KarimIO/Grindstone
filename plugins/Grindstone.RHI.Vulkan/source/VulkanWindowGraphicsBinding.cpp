@@ -314,7 +314,37 @@ void Vulkan::WindowGraphicsBinding::RecreateSwapchain() {
 	grindstoneGlfwWindow->OnSwapchainResized(width, height);
 }
 
-void Vulkan::WindowGraphicsBinding::SubmitCommandBuffer(GraphicsAPI::CommandBuffer* buffer) {
+void Vulkan::WindowGraphicsBinding::SubmitCommandBufferNoSynchronization(GraphicsAPI::CommandBuffer* buffer) {
+	Vulkan::Core& vkCore = Vulkan::Core::Get();
+	VkDevice device = vkCore.GetDevice();
+	VkQueue graphicsQueue = vkCore.graphicsQueue;
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	VkCommandBuffer vkCommandBuffer = static_cast<Vulkan::CommandBuffer*>(buffer)->GetCommandBuffer();
+
+	VkFence fence;
+	VkFenceCreateInfo fenceInfo = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+	vkCreateFence(device, &fenceInfo, nullptr, &fence);
+
+	submitInfo.waitSemaphoreCount = 0u;
+	submitInfo.pWaitSemaphores = nullptr;
+	submitInfo.pWaitDstStageMask = nullptr;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &vkCommandBuffer;
+	submitInfo.signalSemaphoreCount = 0u;
+	submitInfo.pSignalSemaphores = nullptr;
+
+	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, fence) != VK_SUCCESS) {
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to submit draw command buffer!");
+	}
+
+	vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX);
+	vkDestroyFence(device, fence, nullptr);
+}
+
+void Vulkan::WindowGraphicsBinding::SubmitCommandBufferForCurrentFrame(GraphicsAPI::CommandBuffer* buffer) {
 	Vulkan::Core& vkCore = Vulkan::Core::Get();
 	VkDevice device = vkCore.GetDevice();
 	VkQueue graphicsQueue = vkCore.graphicsQueue;

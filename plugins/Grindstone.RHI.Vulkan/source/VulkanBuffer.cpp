@@ -5,12 +5,14 @@
 #include <Grindstone.RHI.Vulkan/include/VulkanCore.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanUtils.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanBuffer.hpp>
+#include <Grindstone.RHI.Vulkan/include/VulkanFormat.hpp>
 
 namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
 Vulkan::Buffer::Buffer(const CreateInfo& createInfo) : GraphicsAPI::Buffer(createInfo) {
-	VkBufferUsageFlags usage = 0;
+	memoryUsage = createInfo.memoryUsage;
 
+	VkBufferUsageFlags usage = 0;
 	if (createInfo.bufferUsage.Test(BufferUsage::Vertex)) {
 		usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 	}
@@ -33,13 +35,7 @@ Vulkan::Buffer::Buffer(const CreateInfo& createInfo) : GraphicsAPI::Buffer(creat
 		usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 	}
 
-	VkMemoryPropertyFlags properties = 0;
-	switch (memoryUsage) {
-	case MemUsage::GPUOnly:		properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT; break;
-	case MemUsage::CPUOnly:		properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT; break;
-	case MemUsage::CPUToGPU:	properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT; break;
-	case MemUsage::GPUToCPU:	properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT; break;
-	}
+	VkMemoryPropertyFlags properties = TranslateMemoryUsageToVulkan(createInfo.memoryUsage);
 
 	VkDevice device = Vulkan::Core::Get().GetDevice();
 	CreateBuffer(createInfo.debugName, bufferSize, usage, properties, bufferObject, deviceMemory);

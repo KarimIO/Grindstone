@@ -4,12 +4,18 @@
 	"version": "0.3.0",
 	"description": "Allows the editor to import assets and convert them to a Grindstone-supported format.",
 	"author": "Grindstone Foundation",
-	"assets": [],
+	"assetDirectories": [
+		{
+			"path": "assets",
+			"mountPoint": "GRINDSTONE.EDITOR.TEXTUREIMPORTER",
+			"loadStage": "EditorAssetImportEarly"
+		}
+	],
 	"dependencies": [],
 	"binaries": [
 		{
 			"path": "lib/{Configuration}/PluginEditorTextureImporter",
-			"loadStage": "EditorEarly",
+			"loadStage": "EditorAssetImportLate",
 			"cmakeTarget": "PluginEditorTextureImporter"
 		}
 	],

@@ -4,6 +4,7 @@
 #include <Editor/PluginSystem/EditorPluginInterface.hpp>
 
 #include <Grindstone.Editor.TextureImporter/include/TextureImporter.hpp>
+#include <Grindstone.Editor.TextureImporter/include/ThumbnailGenerator.hpp>
 
 using namespace Grindstone;
 using namespace Grindstone::Memory;
@@ -16,6 +17,7 @@ extern "C" {
 		Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
 		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
+		Grindstone::EngineCore::SetInstance(*pluginInterface->GetEngineCore());
 
 		Plugins::EditorPluginInterface* editorPluginInterface =
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
@@ -31,6 +33,9 @@ extern "C" {
 			editorPluginInterface->MapExtensionToImporterType("psd", textureImporterName);
 			editorPluginInterface->MapExtensionToImporterType("jpg", textureImporterName);
 			editorPluginInterface->MapExtensionToImporterType("jpeg", textureImporterName);
+			if (InitializeTextureThumbnailGenerator()) {
+				editorPluginInterface->RegisterThumbnailGenerator(Grindstone::AssetType::Texture, Grindstone::Editor::Importers::GenerateTextureThumbnail);
+			}
 		}
 	}
 
@@ -39,6 +44,8 @@ extern "C" {
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
 		if (editorPluginInterface != nullptr) {
+			editorPluginInterface->DeregisterThumbnailGenerator(Grindstone::AssetType::Texture, Grindstone::Editor::Importers::GenerateTextureThumbnail);
+			Grindstone::Editor::Importers::ReleaseTextureThumbnailGenerator();
 			editorPluginInterface->UnmapExtensionToImporterType("png");
 			editorPluginInterface->UnmapExtensionToImporterType("tga");
 			editorPluginInterface->UnmapExtensionToImporterType("bmp");

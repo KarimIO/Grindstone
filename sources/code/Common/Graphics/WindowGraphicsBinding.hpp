@@ -20,7 +20,8 @@ namespace Grindstone::GraphicsAPI {
 		virtual void ImmediateSetContext() = 0;
 		virtual void ImmediateSwapBuffers() = 0;
 		virtual bool AcquireNextImage() = 0;
-		virtual void SubmitCommandBuffer(CommandBuffer* buffers) = 0;
+		virtual void SubmitCommandBufferNoSynchronization(GraphicsAPI::CommandBuffer* buffer) = 0;
+		virtual void SubmitCommandBufferForCurrentFrame(GraphicsAPI::CommandBuffer* buffer) = 0;
 		virtual bool PresentSwapchain() = 0;
 		virtual RenderPass* GetRenderPass() = 0;
 		virtual Framebuffer* GetCurrentFramebuffer() = 0;

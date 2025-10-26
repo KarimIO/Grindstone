@@ -1,6 +1,6 @@
-# Editor Material Importer
+# Editor Texture Importer
 
-This plugin is developed by the Grindstone Foundation. It's designed to allow material files to be imported ingame, and adds a material editor as well.
+This plugin is developed by the Grindstone Foundation. It's designed to allow texture files to be imported ingame, and adds a texture editor as well.
 
 ## Registered Items
 

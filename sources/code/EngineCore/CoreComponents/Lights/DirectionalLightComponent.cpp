@@ -58,7 +58,7 @@ void Grindstone::SetupDirectionalLightComponent(Grindstone::WorldContextSet& cxt
 		lightUniformBufferObjectCi.debugName = "LightUbo";
 		lightUniformBufferObjectCi.content = &lightStruct;
 		lightUniformBufferObjectCi.bufferUsage = GraphicsAPI::BufferUsage::Uniform;
-		lightUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
+		lightUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU;
 		lightUniformBufferObjectCi.bufferSize = sizeof(DirectionalLightComponent::UniformStruct);
 		directionalLightComponent.uniformBufferObject = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
 
@@ -96,7 +96,7 @@ void Grindstone::SetupDirectionalLightComponent(Grindstone::WorldContextSet& cxt
 		GraphicsAPI::Buffer::CreateInfo lightUniformBufferObjectCi{};
 		lightUniformBufferObjectCi.debugName = "Directional Light Shadow Map";
 		lightUniformBufferObjectCi.bufferUsage = GraphicsAPI::BufferUsage::Uniform;
-		lightUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
+		lightUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU;
 		lightUniformBufferObjectCi.bufferSize = sizeof(glm::mat4);
 		directionalLightComponent.shadowMapUniformBufferObject = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
 

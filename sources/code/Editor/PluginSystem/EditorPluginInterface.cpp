@@ -55,3 +55,15 @@ void EditorPluginInterface::DeregisterAssetTemplate(AssetType assetType) {
 	Grindstone::Editor::AssetTemplateRegistry& assetTemplateRegistry = manager.GetAssetTemplateRegistry();
 	assetTemplateRegistry.RemoveTemplate(assetType);
 }
+
+void EditorPluginInterface::RegisterThumbnailGenerator(AssetType assetType, bool(*fn)(Grindstone::Uuid)) {
+	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
+	Grindstone::Editor::ThumbnailManager& thumbnailManager = manager.GetThumbnailManager();
+	thumbnailManager.RegisterGenerator(assetType, fn);
+}
+
+void EditorPluginInterface::DeregisterThumbnailGenerator(AssetType assetType, bool(*fn)(Grindstone::Uuid)) {
+	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
+	Grindstone::Editor::ThumbnailManager& thumbnailManager = manager.GetThumbnailManager();
+	thumbnailManager.DeregisterGenerator(assetType, fn);
+}

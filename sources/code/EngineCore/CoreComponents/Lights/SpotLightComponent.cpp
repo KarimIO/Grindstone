@@ -61,7 +61,7 @@ void Grindstone::SetupSpotLightComponent(Grindstone::WorldContextSet& cxtSet, en
 		lightUniformBufferObjectCi.content = &lightStruct;
 		lightUniformBufferObjectCi.debugName = "LightUbo";
 		lightUniformBufferObjectCi.bufferUsage = GraphicsAPI::BufferUsage::Uniform;
-		lightUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
+		lightUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU;
 		lightUniformBufferObjectCi.bufferSize = sizeof(SpotLightComponent::UniformStruct);
 		spotLightComponent.uniformBufferObject = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
 
@@ -99,7 +99,7 @@ void Grindstone::SetupSpotLightComponent(Grindstone::WorldContextSet& cxtSet, en
 		GraphicsAPI::Buffer::CreateInfo lightUniformBufferObjectCi{};
 		lightUniformBufferObjectCi.debugName = "Spot Shadow Map";
 		lightUniformBufferObjectCi.bufferUsage = GraphicsAPI::BufferUsage::Uniform;
-		lightUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
+		lightUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU;
 		lightUniformBufferObjectCi.bufferSize = sizeof(glm::mat4);
 		spotLightComponent.shadowMapUniformBufferObject = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
 

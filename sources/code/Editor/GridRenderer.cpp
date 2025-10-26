@@ -47,7 +47,7 @@ void GridRenderer::Initialize() {
 		GraphicsAPI::BufferUsage::TransferDst |
 		GraphicsAPI::BufferUsage::TransferSrc |
 		GraphicsAPI::BufferUsage::Uniform;
-	ubCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
+	ubCi.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU;
 	ubCi.bufferSize = static_cast<size_t>(sizeof(GridUniformBuffer));
 
 	for (uint32_t i = 0; i < maxFramesInFlight; ++i) {

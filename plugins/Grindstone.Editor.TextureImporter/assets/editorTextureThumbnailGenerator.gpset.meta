@@ -1,0 +1,15 @@
+{
+    "assetImporterVersion": 1,
+    "metaFileVersion": 1,
+    "defaultUuid": "2ceb09ba-4ac3-4599-b46e-857a54a738fe",
+    "subassets": [
+        {
+            "displayName": "Editor Texture Thumbnail Generator",
+            "address": "@GRINDSTONE.EDITOR.TEXTUREIMPORTER/editorTextureThumbnailGeneratorShader",
+            "subassetIdentifier": "Editor Texture Thumbnail Generator",
+            "uuid": "2ceb09ba-4ac3-4599-b46e-857a54a738fe",
+            "type": "GraphicsPipelineSet"
+        }
+    ],
+    "importerSettings": {}
+}

@@ -11,16 +11,10 @@
 namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
 Vulkan::Image::Image(VkImage image, VkFormat format, uint32_t swapchainIndex) :
+	GraphicsAPI::Image(1, 1, 1, 1, 1, 1, ImageDimension::Dimension2D, Format::Invalid, ImageUsageFlags::Sampled, MemoryUsage::GPUOnly),
 	imageName(std::string("Image View ") + std::to_string(swapchainIndex)),
-	width(1),
-	height(1),
-	depth(1),
-	mipLevels(1),
-	arrayLayers(1),
-	imageDimension(ImageDimension::Dimension2D),
 	imageViewType(VkImageViewType::VK_IMAGE_VIEW_TYPE_2D),
-	aspect(VK_IMAGE_ASPECT_COLOR_BIT)
-{
+	aspect(VK_IMAGE_ASPECT_COLOR_BIT) {
 	UpdateNativeImage(image, imageView, format);
 	imageView = CreateImageView(image, imageViewType, vkFormat, aspect, mipLevels, arrayLayers);
 
@@ -30,15 +24,18 @@ Vulkan::Image::Image(VkImage image, VkFormat format, uint32_t swapchainIndex) :
 
 Vulkan::Image::Image(const CreateInfo& createInfo) :
 	imageName(createInfo.debugName),
-	width(createInfo.width),
-	height(createInfo.height),
-	depth(createInfo.depth),
-	imageDimension(createInfo.imageDimensions),
-	mipLevels(createInfo.mipLevels),
-	arrayLayers(createInfo.arrayLayers),
-	format(createInfo.format),
-	imageUsage(createInfo.imageUsage)
-{
+	GraphicsAPI::Image(
+		createInfo.width,
+		createInfo.height,
+		createInfo.depth,
+		createInfo.mipLevels,
+		createInfo.arrayLayers,
+		1u, // maxImageSize
+		createInfo.imageDimensions,
+		createInfo.format,
+		createInfo.imageUsage,
+		createInfo.memoryUsage
+	) {
 	Create();
 
 	bool hasInitialData = createInfo.initialData != nullptr && createInfo.initialDataSize > 0;
@@ -310,6 +307,12 @@ void Vulkan::Image::CreateImage() {
 		usageFlags |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 	}
 
+	VkMemoryPropertyFlags vkMemoryProperties = TranslateMemoryUsageToVulkan(memoryUsage);
+
+	VkImageTiling tiling = (memoryUsage == GraphicsAPI::MemoryUsage::GPUOnly)
+		? VK_IMAGE_TILING_OPTIMAL
+		: VK_IMAGE_TILING_LINEAR;
+
 	maxImageSize = Vulkan::CreateImage(
 		width,
 		height,
@@ -317,9 +320,9 @@ void Vulkan::Image::CreateImage() {
 		mipLevels,
 		arrayLayers,
 		vkFormat,
-		VK_IMAGE_TILING_OPTIMAL,
+		tiling,
 		usageFlags,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		vkMemoryProperties,
 		image,
 		imageMemory,
 		createFlags
@@ -504,6 +507,81 @@ void Vulkan::Image::UploadDataRegions(void* buffer, size_t bufferSize, ImageRegi
 
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
+}
+
+void* Vulkan::Image::MapMemory(uint64_t dataSize, uint64_t dataOffset) {
+	void* mappedData;
+
+	if (dataSize == Image::MAPPED_MEMORY_ENTIRE_BUFFER) {
+		dataSize = VK_WHOLE_SIZE;
+	}
+
+	VkDevice device = Vulkan::Core::Get().GetDevice();
+	VkResult result = vkMapMemory(device, imageMemory, dataOffset, dataSize, 0, &mappedData);
+	return result == VkResult::VK_SUCCESS
+		? mappedData
+		: nullptr;
+}
+
+void Vulkan::Image::UnmapMemory() {
+	VkDevice device = Vulkan::Core::Get().GetDevice();
+	vkFreeMemory(device, imageMemory, nullptr);
+}
+
+Grindstone::Buffer Vulkan::Image::ReadbackMemory() {
+	VkDevice device = Vulkan::Core::Get().GetDevice();
+
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	CreateBuffer(
+		imageName.c_str(),
+		maxImageSize,
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		stagingBuffer,
+		stagingBufferMemory
+	);
+
+	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+
+	TransitionImageLayout(
+		image,
+		vkFormat,
+		aspect,
+		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		mipLevels,
+		arrayLayers
+	);
+
+	uint32_t regionCount = 1u;
+	VkBufferImageCopy region{
+		.bufferOffset = 0u,
+		.bufferRowLength = 0u,
+		.bufferImageHeight = 0u,
+		.imageSubresource = {
+			.aspectMask = aspect,
+			.mipLevel = 0u,
+			.baseArrayLayer = 0u,
+			.layerCount = 1u
+		},
+		.imageOffset = {0, 0, 0},
+		.imageExtent = {width, height, depth}
+	};
+
+	vkCmdCopyImageToBuffer(commandBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer, regionCount, &region);
+
+	EndSingleTimeCommands(commandBuffer);
+
+	Grindstone::Buffer buffer(maxImageSize);
+	void* mappedData;
+	vkMapMemory(device, stagingBufferMemory, 0, maxImageSize, 0, &mappedData);
+	memcpy(buffer.Get(), mappedData, static_cast<size_t>(maxImageSize));
+	vkUnmapMemory(device, stagingBufferMemory);
+
+	vkDestroyBuffer(device, stagingBuffer, nullptr);
+	vkFreeMemory(device, stagingBufferMemory, nullptr);
+	return buffer;
 }
 
 VkImage Vulkan::Image::GetImage() const {
