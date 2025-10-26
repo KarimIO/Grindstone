@@ -13,6 +13,7 @@ extern "C" {
 	EDITOR_AUDIO_IMPORTER_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
 		Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
 		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
+		Grindstone::EngineCore::SetInstance(*pluginInterface->GetEngineCore());
 
 		Plugins::EditorPluginInterface* editorPluginInterface =
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());

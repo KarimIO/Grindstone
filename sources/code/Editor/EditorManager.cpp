@@ -169,6 +169,7 @@ void Manager::Run() {
 		switch (playMode) {
 		case PlayMode::Editor:
 			engineCore->RunEditorLoopIteration();
+			thumbnailManager.CreateRequestedThumbnails();
 			break;
 		case PlayMode::Play:
 			engineCore->RunLoopIteration();

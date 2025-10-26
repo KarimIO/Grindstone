@@ -38,6 +38,14 @@ namespace Grindstone::GraphicsAPI {
 		Present,				// Presented to screen
 	};
 
+	enum class MemoryUsage {
+		GPUOnly,				// Device-local VRAM, inaccessible to CPU.
+		CPUToGPU,				// Host-visible upload buffer (CPU writes, GPU reads)
+		GPUToCPU,				// Host-visible readback buffer (GPU writes, CPU reads)
+		CPUOnly,				// Host-visible, used as staging/upload/readback
+		Transient,				// Transient GPU memory (tile memory / renderpass-only)
+	};
+
 	enum class ImageDimension {
 		Invalid,
 		Dimension1D,

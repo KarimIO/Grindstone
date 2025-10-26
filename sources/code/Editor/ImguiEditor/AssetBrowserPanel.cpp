@@ -697,7 +697,7 @@ void AssetBrowserPanel::RenderFile(size_t fileIndex) {
 	float cursorY = ImGui::GetCursorPosY();
 	AssetType assetType = item.defaultAssetType;
 
-	auto iconCoords = thumbnailManager.GetThumbnailCoordsFromCache(assetType, item.defaultUuid);
+	auto iconCoords = thumbnailManager.RequestThumbnail(assetType, item.defaultUuid);
 
 	RenderAssetElement(isSelected, buttonString.c_str(), cursorX, iconCoords);
 	RenderAssetContextMenu(false, item.filepath, fileIndex);
@@ -744,7 +744,7 @@ void AssetBrowserPanel::RenderFile(size_t fileIndex) {
 		if (isExpanded) {
 			for (const AssetBrowserItem::Subasset& subasset : item.subassets) {
 				ImGui::TableNextColumn();
-				auto iconCoords = thumbnailManager.GetThumbnailCoordsFromCache(subasset.assetType, subasset.uuid);
+				auto iconCoords = thumbnailManager.RequestThumbnail(subasset.assetType, subasset.uuid);
 				buttonString = item.filepath.string() + subasset.uuid.ToString();
 				ImGui::PushID(buttonString.c_str());
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);

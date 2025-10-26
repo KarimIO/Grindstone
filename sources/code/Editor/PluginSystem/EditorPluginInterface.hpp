@@ -16,14 +16,17 @@ namespace Grindstone::Plugins {
 	public:
 		virtual ImGuiContext* GetImguiContext() const;
 		virtual Grindstone::Editor::Manager* GetEditorInstance() const;
+
 		virtual void MapExtensionToImporterType(const char* extension, Grindstone::HashedString importerType);
-		virtual void RegisterAssetImporter(
-			Grindstone::HashedString importerType,
-			Grindstone::Editor::ImporterData importerVersion
-		);
-		virtual void RegisterAssetTemplate(AssetType assetType, const char* name, const char* extension, const void* const sourcePtr, size_t sourceSize);
 		virtual void UnmapExtensionToImporterType(const char* extension);
+
+		virtual void RegisterAssetImporter(Grindstone::HashedString importerType, Grindstone::Editor::ImporterData importerVersion);
 		virtual void DeregisterAssetImporter(Grindstone::HashedString importerType);
+
+		virtual void RegisterAssetTemplate(AssetType assetType, const char* name, const char* extension, const void* const sourcePtr, size_t sourceSize);
 		virtual void DeregisterAssetTemplate(AssetType assetType);
+
+		virtual void RegisterThumbnailGenerator(AssetType assetType, bool (*fn)(Grindstone::Uuid));
+		virtual void DeregisterThumbnailGenerator(AssetType assetType, bool (*fn)(Grindstone::Uuid));
 	};
 }

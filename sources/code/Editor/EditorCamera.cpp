@@ -143,7 +143,7 @@ EditorCamera::EditorCamera() {
 			GraphicsAPI::BufferUsage::TransferDst |
 			GraphicsAPI::BufferUsage::TransferSrc |
 			GraphicsAPI::BufferUsage::Uniform;
-		mousePickBufferMatrixCreateInfo.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
+		mousePickBufferMatrixCreateInfo.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU;
 		mousePickBufferMatrixCreateInfo.content = nullptr;
 
 		MousePickResponseBuffer mousePickResponseInitialBuffer{};
@@ -152,7 +152,7 @@ EditorCamera::EditorCamera() {
 
 		Grindstone::GraphicsAPI::Buffer::CreateInfo mousePickBufferResponseCreateInfo{};
 		mousePickBufferResponseCreateInfo.bufferSize = sizeof(MousePickResponseBuffer);
-		mousePickBufferResponseCreateInfo.memoryUsage = Grindstone::GraphicsAPI::MemUsage::CPUOnly;
+		mousePickBufferResponseCreateInfo.memoryUsage = Grindstone::GraphicsAPI::MemoryUsage::CPUOnly;
 		mousePickBufferResponseCreateInfo.bufferUsage = Grindstone::GraphicsAPI::BufferUsage::Storage | GraphicsAPI::BufferUsage::TransferSrc | Grindstone::GraphicsAPI::BufferUsage::TransferDst;
 		mousePickBufferResponseCreateInfo.content = &mousePickResponseInitialBuffer;
 

@@ -43,13 +43,6 @@ inline Grindstone::GraphicsAPI::BufferUsage operator&(Grindstone::GraphicsAPI::B
 }
 
 namespace Grindstone::GraphicsAPI {
-	enum class MemUsage : uint8_t {
-		GPUOnly,
-		CPUOnly,
-		CPUToGPU,
-		GPUToCPU
-	};
-
 	/*! A Buffer is a buffer of memory that exists on the CPU, GPU, or shared
 		between them. They can be used by a GraphicsPipeline or ComputePipeline.
 	*/
@@ -60,7 +53,7 @@ namespace Grindstone::GraphicsAPI {
 			const void* content;
 			size_t bufferSize;
 			Grindstone::Containers::BitsetFlags<BufferUsage> bufferUsage;
-			MemUsage memoryUsage;
+			MemoryUsage memoryUsage;
 		};
 
 		Buffer(const Grindstone::GraphicsAPI::Buffer::CreateInfo& createInfo) :
@@ -82,7 +75,7 @@ namespace Grindstone::GraphicsAPI {
 			return bufferUsage.GetValueEnum();
 		}
 
-		MemUsage GetMemoryUsage() const {
+		MemoryUsage GetMemoryUsage() const {
 			return memoryUsage;
 		}
 
@@ -93,7 +86,7 @@ namespace Grindstone::GraphicsAPI {
 	protected:
 		const char* debugName;
 		Grindstone::Containers::BitsetFlags<BufferUsage> bufferUsage;
-		MemUsage memoryUsage;
+		MemoryUsage memoryUsage;
 		size_t bufferSize;
 		void* mappedMemoryPtr = nullptr;
 	};

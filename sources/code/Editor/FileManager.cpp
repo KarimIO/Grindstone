@@ -31,7 +31,11 @@ static void FileWatcherCallback(
 	FileManager* fileManager = static_cast<FileManager*>(param);
 	const Grindstone::Editor::FileManager::MountPoint* mountPoint = nullptr;
 	for (const Grindstone::Editor::FileManager::MountPoint& currentMountPoint : fileManager->GetMountedDirectories()) {
-		mountPoint = &currentMountPoint;
+		std::filesystem::path rel = std::filesystem::relative(path, currentMountPoint.path);
+		if (rel.native()[0] != '.') {
+			mountPoint = &currentMountPoint;
+			break;
+		}
 	}
 
 	if (mountPoint == nullptr) {
@@ -332,6 +336,11 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(const MountPoint& mountPoi
 
 	std::filesystem::file_time_type metaFileLastWriteTime = std::filesystem::last_write_time(metaFilePath);
 	std::filesystem::file_time_type assetFileLastWriteTime = std::filesystem::last_write_time(path);
+
+	if (assetFileLastWriteTime > metaFileLastWriteTime) {
+		return true;
+	}
+
 	std::filesystem::file_time_type lastAssetWriteTime = std::max(metaFileLastWriteTime, assetFileLastWriteTime);
 
 	Grindstone::Editor::ImporterVersion importerVersion = importManager.GetImporterVersionByPath(path);

@@ -238,7 +238,7 @@ void ImguiRendererVulkan::PostRender() {
 	ImGui::RenderPlatformWindowsDefault();
 	currentCommandBuffer->UnbindRenderPass();
 	currentCommandBuffer->EndCommandBuffer();
-	window->SubmitCommandBuffer(currentCommandBuffer);
+	window->SubmitCommandBufferForCurrentFrame(currentCommandBuffer);
 	if (!window->PresentSwapchain() || shouldRebuildSwapchain) {
 		WaitForResizeAndRecreateSwapchain();
 		shouldRebuildSwapchain = false;

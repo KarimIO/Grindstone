@@ -68,7 +68,7 @@ bool ThumbnailManager::Initialize() {
 		.bindings = &descriptorLayoutBinding,
 		.bindingCount = 1
 	};
-	auto descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorLayoutCreateInfo);
+	GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorLayoutCreateInfo);
 
 	Grindstone::GraphicsAPI::Sampler::CreateInfo thumbnailAtlasSamplerCreateInfo{
 		.debugName = "Thumbnail Atlas Sampler",
@@ -85,7 +85,7 @@ bool ThumbnailManager::Initialize() {
 			.mipBias = 0.0f,
 		}
 	};
-	auto thumbnailAtlasSampler = graphicsCore->CreateSampler(thumbnailAtlasSamplerCreateInfo);
+	GraphicsAPI::Sampler* thumbnailAtlasSampler = graphicsCore->CreateSampler(thumbnailAtlasSamplerCreateInfo);
 
 	std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> descriptor = { thumbnailAtlasImage, thumbnailAtlasSampler };
 	GraphicsAPI::DescriptorSet::Binding descriptorBinding = Grindstone::GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler(&descriptor, 1);
@@ -98,11 +98,11 @@ bool ThumbnailManager::Initialize() {
 	thumbnailAtlasDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorCreateInfo);
 
 	// Match order used in the getters
-	defaultIcons.folder =	LoadNamedAssetToAtlas("@EDITOR_ICONS/assetIcons/Folder");
-	defaultIcons.plugin =	LoadNamedAssetToAtlas("@EDITOR_ICONS/assetIcons/Plugin");
-	defaultIcons.generic =	LoadNamedAssetToAtlas("@EDITOR_ICONS/assetIcons/GenericBinary");
-	defaultIcons.dotnet =	LoadNamedAssetToAtlas("@EDITOR_ICONS/assetIcons/Dotnet");
-	defaultIcons.cmake =	LoadNamedAssetToAtlas("@EDITOR_ICONS/assetIcons/Cmake");
+	defaultIcons.folder		= LoadNamedAssetToAtlas("@EDITOR_ICONS/assetIcons/Folder");
+	defaultIcons.plugin		= LoadNamedAssetToAtlas("@EDITOR_ICONS/assetIcons/Plugin");
+	defaultIcons.generic	= LoadNamedAssetToAtlas("@EDITOR_ICONS/assetIcons/GenericBinary");
+	defaultIcons.dotnet		= LoadNamedAssetToAtlas("@EDITOR_ICONS/assetIcons/Dotnet");
+	defaultIcons.cmake		= LoadNamedAssetToAtlas("@EDITOR_ICONS/assetIcons/Cmake");
 
 	for (uint16_t i = 0; i < static_cast<uint16_t>(AssetType::Count); ++i) {
 		AssetType assetType = static_cast<AssetType>(i);
@@ -226,7 +226,7 @@ void ThumbnailManager::RegisterGenerator(AssetType type, ThumbnailGenerateFn gen
 	generators[type] = generator;
 }
 
-void ThumbnailManager::UnregisterGenerator(AssetType type, ThumbnailGenerateFn generator) {
+void ThumbnailManager::DeregisterGenerator(AssetType type, ThumbnailGenerateFn generator) {
 	auto assetIterator = generators.find(type);
 	if (assetIterator == generators.end()) {
 		GPRINT_WARN_V(
@@ -240,8 +240,8 @@ void ThumbnailManager::UnregisterGenerator(AssetType type, ThumbnailGenerateFn g
 		GPRINT_WARN_V(
 			Grindstone::LogSource::Editor,
 			"Trying to register unregister generator for {}, but found a different generator. Ignoring this Unregister call.",
-			GetAssetTypeToString(type)
-		);
+				GetAssetTypeToString(type)
+				);
 	}
 	else {
 		generators.erase(assetIterator);
@@ -270,20 +270,31 @@ ThumbnailManager::AtlasCoords ThumbnailManager::GetThumbnailCoordsFromCache(Grin
 
 ThumbnailManager::AtlasCoords ThumbnailManager::RequestThumbnail(Grindstone::AssetType assetType, Grindstone::Uuid uuid) {
 	auto assetIterator = iconsByUuid.find(uuid);
-	if (assetIterator == iconsByUuid.end()) {
-		std::string uuidAsStr = uuid.ToString();
-
-		GPRINT_WARN_V(
-			Grindstone::LogSource::Editor,
-			"Trying to get existing thumbnail from storage of type '{}' with uuid '{}' but none found.",
-			GetAssetTypeToString(assetType),
-			uuidAsStr
-		);
-
-		return GetCoordsByIndex(defaultIcons.asset[static_cast<size_t>(assetType)]);
+	if (assetIterator != iconsByUuid.end()) {
+		return assetIterator->second.coords;
 	}
 
-	return assetIterator->second.coords;
+	std::filesystem::path path = GetThumbnailCacheFolder() / uuid.ToString();
+	if (std::filesystem::exists(path)) {
+		uint16_t thumbnailIndex = LoadThumbnailByPathToAtlas(path);
+		if (thumbnailIndex != std::numeric_limits<uint16_t>().max()) {
+			auto& iconInMap = iconsByUuid[uuid];
+			iconInMap.isResolved = true;
+			iconInMap.coords = GetCoordsByIndex(thumbnailIndex);
+		}
+	}
+	else {
+		auto it = generators.find(assetType);
+		if (it != generators.end()) {
+			auto& iconInMap = iconsByUuid[uuid];
+			iconInMap.isResolved = false;
+			iconInMap.coords = {};
+
+			requestedThumbnails.emplace_back(assetType, uuid);
+		}
+	}
+
+	return GetCoordsByIndex(defaultIcons.asset[static_cast<size_t>(assetType)]);
 }
 
 bool ThumbnailManager::FreeThumbnailFromMemory(Grindstone::Uuid uuid) {
@@ -325,4 +336,24 @@ bool ThumbnailManager::DeleteThumbnailFromStorage(Grindstone::Uuid uuid) {
 
 		return false;
 	}
+}
+
+void Grindstone::Editor::ThumbnailManager::CreateRequestedThumbnails() {
+	for (auto& [assetType, uuid] : requestedThumbnails) {
+		auto it = generators.find(assetType);
+		if (it != generators.end()) {
+			Grindstone::Editor::ThumbnailGenerateFn generator = it->second;
+			generator(uuid);
+		}
+		else {
+			std::string uuidAsStr = uuid.ToString();
+			GPRINT_WARN_V(
+				Grindstone::LogSource::Editor,
+				"Thumbnail generation requested for {} but then generator was removed.",
+				uuidAsStr
+			);
+		}
+	}
+
+	requestedThumbnails.clear();
 }

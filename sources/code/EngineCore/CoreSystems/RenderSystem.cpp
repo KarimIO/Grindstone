@@ -102,7 +102,7 @@ namespace Grindstone {
 				);
 
 				currentCommandBuffer->EndCommandBuffer();
-				wgb->SubmitCommandBuffer(currentCommandBuffer);
+				wgb->SubmitCommandBufferForCurrentFrame(currentCommandBuffer);
 
 				if (cameraComponent.isMainCamera) {
 					wgb->PresentSwapchain();

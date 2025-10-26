@@ -318,11 +318,11 @@ void TextureImporter::OutputDds(uint8_t* outData, uint64_t contentSize) {
 	std::memset(&outHeader, 0, sizeof(outHeader));
 	outHeader.dwSize = 124;
 	outHeader.ddspf.dwFlags = DDPF_FOURCC;
-	outHeader.dwFlags = DDSD_REQUIRED | DDSD_MIPMAPCOUNT;
+	outHeader.dwFlags = (shouldGenerateMips ? DDSD_MIPMAPCOUNT : 0) | DDSD_REQUIRED;
 	outHeader.dwHeight = texHeight;
 	outHeader.dwWidth = texWidth;
 	outHeader.dwDepth = 1;
-	outHeader.dwCaps = DDSCAPS_COMPLEX | DDSCAPS_TEXTURE;
+	outHeader.dwCaps = (shouldGenerateMips ? DDSCAPS_COMPLEX : 0) | DDSCAPS_TEXTURE;
 	outHeader.dwMipMapCount = 1;
 
 	if (shouldGenerateMips) {

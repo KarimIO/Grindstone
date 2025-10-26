@@ -51,11 +51,11 @@ void Grindstone::SetupPointLightComponent(Grindstone::WorldContextSet& cxtSet, e
 
 	{
 		PointLightComponent::UniformStruct lightInfoStruct{};
-		Buffer::CreateInfo lightUniformBufferObjectCi{};
+		GraphicsAPI::Buffer::CreateInfo lightUniformBufferObjectCi{};
 		lightUniformBufferObjectCi.debugName = "LightUbo";
 		lightUniformBufferObjectCi.content = &lightInfoStruct;
 		lightUniformBufferObjectCi.bufferUsage = BufferUsage::Uniform;
-		lightUniformBufferObjectCi.memoryUsage = MemUsage::CPUToGPU;
+		lightUniformBufferObjectCi.memoryUsage = MemoryUsage::CPUToGPU;
 		lightUniformBufferObjectCi.bufferSize = sizeof(PointLightComponent::UniformStruct);
 		pointLightComponent.uniformBufferObject = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
 	}

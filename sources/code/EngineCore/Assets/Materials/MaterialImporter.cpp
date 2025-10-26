@@ -210,7 +210,7 @@ static void SetupUniformBuffer(
 			GraphicsAPI::BufferUsage::TransferDst |
 			GraphicsAPI::BufferUsage::TransferSrc |
 			GraphicsAPI::BufferUsage::Uniform;
-		ubCi.memoryUsage = GraphicsAPI::MemUsage::CPUToGPU;
+		ubCi.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU;
 		ubCi.bufferSize = static_cast<uint32_t>(materialBuffer->bufferSize);
 		uniformBufferObject = graphicsCore->CreateBuffer(ubCi);
 

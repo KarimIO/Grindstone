@@ -580,6 +580,17 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		return Format::Invalid;
 	}
 
+	VkMemoryPropertyFlags TranslateMemoryUsageToVulkan(GraphicsAPI::MemoryUsage memUsage) {
+		switch (memUsage) {
+		default:
+		case MemoryUsage::GPUOnly:		return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		case MemoryUsage::CPUOnly:		return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		case MemoryUsage::CPUToGPU:		return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		case MemoryUsage::GPUToCPU:		return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		case MemoryUsage::Transient:	return VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
+		}
+	}
+
 	VkCullModeFlags TranslateCullModeToVulkan(CullMode cullMode) {
 		constexpr VkCullModeFlags cullModes[] = {
 			VK_CULL_MODE_NONE,

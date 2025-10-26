@@ -14,7 +14,7 @@ namespace Grindstone::GraphicsAPI {
 }
 
 namespace Grindstone::Editor {
-	using ThumbnailGenerateFn = bool(*)(void);
+	using ThumbnailGenerateFn = bool(*)(Grindstone::Uuid uuid);
 	class ThumbnailManager {
 	public:
 		struct AtlasCoords {
@@ -25,7 +25,7 @@ namespace Grindstone::Editor {
 		};
 
 		void RegisterGenerator(AssetType type, ThumbnailGenerateFn generator);
-		void UnregisterGenerator(AssetType type, ThumbnailGenerateFn generator);
+		void DeregisterGenerator(AssetType type, ThumbnailGenerateFn generator);
 
 		bool Initialize();
 
@@ -51,6 +51,9 @@ namespace Grindstone::Editor {
 		// Frees existing thumbnails from storage if it exists.
 		bool DeleteThumbnailFromStorage(Grindstone::Uuid uuid);
 
+		// Creates all thumbnails dispatched via RequestThumbnail.
+		void CreateRequestedThumbnails();
+
 	protected:
 		uint16_t LoadDdsBufferToAtlas(std::string_view name, Grindstone::Containers::BufferSpan inputBuffer);
 		uint16_t LoadNamedAssetToAtlas(std::string_view name);
@@ -64,6 +67,7 @@ namespace Grindstone::Editor {
 		};
 		std::unordered_map<AssetType, ThumbnailGenerateFn> generators;
 		std::unordered_map<Grindstone::Uuid, IconData> iconsByUuid;
+		std::vector<std::pair<Grindstone::AssetType, Grindstone::Uuid>> requestedThumbnails;
 
 		Grindstone::GraphicsAPI::Image* thumbnailAtlasImage = nullptr;
 		Grindstone::GraphicsAPI::DescriptorSet* thumbnailAtlasDescriptorSet = nullptr;

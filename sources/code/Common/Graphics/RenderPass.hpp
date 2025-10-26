@@ -29,6 +29,7 @@ namespace Grindstone::GraphicsAPI {
 		struct AttachmentInfo {
 			Format colorFormat = Format::Invalid;
 			bool shouldClear = false;
+			GraphicsAPI::MemoryUsage memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly;
 		};
 
 		struct CreateInfo {

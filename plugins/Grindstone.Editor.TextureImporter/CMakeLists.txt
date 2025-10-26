@@ -7,9 +7,7 @@ set(INC ${EDITOR_TEXTURE_IMPORTER_BASE}/include)
 
 set(EDITORTEXTUREIMPORTER_SOURCES
 	${SRC}/TextureImporter.cpp
-
-
-
+	${SRC}/ThumbnailGenerator.cpp
 	${EDITOR_DIR}/EditorManagerInstance.cpp
 	${ENGINE_CORE_DIR}/Utils/Utilities.cpp
 	${SRC}/EntryPoint.cpp
@@ -17,9 +15,7 @@ set(EDITORTEXTUREIMPORTER_SOURCES
 
 set(EDITORTEXTUREIMPORTER_HEADERS
 	${INC}/TextureImporter.hpp
-
-
-
+	${INC}/ThumbnailGenerator.hpp
 	${ENGINE_CORE_DIR}/Utils/Utilities.hpp
 	${INC}/pch.hpp
 )

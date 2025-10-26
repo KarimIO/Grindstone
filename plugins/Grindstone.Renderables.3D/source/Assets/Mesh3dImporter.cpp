@@ -202,7 +202,7 @@ void Mesh3dImporter::LoadMeshImportIndices(
 		GraphicsAPI::BufferUsage::TransferDst |
 		GraphicsAPI::BufferUsage::TransferSrc |
 		GraphicsAPI::BufferUsage::Index;
-	indexBufferCreateInfo.memoryUsage = GraphicsAPI::MemUsage::GPUOnly;
+	indexBufferCreateInfo.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly;
 	indexBufferCreateInfo.bufferSize = static_cast<uint32_t>(indices.size() * sizeof(indices[0]));
 	mesh.indexBuffer = indexBuffer = graphicsCore->CreateBuffer(indexBufferCreateInfo);
 }
