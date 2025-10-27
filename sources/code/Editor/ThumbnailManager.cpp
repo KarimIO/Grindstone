@@ -260,7 +260,7 @@ ThumbnailManager::AtlasCoords ThumbnailManager::GetThumbnailCoordsFromCache(Grin
 		uint16_t thumbnailIndex = LoadThumbnailByPathToAtlas(path);
 		if (thumbnailIndex != std::numeric_limits<uint16_t>().max()) {
 			auto& iconInMap = iconsByUuid[uuid];
-			iconInMap.isResolved = true;
+			iconInMap.status = IconStatus::Resolved;
 			iconInMap.coords = GetCoordsByIndex(thumbnailIndex);
 		}
 	}
@@ -279,7 +279,7 @@ ThumbnailManager::AtlasCoords ThumbnailManager::RequestThumbnail(Grindstone::Ass
 		uint16_t thumbnailIndex = LoadThumbnailByPathToAtlas(path);
 		if (thumbnailIndex != std::numeric_limits<uint16_t>().max()) {
 			auto& iconInMap = iconsByUuid[uuid];
-			iconInMap.isResolved = true;
+			iconInMap.status = IconStatus::Resolved;
 			iconInMap.coords = GetCoordsByIndex(thumbnailIndex);
 		}
 	}
@@ -287,10 +287,11 @@ ThumbnailManager::AtlasCoords ThumbnailManager::RequestThumbnail(Grindstone::Ass
 		auto it = generators.find(assetType);
 		if (it != generators.end()) {
 			auto& iconInMap = iconsByUuid[uuid];
-			iconInMap.isResolved = false;
+			iconInMap.status = IconStatus::Pending;
 			iconInMap.coords = {};
 
 			requestedThumbnails.emplace_back(assetType, uuid);
+			iconsByUuid[uuid].status = IconStatus::Generating;
 		}
 	}
 
@@ -343,7 +344,19 @@ void Grindstone::Editor::ThumbnailManager::CreateRequestedThumbnails() {
 		auto it = generators.find(assetType);
 		if (it != generators.end()) {
 			Grindstone::Editor::ThumbnailGenerateFn generator = it->second;
-			generator(uuid);
+
+			auto& iconInMap = iconsByUuid[uuid];
+			iconInMap.status = IconStatus::Failed;
+			if (generator(uuid)) {
+				std::filesystem::path path = GetThumbnailCacheFolder() / uuid.ToString();
+				if (std::filesystem::exists(path)) {
+					uint16_t thumbnailIndex = LoadThumbnailByPathToAtlas(path);
+					if (thumbnailIndex != std::numeric_limits<uint16_t>().max()) {
+						iconInMap.status = IconStatus::Resolved;
+						iconInMap.coords = GetCoordsByIndex(thumbnailIndex);
+					}
+				}
+			}
 		}
 		else {
 			std::string uuidAsStr = uuid.ToString();
