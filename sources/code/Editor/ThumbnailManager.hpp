@@ -60,9 +60,15 @@ namespace Grindstone::Editor {
 		uint16_t LoadThumbnailByPathToAtlas(const std::filesystem::path& path);
 
 	protected:
+		enum class IconStatus {
+			Pending,
+			Failed,
+			Loading,
+			Generating,
+			Resolved
+		};
 		struct IconData {
-			// If an icon is loaded, isResolved = true. If it is loading, generating, or failed, isResolved = false. If it fails, it was unloaded.
-			bool isResolved = false;
+			IconStatus status = IconStatus::Pending;
 			AtlasCoords coords;
 		};
 		std::unordered_map<AssetType, ThumbnailGenerateFn> generators;
