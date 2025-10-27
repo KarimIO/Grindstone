@@ -1,0 +1,17 @@
+{
+	"name": "Grindstone.Ai.NavMesh",
+	"displayName": "Navigation Mesh System",
+	"version": "0.1.0",
+	"description": "Provides a set of tools to allow NavigationAgents to move through the world using Navigation Meshes.",
+	"author": "Grindstone Foundation",
+	"assets": [],
+	"dependencies": [],
+	"binaries": [
+		{
+			"path": "lib/{Configuration}/PluginNavigationMesh",
+			"loadStage": "EndOfEngineSetup",
+			"cmakeTarget": "PluginNavigationMesh"
+		}
+	],
+	"cmake": "CMakeLists.txt"
+}

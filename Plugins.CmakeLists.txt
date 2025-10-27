@@ -1,4 +1,5 @@
 Grindstone.Rhi.Vulkan/CMakeLists.txt
+Grindstone.Ai.NavMesh/CMakeLists.txt
 Grindstone.Editor.AudioImporter/CMakeLists.txt
 Grindstone.Editor.MaterialImporter/CMakeLists.txt
 Grindstone.Editor.ModelImporter/CMakeLists.txt
