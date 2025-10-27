@@ -1,0 +1,15 @@
+{
+    "assetImporterVersion": 1,
+    "metaFileVersion": 1,
+    "defaultUuid": "d5a4383d-dddf-4ddb-931a-cc54b0aa1366",
+    "subassets": [
+        {
+            "displayName": "Editor Cubemap Thumbnail Generator",
+            "address": "@GRINDSTONE.EDITOR.TEXTUREIMPORTER/editorCubemapThumbnailGeneratorShader",
+            "subassetIdentifier": "Editor Cubemap Thumbnail Generator",
+            "uuid": "d5a4383d-dddf-4ddb-931a-cc54b0aa1366",
+            "type": "GraphicsPipelineSet"
+        }
+    ],
+    "importerSettings": {}
+}

@@ -1,0 +1,58 @@
+pipelineSet "Editor Cubemap Thumbnail Generator" {
+	configuration "main" {
+		pass "main" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+			renderQueue: "ThumbnailGenerator"
+
+			properties {
+				cull: none
+				depthWrite: true
+				depthTest: true
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: {
+					colorMask: rgba
+					blendPreset: opaque
+				}
+			}
+
+			shaderHlsl {
+				SamplerState convertSampler : register(s0, space0);
+				TextureCube<float4> convertTexture : register(t1, space0);
+
+				const static float3 vertPos[] = {
+					float3( 1,  1, 0),
+					float3(-1, -1, 0),
+					float3(-1,  1, 0),
+					float3(-1, -1, 0),
+					float3( 1,  1, 0),
+					float3( 1, -1, 0)
+				};
+
+				struct VertexToFragment {
+					float4 position : SV_Position;
+					[[vk::location(0)]] float2 uv : TEXCOORD0;
+				};
+
+				VertexToFragment mainVertex(uint vertexId : SV_VertexID) {
+					VertexToFragment output = (VertexToFragment)0;
+					output.position = float4(vertPos[vertexId], 1.0f);
+					output.uv = vertPos[vertexId] * 0.5f + float2(0.5f, 0.5f);
+					return output;
+				}
+
+				float4 mainFragment(VertexToFragment inStruct) : SV_TARGET0 {
+					const float pi = 3.1415926536;
+					float2 uv = inStruct.uv;
+					float theta = (1.0 - uv.y) * pi;
+					float phi   = uv.x * pi * 2.0;
+
+					float3 dir = float3(sin(theta) * sin(phi), cos(theta), sin(theta) * cos(phi));
+
+					return convertTexture.SampleLevel(convertSampler, -dir, 0);
+				}
+			}
+		}
+	}
+}
