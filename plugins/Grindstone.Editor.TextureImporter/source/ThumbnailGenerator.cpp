@@ -15,7 +15,8 @@ static struct ThumbnailGeneratorContext {
 	Grindstone::GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
 	Grindstone::GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
 	Grindstone::GraphicsAPI::VertexInputLayout vertexInputLayout;
-	Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> graphicsPipelineAsset;
+	Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> tex2dGraphicsPipelineAsset;
+	Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> cubemapGraphicsPipelineAsset;
 } thumbnailGeneratorContext;
 
 #include <Common/Formats/Dds.hpp>
@@ -94,11 +95,13 @@ bool Grindstone::Editor::Importers::GenerateTextureThumbnail(Grindstone::Uuid uu
 	Grindstone::AssetReference<Grindstone::TextureAsset> texture = engineCore.assetManager->GetAssetReferenceByUuid<Grindstone::TextureAsset>(uuid);
 
 	GraphicsAPI::Image* image = texture.Get()->image;
-	if (image->IsCubemap() || image->GetImageDimension() != GraphicsAPI::ImageDimension::Dimension2D) {
+	if (image->GetImageDimension() != GraphicsAPI::ImageDimension::Dimension2D) {
 		return false;
 	}
 
-	Grindstone::GraphicsPipelineAsset* pipelineAsset = thumbnailGeneratorContext.graphicsPipelineAsset.Get();
+	Grindstone::GraphicsPipelineAsset* pipelineAsset = image->IsCubemap()
+		? thumbnailGeneratorContext.cubemapGraphicsPipelineAsset.Get()
+		: thumbnailGeneratorContext.tex2dGraphicsPipelineAsset.Get();
 	if (pipelineAsset == nullptr) {
 		return false;
 	}
@@ -189,8 +192,11 @@ bool Grindstone::Editor::Importers::InitializeTextureThumbnailGenerator() {
 	};
 	thumbnailGeneratorContext.framebuffer = graphicsCore->CreateFramebuffer(framebufferCreateInfo);
 
-	std::string_view shaderAddress = "@GRINDSTONE.EDITOR.TEXTUREIMPORTER/editorTextureThumbnailGeneratorShader";
-	thumbnailGeneratorContext.graphicsPipelineAsset = engineCore.assetManager->GetAssetReferenceByAddress<Grindstone::GraphicsPipelineAsset>(shaderAddress);
+	std::string_view texture2DShaderAddress = "@GRINDSTONE.EDITOR.TEXTUREIMPORTER/editorTextureThumbnailGeneratorShader";
+	thumbnailGeneratorContext.tex2dGraphicsPipelineAsset = engineCore.assetManager->GetAssetReferenceByAddress<Grindstone::GraphicsPipelineAsset>(texture2DShaderAddress);
+
+	std::string_view cubemapShaderAddress = "@GRINDSTONE.EDITOR.TEXTUREIMPORTER/editorCubemapThumbnailGeneratorShader";
+	thumbnailGeneratorContext.cubemapGraphicsPipelineAsset = engineCore.assetManager->GetAssetReferenceByAddress<Grindstone::GraphicsPipelineAsset>(cubemapShaderAddress);
 
 	thumbnailGeneratorContext.vertexInputLayout.attributes = {};
 	thumbnailGeneratorContext.vertexInputLayout.bindings = {};
@@ -246,7 +252,8 @@ void Grindstone::Editor::Importers::ReleaseTextureThumbnailGenerator() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
-	thumbnailGeneratorContext.graphicsPipelineAsset.Release();
+	thumbnailGeneratorContext.tex2dGraphicsPipelineAsset.Release();
+	thumbnailGeneratorContext.cubemapGraphicsPipelineAsset.Release();
 	graphicsCore->DeleteDescriptorSet(thumbnailGeneratorContext.descriptorSet);
 	graphicsCore->DeleteDescriptorSetLayout(thumbnailGeneratorContext.descriptorSetLayout);
 	graphicsCore->DeleteSampler(thumbnailGeneratorContext.sampler);
