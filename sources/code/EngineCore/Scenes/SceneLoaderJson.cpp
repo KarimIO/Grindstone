@@ -222,13 +222,28 @@ void SceneLoaderJson::ParseMember(
 		CopyDataArrayFloat(parameter, static_cast<float*>(memberPtr), 4);
 		break;
 	case ReflectionTypeData::Bool: {
-		bool& str = *(bool*)memberPtr;
-		str = parameter.GetBool();
+		bool& ptr = *static_cast<bool*>(memberPtr);
+		ptr = parameter.GetBool();
 		break;
 	}
-	case ReflectionTypeData::Int: {
-		int& str = *(int*)memberPtr;
-		str = parameter.GetInt();
+	case ReflectionTypeData::Char: {
+		char& ptr = *static_cast<char*>(memberPtr);
+		ptr = parameter.GetInt();
+		break;
+	}
+	case ReflectionTypeData::Uchar: {
+		unsigned char& ptr = *static_cast<unsigned char*>(memberPtr);
+		ptr = parameter.GetInt();
+		break;
+	}
+	case ReflectionTypeData::Short: {
+		short& ptr = *static_cast<short*>(memberPtr);
+		ptr = parameter.GetInt();
+		break;
+	}
+	case ReflectionTypeData::Ushort: {
+		unsigned short& ptr = *static_cast<unsigned short*>(memberPtr);
+		ptr = parameter.GetInt();
 		break;
 	}
 	case ReflectionTypeData::Int2:
@@ -255,8 +270,8 @@ void SceneLoaderJson::ParseMember(
 		CopyDataArrayUint(parameter, static_cast<uint32_t*>(memberPtr), 4);
 		break;
 	case ReflectionTypeData::Float: {
-		float& str = *(float*)memberPtr;
-		str = parameter.GetFloat();
+		float& ptr = *static_cast<float*>(memberPtr);
+		ptr = parameter.GetFloat();
 		break;
 	}
 	case ReflectionTypeData::Float2:
@@ -269,8 +284,8 @@ void SceneLoaderJson::ParseMember(
 		CopyDataArrayFloat(parameter, static_cast<float*>(memberPtr), 4);
 		break;
 	case ReflectionTypeData::Double: {
-		double& str = *static_cast<double*>(memberPtr);
-		str = parameter.GetDouble();
+		double& ptr = *static_cast<double*>(memberPtr);
+		ptr = parameter.GetDouble();
 		break;
 	}
 	case ReflectionTypeData::Double2:

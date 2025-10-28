@@ -148,6 +148,18 @@ void WriteParameter(SceneRapidjsonWriter& documentWriter, Reflection::TypeDescri
 			documentWriter.String(str.c_str());
 			break;
 		}
+		case Reflection::TypeDescriptor::ReflectionTypeData::Char:
+			documentWriter.Int(*static_cast<int8_t*>(dataPtr));
+			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::Uchar:
+			documentWriter.Int(*static_cast<int8_t*>(dataPtr));
+			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::Short:
+			documentWriter.Int(*static_cast<int16_t*>(dataPtr));
+			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::Ushort:
+			documentWriter.Int(*static_cast<int16_t*>(dataPtr));
+			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Int:
 			documentWriter.Int(*static_cast<int32_t*>(dataPtr));
 			break;
