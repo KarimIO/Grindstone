@@ -3,6 +3,8 @@
 #include <Editor/Importers/ImporterManager.hpp>
 #include <Editor/EditorManager.hpp>
 #include <Editor/AssetTemplateRegistry.hpp>
+#include <Editor/ImguiEditor/ImguiEditor.hpp>
+#include <Editor/ImguiEditor/Menubar.hpp>
 
 #include "EditorPluginInterface.hpp"
 
@@ -66,4 +68,18 @@ void EditorPluginInterface::DeregisterThumbnailGenerator(AssetType assetType, bo
 	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
 	Grindstone::Editor::ThumbnailManager& thumbnailManager = manager.GetThumbnailManager();
 	thumbnailManager.DeregisterGenerator(assetType, fn);
+}
+
+void EditorPluginInterface::RegisterMenuItem(const char* menuItem, void(*fn)(), const char* shortcut) {
+	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
+	Grindstone::Editor::ImguiEditor::ImguiEditor& imguiEditor = manager.GetImguiEditor();
+	Grindstone::Editor::ImguiEditor::Menubar& menubar = imguiEditor.GetMenuBar();
+	menubar.RegisterMenuItem(menuItem, fn, shortcut);
+}
+
+void EditorPluginInterface::DeregisterMenuItem(const char* menuItem) {
+	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
+	Grindstone::Editor::ImguiEditor::ImguiEditor& imguiEditor = manager.GetImguiEditor();
+	Grindstone::Editor::ImguiEditor::Menubar& menubar = imguiEditor.GetMenuBar();
+	menubar.DeregisterMenuItem(menuItem);
 }

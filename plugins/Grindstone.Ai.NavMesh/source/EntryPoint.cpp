@@ -1,7 +1,7 @@
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
-
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
+
 #include <Grindstone.Physics.Bullet/include/Components/ColliderComponent.hpp>
 
 #include <Grindstone.Ai.NavMesh/include/pch.hpp>
@@ -11,6 +11,8 @@
 #include <Grindstone.Ai.NavMesh/include/Components/NavMeshComponent.hpp>
 #include <Grindstone.Ai.NavMesh/include/Components/NavAgentComponent.hpp>
 #include <Grindstone.Ai.NavMesh/include/Components/OffNavMeshConnectionComponent.hpp>
+
+#include <Editor/PluginSystem/EditorPluginInterface.hpp>
 
 #include <Recast.h>
 #include <RecastAlloc.h>
@@ -114,10 +116,7 @@ static void PopulateGeometry(
 	}
 }
 
-static void BakeNavMeshForAgent(rcContext* context, const Ai::NavMeshComponent& navMeshData, const Ai::NavAgentType& agentType) {
-	WorldContextSet set;
-	const entt::registry& registry = set.GetEntityRegistry();
-
+static rcPolyMesh* BakeNavMeshForAgent(const entt::registry& registry, rcContext* context, const Ai::NavMeshComponent& navMeshData, const Ai::NavAgentType& agentType) {
 	glm::vec3 bmin, bmax;
 	std::vector<glm::vec3> verts;
 	std::vector<int> tris;
@@ -200,24 +199,12 @@ static void BakeNavMeshForAgent(rcContext* context, const Ai::NavMeshComponent& 
 	rcBuildPolyMeshDetail(context, *polyMesh, *compactHeightfield, config.detailSampleDist, config.detailSampleMaxError, *polyMeshDetail);
 	rcFreeCompactHeightfield(compactHeightfield);  // Compact heightfield no longer needed
 
+	return polyMesh;
 }
 
-static void BakeNavMesh() {
-	Ai::GrindstoneRecastContext* context = new Ai::GrindstoneRecastContext();
-
-	Ai::NavMeshComponent navMeshData{};
-	std::vector<Ai::NavAgentType> agentTypes;
-
-	for (Ai::NavAgentType& agentType : agentTypes) {
-		// Get data from the below step and cache it
-		BakeNavMeshForAgent(context, navMeshData, agentType);
-	}
-}
-
-static bool CreateNavMeshFromData(
+static dtNavMesh* CreateNavMeshFromData(
 	rcContext* context,
 	const Ai::NavMeshComponent& navMeshData,
-	Ai::NavAgentComponent& navAgent,
 	Ai::NavAgentType& agentType,
 	const OffMeshConnectionDataArrays& offMeshConnections,
 	rcPolyMesh* polyMesh,
@@ -251,20 +238,20 @@ static bool CreateNavMeshFromData(
 	params.walkableClimb = agentType.stepHeight;
 	rcVcopy(params.bmin, polyMesh->bmin);
 	rcVcopy(params.bmax, polyMesh->bmax);
-	params.cs = navMeshData.cellSize;
-	params.ch = navMeshData.cellHeight;
+	params.cs = polyMesh->cs; // navMeshData.cellSize;
+	params.ch = polyMesh->ch; // navMeshData.cellHeight;
 	params.buildBvTree = true;
 
 	if (!dtCreateNavMeshData(&params, &navData, &navDataSize)) {
 		GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Could not build Detour navmesh.");
-		return false;
+		return nullptr;
 	}
 
 	dtNavMesh* navMesh = dtAllocNavMesh();
 	if (!navMesh) {
 		GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Could not create Detour navmesh");
 		dtFree(navData);
-		return false;
+		return nullptr;
 	}
 
 	dtStatus status;
@@ -274,32 +261,196 @@ static bool CreateNavMeshFromData(
 		GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Could not init Detour navmesh");
 		dtFree(navData);
 		dtFreeNavMesh(navMesh);
-		return false;
+		return nullptr;
 	}
 
-
-	dtNavMeshQuery* query = dtAllocNavMeshQuery();
-	status = query->init(navMesh, 2048);
-	if (dtStatusFailed(status)) {
-		GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Could not init Detour navmesh query");
-		dtFreeNavMeshQuery(query);
-		return false;
-	}
-
-	dtFreeNavMeshQuery(query);
-	dtFreeNavMesh(navMesh);
+	return navMesh;
 }
 
-void* recastAllocFn(size_t size, rcAllocHint hint) {
+static void* RecastAllocFn(size_t size, rcAllocHint hint) {
 	return Grindstone::Memory::AllocatorCore::AllocateRaw(size, 1, "Recast Memory");
 }
 
-void* detourAllocFn(size_t size, dtAllocHint hint) {
+static void* DetourAllocFn(size_t size, dtAllocHint hint) {
 	return Grindstone::Memory::AllocatorCore::AllocateRaw(size, 1, "Detour Memory");
 }
 
-void recastFreeFn(void* ptr) {
+static void RecastFreeFn(void* ptr) {
 	Grindstone::Memory::AllocatorCore::FreeWithoutDestructor(ptr);
+}
+
+static const uint32_t NAVMESHSET_MAGIC = 'G' << 24 | 'N' << 16 | 'A' << 8 | 'V';
+static const uint32_t NAVMESHSET_VERSION = 1;
+
+struct NavMeshSetHeader {
+	uint32_t magic;
+	uint32_t version;
+	uint32_t numTiles;
+	dtNavMeshParams params;
+};
+
+struct NavMeshTileHeader {
+	dtTileRef tileRef;
+	uint32_t dataSize;
+};
+
+static void WriteNavmesh(const std::filesystem::path& path, const dtNavMesh* mesh) {
+	if (!mesh) {
+		return;
+	}
+
+	std::ofstream fstream(path, std::ios::binary);
+	if (fstream.fail()) {
+		return;
+	}
+
+	NavMeshSetHeader header{
+		.magic = NAVMESHSET_MAGIC,
+		.version = NAVMESHSET_VERSION,
+		.numTiles = 0,
+	};
+
+	for (int i = 0; i < mesh->getMaxTiles(); ++i) {
+		const dtMeshTile* tile = mesh->getTile(i);
+		if (!tile || !tile->header || !tile->dataSize) {
+			continue;
+		}
+
+		header.numTiles++;
+	}
+
+	memcpy(&header.params, mesh->getParams(), sizeof(dtNavMeshParams));
+	fstream.write(reinterpret_cast<const char*>(&header), sizeof(NavMeshSetHeader));
+
+	// Store tiles.
+	for (int i = 0; i < mesh->getMaxTiles(); ++i) {
+		const dtMeshTile* tile = mesh->getTile(i);
+		if (!tile || !tile->header || !tile->dataSize) {
+			continue;
+		}
+
+		NavMeshTileHeader tileHeader{
+			.tileRef = mesh->getTileRef(tile),
+			.dataSize = static_cast<uint32_t>(tile->dataSize)
+		};
+
+		fstream.write(reinterpret_cast<const char*>(&tileHeader), sizeof(tileHeader));
+		fstream.write(reinterpret_cast<const char*>(tile->data), tile->dataSize);
+	}
+}
+
+static dtNavMesh* LoadNavmesh(const char* path) {
+	FILE* fp = fopen(path, "rb");
+	if (!fp) {
+		return nullptr;
+	}
+
+	// Read header.
+	NavMeshSetHeader header;
+	size_t readLen = fread(&header, sizeof(NavMeshSetHeader), 1, fp);
+	if (readLen != 1 || header.magic != NAVMESHSET_MAGIC || header.version != NAVMESHSET_VERSION) {
+		fclose(fp);
+		return nullptr;
+	}
+
+	dtNavMesh* mesh = dtAllocNavMesh();
+	if (!mesh) {
+		fclose(fp);
+		return nullptr;
+	}
+
+	dtStatus status = mesh->init(&header.params);
+	if (dtStatusFailed(status)) {
+		fclose(fp);
+		return nullptr;
+	}
+
+	// Read tiles.
+	for (int i = 0; i < header.numTiles; ++i) {
+		NavMeshTileHeader tileHeader;
+		readLen = fread(&tileHeader, sizeof(tileHeader), 1, fp);
+		if (readLen != 1) {
+			fclose(fp);
+			return nullptr;
+		}
+
+		if (!tileHeader.tileRef || !tileHeader.dataSize) {
+			break;
+		}
+
+		unsigned char* data = (unsigned char*)dtAlloc(tileHeader.dataSize, DT_ALLOC_PERM);
+		if (!data) {
+			break;
+		}
+
+		memset(data, 0, tileHeader.dataSize);
+		readLen = fread(data, tileHeader.dataSize, 1, fp);
+		if (readLen != 1) {
+			dtFree(data);
+			fclose(fp);
+			return nullptr;
+		}
+
+		mesh->addTile(data, tileHeader.dataSize, DT_TILE_FREE_DATA, tileHeader.tileRef, 0);
+	}
+
+	fclose(fp);
+
+	return mesh;
+}
+
+static void MenuItemGenerateNavMesh() {
+	GPRINT_INFO(LogSource::EngineCore, "Generating Navigation Mesh...");
+
+	Ai::GrindstoneRecastContext* context = Grindstone::Memory::AllocatorCore::Allocate<Ai::GrindstoneRecastContext>();
+	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+	Grindstone::WorldContextSet* worldContextSet = engineCore.GetWorldContextManager()->GetActiveWorldContextSet();
+
+	if (worldContextSet == nullptr) {
+		GPRINT_INFO(LogSource::EngineCore, "Failed to generate Navigation Mesh - no active WorldContextSet.");
+		return;
+	}
+
+	Grindstone::Ai::NavMeshComponent* foundNavMeshComp = nullptr;
+	entt::registry& registry = worldContextSet->GetEntityRegistry();
+	registry.view<Grindstone::Ai::NavMeshComponent>().each(
+		[&foundNavMeshComp](
+			Grindstone::Ai::NavMeshComponent& navMesh
+		) {
+			foundNavMeshComp = &navMesh;
+		}
+	);
+	if (foundNavMeshComp == nullptr) {
+		GPRINT_INFO(LogSource::EngineCore, "Failed to generate Navigation Mesh - no NavigationMeshComponent found.");
+		return;
+	}
+
+	Ai::NavMeshComponent navMeshData{};
+	std::vector<Ai::NavAgentType> agentTypes;
+	agentTypes.emplace_back(Ai::NavAgentType{
+		.radius = 0.5,
+		.height = 2.0f,
+		.stepHeight = 0.1f,
+		.maxSlope = 30.0f,
+		.dropHeight = 1.0f,
+		.jumpDistance = 1.0f,
+	});
+
+	std::vector<rcPolyMesh*> meshes;
+
+	for (Ai::NavAgentType& agentType : agentTypes) {
+		// Get data from the below step and cache it
+		rcPolyMesh* mesh = BakeNavMeshForAgent(registry, context, navMeshData, agentType);
+		meshes.emplace_back(mesh);
+		break;
+	}
+
+	std::filesystem::path path = "";
+	WriteNavmesh(path, meshes[0]);
+
+	Grindstone::Memory::AllocatorCore::Free(context);
+
+	GPRINT_INFO(LogSource::EngineCore, "Generated Navigation Mesh.");
 }
 
 extern "C" {
@@ -307,16 +458,27 @@ extern "C" {
 		Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
 		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
 		Grindstone::EngineCore::SetInstance(*pluginInterface->GetEngineCore());
+		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
 
-		rcAllocSetCustom(recastAllocFn, recastFreeFn);
-		dtAllocSetCustom(detourAllocFn, recastFreeFn);
+		rcAllocSetCustom(RecastAllocFn, RecastFreeFn);
+		dtAllocSetCustom(DetourAllocFn, RecastFreeFn);
 
 		pluginInterface->RegisterComponent<Grindstone::Ai::NavMeshComponent>();
 		pluginInterface->RegisterComponent<Grindstone::Ai::NavAgentComponent>();
 		pluginInterface->RegisterComponent<Grindstone::Ai::OffNavMeshConnectionComponent>();
+
+		Grindstone::Plugins::EditorPluginInterface* editorInterface = static_cast<Grindstone::Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
+		if (editorInterface != nullptr) {
+			editorInterface->RegisterMenuItem("Build/Generate Navigation Mesh", MenuItemGenerateNavMesh);
+		}
 	}
 
 	AI_NAVMESH_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
+		Grindstone::Plugins::EditorPluginInterface* editorInterface = static_cast<Grindstone::Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
+		if (editorInterface != nullptr) {
+			editorInterface->DeregisterMenuItem("Build/Generate Navigation Mesh");
+		}
+
 		pluginInterface->UnregisterComponent<Grindstone::Ai::OffNavMeshConnectionComponent>();
 		pluginInterface->UnregisterComponent<Grindstone::Ai::NavAgentComponent>();
 		pluginInterface->UnregisterComponent<Grindstone::Ai::NavMeshComponent>();
