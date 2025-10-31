@@ -89,6 +89,9 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	SetupFonts();
 	SetupStyles();
 	SetupColors();
+
+	// Initialized early to ensure we can add custom commands
+	menubar = AllocatorCore::Allocate<Menubar>(this);
 }
 
 void ImguiEditor::CreateWindows() {
@@ -106,7 +109,6 @@ void ImguiEditor::CreateWindows() {
 	buildPopup = AllocatorCore::Allocate<BuildPopup>();
 	systemPanel = AllocatorCore::Allocate<SystemPanel>(engineCore->GetSystemRegistrar());
 	controlBar = AllocatorCore::Allocate<ControlBar>(imguiRenderer);
-	menubar = AllocatorCore::Allocate<Menubar>(this);
 	assetPicker = AllocatorCore::Allocate<AssetPicker>();
 	statusBar = AllocatorCore::Allocate<StatusBar>(imguiRenderer);
 	tracingPanel = AllocatorCore::Allocate<TracingPanel>();
@@ -349,6 +351,10 @@ const ImGui::MarkdownConfig& Grindstone::Editor::ImguiEditor::ImguiEditor::GetMa
 
 ImguiRenderer& Grindstone::Editor::ImguiEditor::ImguiEditor::GetImguiRenderer() {
 	return *imguiRenderer;
+}
+
+Menubar& Grindstone::Editor::ImguiEditor::ImguiEditor::GetMenuBar() {
+	return *menubar;
 }
 
 ImFont* Grindstone::Editor::ImguiEditor::ImguiEditor::GetFont(FontType type) const {

@@ -28,5 +28,8 @@ namespace Grindstone::Plugins {
 
 		virtual void RegisterThumbnailGenerator(AssetType assetType, bool (*fn)(Grindstone::Uuid));
 		virtual void DeregisterThumbnailGenerator(AssetType assetType, bool (*fn)(Grindstone::Uuid));
+
+		virtual void RegisterMenuItem(const char* menuItem, void(*fn)(), const char* shortcut = nullptr);
+		virtual void DeregisterMenuItem(const char* menuItem);
 	};
 }

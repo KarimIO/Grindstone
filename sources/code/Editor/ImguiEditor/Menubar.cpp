@@ -34,6 +34,15 @@ void Menubar::Render() {
 		RenderViewMenu();
 	}
 
+	if (ImGui::BeginMenu("Custom Commands")) {
+		for (Menubar::MenubarItem& item : menuItems) {
+			if (ImGui::MenuItem(item.text.c_str(), item.shortcut.c_str(), false)) {
+				item.fnPtr();
+			}
+		}
+		ImGui::EndMenu();
+	}
+
 	ImGui::EndMenuBar();
 }
 
@@ -120,7 +129,7 @@ void Menubar::OnSaveAsFile() {
 }
 
 void Menubar::OnReloadFile() {
-	SceneManagement::SceneManager* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
+	Grindstone::SceneManagement::SceneManager* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
 	sceneManager->LoadScene(sceneManager->scenes.begin()->first);
 }
 
@@ -131,9 +140,9 @@ void Menubar::OnLoadFile() {
 	std::filesystem::path filePath = window->OpenFileDialogue("Scene File (.gscene)\0*.gscene\0");
 
 	Grindstone::Uuid uuid;
-	const char* filePathStr = filePath.string().c_str();
-	if (!filePath.empty() && Grindstone::Uuid::MakeFromString(filePathStr, uuid)) {
-		auto* sceneManager = engineCore.GetSceneManager();
+	std::string filePathStr = filePath.string();
+	if (!filePath.empty() && Grindstone::Uuid::MakeFromString(filePathStr.c_str(), uuid)) {
+		Grindstone::SceneManagement::SceneManager* sceneManager = engineCore.GetSceneManager();
 		sceneManager->LoadScene(uuid);
 	}
 }
@@ -170,6 +179,18 @@ void Menubar::SaveFile(const std::filesystem::path& path) {
 		}
 		else {
 			sceneManager->SaveScene(path, scene);
+		}
+	}
+}
+
+void Menubar::RegisterMenuItem(const char* menuItem, void(*fn)(), const char* shortcut) {
+	menuItems.emplace_back(Menubar::MenubarItem{ .text = menuItem, .shortcut = shortcut == nullptr ? "" : shortcut, .fnPtr = fn});
+}
+
+void Menubar::DeregisterMenuItem(const char* menuItem) {
+	for (auto iterator = menuItems.begin(); iterator != menuItems.end(); iterator++) {
+		if (iterator->text == menuItem) {
+			menuItems.erase(iterator);
 		}
 	}
 }

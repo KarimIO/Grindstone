@@ -18,7 +18,7 @@ namespace Grindstone::Reflection {
 
 	template <>
 	TypeDescriptor* GetPrimitiveDescriptor<unsigned char>() {
-		static TypeDescriptor_Char typeDesc;
+		static TypeDescriptor_Uchar typeDesc;
 		return &typeDesc;
 	}
 
