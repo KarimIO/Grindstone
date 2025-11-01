@@ -18,5 +18,5 @@ void Grindstone::SetupEnvironmentMapComponent(Grindstone::WorldContextSet& cxtSe
 
 void Grindstone::DestroyEnvironmentMapComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	EnvironmentMapComponent& envMap = cxtSet.GetEntityRegistry().get<EnvironmentMapComponent>(entity);
-	// TODO: Unload environment map
+	envMap.specularTexture.Release();
 }

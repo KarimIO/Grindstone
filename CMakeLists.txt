@@ -39,8 +39,7 @@ set(CORE_UTILS
 	${ENGINECORE_DIR}/ECS/Entity.cpp ${ENGINECORE_DIR}/ECS/Entity.hpp
 	${ENGINECORE_DIR}/Logger.cpp ${ENGINECORE_DIR}/Logger.hpp
 	${ENGINECORE_DIR}/Utils/MemoryAllocator.cpp ${ENGINECORE_DIR}/Utils/MemoryAllocator.hpp
-
-
+	${ENGINECORE_DIR}/Utils/DeferredDeletionQueue.cpp ${ENGINECORE_DIR}/Utils/DeferredDeletionQueue.hpp
 )
 set(CORE_LIBS fmt::fmt Rpcrt4.lib)
 

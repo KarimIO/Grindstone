@@ -110,6 +110,8 @@ namespace Grindstone {
 			Grindstone::Rendering::GeometryRenderStats renderingStatsUnlit;
 			Grindstone::Rendering::GeometryRenderStats renderingStatsTransparent;
 			Grindstone::Rendering::GeometryRenderStats renderingStatsSky;
+
+			GraphicsAPI::Image* currentEnvironmentMapImage = nullptr;
 		};
 
 		void CreatePipelines();
@@ -226,9 +228,6 @@ namespace Grindstone {
 		GraphicsAPI::DescriptorSetLayout* dofSourceDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* dofBlurDescriptorSetLayout = nullptr;
 		GraphicsAPI::DescriptorSetLayout* dofCombinationDescriptorSetLayout = nullptr;
-
-		// Used to check when environment map changes, so we can update it
-		Uuid currentEnvironmentMapUuid;
 
 		DeferredRenderMode renderMode;
 	};

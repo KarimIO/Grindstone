@@ -82,6 +82,7 @@ namespace Grindstone {
 			auto assetInMap = assets.find(uuid);
 			if (assetInMap != assets.end()) {
 				++assetInMap->second.referenceCount;
+				return;
 			}
 
 			LoadAsset(uuid);

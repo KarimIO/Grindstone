@@ -6,6 +6,7 @@
 
 #include <entt/entity/registry.hpp>
 
+#include <EngineCore/Utils/DeferredDeletionQueue.hpp>
 #include <Common/Logging.hpp>
 
 namespace Grindstone {
@@ -113,6 +114,7 @@ namespace Grindstone {
 		virtual void CalculateDeltaTime();
 		virtual double GetTimeSinceLaunch() const;
 		virtual double GetDeltaTime() const;
+		virtual void PushDeletion(std::function<void()> fn);
 	public:
 		DisplayManager* displayManager = nullptr;
 		WindowManager* windowManager = nullptr;
@@ -123,6 +125,7 @@ namespace Grindstone {
 		std::function<void()> callbackReloadCsharp;
 		bool isEditor = false;
 	private:
+		Grindstone::DeferredDeletionQueue deferredDeletionQueue;
 		double currentTime = 0.0;
 		double deltaTime = 0.0;
 		std::chrono::steady_clock::time_point firstFrameTime;

@@ -91,29 +91,36 @@ void TextureImporter::QueueReloadAsset(Uuid uuid) {
 	}
 
 	EngineCore& engineCore = EngineCore::GetInstance();
-	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-
 	textureIterator->second.assetLoadStatus = AssetLoadStatus::Reloading;
-	GraphicsAPI::Image*& image = textureIterator->second.image;
-	if (image != nullptr) {
-		graphicsCore->DeleteImage(image);
-		image = nullptr;
-	}
+	GraphicsAPI::Image* image = textureIterator->second.image;
+	GraphicsAPI::Sampler* defaultSampler = textureIterator->second.defaultSampler;
+	engineCore.PushDeletion([image, defaultSampler]() {
+		EngineCore& engineCore = EngineCore::GetInstance();
+		GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+		if (image != nullptr) {
+			graphicsCore->DeleteImage(image);
+		}
 
-	GraphicsAPI::Sampler*& defaultSampler = textureIterator->second.defaultSampler;
-	if (defaultSampler != nullptr) {
-		graphicsCore->DeleteSampler(defaultSampler);
-		defaultSampler = nullptr;
-	}
+		if (defaultSampler != nullptr) {
+			graphicsCore->DeleteSampler(defaultSampler);
+		}
+	});
+	textureIterator->second.image = nullptr;
+	textureIterator->second.defaultSampler = nullptr;
 
 	LoadTextureAsset(textureIterator->second);
 }
 
 void TextureImporter::OnDeleteAsset(TextureAsset& asset) {
 	EngineCore& engineCore = EngineCore::GetInstance();
-	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-	graphicsCore->DeleteImage(asset.image);
-	graphicsCore->DeleteSampler(asset.defaultSampler);
+	Grindstone::GraphicsAPI::Image* image = asset.image;
+	Grindstone::GraphicsAPI::Sampler* sampler = asset.defaultSampler;
+	engineCore.PushDeletion([image, sampler]() {
+		EngineCore& engineCore = EngineCore::GetInstance();
+		GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+		graphicsCore->DeleteImage(image);
+		graphicsCore->DeleteSampler(sampler);
+	});
 	asset.image  = nullptr;
 	asset.defaultSampler = nullptr;
 }
