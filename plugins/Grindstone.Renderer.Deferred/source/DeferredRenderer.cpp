@@ -1947,7 +1947,7 @@ void DeferredRenderer::RenderLights(
 			auto view = registry.view<const EnvironmentMapComponent>();
 
 			bool hasEnvMap = false;
-			view.each([imageSet, &hasEnvMap](const EnvironmentMapComponent& environmentMapComponent) {
+			view.each([&imageSet, &hasEnvMap](const EnvironmentMapComponent& environmentMapComponent) {
 				// Valid env map found - ignore ther est.
 				if (hasEnvMap) {
 					return;
@@ -1969,6 +1969,7 @@ void DeferredRenderer::RenderLights(
 				// We found the correct env map and it is different from the current one - change it and then render.
 				GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::SampledImage(image);
 				imageSet.ambientOcclusionDescriptorSet->ChangeBindings(&binding, 1, 2);
+				imageSet.currentEnvironmentMapImage = image;
 			});
 
 			if (hasEnvMap) {
@@ -1978,9 +1979,6 @@ void DeferredRenderer::RenderLights(
 				iblDescriptors[2] = imageSet.ambientOcclusionDescriptorSet;
 				currentCommandBuffer->BindGraphicsDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), 0, static_cast<uint32_t>(iblDescriptors.size()));
 				currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
-			}
-			else {
-				imageSet.currentEnvironmentMapImage = nullptr;
 			}
 
 			currentCommandBuffer->EndDebugLabelSection();
