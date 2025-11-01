@@ -176,8 +176,8 @@ void EngineCore::Run() {
 
 void EngineCore::RunEditorLoopIteration() {
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
-	assetManager->ReloadQueuedAssets();
 	deferredDeletionQueue.DeleteForFrame();
+	assetManager->ReloadQueuedAssets();
 	CalculateDeltaTime();
 	systemRegistrar->EditorUpdate(GetEntityRegistry());
 	GRIND_PROFILE_END_SESSION();
