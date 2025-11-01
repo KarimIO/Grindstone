@@ -60,8 +60,7 @@ namespace Grindstone::ECS {
 		}
 		else {
 			for (entt::entity entityID : srcEntities) {
-				ComponentType srcComponentCpy = srcRegistry.get<ComponentType>(entityID);
-				dstRegistry.emplace_or_replace<ComponentType>(entityID, srcComponentCpy);
+				dstRegistry.emplace_or_replace<ComponentType>(entityID, srcRegistry.get<ComponentType>(entityID));
 			}
 		}
 	}

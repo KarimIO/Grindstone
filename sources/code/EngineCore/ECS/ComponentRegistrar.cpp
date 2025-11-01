@@ -70,9 +70,11 @@ void ComponentRegistrar::CallDestroyOnRegistry(Grindstone::WorldContextSet& worl
 	for (auto& compFnPair : componentFunctionsList) {
 		ComponentFunctions& compFns = compFnPair.second;
 
-		for (entt::entity entity : entityView) {
-			if (compFns.DestroyComponentFn != nullptr && compFns.HasComponentFn(registry, entity)) {
-				compFns.DestroyComponentFn(cxtSet, entity);
+		if (compFns.DestroyComponentFn != nullptr) {
+			for (entt::entity entity : entityView) {
+				if (compFns.HasComponentFn(registry, entity)) {
+					compFns.DestroyComponentFn(cxtSet, entity);
+				}
 			}
 		}
 	}

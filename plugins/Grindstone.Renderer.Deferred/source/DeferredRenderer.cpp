@@ -1947,25 +1947,28 @@ void DeferredRenderer::RenderLights(
 			auto view = registry.view<const EnvironmentMapComponent>();
 
 			bool hasEnvMap = false;
-			view.each([&](const EnvironmentMapComponent& environmentMapComponent) {
-				if (currentEnvironmentMapUuid == environmentMapComponent.specularTexture.uuid) {
-					hasEnvMap = true;
+			view.each([imageSet, &hasEnvMap](const EnvironmentMapComponent& environmentMapComponent) {
+				// Valid env map found - ignore ther est.
+				if (hasEnvMap) {
 					return;
 				}
 
-				currentEnvironmentMapUuid = environmentMapComponent.specularTexture.uuid;
 				const Grindstone::TextureAsset* texAsset = environmentMapComponent.specularTexture.Get();
-				if (texAsset != nullptr) {
-					GraphicsAPI::Image* tex = texAsset->image;
-					hasEnvMap = true;
-
-					GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::SampledImage(tex);
-
-					for (size_t imageIndex = 0; imageIndex < deferredRendererImageSets.size(); ++imageIndex) {
-						Grindstone::DeferredRenderer::DeferredRendererImageSet& imageSetForAO = deferredRendererImageSets[imageIndex];
-						imageSetForAO.ambientOcclusionDescriptorSet->ChangeBindings(&binding, 1, 2);
-					}
+				// Invalid env map - keep searching.
+				if (texAsset == nullptr || texAsset->image == nullptr) {
+					return;
 				}
+
+				hasEnvMap = true;
+				Grindstone::GraphicsAPI::Image* image = texAsset->image;
+				if (imageSet.currentEnvironmentMapImage == image) {
+					// We found the correct env map and we're already using it - just send it forward to render.
+					return;
+				}
+
+				// We found the correct env map and it is different from the current one - change it and then render.
+				GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::SampledImage(image);
+				imageSet.ambientOcclusionDescriptorSet->ChangeBindings(&binding, 1, 2);
 			});
 
 			if (hasEnvMap) {
@@ -1976,6 +1979,10 @@ void DeferredRenderer::RenderLights(
 				currentCommandBuffer->BindGraphicsDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), 0, static_cast<uint32_t>(iblDescriptors.size()));
 				currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 			}
+			else {
+				imageSet.currentEnvironmentMapImage = nullptr;
+			}
+
 			currentCommandBuffer->EndDebugLabelSection();
 		}
 	}

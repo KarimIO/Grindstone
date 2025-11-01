@@ -115,6 +115,9 @@ bool EngineCore::Initialize(LateCreateInfo& createInfo) {
 		inputManager->SetMainWindow(mainWindow);
 	}
 
+	const uint32_t poolSize = 2048;
+	deferredDeletionQueue.Initialize(mainWindow->GetWindowGraphicsBinding()->GetMaxFramesInFlight(), poolSize);
+
 	{
 		GRIND_PROFILE_SCOPE("Initialize Asset Managers");
 		assetManager = AllocatorCore::Allocate<Assets::AssetManager>(createInfo.assetLoader);
@@ -136,6 +139,10 @@ bool EngineCore::Initialize(LateCreateInfo& createInfo) {
 	lastFrameTime = std::chrono::steady_clock::now();
 
 	return true;
+}
+
+void EngineCore::PushDeletion(std::function<void()> fn) {
+	deferredDeletionQueue.PushDeletion(fn);
 }
 
 void EngineCore::InitializeScene(bool shouldLoadSceneFromDefaults, const char* scenePath) {
@@ -170,6 +177,7 @@ void EngineCore::Run() {
 void EngineCore::RunEditorLoopIteration() {
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
 	assetManager->ReloadQueuedAssets();
+	deferredDeletionQueue.DeleteForFrame();
 	CalculateDeltaTime();
 	systemRegistrar->EditorUpdate(GetEntityRegistry());
 	GRIND_PROFILE_END_SESSION();
@@ -177,6 +185,7 @@ void EngineCore::RunEditorLoopIteration() {
 
 void EngineCore::RunLoopIteration() {
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
+	deferredDeletionQueue.DeleteForFrame();
 	CalculateDeltaTime();
 	systemRegistrar->Update(GetEntityRegistry());
 	GRIND_PROFILE_END_SESSION();
@@ -193,6 +202,8 @@ EngineCore::~EngineCore() {
 	if (graphicsCore != nullptr) {
 		graphicsCore->WaitUntilIdle();
 	}
+
+	deferredDeletionQueue.DeleteAll();
 
 	if (windowManager != nullptr) {
 		for (unsigned int i = 0; i < windowManager->GetNumWindows(); ++i) {

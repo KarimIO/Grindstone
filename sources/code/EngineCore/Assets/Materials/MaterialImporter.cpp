@@ -417,13 +417,22 @@ void MaterialImporter::QueueReloadAsset(Uuid uuid) {
 		return;
 	}
 
-	if (materialAsset.materialDescriptorSet != nullptr) {
-		graphicsCore->DeleteDescriptorSet(materialAsset.materialDescriptorSet);
-	}
+	EngineCore& engineCore = EngineCore::GetInstance();
+	GraphicsAPI::DescriptorSet* materialDescriptorSet = materialAsset.materialDescriptorSet;
+	GraphicsAPI::Buffer* materialDataUniformBuffer = materialAsset.materialDataUniformBuffer;
+	engineCore.PushDeletion([materialDescriptorSet, materialDataUniformBuffer]() {
+		EngineCore& engineCore = EngineCore::GetInstance();
+		GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+		if (materialDescriptorSet != nullptr) {
+			graphicsCore->DeleteDescriptorSet(materialDescriptorSet);
+		}
 
-	if (materialAsset.materialDataUniformBuffer != nullptr) {
-		graphicsCore->DeleteBuffer(materialAsset.materialDataUniformBuffer);
-	}
+		if (materialDataUniformBuffer) {
+			graphicsCore->DeleteBuffer(materialDataUniformBuffer);
+		}
+	});
+	materialAsset.materialDescriptorSet = nullptr;
+	materialAsset.materialDataUniformBuffer = nullptr;
 
 	materialAsset.name = result.displayName;
 	materialAsset.assetLoadStatus = AssetLoadStatus::Reloading;
