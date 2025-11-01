@@ -99,13 +99,31 @@ void Mesh3dImporter::PrepareLayouts() {
 }
 
 void Mesh3dImporter::OnDeleteAsset(Grindstone::Mesh3dAsset& asset) {
-	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
-	graphicsCore->DeleteVertexArrayObject(asset.vertexArrayObject);
-	graphicsCore->DeleteBuffer(asset.positionBuffer);
-	graphicsCore->DeleteBuffer(asset.normalBuffer);
-	graphicsCore->DeleteBuffer(asset.tangentBuffer);
-	graphicsCore->DeleteBuffer(asset.uvBuffer);
-	graphicsCore->DeleteBuffer(asset.indexBuffer);
+	EngineCore& engineCore = EngineCore::GetInstance();
+	Grindstone::GraphicsAPI::VertexArrayObject* vertexArrayObject = asset.vertexArrayObject;
+	Grindstone::GraphicsAPI::Buffer* positionBuffer = asset.positionBuffer;
+	Grindstone::GraphicsAPI::Buffer* normalBuffer = asset.normalBuffer;
+	Grindstone::GraphicsAPI::Buffer* tangentBuffer = asset.tangentBuffer;
+	Grindstone::GraphicsAPI::Buffer* uvBuffer = asset.uvBuffer;
+	Grindstone::GraphicsAPI::Buffer* indexBuffer = asset.indexBuffer;
+	engineCore.PushDeletion([vertexArrayObject, positionBuffer, normalBuffer, tangentBuffer, uvBuffer, indexBuffer]() {
+		EngineCore& engineCore = EngineCore::GetInstance();
+		GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+		graphicsCore->DeleteVertexArrayObject(vertexArrayObject);
+		graphicsCore->DeleteBuffer(positionBuffer);
+		graphicsCore->DeleteBuffer(normalBuffer);
+		graphicsCore->DeleteBuffer(tangentBuffer);
+		graphicsCore->DeleteBuffer(uvBuffer);
+		graphicsCore->DeleteBuffer(indexBuffer);
+	});
+	asset.vertexArrayObject = nullptr;
+	asset.positionBuffer = nullptr;
+	asset.normalBuffer = nullptr;
+	asset.tangentBuffer = nullptr;
+	asset.uvBuffer = nullptr;
+	asset.indexBuffer = nullptr;
+
+	asset.submeshes.clear();
 }
 
 void Mesh3dImporter::QueueReloadAsset(Uuid uuid) {
@@ -117,12 +135,7 @@ void Mesh3dImporter::QueueReloadAsset(Uuid uuid) {
 
 	Grindstone::Mesh3dAsset& meshAsset = meshInMap->second;
 	meshAsset.assetLoadStatus = AssetLoadStatus::Reloading;
-	if (meshAsset.vertexArrayObject != nullptr) {
-		graphicsCore->DeleteVertexArrayObject(meshAsset.vertexArrayObject);
-	}
-
-	meshAsset.submeshes.clear();
-
+	OnDeleteAsset(meshAsset);
 	ImportModelFile(meshAsset);
 }
 

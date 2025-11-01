@@ -6,14 +6,14 @@
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 
-#include <Grindstone.Renderables.3D//include/pch.hpp>
-#include <Grindstone.Renderables.3D//include/Assets/Mesh3dAsset.hpp>
-#include <Grindstone.Renderables.3D//include/Assets/Mesh3dImporter.hpp>
-#include <Grindstone.Renderables.3D//include/Assets/RigAsset.hpp>
-#include <Grindstone.Renderables.3D//include/Assets/RigImporter.hpp>
-#include <Grindstone.Renderables.3D//include/Mesh3dRenderer.hpp>
-#include <Grindstone.Renderables.3D//include/Components/MeshComponent.hpp>
-#include <Grindstone.Renderables.3D//include/Components/MeshRendererComponent.hpp>
+#include <Grindstone.Renderables.3D/include/pch.hpp>
+#include <Grindstone.Renderables.3D/include/Assets/Mesh3dAsset.hpp>
+#include <Grindstone.Renderables.3D/include/Assets/Mesh3dImporter.hpp>
+#include <Grindstone.Renderables.3D/include/Assets/RigAsset.hpp>
+#include <Grindstone.Renderables.3D/include/Assets/RigImporter.hpp>
+#include <Grindstone.Renderables.3D/include/Mesh3dRenderer.hpp>
+#include <Grindstone.Renderables.3D/include/Components/MeshComponent.hpp>
+#include <Grindstone.Renderables.3D/include/Components/MeshRendererComponent.hpp>
 
 using namespace Grindstone;
 using namespace Grindstone::Memory;
@@ -60,6 +60,11 @@ static void DestroyMeshRendererComponent(Grindstone::WorldContextSet& cxtSet, en
 	graphicsCore->DeleteBuffer(meshRendererComponent.perDrawUniformBuffer);
 }
 
+static void DestroyMeshComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+	MeshComponent& meshComponent = cxtSet.GetEntityRegistry().get<MeshComponent>(entity);
+	meshComponent.mesh.Release();
+}
+
 
 extern "C" {
 	RENDERABLES_3D_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
@@ -74,7 +79,7 @@ extern "C" {
 		mesh3dRenderer = AllocatorCore::Allocate<Mesh3dRenderer>(engineCore);
 
 		pluginInterface->RegisterAssetType(Mesh3dAsset::GetStaticType(), "Mesh3dAsset", mesh3dImporter);
-		pluginInterface->RegisterComponent<MeshComponent>();
+		pluginInterface->RegisterComponent<MeshComponent>(nullptr, DestroyMeshComponent);
 		pluginInterface->RegisterComponent<MeshRendererComponent>(SetupMeshRendererComponent, DestroyMeshRendererComponent);
 		pluginInterface->RegisterAssetRenderer(mesh3dRenderer);
 	}
