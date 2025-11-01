@@ -97,13 +97,8 @@ void TextureImporter::QueueReloadAsset(Uuid uuid) {
 	engineCore.PushDeletion([image, defaultSampler]() {
 		EngineCore& engineCore = EngineCore::GetInstance();
 		GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-		if (image != nullptr) {
-			graphicsCore->DeleteImage(image);
-		}
-
-		if (defaultSampler != nullptr) {
-			graphicsCore->DeleteSampler(defaultSampler);
-		}
+		graphicsCore->DeleteImage(image);
+		graphicsCore->DeleteSampler(defaultSampler);
 	});
 	textureIterator->second.image = nullptr;
 	textureIterator->second.defaultSampler = nullptr;
