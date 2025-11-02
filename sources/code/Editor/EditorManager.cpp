@@ -4,6 +4,7 @@
 #include <string>
 #include <Windows.h>
 
+#include <Common/Console/Cvars.hpp>
 #include <Common/Event/BaseEvent.hpp>
 #include <Common/Event/EventType.hpp>
 #include <Common/Event/KeyEvent.hpp>
@@ -312,6 +313,7 @@ bool Manager::LoadEngine() {
 	pluginInterface->SetEditorInterface(Grindstone::Memory::AllocatorCore::Allocate<Grindstone::Plugins::EditorPluginInterface>());
 	Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
 	Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
+	Grindstone::CvarSystem::SetInstance(pluginInterface->GetCvarSystem());
 
 	EngineCore::LateCreateInfo lateCreateInfo;
 	lateCreateInfo.assetLoader = Grindstone::Memory::AllocatorCore::Allocate<Assets::FileAssetLoader>();

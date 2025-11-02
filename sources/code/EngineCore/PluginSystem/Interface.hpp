@@ -32,6 +32,7 @@ namespace Grindstone {
 		class SystemRegistrar;
 	}
 
+	class CvarSystem;
 	class WindowManager;
 	class DisplayManager;
 	class BaseAssetRenderer;
@@ -70,6 +71,7 @@ namespace Grindstone {
 			virtual Grindstone::HashedString::HashMap* GetHashedStringMap() const;
 			virtual Grindstone::Logger::LoggerState* GetLoggerState() const;
 			virtual Grindstone::Memory::AllocatorCore::AllocatorState* GetAllocatorState() const;
+			virtual Grindstone::CvarSystem* GetCvarSystem() const;
 			virtual void RegisterWorldContextFactory(Grindstone::HashedString contextName, Grindstone::UniquePtr<Grindstone::WorldContext> (*FactoryFn)());
 			virtual void UnregisterWorldContextFactory(Grindstone::HashedString contextName);
 

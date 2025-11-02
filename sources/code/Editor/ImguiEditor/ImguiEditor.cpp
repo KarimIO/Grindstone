@@ -30,6 +30,7 @@
 #include "AssetPicker.hpp"
 #include "ImguiInput.hpp"
 #include "TracingPanel.hpp"
+#include "CvarBrowser.hpp"
 #include "ImguiRenderer.hpp"
 
 using namespace Grindstone::Editor::ImguiEditor;
@@ -109,6 +110,7 @@ void ImguiEditor::CreateWindows() {
 	assetPicker = AllocatorCore::Allocate<AssetPicker>();
 	statusBar = AllocatorCore::Allocate<StatusBar>(imguiRenderer);
 	tracingPanel = AllocatorCore::Allocate<TracingPanel>();
+	cvarBrowser = AllocatorCore::Allocate<CvarBrowser>();
 
 	auto eventDispatcher = engineCore->GetEventDispatcher();
 	eventDispatcher->AddEventListener(
@@ -124,6 +126,7 @@ ImguiEditor::~ImguiEditor() {
 		AllocatorCore::Free(input);
 	}
 
+	AllocatorCore::Free(cvarBrowser);
 	AllocatorCore::Free(sceneHeirarchyPanel);
 	AllocatorCore::Free(inspectorPanel);
 	AllocatorCore::Free(assetBrowserPanel);
@@ -320,6 +323,7 @@ void ImguiEditor::Render() {
 	pluginsWindow->Render();
 	statusBar->Render();
 	assetPicker->Render();
+	cvarBrowser->Render();
 }
 
 void ImguiEditor::PromptAssetPicker(AssetType assetType, AssetPicker::AssetPickerCallback callback) {
@@ -415,6 +419,7 @@ void ImguiEditor::RenderDockspace() {
 		ImGui::DockBuilderDockWindow("Inspector", dockIdInspectorArea);
 		ImGui::DockBuilderDockWindow("Stats", dockIdInspectorArea);
 		ImGui::DockBuilderDockWindow("Systems", dockIdInspectorArea);
+		ImGui::DockBuilderDockWindow("Cvar Browser", dockIdInspectorArea);
 
 		ImGuiDockNode* node = ImGui::DockBuilderGetNode(dockIdControlbarArea);
 		node->LocalFlags |= ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoResize;

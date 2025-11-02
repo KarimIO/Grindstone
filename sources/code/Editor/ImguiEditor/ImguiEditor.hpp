@@ -47,6 +47,7 @@ namespace Grindstone {
 			class StatusBar;
 			class AssetPicker;
 			class TracingPanel;
+			class CvarBrowser;
 
 			class ImguiEditor {
 			public:
@@ -81,6 +82,7 @@ namespace Grindstone {
 				SceneHeirarchyPanel* sceneHeirarchyPanel = nullptr;
 				AssetBrowserPanel* assetBrowserPanel = nullptr;
 				AssetPicker* assetPicker = nullptr;
+				CvarBrowser* cvarBrowser = nullptr;
 				Settings::UserSettingsWindow* userSettingsWindow = nullptr;
 				Settings::ProjectSettingsWindow* projectSettingsWindow = nullptr;
 				InspectorPanel* inspectorPanel = nullptr;

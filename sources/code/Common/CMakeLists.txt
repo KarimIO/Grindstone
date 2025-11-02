@@ -27,6 +27,11 @@ file(GLOB_RECURSE HEADER_ASSETS "${COMMON_DIR}/Assets/*.hpp")
 source_group("Assets\\Source Files" FILES ${SOURCE_ASSETS})
 source_group("Assets\\Header Files" FILES ${HEADER_ASSETS})
 
+file(GLOB_RECURSE SOURCE_CONSOLE "${COMMON_DIR}/Console/*.cpp")
+file(GLOB_RECURSE HEADER_CONSOLE "${COMMON_DIR}/Console/*.hpp")
+source_group("Console\\Source Files" FILES ${SOURCE_CONSOLE})
+source_group("Console\\Header Files" FILES ${HEADER_CONSOLE})
+
 file(GLOB_RECURSE SOURCE_CONTAINERS "${COMMON_DIR}/Containers/*.cpp")
 file(GLOB_RECURSE HEADER_CONTAINERS "${COMMON_DIR}/Containers/*.hpp")
 source_group("Containers\\Source Files" FILES ${SOURCE_CONTAINERS})
@@ -85,6 +90,7 @@ source_group("Window\\Header Files" FILES ${HEADER_WINDOW})
 set(COMMON_SOURCES
     ${SOURCE_MAIN}
     ${SOURCE_ASSETS}
+    ${SOURCE_CONSOLE}
     ${SOURCE_CONTAINERS}
     ${SOURCE_DISPLAY}
     ${SOURCE_EVENT}
@@ -100,6 +106,7 @@ set(COMMON_SOURCES
 
 set(COMMON_HEADERS
     ${HEADER_ASSETS}
+    ${HEADER_CONSOLE}
     ${HEADER_CONTAINERS}
     ${HEADER_DISPLAY}
     ${HEADER_EVENT}
