@@ -17,6 +17,7 @@
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <Common/Event/WindowEvent.hpp>
 #include <Common/Graphics/Core.hpp>
+#include <Common/Console/Cvars.hpp>
 #include <Common/Window/WindowManager.hpp>
 
 #include "Logger.hpp"
@@ -42,6 +43,8 @@ bool EngineCore::EarlyInitialize(EarlyCreateInfo& createInfo) {
 
 	Grindstone::HashedString::CreateHashMap();
 	eventDispatcher = AllocatorCore::Allocate<Events::Dispatcher>();
+	auto cvarSystem = Grindstone::CreateCvarSystemInstance();
+	cvarSystem->CreateFloatCvar("test.cvar", "This is a test of the cvar system.", 0.0, 2.0, Grindstone::CvarFlags::EditorNumberSlider);
 
 	firstFrameTime = std::chrono::steady_clock::now();
 
