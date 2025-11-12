@@ -22,6 +22,7 @@
 			]
 		},
 		"imguizmo",
+		"joltphysics",
 		"libgit2",
 		"opengl",
 		"opengl-registry",
