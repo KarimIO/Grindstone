@@ -93,7 +93,7 @@ static bool RunCommand(char* commandLine, const char* workingDirectory) {
 
 static bool RunCMakeCommand(const std::vector<std::string>& cmakeTargets) {
 	std::string workingDirectory = EngineCore::GetInstance().GetEngineBinaryPath().parent_path().string();
-	
+
 	std::ostringstream cmdStream;
 	cmdStream << "cmake";
 	cmdStream << " --build .";
