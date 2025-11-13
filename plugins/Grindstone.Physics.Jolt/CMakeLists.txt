@@ -32,7 +32,9 @@ target_compile_features(PluginJoltPhysics PRIVATE cxx_std_20)
 set_target_properties(PluginJoltPhysics PROPERTIES FOLDER Plugins/Physics)
 
 find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")
-target_compile_definitions(PluginJoltPhysics PUBLIC JOLT_PHYSICS PHYSICS_DLL GLM_ENABLE_EXPERIMENTAL JPH_DEBUG_RENDERER)
+target_compile_definitions(PluginJoltPhysics PUBLIC
+	JOLT_PHYSICS PHYSICS_DLL GLM_ENABLE_EXPERIMENTAL
+)
 target_include_directories(PluginJoltPhysics PUBLIC ${CODE_DIR} ${ENTT_INCLUDE_DIRS} ${PLUGIN_DIR})
 
 set_target_properties(PluginJoltPhysics PROPERTIES

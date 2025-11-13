@@ -128,7 +128,7 @@ void RigidBodyComponent::ApplyForce(Float3 pos, Float3 force) {
 	Grindstone::WorldContextSet* cxtSet = mgr->GetActiveWorldContextSet();
 	Grindstone::Physics::WorldContext* physWorldContext = static_cast<Grindstone::Physics::WorldContext*>(cxtSet->GetContext(physicsWorldContextName));
 
-	physWorldContext->GetBodyInterface().AddForce(rigidBody, JPH::Vec3(force.x, force.y, force.z), JPH::Vec3(pos.x, pos.y, pos.z));
+	physWorldContext->GetBodyInterface().AddForce(rigidBody, JPH::Vec3(force.x, force.y, force.z), JPH::RVec3(pos.x, pos.y, pos.z));
 }
 
 void RigidBodyComponent::ApplyCentralForce(Float3 force) {
@@ -144,7 +144,7 @@ void RigidBodyComponent::ApplyImpulse(Float3 pos, Float3 force) {
 	Grindstone::WorldContextSet* cxtSet = mgr->GetActiveWorldContextSet();
 	Grindstone::Physics::WorldContext* physWorldContext = static_cast<Grindstone::Physics::WorldContext*>(cxtSet->GetContext(physicsWorldContextName));
 
-	physWorldContext->GetBodyInterface().AddImpulse(rigidBody, JPH::Vec3(force.x, force.y, force.z), JPH::Vec3(pos.x, pos.y, pos.z));
+	physWorldContext->GetBodyInterface().AddImpulse(rigidBody, JPH::Vec3(force.x, force.y, force.z), JPH::RVec3(pos.x, pos.y, pos.z));
 }
 
 void RigidBodyComponent::ApplyCentralImpulse(Float3 force) {
