@@ -165,7 +165,6 @@ set_property(TARGET EngineCore PROPERTY COMPILE_WARNING_AS_ERROR ON)
 target_compile_features(EngineCore PRIVATE cxx_std_20)
 target_compile_definitions(EngineCore PUBLIC ENGINE_CORE NOMINMAX GLM_ENABLE_EXPERIMENTAL)
 
-find_package(OpenAL CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 
 target_include_directories(EngineCore PUBLIC ../)
@@ -173,7 +172,6 @@ target_include_directories(EngineCore PUBLIC ../)
 target_link_libraries(EngineCore
 	${CORE_LIBS}
 	Common
-	OpenAL::OpenAL
 )
 
 target_precompile_headers(EngineCore PUBLIC pch.hpp)
