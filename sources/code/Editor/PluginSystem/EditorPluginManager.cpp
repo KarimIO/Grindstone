@@ -16,6 +16,12 @@ using namespace Grindstone::Utilities;
 #include <vector>
 #include <thread>
 
+#if _DEBUG
+constexpr const char* configuration = "Debug";
+#else
+constexpr const char* configuration = "Release";
+#endif
+
 static void ReadPipeLoop(HANDLE pipe, Grindstone::LogSeverity severity) {
 	DWORD bytesRead;
 	char buffer[4096]{ 0 };
@@ -91,7 +97,7 @@ static bool RunCMakeCommand(const std::vector<std::string>& cmakeTargets) {
 	std::ostringstream cmdStream;
 	cmdStream << "cmake";
 	cmdStream << " --build .";
-	cmdStream << " --config Release";
+	cmdStream << " --config " << configuration;
 	cmdStream << " --parallel";
 	cmdStream << " --target";
 	for (const std::string& target : cmakeTargets) {
@@ -106,6 +112,7 @@ static bool RunDotnetCommand(const std::vector<std::string>& dotnetTargets) {
 
 	std::ostringstream cmdStream;
 	cmdStream << "dotnet build ";
+	cmdStream << "--configuration " << configuration << " ";
 	for (const std::string& target : dotnetTargets) {
 		cmdStream << " \"" << target.c_str() << "\"";
 	}
