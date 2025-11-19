@@ -7,4 +7,5 @@ Grindstone.Editor.TextureImporter/CMakeLists.txt
 Grindstone.Physics.Bullet/CMakeLists.txt
 Grindstone.Renderables.3D/CMakeLists.txt
 Grindstone.Renderer.Deferred/CMakeLists.txt
+Grindstone.Renderer.RenderGraph/CMakeLists.txt
 Grindstone.Script.CSharp/CMakeLists.txt
