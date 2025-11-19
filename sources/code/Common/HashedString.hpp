@@ -90,6 +90,8 @@ namespace Grindstone {
 		uint64_t hash;
 		const char* literal;
 	};
+
+	Grindstone::HashedString operator ""_hash(const char* str, size_t len);
 }
 
 namespace std {
