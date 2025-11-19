@@ -1,5 +1,6 @@
 # Project Files
 *.sln
+*.slnx
 *.tlog
 *.vcxproj*
 x64/*
