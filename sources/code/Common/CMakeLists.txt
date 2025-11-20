@@ -19,6 +19,7 @@ file(
     ${COMMON_DIR}/IntTypes.hpp
     ${COMMON_DIR}/Logging.hpp
     ${COMMON_DIR}/Math.hpp
+    ${COMMON_DIR}/Observable.hpp
     ${COMMON_DIR}/String.hpp
 )
 
