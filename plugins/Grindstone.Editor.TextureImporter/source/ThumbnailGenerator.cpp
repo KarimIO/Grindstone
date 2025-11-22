@@ -2,8 +2,8 @@
 #include <EngineCore/WorldContext/WorldContextManager.hpp>
 #include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
 #include <EngineCore/Rendering/RenderPassRegistry.hpp>
-#include <Grindstone.Renderables.3D/include/Components/MeshComponent.hpp>
-#include <Grindstone.Renderables.3D/include/Components/MeshRendererComponent.hpp>
+#include <EngineCore/Assets/Textures/TextureAsset.hpp>
+#include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 #include <Grindstone.Editor.TextureImporter/include/ThumbnailGenerator.hpp>
 
 static struct ThumbnailGeneratorContext {

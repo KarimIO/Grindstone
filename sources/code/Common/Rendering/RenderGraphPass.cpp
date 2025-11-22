@@ -1,4 +1,4 @@
-#include <Grindstone.Renderer.RenderGraph/include/RenderGraphPass.hpp>
+#include <Common/Rendering/RenderGraphPass.hpp>
 
 using namespace Grindstone::Renderer;
 

@@ -134,6 +134,7 @@ target_compile_features(Common PRIVATE cxx_std_20)
 target_link_libraries(Common glfw)
 
 target_include_directories(Common PUBLIC ${COMMON_DIR} ${CODE_DIR} ${PLUGIN_DIR})
+target_compile_definitions(Common PUBLIC NOMINMAX)
 
 message(STATUS
 "Common provides CMake targets:
