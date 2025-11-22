@@ -1,4 +1,4 @@
-#include <Grindstone.Renderer.RenderGraph/include/RenderGraphBuilder.hpp>
+#include <Common/Rendering/RenderGraphBuilder.hpp>
 
 using namespace Grindstone::Renderer;
 

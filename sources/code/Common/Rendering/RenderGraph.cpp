@@ -1,4 +1,4 @@
-#include <Grindstone.Renderer.RenderGraph/include/RenderGraph.hpp>
+#include <Common/Rendering/RenderGraph.hpp>
 
 void Grindstone::Renderer::RenderGraph::Print() {
 }

@@ -2,7 +2,6 @@
 #include <Grindstone.Editor.PipelineSetImporter/include/PipelineSet/Converter/ResolvedStateTree.hpp>
 #include <Grindstone.Editor.PipelineSetImporter/include/PipelineSet/Converter/ShaderCompiler.hpp>
 
-#define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <wrl/client.h>

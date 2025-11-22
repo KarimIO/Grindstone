@@ -1,5 +1,3 @@
-#define NOMINMAX
-
 #include <cassert>
 
 #ifdef _WIN32
