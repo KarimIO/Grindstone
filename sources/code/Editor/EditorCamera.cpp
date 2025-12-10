@@ -246,6 +246,12 @@ EditorCamera::~EditorCamera() {
 }
 
 void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuffer* commandBuffer, int x, int y) {
+	y = height - y;
+
+	if (x < 0 || y < 0 || x > width || y > height) {
+		return;
+	}
+
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
 	EngineCore& engineCore = editorManager.GetEngineCore();
 	entt::registry& registry = engineCore.GetEntityRegistry();
@@ -282,8 +288,6 @@ void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuff
 	matrixBuffer.projectionMatrix = projection;
 	matrixBuffer.viewMatrix = view;
 	mousePickMatrixBuffer[frameIndex]->UploadData(&matrixBuffer);
-
-	y = height - y;
 
 	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 	commandBuffer->SetScissor(x, y, 1, 1);
