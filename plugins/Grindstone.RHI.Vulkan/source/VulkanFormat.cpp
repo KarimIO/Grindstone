@@ -3,6 +3,38 @@
 #include <Grindstone.RHI.Vulkan/include/VulkanFormat.hpp>
 
 namespace Grindstone::GraphicsAPI::Vulkan {
+	VkAttachmentLoadOp TranslateLoadOpToVulkan(Grindstone::GraphicsAPI::LoadOp loadOp) {
+		switch (loadOp) {
+		case Grindstone::GraphicsAPI::LoadOp::Clear:
+			return VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_CLEAR;
+		case Grindstone::GraphicsAPI::LoadOp::DontCare:
+			return VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		case Grindstone::GraphicsAPI::LoadOp::Load:
+			return VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_LOAD;
+		}
+
+		assert(false && "TranslateLoadOpToVulkan: Invalid LoadOp!");
+		return VkAttachmentLoadOp::VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	}
+
+	VkAttachmentStoreOp TranslateStoreOpToVulkan(Grindstone::GraphicsAPI::StoreOp storeOp) {
+		switch (storeOp) {
+		case Grindstone::GraphicsAPI::StoreOp::DontCare:
+			return VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		case Grindstone::GraphicsAPI::StoreOp::Store:
+			return VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_STORE;
+		}
+
+		assert(false && "TranslateStoreOpToVulkan: Invalid StoreOp!");
+		return VkAttachmentStoreOp::VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	}
+
+	VkClearValue TranslateClearUnionToVulkan(Grindstone::GraphicsAPI::ClearUnion clearUnion) {
+		VkClearValue value;
+		memcpy(&value, &clearUnion, sizeof(VkClearValue));
+		return value;
+	}
+
 	VkFilter TranslateFilterToVulkan(TextureFilter f) {
 		switch (f) {
 		case TextureFilter::Nearest:

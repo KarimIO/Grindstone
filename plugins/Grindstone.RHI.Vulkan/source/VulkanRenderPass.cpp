@@ -147,3 +147,27 @@ void Vulkan::RenderPass::Cleanup() {
 VkRenderPass Vulkan::RenderPass::GetRenderPassHandle() const {
 	return renderPass;
 }
+
+size_t Vulkan::RenderPass::GetColorAttachmentCount() const {
+	return colorAttachments.size();
+}
+
+VkFormat Vulkan::RenderPass::GetVkColorFormat(size_t i) const {
+	return Grindstone::GraphicsAPI::Vulkan::TranslateFormatToVulkan(colorAttachments[i].colorFormat);
+}
+
+VkFormat Vulkan::RenderPass::GetVkDepthFormat() const {
+	Grindstone::GraphicsAPI::FormatDepthStencilType type = Grindstone::GraphicsAPI::GetFormatDepthStencilType(depthFormat);
+
+	return (static_cast<uint8_t>(type) & static_cast<uint8_t>(Grindstone::GraphicsAPI::FormatDepthStencilType::Depth))
+		? Grindstone::GraphicsAPI::Vulkan::TranslateFormatToVulkan(depthFormat)
+		: VkFormat::VK_FORMAT_UNDEFINED;
+}
+
+VkFormat Vulkan::RenderPass::GetVkStencilFormat() const {
+	Grindstone::GraphicsAPI::FormatDepthStencilType type = Grindstone::GraphicsAPI::GetFormatDepthStencilType(depthFormat);
+	
+	return (static_cast<uint8_t>(type) & static_cast<uint8_t>(Grindstone::GraphicsAPI::FormatDepthStencilType::Stencil))
+		? Grindstone::GraphicsAPI::Vulkan::TranslateFormatToVulkan(depthFormat)
+		: VkFormat::VK_FORMAT_UNDEFINED;
+}

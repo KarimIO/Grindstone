@@ -106,7 +106,7 @@ static Grindstone::GraphicsAPI::RenderPass* CreateMainRenderPass(Grindstone::Gra
 	mainRenderPassCreateInfo.debugName = "Main HDR Render Pass";
 	mainRenderPassCreateInfo.colorAttachments = &attachment;
 	mainRenderPassCreateInfo.colorAttachmentCount = 1;
-	mainRenderPassCreateInfo.depthFormat = depthFormat;
+	mainRenderPassCreateInfo.depthFormat = Grindstone::GraphicsAPI::Format::Invalid;
 	mainRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 	memcpy(mainRenderPassCreateInfo.debugColor, debugColor, sizeof(float) * 4);
 	Grindstone::GraphicsAPI::RenderPass* rp = graphicsCore->CreateRenderPass(mainRenderPassCreateInfo);
@@ -122,7 +122,7 @@ static Grindstone::GraphicsAPI::RenderPass* CreateLightingRenderPass(Grindstone:
 	lightingRenderPassCreateInfo.debugName = "Deferred Light Render Pass";
 	lightingRenderPassCreateInfo.colorAttachments = &attachment;
 	lightingRenderPassCreateInfo.colorAttachmentCount = 1;
-	lightingRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::Invalid;
+	lightingRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
 	lightingRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 	memcpy(lightingRenderPassCreateInfo.debugColor, debugColor, sizeof(float) * 4);
 	Grindstone::GraphicsAPI::RenderPass* rp = graphicsCore->CreateRenderPass(lightingRenderPassCreateInfo);

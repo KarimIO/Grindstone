@@ -231,6 +231,20 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 	dynamicInfo.pDynamicStates = dynamicStates.data();
 	dynamicInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
 
+	std::vector<VkFormat> formats;
+	formats.resize(renderPass->GetColorAttachmentCount());
+
+	for (size_t i = 0; i < formats.size(); ++i) {
+		formats[i] = renderPass->GetVkColorFormat(i);
+	}
+
+	VkPipelineRenderingCreateInfoKHR pipelineRendering{ VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR };
+	pipelineRendering.pNext = VK_NULL_HANDLE;
+	pipelineRendering.colorAttachmentCount = static_cast<uint32_t>(formats.size());
+	pipelineRendering.pColorAttachmentFormats = formats.data();
+	pipelineRendering.depthAttachmentFormat = renderPass->GetVkDepthFormat();
+	pipelineRendering.stencilAttachmentFormat = renderPass->GetVkStencilFormat();
+
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
@@ -246,9 +260,8 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 	pipelineInfo.subpass = 0;
 	pipelineInfo.pDynamicState = &dynamicInfo;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-	pipelineInfo.renderPass = (renderPass != nullptr)
-		? renderPass->GetRenderPassHandle()
-		: nullptr;
+	pipelineInfo.renderPass = nullptr;
+	pipelineInfo.pNext = &pipelineRendering;
 
 	if (vkCreateGraphicsPipelines(Vulkan::Core::Get().GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create graphics pipeline!");

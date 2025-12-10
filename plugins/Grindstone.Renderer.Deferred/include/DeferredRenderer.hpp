@@ -32,7 +32,7 @@ namespace Grindstone {
 			glm::mat4 projectionMatrix,
 			glm::mat4 viewMatrix,
 			glm::vec3 eyePos,
-			GraphicsAPI::Framebuffer* outputFramebuffer
+			GraphicsAPI::RenderAttachment& outRenderAttachment
 		) override;
 
 		virtual uint16_t GetRenderModeCount() const override;
@@ -59,20 +59,25 @@ namespace Grindstone {
 
 	private:
 		struct DeferredRendererImageSet {
-			GraphicsAPI::Framebuffer* gbuffer = nullptr;
 			GraphicsAPI::Image* gbufferDepthStencilTarget = nullptr;
-			GraphicsAPI::Framebuffer* litHdrFramebuffer = nullptr;
-			GraphicsAPI::Framebuffer* lightingFramebuffer = nullptr;
 			GraphicsAPI::Image* litHdrRenderTarget = nullptr;
 			GraphicsAPI::Image* ssrRenderTarget = nullptr;
 			GraphicsAPI::Image* gbufferAlbedoRenderTarget = nullptr;
 			GraphicsAPI::Image* gbufferNormalRenderTarget = nullptr;
 			GraphicsAPI::Image* gbufferSpecularRoughnessRenderTarget = nullptr;
-
-			GraphicsAPI::Framebuffer* ambientOcclusionFramebuffer = nullptr;
 			GraphicsAPI::Image* ambientOcclusionRenderTarget = nullptr;
-			GraphicsAPI::Framebuffer* blurredAmbientOcclusionFramebuffer = nullptr;
 			GraphicsAPI::Image* blurredAmbientOcclusionRenderTarget = nullptr;
+
+			Grindstone::GraphicsAPI::RenderAttachment gbufferDepthStencilAttachment;
+			Grindstone::GraphicsAPI::RenderAttachment forwardDepthStencilAttachment;
+			Grindstone::GraphicsAPI::RenderAttachment litHdrAttachment;
+			Grindstone::GraphicsAPI::RenderAttachment lightingAttachment;
+			Grindstone::GraphicsAPI::RenderAttachment ssrAttachment;
+			Grindstone::GraphicsAPI::RenderAttachment gbufferAlbedoAttachment;
+			Grindstone::GraphicsAPI::RenderAttachment gbufferNormalAttachment;
+			Grindstone::GraphicsAPI::RenderAttachment gbufferSpecularRoughnessAttachment;
+			Grindstone::GraphicsAPI::RenderAttachment ambientOcclusionAttachment;
+			Grindstone::GraphicsAPI::RenderAttachment blurredAmbientOcclusionAttachment;
 
 			GraphicsAPI::Buffer* globalUniformBufferObject = nullptr;
 			GraphicsAPI::Buffer* debugUniformBufferObject = nullptr;
@@ -97,13 +102,13 @@ namespace Grindstone {
 			GraphicsAPI::Image* farDofRenderTarget = nullptr;
 			GraphicsAPI::Image* nearBlurredDofRenderTarget = nullptr;
 			GraphicsAPI::Image* farBlurredDofRenderTarget = nullptr;
-
-			GraphicsAPI::Framebuffer* dofSeparationFramebuffer = nullptr;
-			GraphicsAPI::Framebuffer* dofNearBlurFramebuffer = nullptr;
-			GraphicsAPI::Framebuffer* dofFarBlurFramebuffer = nullptr;
-			GraphicsAPI::Framebuffer* dofCombinationFramebuffer = nullptr;
+			Grindstone::GraphicsAPI::RenderAttachment nearDofAttachment;
+			Grindstone::GraphicsAPI::RenderAttachment farDofAttachment;
+			Grindstone::GraphicsAPI::RenderAttachment nearBlurredDofAttachment;
+			Grindstone::GraphicsAPI::RenderAttachment farBlurredDofAttachment;
 
 			std::vector<GraphicsAPI::Image*> bloomRenderTargets;
+			std::vector<GraphicsAPI::RenderAttachment> bloomAttachment;
 			std::vector<GraphicsAPI::DescriptorSet*> bloomDescriptorSets;
 
 			Grindstone::Rendering::GeometryRenderStats renderingStatsOpaque;
@@ -128,8 +133,8 @@ namespace Grindstone {
 		void RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* commandBuffer);
 		void RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffer, entt::registry& registry);
 		void RenderLights(uint32_t imageIndex, GraphicsAPI::CommandBuffer* currentCommandBuffer, entt::registry& registry);
-		void PostProcess(uint32_t imageIndex, GraphicsAPI::Framebuffer* framebuffer, GraphicsAPI::CommandBuffer* currentCommandBuffer);
-		void Debug(uint32_t imageIndex, GraphicsAPI::Framebuffer* outputFramebuffer, GraphicsAPI::CommandBuffer* commandBuffer);
+		void PostProcess(uint32_t imageIndex, GraphicsAPI::RenderAttachment& outRenderAttachment, GraphicsAPI::CommandBuffer* currentCommandBuffer);
+		void Debug(uint32_t imageIndex, GraphicsAPI::RenderAttachment& renderAttachment, GraphicsAPI::CommandBuffer* commandBuffer);
 
 		void CreateDepthOfFieldResources();
 		void CreateBloomResources();
@@ -168,8 +173,9 @@ namespace Grindstone {
 
 		uint32_t framebufferWidth = 0u;
 		uint32_t framebufferHeight = 0u;
-		uint32_t renderWidth = 0u;
-		uint32_t renderHeight = 0u;
+		Grindstone::Math::IntRect2D renderArea;
+		Grindstone::Math::IntRect2D halfRenderArea;
+		Grindstone::Math::IntRect2D quarterRenderArea;
 
 		size_t bloomStoredMipLevelCount = 0;
 		size_t bloomMipLevelCount = 0;

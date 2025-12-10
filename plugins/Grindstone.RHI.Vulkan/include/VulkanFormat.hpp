@@ -5,6 +5,10 @@
 #include <vulkan/vulkan.h>
 
 namespace Grindstone::GraphicsAPI::Vulkan {
+	VkAttachmentLoadOp TranslateLoadOpToVulkan(Grindstone::GraphicsAPI::LoadOp loadOp);
+	VkAttachmentStoreOp TranslateStoreOpToVulkan(Grindstone::GraphicsAPI::StoreOp storeOp);
+	VkClearValue TranslateClearUnionToVulkan(Grindstone::GraphicsAPI::ClearUnion clearUnion);
+
 	VkImageAspectFlags TranslateImageAspectBitsToVulkan(ImageAspectBits imageAspectMask);
 	VkPipelineStageFlagBits TranslatePipelineStageToVulkan(PipelineStageBit stage);
 	VkFilter TranslateFilterToVulkan(TextureFilter);

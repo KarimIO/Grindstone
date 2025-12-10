@@ -17,13 +17,24 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void BindRenderPass(
 			Grindstone::GraphicsAPI::RenderPass* renderPass,
 			Grindstone::GraphicsAPI::Framebuffer* framebuffer,
-			uint32_t width,
-			uint32_t height,
-			ClearColorValue* colorClearValues,
+			Grindstone::Math::IntRect2D rect,
+			ClearColor* colorClearValues,
 			uint32_t colorClearCount,
 			ClearDepthStencil depthStencilClearValue
 		) override;
 		virtual void UnbindRenderPass() override;
+
+		virtual void BeginRendering(
+			const char* name,
+			Grindstone::Math::IntRect2D rect,
+			RenderAttachment* colorAttachments,
+			uint32_t colorAttachmentCount,
+			RenderAttachment* depthAttachment,
+			RenderAttachment* stencilAttachment,
+			float* debugColor
+		) override;
+		virtual void EndRendering() override;
+
 		virtual void BeginDebugLabelSection(const char* name, float color[4] = nullptr) override;
 		virtual void EndDebugLabelSection() override;
 		virtual void BindGraphicsDescriptorSet(

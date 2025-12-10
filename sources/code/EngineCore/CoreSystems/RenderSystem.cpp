@@ -92,13 +92,20 @@ namespace Grindstone {
 					cameraComponent.renderer->Resize(width, height);
 				}
 
+				Grindstone::GraphicsAPI::Image* image = wgb->GetCurrentFramebuffer()->GetRenderTarget(0);
+				Grindstone::GraphicsAPI::RenderAttachment attachment{
+					.image = image,
+					.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+					.clearValue = Grindstone::GraphicsAPI::ClearColor()
+				};
+
 				cameraComponent.renderer->Render(
 					currentCommandBuffer,
 					registry,
 					projectionMatrix,
 					viewMatrix,
 					pos,
-					wgb->GetCurrentFramebuffer()
+					attachment
 				);
 
 				currentCommandBuffer->EndCommandBuffer();

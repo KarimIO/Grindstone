@@ -1,6 +1,9 @@
 #pragma once
 
 #include <vector>
+
+#include <Common/Rect.hpp>
+
 #include "Framebuffer.hpp"
 
 namespace Grindstone::GraphicsAPI {
@@ -46,24 +49,32 @@ namespace Grindstone::GraphicsAPI {
 	};
 
 	struct ImageBarrier {
-		GraphicsAPI::Image* image = nullptr;
-		ImageLayout oldLayout;
-		ImageLayout newLayout;
-		AccessFlags srcAccess;
-		AccessFlags dstAccess;
-		ImageAspectBits imageAspect;
-		uint32_t baseMipLevel = 0;
-		uint32_t levelCount = 0;
-		uint32_t baseArrayLayer = 0;
-		uint32_t layerCount = 0;
+		Grindstone::GraphicsAPI::Image*				image = nullptr;
+		Grindstone::GraphicsAPI::ImageLayout		oldLayout;
+		Grindstone::GraphicsAPI::ImageLayout		newLayout;
+		Grindstone::GraphicsAPI::AccessFlags		srcAccess;
+		Grindstone::GraphicsAPI::AccessFlags		dstAccess;
+		Grindstone::GraphicsAPI::ImageAspectBits	imageAspect;
+		uint32_t									baseMipLevel = 0;
+		uint32_t									levelCount = 0;
+		uint32_t									baseArrayLayer = 0;
+		uint32_t									layerCount = 0;
 	};
 
 	struct BufferBarrier {
-		GraphicsAPI::Buffer* buffer = nullptr;
-		AccessFlags srcAccess;
-		AccessFlags dstAccess;
-		uint32_t offset = 0;
-		uint32_t size = 0;
+		Grindstone::GraphicsAPI::Buffer*		buffer = nullptr;
+		Grindstone::GraphicsAPI::AccessFlags	srcAccess;
+		Grindstone::GraphicsAPI::AccessFlags	dstAccess;
+		uint32_t								offset = 0;
+		uint32_t								size = 0;
+	};
+
+	struct RenderAttachment {
+		Grindstone::GraphicsAPI::Image*			image = nullptr;
+		Grindstone::GraphicsAPI::ImageLayout	imageLayout;
+		Grindstone::GraphicsAPI::LoadOp			loadOp = Grindstone::GraphicsAPI::LoadOp::Clear;
+		Grindstone::GraphicsAPI::StoreOp		storeOp = Grindstone::GraphicsAPI::StoreOp::Store;
+		Grindstone::GraphicsAPI::ClearUnion		clearValue;
 	};
 
 	/*! CommandBuffers are an object that hold a list of commands to be executed
@@ -78,13 +89,22 @@ namespace Grindstone::GraphicsAPI {
 		virtual void BindRenderPass(
 			RenderPass* renderPass,
 			Framebuffer* framebuffer,
-			uint32_t width,
-			uint32_t height,
-			ClearColorValue* colorClearValues,
+			Grindstone::Math::IntRect2D rect,
+			ClearColor* colorClearValues,
 			uint32_t colorClearCount,
 			ClearDepthStencil depthStencilClearValue
 		) = 0;
 		virtual void UnbindRenderPass() = 0;
+		virtual void BeginRendering(
+			const char* name,
+			Grindstone::Math::IntRect2D rect,
+			RenderAttachment* colorAttachments,
+			uint32_t colorAttachmentCount,
+			RenderAttachment* depthAttachment = nullptr,
+			RenderAttachment* stencilAttachment = nullptr,
+			float* debugColor = nullptr
+		) = 0;
+		virtual void EndRendering() = 0;
 		virtual void BeginDebugLabelSection(const char* name, float color[4] = nullptr) = 0;
 		virtual void EndDebugLabelSection() = 0;
 		virtual void BindGraphicsDescriptorSet(

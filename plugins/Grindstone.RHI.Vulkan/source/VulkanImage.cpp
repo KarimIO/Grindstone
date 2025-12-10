@@ -74,10 +74,10 @@ void Vulkan::Image::Create() {
 		case FormatDepthStencilType::DepthStencil:
 			aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 			break;
-		case FormatDepthStencilType::StencilOnly:
+		case FormatDepthStencilType::Stencil:
 			aspect = VK_IMAGE_ASPECT_STENCIL_BIT;
 			break;
-		case FormatDepthStencilType::DepthOnly:
+		case FormatDepthStencilType::Depth:
 			aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
 			break;
 		}

@@ -17,7 +17,12 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual VkRenderPass GetRenderPassHandle() const;
 		virtual const char* GetDebugName() const override;
 		virtual const float* GetDebugColor() const override;
+		size_t GetColorAttachmentCount() const;
+		VkFormat GetVkColorFormat(size_t i) const;
+		VkFormat GetVkDepthFormat() const;
+		VkFormat GetVkStencilFormat() const;
 
+		bool shouldClearDepthOnLoad = true;
 	private:
 		void Create();
 		void Cleanup();
@@ -26,7 +31,6 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		float debugColor[4] = {};
 		std::vector<RenderPass::AttachmentInfo> colorAttachments;
 		Format depthFormat = Format::Invalid;
-		bool shouldClearDepthOnLoad = true;
 		bool ownsRenderPass = true;
 		VkRenderPass renderPass = nullptr;
 	};
