@@ -6,8 +6,8 @@ FormatDepthStencilType Grindstone::GraphicsAPI::GetFormatDepthStencilType(Format
 	switch (format) {
 	case Format::D16_UNORM: return FormatDepthStencilType::NotDepthStencil;
 	case Format::X8_D24_UNORM_PACK32: return FormatDepthStencilType::NotDepthStencil;
-	case Format::D32_SFLOAT: return FormatDepthStencilType::DepthOnly;
-	case Format::S8_UINT: return FormatDepthStencilType::StencilOnly;
+	case Format::D32_SFLOAT: return FormatDepthStencilType::Depth;
+	case Format::S8_UINT: return FormatDepthStencilType::Stencil;
 	case Format::D16_UNORM_S8_UINT: return FormatDepthStencilType::DepthStencil;
 	case Format::D24_UNORM_S8_UINT: return FormatDepthStencilType::DepthStencil;
 	case Format::D32_SFLOAT_S8_UINT: return FormatDepthStencilType::DepthStencil;

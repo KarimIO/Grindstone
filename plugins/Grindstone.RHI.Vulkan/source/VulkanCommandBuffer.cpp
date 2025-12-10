@@ -15,15 +15,19 @@
 #include <Grindstone.RHI.Vulkan/include/VulkanDescriptorSetLayout.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanCommandBuffer.hpp>
 
-PFN_vkCmdBeginDebugUtilsLabelEXT cmdBeginDebugUtilsLabelEXT;
-PFN_vkCmdEndDebugUtilsLabelEXT cmdEndDebugUtilsLabelEXT;
+PFN_vkCmdBeginDebugUtilsLabelEXT pfnVkCmdBeginDebugUtilsLabelEXT;
+PFN_vkCmdEndDebugUtilsLabelEXT pfnVkCmdEndDebugUtilsLabelEXT;
+PFN_vkCmdBeginRenderingKHR pfnVkCmdBeginRenderingKHR;
+PFN_vkCmdEndRenderingKHR pfnVkCmdEndRenderingKHR;
 
 namespace Base = Grindstone::GraphicsAPI;
 namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
 void Vulkan::CommandBuffer::SetupDebugLabelUtils(VkInstance instance) {
-	cmdBeginDebugUtilsLabelEXT = (PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetInstanceProcAddr(instance, "vkCmdBeginDebugUtilsLabelEXT");
-	cmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(instance, "vkCmdEndDebugUtilsLabelEXT");
+	pfnVkCmdBeginDebugUtilsLabelEXT = (PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetInstanceProcAddr(instance, "vkCmdBeginDebugUtilsLabelEXT");
+	pfnVkCmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(instance, "vkCmdEndDebugUtilsLabelEXT");
+	pfnVkCmdBeginRenderingKHR = (PFN_vkCmdBeginRenderingKHR)vkGetInstanceProcAddr(instance, "vkCmdBeginRenderingKHR");
+	pfnVkCmdEndRenderingKHR = (PFN_vkCmdEndRenderingKHR)vkGetInstanceProcAddr(instance, "vkCmdEndRenderingKHR");
 }
 
 VkCommandBuffer Vulkan::CommandBuffer::GetCommandBuffer()	{
@@ -85,9 +89,8 @@ void Vulkan::CommandBuffer::BeginCommandBuffer() {
 void Vulkan::CommandBuffer::BindRenderPass(
 	GraphicsAPI::RenderPass* renderPass,
 	GraphicsAPI::Framebuffer* framebuffer,
-	uint32_t width,
-	uint32_t height,
-	ClearColorValue* colorClearValues,
+	Grindstone::Math::IntRect2D rect,
+	ClearColor* colorClearValues,
 	uint32_t colorClearCount,
 	ClearDepthStencil depthStencilClearValue
 ) {
@@ -97,19 +100,19 @@ void Vulkan::CommandBuffer::BindRenderPass(
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = vulkanRenderPass->GetRenderPassHandle();
 	renderPassInfo.framebuffer = vulkanFramebuffer->GetFramebuffer();
-	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = { width, height };
+	renderPassInfo.renderArea.offset = { rect.offset.x, rect.offset.y };
+	renderPassInfo.renderArea.extent = { rect.extent.x, rect.extent.y };
 
 	size_t clearColorCount = colorClearCount;
-	clearColorCount += depthStencilClearValue.hasDepthStencilAttachment ? 1 : 0;
+	clearColorCount += vulkanRenderPass->shouldClearDepthOnLoad ? 1 : 0;
 
 	std::vector<VkClearValue> clearColor;
 	clearColor.resize(clearColorCount);
 	for (size_t i = 0; i < colorClearCount; i++) {
-		std::memcpy(&clearColor[i].color, &colorClearValues[i], sizeof(VkClearColorValue));
+		std::memcpy(&clearColor[i].color, &colorClearValues[i], sizeof(VkClearValue));
 	}
 
-	if (depthStencilClearValue.hasDepthStencilAttachment) {
+	if (vulkanRenderPass->shouldClearDepthOnLoad) {
 		clearColor[colorClearCount].depthStencil = {
 			depthStencilClearValue.depth,
 			depthStencilClearValue.stencil
@@ -132,13 +135,104 @@ void Vulkan::CommandBuffer::BindRenderPass(
 		labelInfo.color[3] = debugColor[3];
 	}
 
-	cmdBeginDebugUtilsLabelEXT(commandBuffer, &labelInfo);
+	pfnVkCmdBeginDebugUtilsLabelEXT(commandBuffer, &labelInfo);
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 void Vulkan::CommandBuffer::UnbindRenderPass() {
 	vkCmdEndRenderPass(commandBuffer);
-	cmdEndDebugUtilsLabelEXT(commandBuffer);
+	pfnVkCmdEndDebugUtilsLabelEXT(commandBuffer);
+}
+
+void Vulkan::CommandBuffer::BeginRendering(
+	const char* name,
+	Grindstone::Math::IntRect2D rect,
+	RenderAttachment* colorAttachments,
+	uint32_t attachmentCount,
+	RenderAttachment* depthAttachment,
+	RenderAttachment* stencilAttachment,
+	float* debugColor
+) {
+	VkDebugUtilsLabelEXT labelInfo{};
+	labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+	labelInfo.pLabelName = name;
+	labelInfo.pNext = nullptr;
+
+	if (debugColor != nullptr) {
+		labelInfo.color[0] = debugColor[0];
+		labelInfo.color[1] = debugColor[1];
+		labelInfo.color[2] = debugColor[2];
+		labelInfo.color[3] = debugColor[3];
+	}
+
+	std::vector<VkRenderingAttachmentInfoKHR> colorAttachmentInfos;
+	VkRenderingAttachmentInfoKHR depthAttachmentInfo;
+	VkRenderingAttachmentInfoKHR stencilAttachmentInfo;
+
+	for (uint32_t i = 0; i < attachmentCount; ++i) {
+		RenderAttachment& attachment = colorAttachments[i];
+		Grindstone::GraphicsAPI::Vulkan::Image* image = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(attachment.image);
+
+		colorAttachmentInfos.emplace_back(
+			VkRenderingAttachmentInfoKHR{
+				.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
+				.imageView = image->GetImageView(),
+				.imageLayout = TranslateImageLayoutToVulkan(attachment.imageLayout),
+				.loadOp = TranslateLoadOpToVulkan(attachment.loadOp),
+				.storeOp = TranslateStoreOpToVulkan(attachment.storeOp),
+				.clearValue = TranslateClearUnionToVulkan(attachment.clearValue)
+			}
+		);
+	}
+
+	if (depthAttachment != nullptr) {
+		Grindstone::GraphicsAPI::Vulkan::Image* depthImage = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(depthAttachment->image);
+		depthAttachmentInfo = VkRenderingAttachmentInfoKHR{
+			.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
+			.imageView = depthImage->GetImageView(),
+			.imageLayout = TranslateImageLayoutToVulkan(depthAttachment->imageLayout),
+			.loadOp = TranslateLoadOpToVulkan(depthAttachment->loadOp),
+			.storeOp = TranslateStoreOpToVulkan(depthAttachment->storeOp),
+			.clearValue = TranslateClearUnionToVulkan(depthAttachment->clearValue)
+		};
+	}
+
+	if (stencilAttachment != nullptr) {
+		Grindstone::GraphicsAPI::Vulkan::Image* stencilImage = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(stencilAttachment->image);
+		stencilAttachmentInfo = VkRenderingAttachmentInfoKHR{
+			.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
+			.imageView = stencilImage->GetImageView(),
+			.imageLayout = TranslateImageLayoutToVulkan(stencilAttachment->imageLayout),
+			.loadOp = TranslateLoadOpToVulkan(stencilAttachment->loadOp),
+			.storeOp = TranslateStoreOpToVulkan(stencilAttachment->storeOp),
+			.clearValue = TranslateClearUnionToVulkan(stencilAttachment->clearValue)
+		};
+	}
+
+	const VkRect2D renderArea = {
+		rect.offset.x,
+		rect.offset.y,
+		rect.extent.x,
+		rect.extent.y
+	};
+
+	const VkRenderingInfoKHR renderInfo{
+		.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR,
+		.renderArea = renderArea,
+		.layerCount = 1,
+		.colorAttachmentCount = static_cast<uint32_t>(colorAttachmentInfos.size()),
+		.pColorAttachments = colorAttachmentInfos.data(),
+		.pDepthAttachment = depthAttachment != nullptr ? &depthAttachmentInfo : nullptr,
+		.pStencilAttachment = stencilAttachment != nullptr ? &stencilAttachmentInfo : nullptr
+	};
+
+	pfnVkCmdBeginDebugUtilsLabelEXT(commandBuffer, &labelInfo);
+	pfnVkCmdBeginRenderingKHR(commandBuffer, &renderInfo);
+}
+
+void Vulkan::CommandBuffer::EndRendering() {
+	pfnVkCmdEndRenderingKHR(commandBuffer);
+	pfnVkCmdEndDebugUtilsLabelEXT(commandBuffer);
 }
 
 void Vulkan::CommandBuffer::BeginDebugLabelSection(const char* name, float color[4]) {
@@ -154,11 +248,11 @@ void Vulkan::CommandBuffer::BeginDebugLabelSection(const char* name, float color
 		labelInfo.color[3] = color[3];
 	}
 
-	cmdBeginDebugUtilsLabelEXT(commandBuffer, &labelInfo);
+	pfnVkCmdBeginDebugUtilsLabelEXT(commandBuffer, &labelInfo);
 }
 
 void Vulkan::CommandBuffer::EndDebugLabelSection() {
-	cmdEndDebugUtilsLabelEXT(commandBuffer);
+	pfnVkCmdEndDebugUtilsLabelEXT(commandBuffer);
 }
 
 void Vulkan::CommandBuffer::BindGraphicsDescriptorSet(

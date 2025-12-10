@@ -52,12 +52,11 @@ namespace Grindstone {
 
 			GizmoRenderer gizmoRenderer;
 			GridRenderer gridRenderer;
-			GraphicsAPI::Image* renderTarget = nullptr;
-			GraphicsAPI::Image* depthTarget = nullptr;
+			std::array<GraphicsAPI::Image*, 3> renderTarget;
+			std::array<GraphicsAPI::Image*, 3> depthTarget;
 			GraphicsAPI::Sampler* sampler = nullptr;
 			GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
-			GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
-			GraphicsAPI::Framebuffer* framebuffer = nullptr;
+			std::array<GraphicsAPI::DescriptorSet*, 3> descriptorSet;
 
 			GraphicsAPI::DescriptorSetLayout* mousePickDescriptorSetLayout = nullptr;
 			std::array<GraphicsAPI::Image*, 3> mousePickRenderTarget{};

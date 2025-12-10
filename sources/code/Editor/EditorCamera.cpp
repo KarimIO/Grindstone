@@ -51,8 +51,8 @@ void EditorCamera::SetupRenderPasses() {
 	editorRenderPassCreateInfo.debugName = "Editor RenderPass";
 	editorRenderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(attachments.size());
 	editorRenderPassCreateInfo.colorAttachments = attachments.data();
-	editorRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
-	editorRenderPassCreateInfo.shouldClearDepthOnLoad = true;
+	editorRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::Invalid;
+	editorRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 	editorRenderPass = core->CreateRenderPass(editorRenderPassCreateInfo);
 	renderPassRegistry->RegisterRenderpass(editorRenderPassHashedString, editorRenderPass);
 
@@ -91,17 +91,14 @@ EditorCamera::EditorCamera() {
 	uint32_t framebufferHeight = display.height;
 
 	GraphicsAPI::Image::CreateInfo renderTargetCreateInfo{};
-	renderTargetCreateInfo.debugName = "Editor Viewport Color Image";
 	renderTargetCreateInfo.width = framebufferWidth;
 	renderTargetCreateInfo.height = framebufferHeight;
 	renderTargetCreateInfo.format = GraphicsAPI::Format::R8G8B8A8_UNORM;
 	renderTargetCreateInfo.imageUsage =
 		GraphicsAPI::ImageUsageFlags::Sampled |
 		GraphicsAPI::ImageUsageFlags::RenderTarget;
-	renderTarget = core->CreateImage(renderTargetCreateInfo);
 
 	GraphicsAPI::Image::CreateInfo depthTargetCreateInfo{};
-	depthTargetCreateInfo.debugName = "Editor Viewport Depth Image";
 	depthTargetCreateInfo.width = framebufferWidth;
 	depthTargetCreateInfo.height = framebufferHeight;
 	depthTargetCreateInfo.format = GraphicsAPI::Format::D32_SFLOAT;
@@ -109,17 +106,6 @@ EditorCamera::EditorCamera() {
 		GraphicsAPI::ImageUsageFlags::TransferDst |
 		GraphicsAPI::ImageUsageFlags::Sampled |
 		GraphicsAPI::ImageUsageFlags::DepthStencil;
-	depthTarget = core->CreateImage(depthTargetCreateInfo);
-
-	GraphicsAPI::Framebuffer::CreateInfo framebufferCreateInfo{};
-	framebufferCreateInfo.debugName = "Editor Framebuffer";
-	framebufferCreateInfo.renderTargets = &renderTarget;
-	framebufferCreateInfo.renderTargetCount = 1;
-	framebufferCreateInfo.depthTarget = depthTarget;
-	framebufferCreateInfo.renderPass = editorRenderPass;
-	framebufferCreateInfo.width = framebufferWidth;
-	framebufferCreateInfo.height = framebufferHeight;
-	framebuffer = core->CreateFramebuffer(framebufferCreateInfo);
 
 	{
 		GraphicsAPI::Format mousePickColorImageFormat = GraphicsAPI::Format::R32_UINT;
@@ -223,15 +209,25 @@ EditorCamera::EditorCamera() {
 	descriptorSetLayoutCreateInfo.bindings = &descriptorSetLayoutBinding;
 	descriptorSetLayout = core->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
 
-	std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> combinedSamplerPair = { renderTarget, sampler };
-	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding = GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler( &combinedSamplerPair );
-
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
-	descriptorSetCreateInfo.debugName = "Editor Viewport Descriptor Set";
 	descriptorSetCreateInfo.bindingCount = 1;
-	descriptorSetCreateInfo.bindings = &descriptorSetBinding;
 	descriptorSetCreateInfo.layout = descriptorSetLayout;
-	descriptorSet = core->CreateDescriptorSet(descriptorSetCreateInfo);
+
+	for (size_t i = 0; i < 3; ++i) {
+		std::string numAsStr = std::to_string(i);
+		std::string rtName = "Editor Viewport Color Image [" + numAsStr + "]";
+		std::string dtName = "Editor Viewport Depth Image [" + numAsStr + "]";
+		std::string descriptorSetName = "Editor Viewport Descriptor Set [" + numAsStr + "]";
+		renderTargetCreateInfo.debugName = rtName.c_str();
+		depthTargetCreateInfo.debugName = dtName.c_str();
+		descriptorSetCreateInfo.debugName = descriptorSetName.c_str();
+		renderTarget[i] = core->CreateImage(renderTargetCreateInfo);
+		depthTarget[i] = core->CreateImage(depthTargetCreateInfo);
+		std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> combinedSamplerPair = { renderTarget[i], sampler };
+		GraphicsAPI::DescriptorSet::Binding descriptorSetBinding = GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler(&combinedSamplerPair);
+		descriptorSetCreateInfo.bindings = &descriptorSetBinding;
+		descriptorSet[i] = core->CreateDescriptorSet(descriptorSetCreateInfo);
+	}
 
 	gridRenderer.Initialize();
 	gizmoRenderer.Initialize();
@@ -258,20 +254,23 @@ void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuff
 	GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	uint32_t frameIndex = wgb->GetCurrentImageIndex();
 
-	GraphicsAPI::ClearColorValue clearColor = { .uint32={ UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX }};
+	GraphicsAPI::ClearColor clearColor(UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX);
 	GraphicsAPI::ClearDepthStencil clearDepthStencil{};
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
-	clearDepthStencil.hasDepthStencilAttachment = true;
 
-	commandBuffer->BindRenderPass(
-		mousePickRenderPass,
-		mousePickFramebuffer[frameIndex],
-		width,
-		height,
-		&clearColor,
-		1,
-		clearDepthStencil
+	Grindstone::GraphicsAPI::RenderAttachment mousePickAttachment{
+		.image =		mousePickRenderTarget[frameIndex],
+		.imageLayout =	Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+		.clearValue =	clearColor
+	};
+
+	commandBuffer->BeginRendering(
+		"Mouse Pick",
+		Math::IntRect2D(0, 0, width, height),
+		&mousePickAttachment,
+		1u,
+		nullptr
 	);
 
 	MousePickResponseBuffer mousePickResponseInitialBuffer{};
@@ -292,14 +291,13 @@ void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuff
 	Grindstone::Rendering::RenderViewData viewData{
 		.projectionMatrix = projection,
 		.viewMatrix = view,
-		.renderTargetOffset = glm::vec2(0.0f, 0.0f),
-		.renderTargetSize = glm::vec2(static_cast<float>(width), static_cast<float>(height))
+		.renderArea = Math::IntRect2D(0, 0, width, height)
 	};
 
 	assetRendererManager->SetEngineDescriptorSet(mousePickDescriptorSet[frameIndex]);
 	assetRendererManager->RenderQueue(commandBuffer, viewData, registry, mousePickRenderQueue);
 
-	commandBuffer->UnbindRenderPass();
+	commandBuffer->EndRendering();
 }
 
 uint32_t EditorCamera::GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandBuffer) {
@@ -335,7 +333,12 @@ uint32_t EditorCamera::GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandB
 }
 
 uint64_t EditorCamera::GetRenderOutput() {
-	return (uint64_t)(static_cast<GraphicsAPI::Vulkan::DescriptorSet*>(descriptorSet)->GetDescriptorSet());
+	EngineCore& engineCore = EngineCore::GetInstance();
+	auto window = engineCore.windowManager->GetWindowByIndex(0);
+	auto wgb = window->GetWindowGraphicsBinding();
+	uint32_t imageIndex = wgb->GetCurrentImageIndex();
+
+	return (uint64_t)(static_cast<GraphicsAPI::Vulkan::DescriptorSet*>(descriptorSet[imageIndex])->GetDescriptorSet());
 }
 
 void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
@@ -354,6 +357,17 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		return;
 	}
 
+	auto window = engineCore.windowManager->GetWindowByIndex(0);
+	auto wgb = window->GetWindowGraphicsBinding();
+	uint32_t imageIndex = wgb->GetCurrentImageIndex();
+	Grindstone::GraphicsAPI::Image* image = renderTarget[imageIndex];
+
+	Grindstone::GraphicsAPI::RenderAttachment attachment{
+		.image = image,
+		.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+		.clearValue = Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f)
+	};
+	
 	entt::registry& registry = scene->GetEntityRegistry();
 	renderer->Render(
 		commandBuffer,
@@ -361,21 +375,21 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		projection,
 		view,
 		position,
-		framebuffer
+		attachment
 	);
+	return;
 
 	glm::mat4 gizmoProjection = projection;
 	graphicsCore->AdjustPerspective(&gizmoProjection[0][0]);
 	glm::mat4 projView = gizmoProjection * view;
 	glm::vec2 renderScale = glm::vec2(
-		static_cast<float>(width) / framebuffer->GetWidth(),
-		static_cast<float>(height) / framebuffer->GetHeight()
+		static_cast<float>(width) / image->GetWidth(),
+		static_cast<float>(height) / image->GetHeight()
 	);
 
 	Grindstone::GraphicsAPI::ClearColor clearColor{};
 	Grindstone::GraphicsAPI::ClearDepthStencil clearDepthStencil;
-	clearDepthStencil.hasDepthStencilAttachment = true;
-	commandBuffer->BindRenderPass(gizmoRenderPass, framebuffer, width, height, &clearColor, 1, clearDepthStencil);
+	commandBuffer->BeginRendering("Editor Gizmo Pass", Grindstone::Math::IntRect2D(0, 0, width, height), &attachment, 1u);
 	if (isGridEnabled) {
 		gridRenderer.Render(commandBuffer, renderScale, gizmoProjection, view, nearPlaneDistance, farPlaneDistance, glm::quat(), 0.0f);
 	}
@@ -438,7 +452,7 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 
 		gizmoRenderer.Render(commandBuffer, projView);
 	}
-	commandBuffer->UnbindRenderPass();
+	commandBuffer->EndRendering();
 }
 
 void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
@@ -503,13 +517,24 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 		cameraComponent->farPlaneDistance
 	);
 
+	auto window = engineCore.windowManager->GetWindowByIndex(0);
+	auto wgb = window->GetWindowGraphicsBinding();
+	uint32_t imageIndex = wgb->GetCurrentImageIndex();
+	Grindstone::GraphicsAPI::Image* image = renderTarget[imageIndex];
+
+	Grindstone::GraphicsAPI::RenderAttachment attachment{
+		.image = image,
+		.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+		.clearValue = Grindstone::GraphicsAPI::ClearColor()
+	};
+
 	renderer->Render(
 		commandBuffer,
 		registry,
 		projectionMatrix,
 		viewMatrix,
 		pos,
-		framebuffer
+		attachment
 	);
 }
 
@@ -573,9 +598,16 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 	GraphicsAPI::Core* core = Editor::Manager::GetEngineCore().GetGraphicsCore();
 	core->WaitUntilIdle();
 
-	renderTarget->Resize(width, height);
-	depthTarget->Resize(width, height);
-	framebuffer->Resize(width, height);
+	for (size_t i = 0; i < 3; ++i) {
+		renderTarget[i]->Resize(width, height);
+		depthTarget[i]->Resize(width, height);
+
+		std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> combinedSamplerPair = { renderTarget[i], sampler};
+		GraphicsAPI::DescriptorSet::Binding descriptorSetBinding = GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler(&combinedSamplerPair);
+
+		descriptorSet[i]->ChangeBindings(&descriptorSetBinding, 1u);
+	}
+
 	if (renderer) {
 		renderer->Resize(width, height);
 	}
@@ -584,16 +616,6 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 		mousePickRenderTarget[i]->Resize(width, height);
 		mousePickFramebuffer[i]->Resize(width, height);
 	}
-
-	std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> combinedSamplerPair = { renderTarget, sampler };
-	GraphicsAPI::DescriptorSet::Binding descriptorSetBinding = GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler( &combinedSamplerPair );
-
-	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
-	descriptorSetCreateInfo.debugName = "Editor Viewport Descriptor Set";
-	descriptorSetCreateInfo.bindingCount = 1;
-	descriptorSetCreateInfo.bindings = &descriptorSetBinding;
-	descriptorSetCreateInfo.layout = descriptorSetLayout;
-	descriptorSet = core->CreateDescriptorSet(descriptorSetCreateInfo);
 
 	UpdateProjectionMatrix();
 }

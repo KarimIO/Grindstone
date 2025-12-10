@@ -11,6 +11,7 @@
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
 #include <Editor/EditorManager.hpp>
+#include <Editor/EditorCamera.hpp>
 
 #include "ViewportPanel.hpp"
 #include "ImguiEditor.hpp"

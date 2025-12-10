@@ -94,8 +94,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 		Display display = EngineCore::GetInstance().displayManager->GetMainDisplay();
 		framebufferWidth = display.width;
 		framebufferHeight = display.height;
-		renderWidth = display.width;
-		renderHeight = display.height;
+		renderArea = Grindstone::Math::IntRect2D(display.width, display.height);
 	}
 
 	renderMode = DeferredRenderMode::Default;
@@ -106,7 +105,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 	uint32_t maxFramesInFlight = wgb->GetMaxFramesInFlight();
 	deferredRendererImageSets.resize(maxFramesInFlight);
 
-	bloomStoredMipLevelCount = bloomMipLevelCount = CalculateBloomLevels(renderWidth, renderHeight);
+	bloomStoredMipLevelCount = bloomMipLevelCount = CalculateBloomLevels(renderArea.GetWidth(), renderArea.GetHeight());
 	bloomFirstUpsampleIndex = bloomStoredMipLevelCount - 1;
 
 	std::string_view iblBrdfLut = "@CORESHADERS/textures/ibl_brdf_lut";
@@ -162,7 +161,6 @@ DeferredRenderer::~DeferredRenderer() {
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		DeferredRendererImageSet& imageSet = deferredRendererImageSets[i];
 
-		graphicsCore->DeleteFramebuffer(imageSet.lightingFramebuffer);
 		graphicsCore->DeleteImage(imageSet.ssrRenderTarget);
 
 		graphicsCore->DeleteBuffer(imageSet.debugUniformBufferObject);
@@ -181,11 +179,6 @@ DeferredRenderer::~DeferredRenderer() {
 		graphicsCore->DeleteImage(imageSet.nearBlurredDofRenderTarget);
 		graphicsCore->DeleteImage(imageSet.farBlurredDofRenderTarget);
 
-		graphicsCore->DeleteFramebuffer(imageSet.dofSeparationFramebuffer);
-		graphicsCore->DeleteFramebuffer(imageSet.dofNearBlurFramebuffer);
-		graphicsCore->DeleteFramebuffer(imageSet.dofFarBlurFramebuffer);
-		graphicsCore->DeleteFramebuffer(imageSet.dofCombinationFramebuffer);
-
 		for (GraphicsAPI::Image* bloomRt : imageSet.bloomRenderTargets) {
 			graphicsCore->DeleteImage(bloomRt);
 		}
@@ -196,13 +189,11 @@ DeferredRenderer::~DeferredRenderer() {
 
 		graphicsCore->DeleteBuffer(imageSet.globalUniformBufferObject);
 
-		graphicsCore->DeleteFramebuffer(imageSet.gbuffer);
 		graphicsCore->DeleteImage(imageSet.gbufferAlbedoRenderTarget);
 		graphicsCore->DeleteImage(imageSet.gbufferNormalRenderTarget);
 		graphicsCore->DeleteImage(imageSet.gbufferSpecularRoughnessRenderTarget);
 
 		graphicsCore->DeleteImage(imageSet.gbufferDepthStencilTarget);
-		graphicsCore->DeleteFramebuffer(imageSet.litHdrFramebuffer);
 		graphicsCore->DeleteImage(imageSet.litHdrRenderTarget);
 
 		graphicsCore->DeleteDescriptorSet(imageSet.engineDescriptorSet);
@@ -210,11 +201,9 @@ DeferredRenderer::~DeferredRenderer() {
 		graphicsCore->DeleteDescriptorSet(imageSet.gbufferDescriptorSet);
 
 		graphicsCore->DeleteImage(imageSet.ambientOcclusionRenderTarget);
-		graphicsCore->DeleteFramebuffer(imageSet.ambientOcclusionFramebuffer);
 		graphicsCore->DeleteDescriptorSet(imageSet.ambientOcclusionDescriptorSet);
 
 		graphicsCore->DeleteImage(imageSet.blurredAmbientOcclusionRenderTarget);
-		graphicsCore->DeleteFramebuffer(imageSet.blurredAmbientOcclusionFramebuffer);
 		graphicsCore->DeleteDescriptorSet(imageSet.blurredSsaoInputDescriptorSet);
 	}
 
@@ -273,22 +262,6 @@ void DeferredRenderer::CreateDepthOfFieldRenderTargetsAndDescriptorSets(Deferred
 		graphicsCore->DeleteImage(imageSet.farBlurredDofRenderTarget);
 	}
 
-	if (imageSet.dofSeparationFramebuffer != nullptr) {
-		graphicsCore->DeleteFramebuffer(imageSet.dofSeparationFramebuffer);
-	}
-
-	if (imageSet.dofNearBlurFramebuffer != nullptr) {
-		graphicsCore->DeleteFramebuffer(imageSet.dofNearBlurFramebuffer);
-	}
-
-	if (imageSet.dofFarBlurFramebuffer != nullptr) {
-		graphicsCore->DeleteFramebuffer(imageSet.dofFarBlurFramebuffer);
-	}
-
-	if (imageSet.dofCombinationFramebuffer != nullptr) {
-		graphicsCore->DeleteFramebuffer(imageSet.dofCombinationFramebuffer);
-	}
-
 	if (imageSet.dofSourceDescriptorSet != nullptr) {
 		graphicsCore->DeleteDescriptorSet(imageSet.dofSourceDescriptorSet);
 	}
@@ -322,63 +295,38 @@ void DeferredRenderer::CreateDepthOfFieldRenderTargetsAndDescriptorSets(Deferred
 		imageSet.nearBlurredDofRenderTarget = graphicsCore->CreateImage(dofRtCreateInfo);
 		dofRtCreateInfo.debugName = "Far Blurred DOF Render Target";
 		imageSet.farBlurredDofRenderTarget = graphicsCore->CreateImage(dofRtCreateInfo);
-	}
 
-	{
-		std::array<GraphicsAPI::Image*, 2> renderTargets = {
-			imageSet.nearDofRenderTarget,
-			imageSet.farDofRenderTarget
+		imageSet.nearDofAttachment = {
+			.image = imageSet.nearDofRenderTarget,
+			.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+			.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
+			.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+			.clearValue = Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f),
 		};
 
-		GraphicsAPI::Framebuffer::CreateInfo dofSeparationFramebufferCreateInfo{};
-		dofSeparationFramebufferCreateInfo.debugName = "Depth of Field Separation Framebuffer";
-		dofSeparationFramebufferCreateInfo.depthTarget = nullptr;
-		dofSeparationFramebufferCreateInfo.width = framebufferWidth / 2;
-		dofSeparationFramebufferCreateInfo.height = framebufferHeight / 2;
-		dofSeparationFramebufferCreateInfo.isCubemap = false;
-		dofSeparationFramebufferCreateInfo.renderPass = renderPassRegistry->GetRenderpass(dofSeparationRenderPassKey);
-		dofSeparationFramebufferCreateInfo.renderTargets = renderTargets.data();
-		dofSeparationFramebufferCreateInfo.renderTargetCount = static_cast<uint32_t>(renderTargets.size());
-		imageSet.dofSeparationFramebuffer = graphicsCore->CreateFramebuffer(dofSeparationFramebufferCreateInfo);
-	}
+		imageSet.farDofAttachment = {
+			.image = imageSet.farDofRenderTarget,
+			.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+			.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
+			.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+			.clearValue = Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f),
+		};
 
-	{
-		GraphicsAPI::Framebuffer::CreateInfo dofSeparationFramebufferCreateInfo{};
-		dofSeparationFramebufferCreateInfo.debugName = "Depth of Field Near Framebuffer";
-		dofSeparationFramebufferCreateInfo.depthTarget = nullptr;
-		dofSeparationFramebufferCreateInfo.width = framebufferWidth / 4;
-		dofSeparationFramebufferCreateInfo.height = framebufferHeight / 4;
-		dofSeparationFramebufferCreateInfo.isCubemap = false;
-		dofSeparationFramebufferCreateInfo.renderPass = renderPassRegistry->GetRenderpass(dofBlurAndCombinationRenderPassKey);
-		dofSeparationFramebufferCreateInfo.renderTargets = &imageSet.nearBlurredDofRenderTarget;
-		dofSeparationFramebufferCreateInfo.renderTargetCount = 1;
-		imageSet.dofNearBlurFramebuffer = graphicsCore->CreateFramebuffer(dofSeparationFramebufferCreateInfo);
-	}
+		imageSet.nearBlurredDofAttachment = {
+			.image = imageSet.nearBlurredDofRenderTarget,
+			.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+			.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
+			.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+			.clearValue = Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f),
+		};
 
-	{
-		GraphicsAPI::Framebuffer::CreateInfo dofSeparationFramebufferCreateInfo{};
-		dofSeparationFramebufferCreateInfo.debugName = "Depth of Field Far Framebuffer";
-		dofSeparationFramebufferCreateInfo.depthTarget = nullptr;
-		dofSeparationFramebufferCreateInfo.width = framebufferWidth / 4;
-		dofSeparationFramebufferCreateInfo.height = framebufferHeight / 4;
-		dofSeparationFramebufferCreateInfo.isCubemap = false;
-		dofSeparationFramebufferCreateInfo.renderPass = renderPassRegistry->GetRenderpass(dofBlurAndCombinationRenderPassKey);
-		dofSeparationFramebufferCreateInfo.renderTargets = &imageSet.farBlurredDofRenderTarget;
-		dofSeparationFramebufferCreateInfo.renderTargetCount = 1;
-		imageSet.dofFarBlurFramebuffer = graphicsCore->CreateFramebuffer(dofSeparationFramebufferCreateInfo);
-	}
-
-	{
-		GraphicsAPI::Framebuffer::CreateInfo dofSeparationFramebufferCreateInfo{};
-		dofSeparationFramebufferCreateInfo.debugName = "Depth of Field Combination Framebuffer";
-		dofSeparationFramebufferCreateInfo.depthTarget = nullptr;
-		dofSeparationFramebufferCreateInfo.width = framebufferWidth;
-		dofSeparationFramebufferCreateInfo.height = framebufferHeight;
-		dofSeparationFramebufferCreateInfo.isCubemap = false;
-		dofSeparationFramebufferCreateInfo.renderPass = renderPassRegistry->GetRenderpass(dofBlurAndCombinationRenderPassKey);
-		dofSeparationFramebufferCreateInfo.renderTargets = &imageSet.litHdrRenderTarget;
-		dofSeparationFramebufferCreateInfo.renderTargetCount = 1;
-		imageSet.dofCombinationFramebuffer = graphicsCore->CreateFramebuffer(dofSeparationFramebufferCreateInfo);
+		imageSet.farBlurredDofAttachment = {
+			.image = imageSet.farBlurredDofRenderTarget,
+			.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+			.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
+			.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+			.clearValue = Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f),
+		};
 	}
 
 	{
@@ -659,11 +607,13 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 		return;
 	}
 
-	this->renderWidth = width;
-	this->renderHeight = height;
+	this->renderArea = Grindstone::Math::IntRect2D(width, height);
 
 	uint32_t halfWidth = width / 2u;
 	uint32_t halfHeight = height / 2u;
+
+	halfRenderArea = Grindstone::Math::IntRect2D(halfWidth, halfHeight);
+	quarterRenderArea = Grindstone::Math::IntRect2D(halfWidth / 2u, halfHeight / 2u);
 
 	bloomMipLevelCount = CalculateBloomLevels(width, height);
 
@@ -701,15 +651,10 @@ void DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 		imageSet.gbufferSpecularRoughnessRenderTarget->Resize(width, height);
 
 		imageSet.gbufferDepthStencilTarget->Resize(width, height);
-		imageSet.gbuffer->Resize(width, height);
 		imageSet.litHdrRenderTarget->Resize(width, height);
-		imageSet.litHdrFramebuffer->Resize(width, height);
 
 		imageSet.ambientOcclusionRenderTarget->Resize(halfWidth, halfHeight);
-		imageSet.ambientOcclusionFramebuffer->Resize(halfWidth, halfHeight);
-
 		imageSet.blurredAmbientOcclusionRenderTarget->Resize(halfWidth, halfHeight);
-		imageSet.blurredAmbientOcclusionFramebuffer->Resize(halfWidth, halfHeight);
 
 		CreateDepthOfFieldRenderTargetsAndDescriptorSets(imageSet, i);
 		CreateSsrRenderTargetsAndDescriptorSets(imageSet, i);
@@ -763,6 +708,13 @@ void DeferredRenderer::CreateSsrRenderTargetsAndDescriptorSets(DeferredRendererI
 		GraphicsAPI::ImageUsageFlags::Storage |
 		GraphicsAPI::ImageUsageFlags::Sampled;
 	imageSet.ssrRenderTarget = graphicsCore->CreateImage(ssrRenderTargetCreateInfo);
+	imageSet.ssrAttachment = {
+		.image = imageSet.ssrRenderTarget,
+		.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+		.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
+		.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+		.clearValue = Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f),
+	};
 
 	std::array<GraphicsAPI::DescriptorSet::Binding, 6> descriptorBindings;
 	descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( imageSet.globalUniformBufferObject );
@@ -899,11 +851,11 @@ void DeferredRenderer::CreateBloomRenderTargetsAndDescriptorSets(DeferredRendere
 
 void DeferredRenderer::UpdateBloomUBO() {
 	std::vector<glm::vec2> mipSizes(bloomMipLevelCount);
-	float mipWidth = static_cast<float>(renderWidth);
-	float mipHeight = static_cast<float>(renderHeight);
+	float mipWidth = static_cast<float>(renderArea.GetWidth());
+	float mipHeight = static_cast<float>(renderArea.GetHeight());
 
-	float widthMultiplier = static_cast<float>(renderWidth) / static_cast<float>(framebufferWidth);
-	float heightMultiplier = static_cast<float>(renderHeight) / static_cast<float>(framebufferHeight);
+	float widthMultiplier = static_cast<float>(mipWidth) / static_cast<float>(framebufferWidth);
+	float heightMultiplier = static_cast<float>(mipHeight) / static_cast<float>(framebufferHeight);
 	for (uint32_t i = 0; i < bloomMipLevelCount; ++i) {
 		mipSizes[i] = glm::vec2(widthMultiplier / static_cast<float>(mipWidth), heightMultiplier / static_cast<float>(mipHeight));
 		mipWidth = mipWidth / 2.0f;
@@ -958,10 +910,11 @@ void DeferredRenderer::UpdateBloomDescriptorSet(DeferredRendererImageSet& imageS
 		return;
 	}
 
-	std::array<GraphicsAPI::DescriptorSet::Binding, 3> bindings;
-	bindings[0] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.bloomRenderTargets[(bloomStoredMipLevelCount * 2) - bloomMipLevelCount + 2] );
-	bindings[1] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomMipLevelCount - 2] );
-	bindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.bloomRenderTargets[bloomMipLevelCount - 1] );
+	std::array<GraphicsAPI::DescriptorSet::Binding, 3> bindings{
+		GraphicsAPI::DescriptorSet::Binding::StorageImage(imageSet.bloomRenderTargets[(bloomStoredMipLevelCount * 2) - bloomMipLevelCount + 2]),
+		GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.bloomRenderTargets[bloomMipLevelCount - 2]),
+		GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.bloomRenderTargets[bloomMipLevelCount - 1])
+	};
 
 	imageSet.bloomDescriptorSets[bloomFirstUpsampleIndex]->ChangeBindings(bindings.data(), static_cast<uint32_t>(bindings.size()), 2);
 }
@@ -1455,19 +1408,44 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 			gbufferRenderTargets[2] = imageSet.gbufferSpecularRoughnessRenderTarget = graphicsCore->CreateImage(gbufferRtCreateInfo);
 		}
 
-		imageSet.gbufferDepthStencilTarget = graphicsCore->CreateImage(gbufferDepthImageCreateInfo);
+		imageSet.gbufferAlbedoAttachment = {
+			.image = imageSet.gbufferAlbedoRenderTarget,
+			.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+			.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
+			.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+			.clearValue = Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f),
+		};
+		imageSet.gbufferNormalAttachment = {
+			.image = imageSet.gbufferNormalRenderTarget,
+			.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+			.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
+			.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+			.clearValue = Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f),
+		};
+		imageSet.gbufferSpecularRoughnessAttachment = {
+			.image = imageSet.gbufferSpecularRoughnessRenderTarget,
+			.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+			.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
+			.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+			.clearValue = Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f),
+		};
 
-		{
-			GraphicsAPI::Framebuffer::CreateInfo gbufferCreateInfo{};
-			gbufferCreateInfo.debugName = "G-Buffer Framebuffer";
-			gbufferCreateInfo.width = framebufferWidth;
-			gbufferCreateInfo.height = framebufferHeight;
-			gbufferCreateInfo.renderPass = engineCore.GetRenderPassRegistry()->GetRenderpass(gbufferRenderPassKey);
-			gbufferCreateInfo.renderTargets = gbufferRenderTargets.data();
-			gbufferCreateInfo.renderTargetCount = static_cast<uint32_t>(gbufferRenderTargets.size());
-			gbufferCreateInfo.depthTarget = imageSet.gbufferDepthStencilTarget;
-			imageSet.gbuffer = graphicsCore->CreateFramebuffer(gbufferCreateInfo);
-		}
+		imageSet.gbufferDepthStencilTarget = graphicsCore->CreateImage(gbufferDepthImageCreateInfo);
+		imageSet.gbufferDepthStencilAttachment = {
+			.image = imageSet.gbufferDepthStencilTarget,
+			.imageLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+			.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
+			.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+			.clearValue = Grindstone::GraphicsAPI::ClearDepthStencil(1.0f, 0u),
+		};
+
+		imageSet.forwardDepthStencilAttachment = {
+			.image = imageSet.gbufferDepthStencilTarget,
+			.imageLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+			.loadOp = Grindstone::GraphicsAPI::LoadOp::Load,
+			.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+			.clearValue = Grindstone::GraphicsAPI::ClearDepthStencil(1.0f, 0u),
+		};
 
 		{
 			GraphicsAPI::Image::CreateInfo ssaoRenderTargetCreateInfo{};
@@ -1480,16 +1458,13 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 				GraphicsAPI::ImageUsageFlags::Sampled;
 
 			imageSet.ambientOcclusionRenderTarget = graphicsCore->CreateImage(ssaoRenderTargetCreateInfo);
-
-			GraphicsAPI::Framebuffer::CreateInfo ssaoFramebufferCreateInfo{};
-			ssaoFramebufferCreateInfo.debugName = "SSAO Framebuffer";
-			ssaoFramebufferCreateInfo.width = framebufferWidth / 2;
-			ssaoFramebufferCreateInfo.height = framebufferHeight / 2;
-			ssaoFramebufferCreateInfo.renderTargets = &imageSet.ambientOcclusionRenderTarget;
-			ssaoFramebufferCreateInfo.renderTargetCount = 1;
-			ssaoFramebufferCreateInfo.depthTarget = nullptr;
-			ssaoFramebufferCreateInfo.renderPass = engineCore.GetRenderPassRegistry()->GetRenderpass(ssaoRenderPassKey);
-			imageSet.ambientOcclusionFramebuffer = graphicsCore->CreateFramebuffer(ssaoFramebufferCreateInfo);
+			imageSet.ambientOcclusionAttachment = {
+				.image = imageSet.ambientOcclusionRenderTarget,
+				.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+				.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
+				.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+				.clearValue = Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f),
+			};
 		}
 
 		{
@@ -1503,16 +1478,13 @@ void DeferredRenderer::CreateGbufferFramebuffer() {
 				GraphicsAPI::ImageUsageFlags::Sampled;
 
 			imageSet.blurredAmbientOcclusionRenderTarget = graphicsCore->CreateImage(ssaoRenderTargetCreateInfo);
-
-			GraphicsAPI::Framebuffer::CreateInfo ssaoFramebufferCreateInfo{};
-			ssaoFramebufferCreateInfo.debugName = "Blurred SSAO Framebuffer";
-			ssaoFramebufferCreateInfo.width = framebufferWidth / 2;
-			ssaoFramebufferCreateInfo.height = framebufferHeight / 2;
-			ssaoFramebufferCreateInfo.renderTargets = &imageSet.blurredAmbientOcclusionRenderTarget;
-			ssaoFramebufferCreateInfo.renderTargetCount = 1;
-			ssaoFramebufferCreateInfo.depthTarget = nullptr;
-			ssaoFramebufferCreateInfo.renderPass = engineCore.GetRenderPassRegistry()->GetRenderpass(ssaoRenderPassKey);
-			imageSet.blurredAmbientOcclusionFramebuffer = graphicsCore->CreateFramebuffer(ssaoFramebufferCreateInfo);
+			imageSet.blurredAmbientOcclusionAttachment = {
+				.image = imageSet.blurredAmbientOcclusionRenderTarget,
+				.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+				.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
+				.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+				.clearValue = Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f),
+			};
 		}
 	}
 }
@@ -1522,7 +1494,6 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
 	GraphicsAPI::Image::CreateInfo litHdrImagesCreateInfo{};
-	litHdrImagesCreateInfo.debugName = "Lit HDR Color Image";
 	litHdrImagesCreateInfo.width = framebufferWidth;
 	litHdrImagesCreateInfo.height = framebufferHeight;
 	litHdrImagesCreateInfo.format = Grindstone::GraphicsAPI::Format::R16G16B16A16_SFLOAT;
@@ -1530,25 +1501,22 @@ void DeferredRenderer::CreateLitHDRFramebuffer() {
 		GraphicsAPI::ImageUsageFlags::RenderTarget |
 		GraphicsAPI::ImageUsageFlags::Sampled;
 
-	// DepthStencilTarget::CreateInfo litHdrDepthImageCreateInfo(DepthFormat::D24_STENCIL_8, width, height, false, false, false, "Lit HDR Depth Image");
-
 	GraphicsAPI::RenderPass::AttachmentInfo attachment{ litHdrImagesCreateInfo.format , true };
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		auto& imageSet = deferredRendererImageSets[i];
 
-		imageSet.litHdrRenderTarget = graphicsCore->CreateImage(litHdrImagesCreateInfo);
+		std::string rtName = "Lit HDR Color Image [" + std::to_string(i) + "]";
+		litHdrImagesCreateInfo.debugName = rtName.c_str();
 
-		std::string framebufferName = std::string("Main HDR Framebuffer ") + std::to_string(i);
-		GraphicsAPI::Framebuffer::CreateInfo litHdrFramebufferCreateInfo{};
-		litHdrFramebufferCreateInfo.debugName = framebufferName.c_str();
-		litHdrFramebufferCreateInfo.width = framebufferWidth;
-		litHdrFramebufferCreateInfo.height = framebufferHeight;
-		litHdrFramebufferCreateInfo.renderTargets = &imageSet.litHdrRenderTarget;
-		litHdrFramebufferCreateInfo.renderTargetCount = 1;
-		litHdrFramebufferCreateInfo.depthTarget = nullptr;
-		litHdrFramebufferCreateInfo.renderPass = engineCore.GetRenderPassRegistry()->GetRenderpass(lightingRenderPassKey);
-		imageSet.litHdrFramebuffer = graphicsCore->CreateFramebuffer(litHdrFramebufferCreateInfo);
+		imageSet.litHdrRenderTarget = graphicsCore->CreateImage(litHdrImagesCreateInfo);
+		imageSet.litHdrAttachment = {
+			.image = imageSet.litHdrRenderTarget,
+			.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+			.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
+			.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+			.clearValue = Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f),
+		};
 	}
 }
 
@@ -1575,27 +1543,24 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 	EngineCore& engineCore = EngineCore::GetInstance();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
-	GraphicsAPI::ClearColorValue singleClearColor{ 0.0f, 0.0f, 0.0f, 0.f };
+	GraphicsAPI::ClearColor singleClearColor{ 0.0f, 0.0f, 0.0f, 0.f };
 
 	GraphicsAPI::ClearDepthStencil depthStencilClear;
-	depthStencilClear.hasDepthStencilAttachment = false;
 
 	currentCommandBuffer->BeginDebugLabelSection("Depth of Field Pass", nullptr);
 
 	{
-		std::array<GraphicsAPI::ClearColorValue, 2> clearColors = {
-			GraphicsAPI::ClearColorValue{0.0f, 0.0f, 0.0f, 0.f},
-			GraphicsAPI::ClearColorValue{0.0f, 0.0f, 0.0f, 0.f}
+		std::array<Grindstone::GraphicsAPI::RenderAttachment, 2> attachments = {
+			imageSet.nearDofAttachment,
+			imageSet.farDofAttachment
 		};
-
-		currentCommandBuffer->BindRenderPass(
-			engineCore.GetRenderPassRegistry()->GetRenderpass(dofSeparationRenderPassKey),
-			imageSet.dofSeparationFramebuffer,
-			renderWidth / 2,
-			renderHeight / 2,
-			clearColors.data(),
-			static_cast<uint32_t>(clearColors.size()),
-			depthStencilClear
+		currentCommandBuffer->BeginRendering(
+			"DOF Separation Pass (Depth of Field)",
+			halfRenderArea,
+			attachments.data(),
+			static_cast<uint32_t>(attachments.size()),
+			nullptr,
+			nullptr
 		);
 
 		Grindstone::GraphicsAPI::GraphicsPipeline* dofSeparationPipeline = dofSeparationPipelineSet.Get()->GetFirstPassPipeline(&vertexLightPositionLayout);
@@ -1611,20 +1576,19 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 			static_cast<uint32_t>(descriptorSets.size())
 		);
 		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
-		currentCommandBuffer->UnbindRenderPass();
+		currentCommandBuffer->EndRendering();
 	}
 
 	Grindstone::GraphicsAPI::GraphicsPipeline* dofBlurPipeline = dofBlurPipelineSet.Get()->GetFirstPassPipeline(&vertexLightPositionLayout);
 
 	{
-		currentCommandBuffer->BindRenderPass(
-			engineCore.GetRenderPassRegistry()->GetRenderpass(dofBlurAndCombinationRenderPassKey),
-			imageSet.dofNearBlurFramebuffer,
-			renderWidth / 4,
-			renderHeight / 4,
-			&singleClearColor,
+		currentCommandBuffer->BeginRendering(
+			"DOF Near Blur Pass (Depth of Field)",
+			quarterRenderArea,
+			&imageSet.nearBlurredDofAttachment,
 			1u,
-			depthStencilClear
+			nullptr,
+			nullptr
 		);
 
 
@@ -1641,18 +1605,17 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 			static_cast<uint32_t>(descriptorSets.size())
 		);
 		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
-		currentCommandBuffer->UnbindRenderPass();
+		currentCommandBuffer->EndRendering();
 	}
 
 	{
-		currentCommandBuffer->BindRenderPass(
-			engineCore.GetRenderPassRegistry()->GetRenderpass(dofBlurAndCombinationRenderPassKey),
-			imageSet.dofFarBlurFramebuffer,
-			renderWidth / 4,
-			renderHeight / 4,
-			&singleClearColor,
+		currentCommandBuffer->BeginRendering(
+			"DOF Far Blur Pass (Depth of Field)",
+			quarterRenderArea,
+			&imageSet.farBlurredDofAttachment,
 			1u,
-			depthStencilClear
+			nullptr,
+			nullptr
 		);
 
 		std::array<GraphicsAPI::DescriptorSet*, 2> descriptorSets = {
@@ -1667,18 +1630,17 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 			static_cast<uint32_t>(descriptorSets.size())
 		);
 		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
-		currentCommandBuffer->UnbindRenderPass();
+		currentCommandBuffer->EndRendering();
 	}
 
 	{
-		currentCommandBuffer->BindRenderPass(
-			engineCore.GetRenderPassRegistry()->GetRenderpass(dofBlurAndCombinationRenderPassKey),
-			imageSet.dofCombinationFramebuffer,
-			renderWidth,
-			renderHeight,
+		currentCommandBuffer->BeginRendering(
+			"DOF Combination Pass (Depth of Field)",
+			renderArea,
+			&imageSet.litHdrAttachment,
+			1u,
 			nullptr,
-			0u,
-			depthStencilClear
+			nullptr
 		);
 
 		std::array<GraphicsAPI::DescriptorSet*, 3> descriptorSets = {
@@ -1695,7 +1657,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 			static_cast<uint32_t>(descriptorSets.size())
 		);
 		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
-		currentCommandBuffer->UnbindRenderPass();
+		currentCommandBuffer->EndRendering();
 	}
 
 	currentCommandBuffer->EndDebugLabelSection();
@@ -1738,7 +1700,7 @@ void DeferredRenderer::RenderSsr(DeferredRendererImageSet& imageSet, GraphicsAPI
 			&barrier, 1
 		);
 		currentCommandBuffer->BindComputeDescriptorSet(ssrPipeline, &imageSet.ssrDescriptorSet, 2, 1);
-		currentCommandBuffer->DispatchCompute(renderWidth, renderHeight, 1);
+		currentCommandBuffer->DispatchCompute(renderArea.GetWidth(), renderArea.GetHeight(), 1);
 
 		barrier.image = imageSet.ssrRenderTarget;
 		barrier.oldLayout = GraphicsAPI::ImageLayout::General;
@@ -1774,8 +1736,8 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 	GraphicsAPI::Core* graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	currentCommandBuffer->BindComputePipeline(bloomPipeline);
-	uint32_t groupCountX = static_cast<uint32_t>(std::ceil(renderWidth / 4.0f));
-	uint32_t groupCountY = static_cast<uint32_t>(std::ceil(renderHeight / 4.0f));
+	uint32_t groupCountX = static_cast<uint32_t>(std::ceil(quarterRenderArea.GetWidth()));
+	uint32_t groupCountY = static_cast<uint32_t>(std::ceil(quarterRenderArea.GetHeight()));
 	uint32_t descriptorSetIndex = 0;
 
 	GraphicsAPI::ImageBarrier readImageBarrier{
@@ -1816,8 +1778,8 @@ void DeferredRenderer::RenderBloom(DeferredRendererImageSet& imageSet, GraphicsA
 	}
 	currentCommandBuffer->EndDebugLabelSection();
 
-	uint32_t mipWidth = static_cast<uint32_t>(renderWidth);
-	uint32_t mipHeight = static_cast<uint32_t>(renderHeight);
+	uint32_t mipWidth = static_cast<uint32_t>(renderArea.GetWidth());
+	uint32_t mipHeight = static_cast<uint32_t>(renderArea.GetHeight());
 
 	std::vector<uint32_t> mipWidths(bloomMipLevelCount);
 	std::vector<uint32_t> mipHeights(bloomMipLevelCount);
@@ -2101,27 +2063,20 @@ void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAP
 	EngineCore& engineCore = EngineCore::GetInstance();
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
-	GraphicsAPI::ClearColorValue clearColorAttachment = { 16.0f, 16.0f, 16.0f, 16.0f };
+	GraphicsAPI::ClearColor clearColorAttachment = { 16.0f, 16.0f, 16.0f, 16.0f };
 	GraphicsAPI::ClearDepthStencil clearDepthStencil{};
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
-	clearDepthStencil.hasDepthStencilAttachment = false;
 
-	commandBuffer->BindRenderPass(
-		engineCore.GetRenderPassRegistry()->GetRenderpass(ssaoRenderPassKey),
-		imageSet.ambientOcclusionFramebuffer,
-		imageSet.ambientOcclusionFramebuffer->GetWidth(),
-		imageSet.ambientOcclusionFramebuffer->GetHeight(),
-		&clearColorAttachment,
-		1,
-		clearDepthStencil
+	commandBuffer->BeginRendering(
+		"SSAO Pass (Screen-Space Ambient Occlusion)",
+		halfRenderArea,
+		&imageSet.ambientOcclusionAttachment,
+		1u
 	);
 
-	uint32_t halfWidth = renderWidth / 2u;
-	uint32_t halfHeight = renderHeight / 2u;
-
-	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(halfWidth), static_cast<float>(halfHeight), 0.0f, 1.0f);
-	commandBuffer->SetScissor(0, 0, halfWidth, halfHeight);
+	commandBuffer->SetViewport(halfRenderArea.offset.x, halfRenderArea.offset.y, static_cast<float>(halfRenderArea.GetWidth()), static_cast<float>(halfRenderArea.GetHeight()), 0.0f, 1.0f);
+	commandBuffer->SetScissor(halfRenderArea.offset.x, halfRenderArea.offset.y, halfRenderArea.GetWidth(), halfRenderArea.GetHeight());
 
 	commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	commandBuffer->BindIndexBuffer(indexBuffer);
@@ -2135,20 +2090,19 @@ void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAP
 	commandBuffer->BindGraphicsPipeline(ssaoPipeline);
 	commandBuffer->BindGraphicsDescriptorSet(ssaoPipeline, descriptorSets.data(), 0, static_cast<uint32_t>(descriptorSets.size()));
 	commandBuffer->DrawIndices(0, 6, 0, 1, 0);
-	commandBuffer->UnbindRenderPass();
+	commandBuffer->EndRendering();
 
-	commandBuffer->BindRenderPass(
-		engineCore.GetRenderPassRegistry()->GetRenderpass(ssaoBlurRenderPassKey),
-		imageSet.blurredAmbientOcclusionFramebuffer,
-		imageSet.blurredAmbientOcclusionFramebuffer->GetWidth(),
-		imageSet.blurredAmbientOcclusionFramebuffer->GetHeight(),
-		&clearColorAttachment,
-		1,
-		clearDepthStencil
+	commandBuffer->BeginRendering(
+		"SSAO Blur Pass (Screen-Space Ambient Occlusion)",
+		halfRenderArea,
+		&imageSet.blurredAmbientOcclusionAttachment,
+		1u,
+		nullptr,
+		nullptr
 	);
 
-	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(halfWidth), static_cast<float>(halfHeight), 0.0f, 1.0f);
-	commandBuffer->SetScissor(0, 0, halfWidth, halfHeight);
+	commandBuffer->SetViewport(halfRenderArea.offset.x, halfRenderArea.offset.y, static_cast<float>(halfRenderArea.GetWidth()), static_cast<float>(halfRenderArea.GetHeight()), 0.0f, 1.0f);
+	commandBuffer->SetScissor(halfRenderArea.offset.x, halfRenderArea.offset.y, halfRenderArea.GetWidth(), halfRenderArea.GetHeight());
 
 	commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	commandBuffer->BindIndexBuffer(indexBuffer);
@@ -2161,7 +2115,7 @@ void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAP
 	commandBuffer->BindGraphicsPipeline(blurPipeline);
 	commandBuffer->BindGraphicsDescriptorSet(blurPipeline, blurDescriptorSets.data(), 0, static_cast<uint32_t>(blurDescriptorSets.size()));
 	commandBuffer->DrawIndices(0, 6, 0, 1, 0);
-	commandBuffer->UnbindRenderPass();
+	commandBuffer->EndRendering();
 }
 
 void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffer, entt::registry& registry) {
@@ -2173,7 +2127,6 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 	GraphicsAPI::ClearDepthStencil clearDepthStencil{};
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
-	clearDepthStencil.hasDepthStencilAttachment = true;
 
 	/* TODO: Finish with Point Light Shadows eventually
 	{
@@ -2207,8 +2160,8 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 
 			pointLightComponent.shadowMapUniformBufferObject->UploadData(&shadowPass);
 
-			commandBuffer->BindRenderPass(
-				pointLightComponent.renderPass,
+			commandBuffer->BeginRendering(
+				"Point Shadow Pass",
 				pointLightComponent.framebuffer,
 				resolution,
 				resolution,
@@ -2231,7 +2184,7 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 				transformComponent.position
 			);
 
-			commandBuffer->UnbindRenderPass();
+			commandBuffer->EndRendering();
 		});
 	}
 	*/
@@ -2273,32 +2226,58 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 				GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::SampledImage(spotLightComponent.depthTarget);
 				spotLightComponent.descriptorSet->ChangeBindings(&binding, 1, 1);
 			}
-			
+
+			GraphicsAPI::ImageBarrier depthTargetBarrier = {
+				.image = spotLightComponent.depthTarget,
+				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
+				.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
+				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite,
+				.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1
+			};
+
+			commandBuffer->PipelineBarrier(
+				GraphicsAPI::PipelineStageBit::TopOfPipe,
+				GraphicsAPI::PipelineStageBit::EarlyFragmentTests,
+				nullptr, 0,
+				&depthTargetBarrier, 1u
+			);
+
 			uint32_t resolution = spotLightComponent.shadowResolution;
 
 			spotLightComponent.shadowMapUniformBufferObject->UploadData(&spotLightComponent.shadowMatrix);
 			assetManager->SetEngineDescriptorSet(spotLightComponent.shadowMapDescriptorSet);
 
-			commandBuffer->BindRenderPass(
-				spotLightComponent.renderPass,
-				spotLightComponent.framebuffer,
-				resolution,
-				resolution,
-				nullptr,
-				0,
-				clearDepthStencil
-			);
+			Grindstone::GraphicsAPI::RenderAttachment shadowRenderAttachment{
+				.image = spotLightComponent.depthTarget,
+				.imageLayout =  Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+				.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
+				.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+				.clearValue = clearDepthStencil
+			};
 
-			float resF = static_cast<float>(resolution);
+			Grindstone::Math::IntRect2D shadowRenderArea = Grindstone::Math::IntRect2D(0u, 0u, resolution, resolution);
+
+			commandBuffer->BeginRendering(
+				"Spot Light Pass",
+				shadowRenderArea,
+				nullptr,
+				0u,
+				&shadowRenderAttachment,
+				nullptr
+			);
 
 			Grindstone::Rendering::RenderViewData renderViewData{
 				.projectionMatrix = projectionMatrix,
 				.viewMatrix = viewMatrix,
-				.renderTargetOffset = glm::vec2(0, 0),
-				.renderTargetSize = glm::vec2(resF, resF),
+				.renderArea = shadowRenderArea
 			};
 
-			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
+			commandBuffer->SetViewport(0.0f, 0.0f, resolution, resolution);
 			commandBuffer->SetScissor(0, 0, resolution, resolution);
 			assetManager->RenderQueue(
 				commandBuffer,
@@ -2307,7 +2286,7 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 				shadowMapRenderPassKey
 			);
 
-			commandBuffer->UnbindRenderPass();
+			commandBuffer->EndRendering();
 		});
 	}
 
@@ -2342,28 +2321,55 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 				directionalLightComponent.descriptorSet->ChangeBindings(&binding, 1, 1);
 			}
 
+			GraphicsAPI::ImageBarrier depthTargetBarrier = {
+				.image = directionalLightComponent.depthTarget,
+				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
+				.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
+				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite,
+				.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1
+			};
+
+			commandBuffer->PipelineBarrier(
+				GraphicsAPI::PipelineStageBit::TopOfPipe,
+				GraphicsAPI::PipelineStageBit::EarlyFragmentTests,
+				nullptr, 0,
+				&depthTargetBarrier, 1u
+			);
+
 			uint32_t resolution = directionalLightComponent.shadowResolution;
 
 			directionalLightComponent.shadowMapUniformBufferObject->UploadData(&projView);
 			assetManager->SetEngineDescriptorSet(directionalLightComponent.shadowMapDescriptorSet);
 
-			commandBuffer->BindRenderPass(
-				directionalLightComponent.renderPass,
-				directionalLightComponent.framebuffer,
-				resolution,
-				resolution,
-				nullptr,
-				0,
-				clearDepthStencil
-			);
+			Grindstone::GraphicsAPI::RenderAttachment shadowRenderAttachment{
+				.image = directionalLightComponent.depthTarget,
+				.imageLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+				.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
+				.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+				.clearValue = clearDepthStencil
+			};
 
 			float resF = static_cast<float>(resolution);
+			Grindstone::Math::IntRect2D shadowRenderArea = Grindstone::Math::IntRect2D(0u, 0u, resolution, resolution);
+
+			commandBuffer->BeginRendering(
+				"Directional Shadow Map Pass",
+				shadowRenderArea,
+				nullptr,
+				0u,
+				&shadowRenderAttachment,
+				nullptr
+			);
 
 			Grindstone::Rendering::RenderViewData renderViewData{
 				.projectionMatrix = projectionMatrix,
 				.viewMatrix = viewMatrix,
-				.renderTargetOffset = glm::vec2(0, 0),
-				.renderTargetSize = glm::vec2(resF, resF),
+				.renderArea = shadowRenderArea,
 			};
 
 			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
@@ -2375,14 +2381,14 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 				shadowMapRenderPassKey
 			);
 
-			commandBuffer->UnbindRenderPass();
+			commandBuffer->EndRendering();
 		});
 	}
 }
 
 void DeferredRenderer::PostProcess(
 	uint32_t imageIndex,
-	GraphicsAPI::Framebuffer* framebuffer,
+	GraphicsAPI::RenderAttachment& outRenderAttachment,
 	GraphicsAPI::CommandBuffer* currentCommandBuffer
 ) {
 	DeferredRendererImageSet& imageSet = deferredRendererImageSets[imageIndex];
@@ -2391,14 +2397,32 @@ void DeferredRenderer::PostProcess(
 	// RenderDepthOfField(imageSet, currentCommandBuffer);
 	RenderBloom(imageSet, currentCommandBuffer);
 
-	GraphicsAPI::ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
-	GraphicsAPI::ClearDepthStencil clearDepthStencil;
-	clearDepthStencil.depth = 1.0f;
-	clearDepthStencil.stencil = 0;
-	clearDepthStencil.hasDepthStencilAttachment = true;
+	GraphicsAPI::ImageBarrier preTonemapImageBarrier{
+		.image = outRenderAttachment.image,
+		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
+		.newLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
+		.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+		.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
 
-	GraphicsAPI::RenderPass* renderPass = framebuffer->GetRenderPass();
-	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, framebuffer->GetWidth(), framebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
+	currentCommandBuffer->PipelineBarrier(
+		GraphicsAPI::PipelineStageBit::TopOfPipe,
+		GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
+		nullptr, 0,
+		&preTonemapImageBarrier, 1u
+	);
+
+	currentCommandBuffer->BeginRendering(
+		"Tonemap Pass",
+		renderArea,
+		&outRenderAttachment,
+		1u
+	);
 
 	Grindstone::GraphicsPipelineAsset* tonemapPipelineAsset = tonemapPipelineSet.Get();
 	if (tonemapPipelineAsset != nullptr) {
@@ -2417,7 +2441,49 @@ void DeferredRenderer::PostProcess(
 		}
 	}
 
-	currentCommandBuffer->UnbindRenderPass();
+	currentCommandBuffer->EndRendering();
+
+	GraphicsAPI::ImageBarrier colorBarrier {
+		.image = outRenderAttachment.image,
+		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+		.newLayout = Grindstone::GraphicsAPI::ImageLayout::ShaderRead,
+		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+		.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ShaderRead,
+		.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
+
+	currentCommandBuffer->PipelineBarrier(
+		GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
+		GraphicsAPI::PipelineStageBit::FragmentShader,
+		nullptr, 0,
+		&colorBarrier, 1u
+	);
+
+	GraphicsAPI::ImageBarrier depthBarrier{
+		.image = imageSet.gbufferDepthStencilTarget,
+		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead,
+		.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ShaderRead,
+		.dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite,
+		.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
+
+	currentCommandBuffer->PipelineBarrier(
+		GraphicsAPI::PipelineStageBit::FragmentShader,
+		GraphicsAPI::PipelineStageBit::EarlyFragmentTests | GraphicsAPI::PipelineStageBit::LateFragmentTests,
+		nullptr, 0,
+		&depthBarrier, 1u
+	);
+
+	/*
 
 	GraphicsAPI::ImageBarrier blitBarrier{
 		.image = imageSet.gbufferDepthStencilTarget,
@@ -2428,6 +2494,7 @@ void DeferredRenderer::PostProcess(
 		.layerCount = 1
 	};
 
+	/*
 	std::array<Grindstone::GraphicsAPI::ImageBarrier, 2> preBlitBarriers{ blitBarrier , blitBarrier };
 	preBlitBarriers[0].image = imageSet.gbufferDepthStencilTarget;
 	preBlitBarriers[0].oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead;
@@ -2465,7 +2532,7 @@ void DeferredRenderer::PostProcess(
 		framebuffer->GetDepthStencilTarget(),
 		Grindstone::GraphicsAPI::ImageLayout::TransferSrc,
 		Grindstone::GraphicsAPI::ImageLayout::TransferDst,
-		renderWidth, renderHeight, 1
+		renderArea.GetWidth(), renderArea.GetHeight(), 1
 	);
 	currentCommandBuffer->PipelineBarrier(
 		GraphicsAPI::PipelineStageBit::Transfer,
@@ -2473,23 +2540,27 @@ void DeferredRenderer::PostProcess(
 		nullptr, 0,
 		postBlitBarriers.data(), static_cast<uint32_t>(postBlitBarriers.size())
 	);
+	*/
 }
 
 void DeferredRenderer::Debug(
 	uint32_t imageIndex,
-	GraphicsAPI::Framebuffer* framebuffer,
+	GraphicsAPI::RenderAttachment& renderAttachment,
 	GraphicsAPI::CommandBuffer* currentCommandBuffer
 ) {
 	DeferredRendererImageSet& imageSet = deferredRendererImageSets[imageIndex];
 
-	GraphicsAPI::ClearColorValue clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
+	GraphicsAPI::ClearColor clearColor = { 0.3f, 0.6f, 0.9f, 1.f };
 	GraphicsAPI::ClearDepthStencil clearDepthStencil;
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
-	clearDepthStencil.hasDepthStencilAttachment = true;
 
-	GraphicsAPI::RenderPass* renderPass = framebuffer->GetRenderPass();
-	currentCommandBuffer->BindRenderPass(renderPass, framebuffer, framebuffer->GetWidth(), framebuffer->GetHeight(), &clearColor, 1, clearDepthStencil);
+	currentCommandBuffer->BeginRendering(
+		"Debug Pass",
+		renderArea,
+		&renderAttachment,
+		1u
+	);
 
 	Grindstone::GraphicsAPI::GraphicsPipeline* debugPipeline = debugPipelineSet.Get()->GetFirstPassPipeline(&vertexLightPositionLayout);
 	if (debugPipeline != nullptr) {
@@ -2500,7 +2571,7 @@ void DeferredRenderer::Debug(
 		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
 	}
 
-	currentCommandBuffer->UnbindRenderPass();
+	currentCommandBuffer->EndRendering();
 }
 
 void DeferredRenderer::Render(
@@ -2509,7 +2580,7 @@ void DeferredRenderer::Render(
 	glm::mat4 projectionMatrix,
 	glm::mat4 viewMatrix,
 	glm::vec3 eyePos,
-	GraphicsAPI::Framebuffer* outputFramebuffer
+	GraphicsAPI::RenderAttachment& outRenderAttachment
 ) {
 	Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
@@ -2528,8 +2599,8 @@ void DeferredRenderer::Render(
 		.inverseViewMatrix = glm::inverse(viewMatrix),
 		.eyePos = eyePos,
 		.framebufferResolution = glm::vec2(framebufferWidth, framebufferHeight),
-		.renderResolution = glm::vec2(renderWidth, renderHeight),
-		.renderScale = glm::vec2(static_cast<float>(renderWidth) / framebufferWidth, static_cast<float>(renderHeight) / framebufferHeight),
+		.renderResolution = glm::vec2(renderArea.GetWidth(), renderArea.GetHeight()),
+		.renderScale = glm::vec2(static_cast<float>(renderArea.GetWidth()) / framebufferWidth, static_cast<float>(renderArea.GetHeight()) / framebufferHeight),
 		.time = static_cast<float>(engineCore.GetTimeSinceLaunch())
 	};
 
@@ -2538,8 +2609,7 @@ void DeferredRenderer::Render(
 	Grindstone::Rendering::RenderViewData renderViewData{
 		.projectionMatrix = projectionMatrix,
 		.viewMatrix = viewMatrix,
-		.renderTargetOffset = glm::vec2(0, 0),
-		.renderTargetSize = glm::vec2(renderWidth, renderHeight),
+		.renderArea = renderArea,
 	};
 
 	if (renderMode == DeferredRenderMode::Default) {
@@ -2549,45 +2619,243 @@ void DeferredRenderer::Render(
 	assetManager->SetEngineDescriptorSet(imageSet.engineDescriptorSet);
 
 	{
-		std::array<GraphicsAPI::ClearColorValue, 3> clearColors = {
-			GraphicsAPI::ClearColorValue{0.0f, 0.0f, 0.0f, 1.f},
-			GraphicsAPI::ClearColorValue{0.0f, 0.0f, 0.0f, 1.f},
-			GraphicsAPI::ClearColorValue{0.0f, 0.0f, 0.0f, 1.f}
+		std::array<GraphicsAPI::ImageBarrier, 3> gbufferBarriers = {
+			GraphicsAPI::ImageBarrier {
+				.image = imageSet.gbufferAlbedoRenderTarget,
+				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
+				.newLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
+				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+				.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1
+			},
+			GraphicsAPI::ImageBarrier {
+				.image = imageSet.gbufferNormalRenderTarget,
+				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
+				.newLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
+				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+				.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1
+			},
+			GraphicsAPI::ImageBarrier {
+				.image = imageSet.gbufferSpecularRoughnessRenderTarget,
+				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
+				.newLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
+				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+				.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1
+			}
 		};
 
-		GraphicsAPI::ClearDepthStencil clearDepthStencil;
-		clearDepthStencil.depth = 1.0f;
-		clearDepthStencil.stencil = 0;
-		clearDepthStencil.hasDepthStencilAttachment = true;
+		commandBuffer->PipelineBarrier(
+			GraphicsAPI::PipelineStageBit::TopOfPipe,
+			GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
+			nullptr, 0,
+			gbufferBarriers.data(), static_cast<uint32_t>(gbufferBarriers.size())
+		);
 
-		commandBuffer->BindRenderPass(
-			engineCore.GetRenderPassRegistry()->GetRenderpass(gbufferRenderPassKey),
-			imageSet.gbuffer,
-			renderWidth, renderHeight,
-			clearColors.data(),
-			static_cast<uint32_t>(clearColors.size()),
-			clearDepthStencil
+		GraphicsAPI::ImageBarrier depthBarrier{
+			.image = imageSet.gbufferDepthStencilTarget,
+			.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
+			.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+			.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
+			.dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite,
+			.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
+			.baseMipLevel = 0,
+			.levelCount = 1,
+			.baseArrayLayer = 0,
+			.layerCount = 1
+		};
+
+		commandBuffer->PipelineBarrier(
+			GraphicsAPI::PipelineStageBit::TopOfPipe,
+			GraphicsAPI::PipelineStageBit::EarlyFragmentTests,
+			nullptr, 0,
+			&depthBarrier, 1u
 		);
 	}
 
-	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(renderWidth), static_cast<float>(renderHeight));
-	commandBuffer->SetScissor(0, 0, renderWidth, renderHeight);
+	{
+		std::array<GraphicsAPI::RenderAttachment, 3> renderAttachments = {
+			imageSet.gbufferAlbedoAttachment,
+			imageSet.gbufferNormalAttachment,
+			imageSet.gbufferSpecularRoughnessAttachment
+		};
+
+		commandBuffer->BeginRendering(
+			"Gbuffer Geometry Pass",
+			renderArea,
+			renderAttachments.data(),
+			static_cast<uint32_t>(renderAttachments.size()),
+			&imageSet.gbufferDepthStencilAttachment
+		);
+	}
+
+	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(renderArea.GetWidth()), static_cast<float>(renderArea.GetHeight()));
+	commandBuffer->SetScissor(0, 0, renderArea.GetWidth(), renderArea.GetHeight());
 
 	imageSet.renderingStatsOpaque = assetManager->RenderQueue(commandBuffer, renderViewData, registry, geometryOpaqueRenderPassKey);
-	commandBuffer->UnbindRenderPass();
+	commandBuffer->EndRendering();
+
+	{
+		std::array<GraphicsAPI::ImageBarrier, 3> gbufferBarriers = {
+			GraphicsAPI::ImageBarrier {
+				.image = imageSet.gbufferAlbedoRenderTarget,
+				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+				.newLayout = Grindstone::GraphicsAPI::ImageLayout::ShaderRead,
+				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ShaderRead,
+				.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1
+			},
+			GraphicsAPI::ImageBarrier {
+				.image = imageSet.gbufferNormalRenderTarget,
+				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+				.newLayout = Grindstone::GraphicsAPI::ImageLayout::ShaderRead,
+				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ShaderRead,
+				.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1
+			},
+			GraphicsAPI::ImageBarrier {
+				.image = imageSet.gbufferSpecularRoughnessRenderTarget,
+				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+				.newLayout = Grindstone::GraphicsAPI::ImageLayout::ShaderRead,
+				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ShaderRead,
+				.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1
+			}
+		};
+
+		commandBuffer->PipelineBarrier(
+			GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
+			GraphicsAPI::PipelineStageBit::FragmentShader,
+			nullptr, 0,
+			gbufferBarriers.data(), static_cast<uint32_t>(gbufferBarriers.size())
+		);
+	}
+
+	std::vector<GraphicsAPI::ImageBarrier> depthBarriers;
+
+	depthBarriers.emplace_back(GraphicsAPI::ImageBarrier{
+		.image = imageSet.gbufferDepthStencilTarget,
+		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+		.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead,
+		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite,
+		.dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentRead,
+		.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+		});
+
+	{
+		auto view = registry.view<const entt::entity, SpotLightComponent>();
+		view.each([&](SpotLightComponent& spotLightComponent) {
+			depthBarriers.emplace_back(
+				GraphicsAPI::ImageBarrier{
+					.image = spotLightComponent.depthTarget,
+					.oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+					.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead,
+					.srcAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite,
+					.dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentRead,
+					.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
+					.baseMipLevel = 0,
+					.levelCount = 1,
+					.baseArrayLayer = 0,
+					.layerCount = 1
+				}
+			);
+		});
+	}
+
+	{
+		auto view = registry.view<DirectionalLightComponent>();
+		view.each([&](DirectionalLightComponent& directionalLightComponent) {
+			depthBarriers.emplace_back(
+				GraphicsAPI::ImageBarrier{
+					.image = directionalLightComponent.depthTarget,
+					.oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+					.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead,
+					.srcAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite,
+					.dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentRead,
+					.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
+					.baseMipLevel = 0,
+					.levelCount = 1,
+					.baseArrayLayer = 0,
+					.layerCount = 1
+				}
+			);
+		});
+	}
+
+	commandBuffer->PipelineBarrier(
+		GraphicsAPI::PipelineStageBit::LateFragmentTests,
+		GraphicsAPI::PipelineStageBit::FragmentShader,
+		nullptr, 0,
+		depthBarriers.data(), static_cast<uint32_t>(depthBarriers.size())
+	);
 
 	if (renderMode == DeferredRenderMode::Default || renderMode == DeferredRenderMode::AmbientOcclusion) {
 		RenderSsao(imageSet, commandBuffer);
 	}
 
-	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(renderWidth), static_cast<float>(renderHeight));
-	commandBuffer->SetScissor(0, 0, renderWidth, renderHeight);
+	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(renderArea.GetWidth()), static_cast<float>(renderArea.GetHeight()));
+	commandBuffer->SetScissor(0, 0, renderArea.GetWidth(), renderArea.GetHeight());
 
 	{
-		GraphicsAPI::ClearColorValue clearColor{ 0.0f, 0.0f, 0.0f, 1.f };
+		GraphicsAPI::ImageBarrier preLitHdrBufferBarrier{
+				.image = imageSet.litHdrRenderTarget,
+				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
+				.newLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
+				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+				.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1
+		};
+
+		commandBuffer->PipelineBarrier(
+			GraphicsAPI::PipelineStageBit::TopOfPipe,
+			GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
+			nullptr, 0,
+			&preLitHdrBufferBarrier, 1u
+		);
+
+		GraphicsAPI::ClearColor clearColor{ 0.0f, 0.0f, 0.0f, 1.f };
 		GraphicsAPI::ClearDepthStencil clearDepthStencil;
 
-		commandBuffer->BindRenderPass(engineCore.GetRenderPassRegistry()->GetRenderpass(lightingRenderPassKey), imageSet.litHdrFramebuffer, renderWidth, renderHeight, &clearColor, 1, clearDepthStencil);
+		commandBuffer->BeginRendering(
+			"Lighting and Forward Pass",
+			renderArea,
+			&imageSet.litHdrAttachment,
+			1u,
+			&imageSet.forwardDepthStencilAttachment
+		);
 
 		if (renderMode == DeferredRenderMode::Default) {
 			commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
@@ -2602,14 +2870,35 @@ void DeferredRenderer::Render(
 			imageSet.renderingStatsTransparent = assetManager->RenderQueue(commandBuffer, renderViewData, registry, geometryTransparentRenderPassKey);
 		}
 
-		commandBuffer->UnbindRenderPass();
+		commandBuffer->EndRendering();
+
+		GraphicsAPI::ImageBarrier postLitHdrBufferBarrier{
+				.image = imageSet.litHdrRenderTarget,
+				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+				.newLayout = Grindstone::GraphicsAPI::ImageLayout::ShaderRead,
+				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ShaderRead,
+				.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1
+		};
+
+		commandBuffer->PipelineBarrier(
+			GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
+			GraphicsAPI::PipelineStageBit::FragmentShader,
+			nullptr, 0,
+			&postLitHdrBufferBarrier, 1u
+		);
+
 	}
 
 	commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	commandBuffer->BindIndexBuffer(indexBuffer);
 
 	if (renderMode == DeferredRenderMode::Default) {
-		PostProcess(imageIndex, outputFramebuffer, commandBuffer);
+		PostProcess(imageIndex, outRenderAttachment, commandBuffer);
 	}
 	else {
 		debugUboData.renderMode = static_cast<uint32_t>(renderMode);
@@ -2617,8 +2906,9 @@ void DeferredRenderer::Render(
 		float projection_33 = projectionMatrix[2][2];
 		debugUboData.nearDistance = projection_43 / (projection_33 - 1.0f);
 		debugUboData.farDistance = projection_43 / (projection_33 + 1.0f);
-		Debug(imageIndex, outputFramebuffer, commandBuffer);
+		Debug(imageIndex, outRenderAttachment, commandBuffer);
 	}
+
 }
 
 uint16_t DeferredRenderer::GetRenderModeCount() const {

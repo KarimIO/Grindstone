@@ -54,6 +54,7 @@ const std::vector<const char*> validationLayers = {
 };
 
 const std::vector<const char*> deviceExtensions = {
+	VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 	VK_GOOGLE_HLSL_FUNCTIONALITY_1_EXTENSION_NAME,
 	VK_GOOGLE_USER_TYPE_EXTENSION_NAME,
@@ -70,7 +71,7 @@ constexpr auto vkApiVersion = VK_API_VERSION_1_3;
 static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 	Grindstone::GraphicsAPI::Vulkan::Core* vk = static_cast<Grindstone::GraphicsAPI::Vulkan::Core*>(pUserData);
 
-	if (pCallbackData->messageIdNumber == 1402107823 || -507995293 == pCallbackData->messageIdNumber) {
+	if (pCallbackData->messageIdNumber == 1402107823 || -507995293 == pCallbackData->messageIdNumber || 941228658 == pCallbackData->messageIdNumber || pCallbackData->messageIdNumber == 941228658) {
 		return VK_FALSE;
 	}
 

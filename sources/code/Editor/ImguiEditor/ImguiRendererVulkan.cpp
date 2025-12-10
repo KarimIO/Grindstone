@@ -108,9 +108,17 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	ImGui_ImplGlfw_InitForVulkan(static_cast<Grindstone::GlfwWindow*>(window)->GetHandle(), true);
 	auto vulkanRenderPass = static_cast<Grindstone::GraphicsAPI::Vulkan::RenderPass*>(wgb->GetRenderPass());
 
+	VkFormat colorFormat = static_cast<Grindstone::GraphicsAPI::Vulkan::WindowGraphicsBinding*>(wgb)->GetSwapchainVulkanFormat();
+
 	ImGui_ImplVulkan_InitInfo imguiInitInfo{};
 	imguiInitInfo.Instance = vulkanCore->GetInstance();
-	imguiInitInfo.RenderPass = vulkanRenderPass->GetRenderPassHandle();
+	imguiInitInfo.RenderPass = nullptr;
+	imguiInitInfo.UseDynamicRendering = true;
+	imguiInitInfo.PipelineRenderingCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+	imguiInitInfo.PipelineRenderingCreateInfo.pColorAttachmentFormats = &colorFormat;
+	imguiInitInfo.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
+	imguiInitInfo.PipelineRenderingCreateInfo.stencilAttachmentFormat = VkFormat::VK_FORMAT_UNDEFINED;
+	imguiInitInfo.PipelineRenderingCreateInfo.depthAttachmentFormat = VkFormat::VK_FORMAT_UNDEFINED;
 	imguiInitInfo.PhysicalDevice = vulkanCore->GetPhysicalDevice();
 	imguiInitInfo.Device = vulkanCore->GetDevice();
 	imguiInitInfo.Queue = vulkanCore->graphicsQueue;
@@ -204,20 +212,43 @@ void ImguiRendererVulkan::PrepareImguiRendering() {
 	GraphicsAPI::Framebuffer* framebuffer = window->GetCurrentFramebuffer();
 	GraphicsAPI::CommandBuffer* currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
 
-	GraphicsAPI::ClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-	GraphicsAPI::ClearDepthStencil clearDepthStencil;
-	clearDepthStencil.depth = 1.0f;
-	clearDepthStencil.stencil = 0;
-	clearDepthStencil.hasDepthStencilAttachment = true;
+	GraphicsAPI::ClearColor clearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
 
-	currentCommandBuffer->BindRenderPass(
-		renderPass,
-		framebuffer,
-		framebuffer->GetWidth(),
-		framebuffer->GetHeight(),
-		&clearColor,
-		1,
-		clearDepthStencil
+	Grindstone::Math::IntRect2D viewport(0, 0, framebuffer->GetWidth(), framebuffer->GetHeight());
+
+	Grindstone::GraphicsAPI::Image* image = static_cast<GraphicsAPI::Vulkan::WindowGraphicsBinding*>(window)->GetSwapchainImage(window->GetCurrentImageIndex());
+
+	GraphicsAPI::ImageBarrier outputImageBarrier{
+		.image = image,
+		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
+		.newLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
+		.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+		.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
+
+	currentCommandBuffer->PipelineBarrier(
+		GraphicsAPI::PipelineStageBit::TopOfPipe,
+		GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
+		nullptr, 0,
+		&outputImageBarrier, 1u
+	);
+
+	Grindstone::GraphicsAPI::RenderAttachment colorAttachment{
+		.image = image,
+		.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+		.clearValue = clearColor,
+	};
+
+	currentCommandBuffer->BeginRendering(
+		"ImGui Pass",
+		viewport,
+		&colorAttachment,
+		1u
 	);
 
 	ImGui_ImplVulkan_NewFrame();
@@ -236,7 +267,31 @@ void ImguiRendererVulkan::PostRender() {
 
 	ImGui::UpdatePlatformWindows();
 	ImGui::RenderPlatformWindowsDefault();
-	currentCommandBuffer->UnbindRenderPass();
+	currentCommandBuffer->EndRendering();
+
+	Grindstone::GraphicsAPI::Image* image = static_cast<GraphicsAPI::Vulkan::WindowGraphicsBinding*>(window)->GetSwapchainImage(window->GetCurrentImageIndex());
+
+	GraphicsAPI::ImageBarrier preTonemapImageBarrier{
+		.image = image,
+		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+		.newLayout = Grindstone::GraphicsAPI::ImageLayout::Present,
+		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+		.dstAccess = Grindstone::GraphicsAPI::AccessFlags::None,
+		.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
+
+	currentCommandBuffer->PipelineBarrier(
+		GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
+		GraphicsAPI::PipelineStageBit::BottomOfPipe,
+		nullptr, 0,
+		&preTonemapImageBarrier, 1u
+	);
+
+
 	currentCommandBuffer->EndCommandBuffer();
 	window->SubmitCommandBufferForCurrentFrame(currentCommandBuffer);
 	if (!window->PresentSwapchain() || shouldRebuildSwapchain) {

@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 
 #include <Common/Rendering/GeometryRenderingStats.hpp>
+#include <Common/Graphics/CommandBuffer.hpp>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -31,7 +32,7 @@ namespace Grindstone {
 			glm::mat4 projectionMatrix,
 			glm::mat4 viewMatrix,
 			glm::vec3 eyePos,
-			GraphicsAPI::Framebuffer* outputFramebuffer = nullptr // If nullptr, use default framebuffer
+			Grindstone::GraphicsAPI::RenderAttachment& outAttachment // If nullptr, use default framebuffer
 		) = 0;
 		virtual uint16_t GetRenderModeCount() const = 0;
 		virtual const RenderMode* GetRenderModes() const = 0;

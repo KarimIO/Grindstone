@@ -113,7 +113,7 @@ bool Grindstone::Editor::Importers::GenerateTextureThumbnail(Grindstone::Uuid uu
 
 	uint32_t width = 128u;
 	uint32_t height = 128u;
-	Grindstone::GraphicsAPI::ClearColorValue clearValues = { 0.0f, 0.0f, 0.0f, 1.0f };
+	Grindstone::GraphicsAPI::ClearColor clearValues = { 0.0f, 0.0f, 0.0f, 1.0f };
 	uint32_t clearCount = 1;
 	Grindstone::GraphicsAPI::ClearDepthStencil depthStencilVaue = Grindstone::GraphicsAPI::ClearDepthStencil{};
 
@@ -123,7 +123,7 @@ bool Grindstone::Editor::Importers::GenerateTextureThumbnail(Grindstone::Uuid uu
 	thumbnailGeneratorContext.descriptorSet->ChangeBindings(&textureBinding, 1, 1);
 	thumbnailGeneratorContext.commandBuffer->SetViewport(0, 0, 128, 128);
 	thumbnailGeneratorContext.commandBuffer->SetScissor(0, 0, 128, 128);
-	thumbnailGeneratorContext.commandBuffer->BindRenderPass(renderpass, framebuffer, width, height, &clearValues, clearCount, depthStencilVaue);
+	thumbnailGeneratorContext.commandBuffer->BindRenderPass(renderpass, framebuffer, Math::IntRect2D( 0, 0, width, height ), &clearValues, clearCount, depthStencilVaue);
 	thumbnailGeneratorContext.commandBuffer->BindGraphicsPipeline(pipeline);
 	thumbnailGeneratorContext.commandBuffer->BindGraphicsDescriptorSet(pipeline, &thumbnailGeneratorContext.descriptorSet, 0, 1);
 	thumbnailGeneratorContext.commandBuffer->DrawVertices(6, 0, 1, 0);

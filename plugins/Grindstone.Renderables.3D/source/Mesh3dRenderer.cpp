@@ -177,7 +177,7 @@ static bool IsInFrustum(const CullingFrustum& frustum, const glm::mat4& viewMode
 }
 
 static CullingFrustum CreateFrustum(const Grindstone::Rendering::RenderViewData& renderViewData) {
-	float aspectRatio = renderViewData.renderTargetSize.x / renderViewData.renderTargetSize.y;
+	float aspectRatio = renderViewData.renderArea.extent.x / renderViewData.renderArea.extent.y;
 	float tanFov = 1.0f / renderViewData.projectionMatrix[0][0];
 
 	float projection_43 = renderViewData.projectionMatrix[3][2];

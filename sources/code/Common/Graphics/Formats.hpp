@@ -5,6 +5,71 @@
 #include <stdint.h>
 
 namespace Grindstone::GraphicsAPI {
+	/*! Values to clear an attachment with. Use the unions with the correct data type
+		that represents the attachment, and use each of the 4 members of the array
+		to represent red, green, blue, and alpha respectively.
+	*/
+	union ClearColor {
+		float       float32[4];
+		int32_t     int32[4];
+		uint32_t    uint32[4];
+
+		ClearColor() : float32{ 0.0f, 0.0f, 0.0f, 0.0f } {};
+		ClearColor(float* v) : float32{ v[0], v[1], v[2], v[3] } {};
+		ClearColor(int32_t* v) : int32{ v[0], v[1], v[2], v[3] } {};
+		ClearColor(uint32_t* v) : uint32{ v[0], v[1], v[2], v[3] } {};
+
+		ClearColor(float r, float g, float b, float a) : float32{ r, g, b, a } {};
+		ClearColor(int32_t r, int32_t g, int32_t b, int32_t a) : int32{ r, g, b, a } {};
+		ClearColor(uint32_t r, uint32_t g, uint32_t b, uint32_t a) : uint32{ r, g, b, a } {};
+
+		ClearColor(const ClearColor& other) : uint32{ other.uint32[0], other.uint32[1] , other.uint32[2] , other.uint32[3] } {};
+
+		ClearColor& operator=(const ClearColor& other) {
+			float32[0] = other.float32[0];
+			float32[1] = other.float32[1];
+			float32[2] = other.float32[2];
+			float32[3] = other.float32[3];
+			return *this;
+		};
+
+		~ClearColor() = default;
+	};
+
+	// Clear values for the DepthStencilImage.
+	struct ClearDepthStencil {
+		float       depth = 0.f;
+		uint32_t    stencil = 0;
+	};
+
+	// A union of ClearColor and ClearDepthStencil.
+	union ClearUnion {
+		ClearColor color;
+		ClearDepthStencil depth;
+
+		ClearUnion() : color() {}
+		ClearUnion(ClearColor value) : color(value) {}
+		ClearUnion(ClearDepthStencil value) : depth(value) {}
+
+		ClearUnion(const ClearUnion& other) : color(other.color) {}
+
+		ClearUnion& operator=(const ClearUnion& other) {
+			color = other.color;
+			return *this;
+		};
+	};
+
+	enum class LoadOp {
+		Load = 0,
+		Clear,
+		DontCare
+	};
+
+	enum class StoreOp {
+		Store = 0,
+		DontCare
+	};
+
 	enum class TextureWrapMode : uint8_t {
 		Repeat = 0,
 		ClampToEdge,
@@ -373,11 +438,11 @@ namespace Grindstone::GraphicsAPI {
 		A8_UNORM,
 	};
 
-	enum class FormatDepthStencilType {
-		NotDepthStencil,
-		DepthOnly,
-		StencilOnly,
-		DepthStencil
+	enum class FormatDepthStencilType : uint8_t {
+		NotDepthStencil = 0,
+		Depth = 1 << 0,
+		Stencil = 1 << 1,
+		DepthStencil = static_cast<uint8_t>(FormatDepthStencilType::Depth) | static_cast<uint8_t>(FormatDepthStencilType::Stencil)
 	};
 
 	FormatDepthStencilType GetFormatDepthStencilType(Format format);

@@ -58,8 +58,10 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void ImmediateSetContext() override;
 		virtual void ImmediateSwapBuffers() override;
 		virtual void Resize(uint32_t width, uint32_t height) override;
+		GraphicsAPI::Image* GetSwapchainImage(uint32_t index) const { return imageSets[index].swapChainTarget; }
+		virtual GraphicsAPI::Format GetSwapchainFormat() const override { return swapchainFormat; }
+		VkFormat GetSwapchainVulkanFormat() const { return swapchainVulkanFormat; }
 	private:
-		Format GetDeviceColorFormat() const;
 		VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 		VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);

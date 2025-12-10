@@ -111,10 +111,6 @@ void Vulkan::WindowGraphicsBinding::SubmitWindowObjects(WindowBindingDataNative&
 	}
 }
 
-Base::Format Vulkan::WindowGraphicsBinding::GetDeviceColorFormat() const {
-	return swapchainFormat;
-}
-
 Vulkan::SwapChainSupportDetails Vulkan::WindowGraphicsBinding::QuerySwapChainSupport(VkPhysicalDevice device) {
 	SwapChainSupportDetails details;
 

@@ -135,7 +135,8 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 					combinedColor = applyGrain(sceneColor, resolution, inData.fragmentTexCoord);
 					combinedColor = hdrTransform(combinedColor);
 
-					return float4(combinedColor, 1);
+
+					return float4(sceneColor.rgb, 1);
 				}
 			}
 		}
