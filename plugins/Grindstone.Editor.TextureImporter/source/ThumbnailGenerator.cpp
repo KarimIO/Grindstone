@@ -7,8 +7,6 @@
 #include <Grindstone.Editor.TextureImporter/include/ThumbnailGenerator.hpp>
 
 static struct ThumbnailGeneratorContext {
-	Grindstone::GraphicsAPI::RenderPass* renderpass = nullptr;
-	Grindstone::GraphicsAPI::Framebuffer* framebuffer = nullptr;
 	Grindstone::GraphicsAPI::Image* renderTargetImage = nullptr;
 	Grindstone::GraphicsAPI::Sampler* sampler = nullptr;
 	Grindstone::GraphicsAPI::CommandBuffer* commandBuffer = nullptr;
@@ -108,26 +106,71 @@ bool Grindstone::Editor::Importers::GenerateTextureThumbnail(Grindstone::Uuid uu
 
 	Grindstone::GraphicsAPI::GraphicsPipeline* pipeline = pipelineAsset->GetFirstPassPipeline(&thumbnailGeneratorContext.vertexInputLayout);
 
-	Grindstone::GraphicsAPI::RenderPass* renderpass = thumbnailGeneratorContext.renderpass;
-	Grindstone::GraphicsAPI::Framebuffer* framebuffer = thumbnailGeneratorContext.framebuffer;
+	Grindstone::GraphicsAPI::Image* renderTarget = thumbnailGeneratorContext.renderTargetImage;
 
-	uint32_t width = 128u;
-	uint32_t height = 128u;
+	Grindstone::Math::IntRect2D rect(0, 0, 128u, 128u);
 	Grindstone::GraphicsAPI::ClearColor clearValues = { 0.0f, 0.0f, 0.0f, 1.0f };
-	uint32_t clearCount = 1;
-	Grindstone::GraphicsAPI::ClearDepthStencil depthStencilVaue = Grindstone::GraphicsAPI::ClearDepthStencil{};
 
-	Grindstone::GraphicsAPI::DescriptorSet::Binding textureBinding = Grindstone::GraphicsAPI::DescriptorSet::Binding::SampledImage(texture.Get()->image);
+	Grindstone::GraphicsAPI::RenderAttachment colorAttachment{
+		.image = renderTarget,
+		.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+		.clearValue = clearValues
+	};
+
+	Grindstone::GraphicsAPI::DescriptorSet::Binding textureBinding = Grindstone::GraphicsAPI::DescriptorSet::Binding::SampledImage(image);
+
+	GraphicsAPI::ImageBarrier preImageBarrier{
+		.image = renderTarget,
+		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
+		.newLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
+		.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+		.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
+
+	GraphicsAPI::ImageBarrier postImageBarrier{
+		.image = image,
+		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+		.newLayout = Grindstone::GraphicsAPI::ImageLayout::Present,
+		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+		.dstAccess = Grindstone::GraphicsAPI::AccessFlags::None,
+		.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
 
 	thumbnailGeneratorContext.commandBuffer->BeginCommandBuffer();
+	thumbnailGeneratorContext.commandBuffer->PipelineBarrier(
+		GraphicsAPI::PipelineStageBit::TopOfPipe,
+		GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
+		nullptr, 0,
+		&preImageBarrier, 1u
+	);
+
 	thumbnailGeneratorContext.descriptorSet->ChangeBindings(&textureBinding, 1, 1);
 	thumbnailGeneratorContext.commandBuffer->SetViewport(0, 0, 128, 128);
 	thumbnailGeneratorContext.commandBuffer->SetScissor(0, 0, 128, 128);
-	thumbnailGeneratorContext.commandBuffer->BindRenderPass(renderpass, framebuffer, Math::IntRect2D( 0, 0, width, height ), &clearValues, clearCount, depthStencilVaue);
+	thumbnailGeneratorContext.commandBuffer->BeginRendering(
+		"Texture Thumbnail Creation Pass",
+		rect,
+		&colorAttachment, 1u
+	);
 	thumbnailGeneratorContext.commandBuffer->BindGraphicsPipeline(pipeline);
 	thumbnailGeneratorContext.commandBuffer->BindGraphicsDescriptorSet(pipeline, &thumbnailGeneratorContext.descriptorSet, 0, 1);
 	thumbnailGeneratorContext.commandBuffer->DrawVertices(6, 0, 1, 0);
-	thumbnailGeneratorContext.commandBuffer->UnbindRenderPass();
+	thumbnailGeneratorContext.commandBuffer->EndRendering();
+	thumbnailGeneratorContext.commandBuffer->PipelineBarrier(
+		GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
+		GraphicsAPI::PipelineStageBit::BottomOfPipe,
+		nullptr, 0,
+		&postImageBarrier, 1u
+	);
 	thumbnailGeneratorContext.commandBuffer->EndCommandBuffer();
 
 	GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
@@ -161,10 +204,10 @@ bool Grindstone::Editor::Importers::InitializeTextureThumbnailGenerator() {
 		.depthFormat = GraphicsAPI::Format::Invalid,
 		.shouldClearDepthOnLoad = false,
 	};
-	thumbnailGeneratorContext.renderpass = graphicsCore->CreateRenderPass(renderpassCreateInfo);
+	Grindstone::GraphicsAPI::RenderPass* renderPass = graphicsCore->CreateRenderPass(renderpassCreateInfo);
 
 	Grindstone::HashedString rpName = Grindstone::HashedString("ThumbnailGenerator");
-	engineCore.GetRenderPassRegistry()->RegisterRenderpass(rpName, thumbnailGeneratorContext.renderpass);
+	engineCore.GetRenderPassRegistry()->RegisterRenderpass(rpName, renderPass);
 
 	Grindstone::GraphicsAPI::Image::CreateInfo renderTargetImageCreateInfo{
 		.debugName = "Thumbnail Rendertarget",
@@ -179,18 +222,6 @@ bool Grindstone::Editor::Importers::InitializeTextureThumbnailGenerator() {
 		.imageUsage = GraphicsAPI::ImageUsageFlags::RenderTarget | GraphicsAPI::ImageUsageFlags::TransferSrc,
 	};
 	thumbnailGeneratorContext.renderTargetImage = graphicsCore->CreateImage(renderTargetImageCreateInfo);
-
-	Grindstone::GraphicsAPI::Framebuffer::CreateInfo framebufferCreateInfo{
-		.debugName = "Thumbnail Framebuffer",
-		.renderPass = thumbnailGeneratorContext.renderpass,
-		.width = 128u,
-		.height = 128u,
-		.renderTargets = &thumbnailGeneratorContext.renderTargetImage,
-		.renderTargetCount = 1u,
-		.depthTarget = nullptr,
-		.isCubemap = false
-	};
-	thumbnailGeneratorContext.framebuffer = graphicsCore->CreateFramebuffer(framebufferCreateInfo);
 
 	std::string_view texture2DShaderAddress = "@GRINDSTONE.EDITOR.TEXTUREIMPORTER/editorTextureThumbnailGeneratorShader";
 	thumbnailGeneratorContext.tex2dGraphicsPipelineAsset = engineCore.assetManager->GetAssetReferenceByAddress<Grindstone::GraphicsPipelineAsset>(texture2DShaderAddress);
@@ -258,7 +289,5 @@ void Grindstone::Editor::Importers::ReleaseTextureThumbnailGenerator() {
 	graphicsCore->DeleteDescriptorSetLayout(thumbnailGeneratorContext.descriptorSetLayout);
 	graphicsCore->DeleteSampler(thumbnailGeneratorContext.sampler);
 	graphicsCore->DeleteCommandBuffer(thumbnailGeneratorContext.commandBuffer);
-	graphicsCore->DeleteFramebuffer(thumbnailGeneratorContext.framebuffer);
 	graphicsCore->DeleteImage(thumbnailGeneratorContext.renderTargetImage);
-	graphicsCore->DeleteRenderPass(thumbnailGeneratorContext.renderpass);
 }
