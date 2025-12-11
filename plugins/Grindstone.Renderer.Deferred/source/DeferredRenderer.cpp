@@ -465,15 +465,15 @@ void DeferredRenderer::CreateSSRResources() {
 	sourceBinding.type = GraphicsAPI::BindingType::SampledImage;
 	sourceBinding.stages = GraphicsAPI::ShaderStageBit::Compute;
 
-	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 6> ssrLayoutBindings{};
+	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 7> ssrLayoutBindings{};
 	for (size_t i = 0; i < ssrLayoutBindings.size(); ++i) {
 		ssrLayoutBindings[i] = sourceBinding;
 		ssrLayoutBindings[i].bindingId = static_cast<uint32_t>(i);
 	}
 
 	ssrLayoutBindings[0].type = GraphicsAPI::BindingType::UniformBuffer;
-	ssrLayoutBindings[1].type = GraphicsAPI::BindingType::StorageImage;
-	ssrLayoutBindings[3].type = GraphicsAPI::BindingType::SampledImage;
+	ssrLayoutBindings[1].type = GraphicsAPI::BindingType::Sampler;
+	ssrLayoutBindings[2].type = GraphicsAPI::BindingType::StorageImage;
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo ssrDescriptorSetLayoutCreateInfo{};
 	ssrDescriptorSetLayoutCreateInfo.debugName = "SSR Descriptor Set Layout";
@@ -716,13 +716,14 @@ void DeferredRenderer::CreateSsrRenderTargetsAndDescriptorSets(DeferredRendererI
 		.clearValue = Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f),
 	};
 
-	std::array<GraphicsAPI::DescriptorSet::Binding, 6> descriptorBindings;
-	descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( imageSet.globalUniformBufferObject );
-	descriptorBindings[1] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.ssrRenderTarget );
-	descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.litHdrRenderTarget );
-	descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferDepthStencilTarget );
-	descriptorBindings[4] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferNormalRenderTarget );
-	descriptorBindings[5] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferSpecularRoughnessRenderTarget );
+	std::array<GraphicsAPI::DescriptorSet::Binding, 7> descriptorBindings;
+	descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(imageSet.globalUniformBufferObject);
+	descriptorBindings[1] = GraphicsAPI::DescriptorSet::Binding::Sampler(screenSampler);
+	descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.ssrRenderTarget );
+	descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.litHdrRenderTarget);
+	descriptorBindings[4] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferDepthStencilTarget );
+	descriptorBindings[5] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferNormalRenderTarget );
+	descriptorBindings[6] = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferSpecularRoughnessRenderTarget );
 
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 	descriptorSetCreateInfo.debugName = "SSR Descriptor Set";
@@ -1682,9 +1683,9 @@ void DeferredRenderer::RenderSsr(DeferredRendererImageSet& imageSet, GraphicsAPI
 	{
 		GraphicsAPI::ImageBarrier barrier{
 			.image = imageSet.ssrRenderTarget,
-			.oldLayout = GraphicsAPI::ImageLayout::ShaderRead,
+			.oldLayout = GraphicsAPI::ImageLayout::Undefined,
 			.newLayout = GraphicsAPI::ImageLayout::General,
-			.srcAccess = GraphicsAPI::AccessFlags::ShaderRead,
+			.srcAccess = GraphicsAPI::AccessFlags::None,
 			.dstAccess = GraphicsAPI::AccessFlags::ShaderWrite,
 			.imageAspect = GraphicsAPI::ImageAspectBits::Color,
 			.baseMipLevel = 0,
@@ -1694,12 +1695,19 @@ void DeferredRenderer::RenderSsr(DeferredRendererImageSet& imageSet, GraphicsAPI
 		};
 
 		currentCommandBuffer->PipelineBarrier(
-			GraphicsAPI::PipelineStageBit::ComputeShader,
+			GraphicsAPI::PipelineStageBit::TopOfPipe,
 			GraphicsAPI::PipelineStageBit::ComputeShader,
 			nullptr, 0,
 			&barrier, 1
 		);
-		currentCommandBuffer->BindComputeDescriptorSet(ssrPipeline, &imageSet.ssrDescriptorSet, 2, 1);
+
+		std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> ssrDescriptors = {
+			imageSet.engineDescriptorSet,
+			imageSet.gbufferDescriptorSet,
+			imageSet.ssrDescriptorSet
+		};
+
+		currentCommandBuffer->BindComputeDescriptorSet(ssrPipeline, &imageSet.ssrDescriptorSet, 2u, 1u);
 		currentCommandBuffer->DispatchCompute(renderArea.GetWidth(), renderArea.GetHeight(), 1);
 
 		barrier.image = imageSet.ssrRenderTarget;
