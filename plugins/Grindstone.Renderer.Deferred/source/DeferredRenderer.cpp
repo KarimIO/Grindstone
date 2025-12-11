@@ -2559,7 +2559,7 @@ void DeferredRenderer::PostProcess(
 
 void DeferredRenderer::Debug(
 	uint32_t imageIndex,
-	GraphicsAPI::RenderAttachment& renderAttachment,
+	GraphicsAPI::RenderAttachment& outRenderAttachment,
 	GraphicsAPI::CommandBuffer* currentCommandBuffer
 ) {
 	DeferredRendererImageSet& imageSet = deferredRendererImageSets[imageIndex];
@@ -2569,10 +2569,30 @@ void DeferredRenderer::Debug(
 	clearDepthStencil.depth = 1.0f;
 	clearDepthStencil.stencil = 0;
 
+	GraphicsAPI::ImageBarrier preTonemapImageBarrier{
+		.image = outRenderAttachment.image,
+		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
+		.newLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
+		.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+		.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
+
+	currentCommandBuffer->PipelineBarrier(
+		GraphicsAPI::PipelineStageBit::TopOfPipe,
+		GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
+		nullptr, 0,
+		&preTonemapImageBarrier, 1u
+	);
+
 	currentCommandBuffer->BeginRendering(
 		"Debug Pass",
 		renderArea,
-		&renderAttachment,
+		&outRenderAttachment,
 		1u
 	);
 
@@ -2586,6 +2606,27 @@ void DeferredRenderer::Debug(
 	}
 
 	currentCommandBuffer->EndRendering();
+
+	GraphicsAPI::ImageBarrier colorBarrier{
+		.image = outRenderAttachment.image,
+		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+		.newLayout = Grindstone::GraphicsAPI::ImageLayout::ShaderRead,
+		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+		.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ShaderRead,
+		.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+		.baseMipLevel = 0,
+		.levelCount = 1,
+		.baseArrayLayer = 0,
+		.layerCount = 1
+	};
+
+	currentCommandBuffer->PipelineBarrier(
+		GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
+		GraphicsAPI::PipelineStageBit::FragmentShader,
+		nullptr, 0,
+		&colorBarrier, 1u
+	);
+
 }
 
 void DeferredRenderer::Render(
@@ -2784,46 +2825,48 @@ void DeferredRenderer::Render(
 		.levelCount = 1,
 		.baseArrayLayer = 0,
 		.layerCount = 1
-		});
+	});
 
-	{
-		auto view = registry.view<const entt::entity, SpotLightComponent>();
-		view.each([&](SpotLightComponent& spotLightComponent) {
-			depthBarriers.emplace_back(
-				GraphicsAPI::ImageBarrier{
-					.image = spotLightComponent.depthTarget,
-					.oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
-					.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead,
-					.srcAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite,
-					.dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentRead,
-					.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
-					.baseMipLevel = 0,
-					.levelCount = 1,
-					.baseArrayLayer = 0,
-					.layerCount = 1
-				}
-			);
-		});
-	}
+	if (renderMode == DeferredRenderMode::Default) {
+		{
+			auto view = registry.view<const entt::entity, SpotLightComponent>();
+			view.each([&](SpotLightComponent& spotLightComponent) {
+				depthBarriers.emplace_back(
+					GraphicsAPI::ImageBarrier{
+						.image = spotLightComponent.depthTarget,
+						.oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+						.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead,
+						.srcAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite,
+						.dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentRead,
+						.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
+						.baseMipLevel = 0,
+						.levelCount = 1,
+						.baseArrayLayer = 0,
+						.layerCount = 1
+					}
+				);
+			});
+		}
 
-	{
-		auto view = registry.view<DirectionalLightComponent>();
-		view.each([&](DirectionalLightComponent& directionalLightComponent) {
-			depthBarriers.emplace_back(
-				GraphicsAPI::ImageBarrier{
-					.image = directionalLightComponent.depthTarget,
-					.oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
-					.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead,
-					.srcAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite,
-					.dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentRead,
-					.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
-					.baseMipLevel = 0,
-					.levelCount = 1,
-					.baseArrayLayer = 0,
-					.layerCount = 1
-				}
-			);
-		});
+		{
+			auto view = registry.view<DirectionalLightComponent>();
+			view.each([&](DirectionalLightComponent& directionalLightComponent) {
+				depthBarriers.emplace_back(
+					GraphicsAPI::ImageBarrier{
+						.image = directionalLightComponent.depthTarget,
+						.oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+						.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead,
+						.srcAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite,
+						.dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentRead,
+						.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
+						.baseMipLevel = 0,
+						.levelCount = 1,
+						.baseArrayLayer = 0,
+						.layerCount = 1
+					}
+				);
+			});
+		}
 	}
 
 	commandBuffer->PipelineBarrier(
@@ -2840,18 +2883,18 @@ void DeferredRenderer::Render(
 	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(renderArea.GetWidth()), static_cast<float>(renderArea.GetHeight()));
 	commandBuffer->SetScissor(0, 0, renderArea.GetWidth(), renderArea.GetHeight());
 
-	{
+	if (renderMode == DeferredRenderMode::Default) {
 		GraphicsAPI::ImageBarrier preLitHdrBufferBarrier{
-				.image = imageSet.litHdrRenderTarget,
-				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
-				.newLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
-				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
-				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
-				.imageAspect = GraphicsAPI::ImageAspectBits::Color,
-				.baseMipLevel = 0,
-				.levelCount = 1,
-				.baseArrayLayer = 0,
-				.layerCount = 1
+			.image = imageSet.litHdrRenderTarget,
+			.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
+			.newLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+			.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
+			.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+			.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+			.baseMipLevel = 0,
+			.levelCount = 1,
+			.baseArrayLayer = 0,
+			.layerCount = 1
 		};
 
 		commandBuffer->PipelineBarrier(
@@ -2872,11 +2915,9 @@ void DeferredRenderer::Render(
 			&imageSet.forwardDepthStencilAttachment
 		);
 
-		if (renderMode == DeferredRenderMode::Default) {
-			commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
-			commandBuffer->BindIndexBuffer(indexBuffer);
-			RenderLights(imageIndex, commandBuffer, registry);
-		}
+		commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
+		commandBuffer->BindIndexBuffer(indexBuffer);
+		RenderLights(imageIndex, commandBuffer, registry);
 
 		imageSet.renderingStatsUnlit = assetManager->RenderQueue(commandBuffer, renderViewData, registry, geometryUnlitRenderPassKey);
 
@@ -2888,16 +2929,16 @@ void DeferredRenderer::Render(
 		commandBuffer->EndRendering();
 
 		GraphicsAPI::ImageBarrier postLitHdrBufferBarrier{
-				.image = imageSet.litHdrRenderTarget,
-				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
-				.newLayout = Grindstone::GraphicsAPI::ImageLayout::ShaderRead,
-				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
-				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ShaderRead,
-				.imageAspect = GraphicsAPI::ImageAspectBits::Color,
-				.baseMipLevel = 0,
-				.levelCount = 1,
-				.baseArrayLayer = 0,
-				.layerCount = 1
+			.image = imageSet.litHdrRenderTarget,
+			.oldLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+			.newLayout = Grindstone::GraphicsAPI::ImageLayout::ShaderRead,
+			.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+			.dstAccess = Grindstone::GraphicsAPI::AccessFlags::ShaderRead,
+			.imageAspect = GraphicsAPI::ImageAspectBits::Color,
+			.baseMipLevel = 0,
+			.levelCount = 1,
+			.baseArrayLayer = 0,
+			.layerCount = 1
 		};
 
 		commandBuffer->PipelineBarrier(
@@ -2906,7 +2947,6 @@ void DeferredRenderer::Render(
 			nullptr, 0,
 			&postLitHdrBufferBarrier, 1u
 		);
-
 	}
 
 	commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
