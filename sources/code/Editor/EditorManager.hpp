@@ -91,6 +91,7 @@ namespace Grindstone::Editor {
 		std::filesystem::path engineBinariesPath;
 		bool shouldClose = false;
 		EngineCore* engineCore = nullptr;
+		Grindstone::Assets::AssetLoader* assetLoader = nullptr;
 		ImguiEditor::ImguiEditor* imguiEditor = nullptr;
 		ScriptBuilder::CSharpBuildManager csharpBuildManager;
 		CommandList commandList;
