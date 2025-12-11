@@ -43,7 +43,7 @@ bool EngineCore::EarlyInitialize(EarlyCreateInfo& createInfo) {
 
 	Grindstone::HashedString::CreateHashMap();
 	eventDispatcher = AllocatorCore::Allocate<Events::Dispatcher>();
-	auto cvarSystem = Grindstone::CreateCvarSystemInstance();
+	Grindstone::CvarSystem* cvarSystem = Grindstone::CreateCvarSystemInstance();
 	cvarSystem->CreateFloatCvar("test.cvar", "This is a test of the cvar system.", 0.0, 2.0, Grindstone::CvarFlags::EditorNumberSlider);
 
 	firstFrameTime = std::chrono::steady_clock::now();
@@ -244,6 +244,7 @@ EngineCore::~EngineCore() {
 	AllocatorCore::Free(systemRegistrar);
 	Logger::GetLoggerState()->dispatcher = nullptr;
 	AllocatorCore::Free(eventDispatcher);
+	AllocatorCore::Free(Grindstone::CvarSystem::GetInstance());
 	AllocatorCore::Free(Grindstone::HashedString::GetHashedStringMap());
 
 	if (!AllocatorCore::IsEmpty()) {
