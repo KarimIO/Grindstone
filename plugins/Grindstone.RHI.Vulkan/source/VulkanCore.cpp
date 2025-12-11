@@ -635,47 +635,47 @@ const char* Vulkan::Core::GetDefaultShaderExtension() const {
 // Creators
 //==================================
 Base::Framebuffer* Vulkan::Core::CreateFramebuffer(const Base::Framebuffer::CreateInfo& ci) {
-	return static_cast<Base::Framebuffer*>(AllocatorCore::Allocate<Vulkan::Framebuffer>(ci));
+	return static_cast<Base::Framebuffer*>(AllocatorCore::AllocateNamed<Vulkan::Framebuffer>(ci.debugName ? ci.debugName : "Vulkan::Framebuffer", ci));
 }
 
 Base::RenderPass* Vulkan::Core::CreateRenderPass(const Base::RenderPass::CreateInfo& ci) {
-	return static_cast<Base::RenderPass*>(AllocatorCore::Allocate<Vulkan::RenderPass>(ci));
+	return static_cast<Base::RenderPass*>(AllocatorCore::AllocateNamed<Vulkan::RenderPass>(ci.debugName ? ci.debugName : "Vulkan::RenderPass", ci));
 }
 
 Base::ComputePipeline* Vulkan::Core::CreateComputePipeline(const Base::ComputePipeline::CreateInfo& ci) {
-	return static_cast<Base::ComputePipeline*>(AllocatorCore::Allocate<Vulkan::ComputePipeline>(ci));
+	return static_cast<Base::ComputePipeline*>(AllocatorCore::AllocateNamed<Vulkan::ComputePipeline>(ci.debugName ? ci.debugName : "Vulkan::ComputePipeline", ci));
 }
 
 Base::GraphicsPipeline* Vulkan::Core::CreateGraphicsPipeline(const Base::GraphicsPipeline::CreateInfo& ci) {
-	return static_cast<Base::GraphicsPipeline*>(AllocatorCore::Allocate<Vulkan::GraphicsPipeline>(ci));
+	return static_cast<Base::GraphicsPipeline*>(AllocatorCore::AllocateNamed<Vulkan::GraphicsPipeline>(ci.pipelineData.debugName ? ci.pipelineData.debugName : "Vulkan::GraphicsPipeline", ci));
 }
 
 Base::CommandBuffer* Vulkan::Core::CreateCommandBuffer(const Base::CommandBuffer::CreateInfo& ci) {
-	return static_cast<Base::CommandBuffer*>(AllocatorCore::Allocate<Vulkan::CommandBuffer>(ci));
+	return static_cast<Base::CommandBuffer*>(AllocatorCore::AllocateNamed<Vulkan::CommandBuffer>(ci.debugName ? ci.debugName : "Vulkan::CommandBuffer", ci));
 }
 
 Base::VertexArrayObject* Vulkan::Core::CreateVertexArrayObject(const Base::VertexArrayObject::CreateInfo& ci) {
-	return static_cast<Base::VertexArrayObject*>(AllocatorCore::Allocate<Vulkan::VertexArrayObject>(ci));
+	return static_cast<Base::VertexArrayObject*>(AllocatorCore::AllocateNamed<Vulkan::VertexArrayObject>(ci.debugName ? ci.debugName : "Vulkan::VertexArrayObject", ci));
 }
 
 Base::Buffer* Vulkan::Core::CreateBuffer(const Base::Buffer::CreateInfo& ci) {
-	return static_cast<Base::Buffer*>(AllocatorCore::Allocate<Vulkan::Buffer>(ci));
+	return static_cast<Base::Buffer*>(AllocatorCore::AllocateNamed<Vulkan::Buffer>(ci.debugName ? ci.debugName : "Vulkan::Buffer", ci));
 }
 
 Base::Sampler* Vulkan::Core::CreateSampler(const Base::Sampler::CreateInfo& createInfo) {
-	return static_cast<Base::Sampler*>(AllocatorCore::Allocate<Vulkan::Sampler>(createInfo));
+	return static_cast<Base::Sampler*>(AllocatorCore::AllocateNamed<Vulkan::Sampler>(createInfo.debugName ? createInfo.debugName : "Vulkan::Sampler", createInfo));
 }
 
 Base::Image* Vulkan::Core::CreateImage(const Base::Image::CreateInfo& createInfo) {
-	return static_cast<Base::Image*>(AllocatorCore::Allocate<Vulkan::Image>(createInfo));
+	return static_cast<Base::Image*>(AllocatorCore::AllocateNamed<Vulkan::Image>(createInfo.debugName ? createInfo.debugName : "Vulkan::Image", createInfo));
 }
 
 Base::DescriptorSet* Vulkan::Core::CreateDescriptorSet(const Base::DescriptorSet::CreateInfo& ci) {
-	return static_cast<Base::DescriptorSet*>(AllocatorCore::Allocate<Vulkan::DescriptorSet>(ci));
+	return static_cast<Base::DescriptorSet*>(AllocatorCore::AllocateNamed<Vulkan::DescriptorSet>(ci.debugName ? ci.debugName : "Vulkan::DescriptorSet", ci));
 }
 
 Base::DescriptorSetLayout* Vulkan::Core::CreateDescriptorSetLayout(const Base::DescriptorSetLayout::CreateInfo& ci) {
-	return static_cast<Base::DescriptorSetLayout*>(AllocatorCore::Allocate<Vulkan::DescriptorSetLayout>(ci));
+	return static_cast<Base::DescriptorSetLayout*>(AllocatorCore::AllocateNamed<Vulkan::DescriptorSetLayout>(ci.debugName ? ci.debugName : "Vulkan::DescriptorSetLayout", ci));
 }
 
 Base::GraphicsPipeline* Vulkan::Core::GetOrCreateGraphicsPipelineFromCache(
