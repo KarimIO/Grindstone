@@ -77,6 +77,36 @@ namespace Grindstone::Memory::AllocatorCore {
 		return ptr;
 	}
 
+	template<typename T, typename... Args>
+	T* AllocateNamed(const char* debugName, Args&&... params) {
+		T* ptr = static_cast<T*>(GetAllocatorState()->dynamicAllocator.AllocateRaw(sizeof(T), alignof(T), debugName));
+		if (ptr != nullptr) {
+			// Call the constructor on the newly allocated memory
+			new (ptr) T(std::forward<Args>(params)...);
+		}
+
+		return ptr;
+	}
+
+	template<typename T>
+	T* AllocateArrayNamed(const char* debugName, size_t arraySize) {
+		T* ptr = static_cast<T*>(GetAllocatorState()->dynamicAllocator.AllocateRaw(sizeof(T) * arraySize, alignof(T), debugName));
+		return ptr;
+	}
+
+	template<typename T, typename... Args>
+	T* AllocateArrayNamed(const char* debugName, size_t arraySize, Args&&... params) {
+		T* ptr = static_cast<T*>(GetAllocatorState()->dynamicAllocator.AllocateRaw(sizeof(T) * arraySize, alignof(T), debugName));
+		if (ptr != nullptr) {
+			// Call the constructor on the newly allocated memory
+			for (size_t i = 0; i < arraySize; ++i) {
+				new (ptr + i) T(std::forward<Args>(params)...);
+			}
+		}
+
+		return ptr;
+	}
+
 	template<typename T>
 	bool Free(T* memPtr) {
 		if (memPtr == nullptr) {
