@@ -320,7 +320,7 @@ void* DynamicAllocator::AllocateRaw(size_t size, size_t alignment, const char* d
 	void* voidAddr = reinterpret_cast<void*>(reinterpret_cast<char*>(newHeader) + sizeof(AllocationHeader));
 
 #ifdef _DEBUG
-	nameMap[voidAddr] = debugName;
+	strncpy(nameMap[voidAddr], debugName, DEBUG_NAME_SIZE);
 #endif
 
 	return voidAddr;
