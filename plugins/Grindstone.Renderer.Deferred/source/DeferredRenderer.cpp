@@ -158,6 +158,8 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) : 
 DeferredRenderer::~DeferredRenderer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
+	graphicsCore->DeleteBuffer(gpuGlobalUniformBufferObject);
+
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
 		DeferredRendererImageSet& imageSet = deferredRendererImageSets[i];
 
@@ -717,7 +719,7 @@ void DeferredRenderer::CreateSsrRenderTargetsAndDescriptorSets(DeferredRendererI
 	};
 
 	std::array<GraphicsAPI::DescriptorSet::Binding, 7> descriptorBindings;
-	descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(imageSet.globalUniformBufferObject);
+	descriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(gpuGlobalUniformBufferObject);
 	descriptorBindings[1] = GraphicsAPI::DescriptorSet::Binding::Sampler(screenSampler);
 	descriptorBindings[2] = GraphicsAPI::DescriptorSet::Binding::StorageImage( imageSet.ssrRenderTarget );
 	descriptorBindings[3] = GraphicsAPI::DescriptorSet::Binding::SampledImage(imageSet.litHdrRenderTarget);
@@ -928,7 +930,7 @@ void DeferredRenderer::CreateUniformBuffers() {
 		GraphicsAPI::BufferUsage::TransferDst |
 		GraphicsAPI::BufferUsage::TransferSrc |
 		GraphicsAPI::BufferUsage::Uniform;
-	globalUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU;
+	globalUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemoryUsage::CPUOnly;
 	globalUniformBufferObjectCi.bufferSize = sizeof(EngineUboStruct);
 
 	GraphicsAPI::Buffer::CreateInfo debugUniformBufferObjectCi{};
@@ -937,7 +939,7 @@ void DeferredRenderer::CreateUniformBuffers() {
 	debugUniformBufferObjectCi.bufferSize = sizeof(DebugUboData);
 
 	for (size_t i = 0; i < deferredRendererImageSets.size(); ++i) {
-		std::string engineUboName = std::vformat("EngineUbo [{}]", std::make_format_args(i));
+		std::string engineUboName = std::vformat("EngineUbo Staging Buffer [{}]", std::make_format_args(i));
 		std::string debugUboName = std::vformat("DebugUbo [{}]", std::make_format_args(i));
 
 		globalUniformBufferObjectCi.debugName = engineUboName.c_str();
@@ -947,6 +949,10 @@ void DeferredRenderer::CreateUniformBuffers() {
 		imageSet.globalUniformBufferObject = graphicsCore->CreateBuffer(globalUniformBufferObjectCi);
 		imageSet.debugUniformBufferObject = graphicsCore->CreateBuffer(debugUniformBufferObjectCi);
 	}
+
+	globalUniformBufferObjectCi.debugName = "EngineUbo GPU Buffer";
+	globalUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly;
+	gpuGlobalUniformBufferObject = graphicsCore->CreateBuffer(globalUniformBufferObjectCi);
 
 	CreateDescriptorSetLayouts();
 }
@@ -1168,7 +1174,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
 	const GraphicsAPI::DescriptorSet::Binding screenSamplerBinding = GraphicsAPI::DescriptorSet::Binding::Sampler(screenSampler);
-	const GraphicsAPI::DescriptorSet::Binding engineUboBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( imageSet.globalUniformBufferObject );
+	const GraphicsAPI::DescriptorSet::Binding engineUboBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( gpuGlobalUniformBufferObject );
 	const GraphicsAPI::DescriptorSet::Binding litHdrRenderTargetBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.litHdrRenderTarget );
 	const GraphicsAPI::DescriptorSet::Binding gbufferDepthBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferDepthStencilTarget );
 	const GraphicsAPI::DescriptorSet::Binding gbufferAlbedoBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferAlbedoRenderTarget );
@@ -1274,7 +1280,7 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 void DeferredRenderer::UpdateDescriptorSets(DeferredRendererImageSet& imageSet) {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	GraphicsAPI::DescriptorSet::Binding engineUboBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( imageSet.globalUniformBufferObject );
+	GraphicsAPI::DescriptorSet::Binding engineUboBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( gpuGlobalUniformBufferObject );
 	GraphicsAPI::DescriptorSet::Binding screenSamplerBinding = GraphicsAPI::DescriptorSet::Binding::Sampler( screenSampler );
 	GraphicsAPI::DescriptorSet::Binding litHdrRenderTargetBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.litHdrRenderTarget );
 	GraphicsAPI::DescriptorSet::Binding gbufferDepthBinding = GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.gbufferDepthStencilTarget );
@@ -2613,6 +2619,7 @@ void DeferredRenderer::Render(
 	};
 
 	imageSet.globalUniformBufferObject->UploadData(&engineUboStruct);
+	commandBuffer->CopyBufferRegion(imageSet.globalUniformBufferObject, gpuGlobalUniformBufferObject);
 
 	Grindstone::Rendering::RenderViewData renderViewData{
 		.projectionMatrix = projectionMatrix,

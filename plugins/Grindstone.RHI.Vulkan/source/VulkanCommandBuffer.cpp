@@ -448,6 +448,66 @@ void Vulkan::CommandBuffer::DispatchCompute(uint32_t groupCountX, uint32_t group
 	vkCmdDispatch(commandBuffer, groupCountX, groupCountY, groupCountZ);
 }
 
+void Vulkan::CommandBuffer::CopyBufferRegions(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, BufferCopyRegion* regions, uint32_t regionCount) {
+	std::vector<VkBufferCopy2> vkRegions;
+
+	for (uint32_t i = 0; i < regionCount; ++i) {
+		BufferCopyRegion& region = regions[i];
+		GS_ASSERT_ENGINE(region.srcOffset + region.size <= srcBuffer->GetSize());
+		GS_ASSERT_ENGINE(region.dstOffset + region.size <= dstBuffer->GetSize());
+
+		vkRegions.emplace_back(
+			VkBufferCopy2{
+				.sType = VK_STRUCTURE_TYPE_BUFFER_COPY_2,
+				.pNext = nullptr,
+				.srcOffset = region.srcOffset,
+				.dstOffset = region.dstOffset,
+				.size = region.size
+			}
+		);
+	}
+
+	const VkCopyBufferInfo2 copyBufferInfo{
+		.sType = VK_STRUCTURE_TYPE_COPY_BUFFER_INFO_2,
+		.pNext = nullptr,
+		.srcBuffer = static_cast<Vulkan::Buffer*>(srcBuffer)->GetBuffer(),
+		.dstBuffer = static_cast<Vulkan::Buffer*>(dstBuffer)->GetBuffer(),
+		.regionCount = static_cast<uint32_t>(vkRegions.size()),
+		.pRegions =  vkRegions.data(),
+	};
+
+	vkCmdCopyBuffer2(commandBuffer, &copyBufferInfo);
+}
+
+void Vulkan::CommandBuffer::CopyBufferRegion(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, uint64_t size, uint32_t srcOffset, uint32_t dstOffset) {
+	if (size == 0) {
+		size = srcBuffer->GetSize();
+		GS_ASSERT_ENGINE_WITH_MESSAGE(srcBuffer->GetSize() == dstBuffer->GetSize(), "CopyBufferRegion: If size == 0, the buffer sizes must match - this is to ensure predictable functionality.");
+	}
+
+	GS_ASSERT_ENGINE(srcOffset + size <= srcBuffer->GetSize());
+	GS_ASSERT_ENGINE(dstOffset + size <= dstBuffer->GetSize());
+	
+	const VkBufferCopy2 region{
+		.sType = VK_STRUCTURE_TYPE_BUFFER_COPY_2,
+		.pNext = nullptr,
+		.srcOffset = srcOffset,
+		.dstOffset = dstOffset,
+		.size = size
+	};
+
+	const VkCopyBufferInfo2 copyBufferInfo{
+		.sType = VK_STRUCTURE_TYPE_COPY_BUFFER_INFO_2,
+		.pNext = nullptr,
+		.srcBuffer = static_cast<Vulkan::Buffer*>(srcBuffer)->GetBuffer(),
+		.dstBuffer = static_cast<Vulkan::Buffer*>(dstBuffer)->GetBuffer(),
+		.regionCount = 1u,
+		.pRegions = &region,
+	};
+
+	vkCmdCopyBuffer2(commandBuffer, &copyBufferInfo);
+}
+
 void Vulkan::CommandBuffer::PipelineBarrier(
 	GraphicsAPI::PipelineStageBit srcPipelineStageMask,
 	GraphicsAPI::PipelineStageBit dstPipelineStageMask,

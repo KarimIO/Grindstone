@@ -58,6 +58,8 @@ namespace Grindstone {
 		};
 
 	private:
+		GraphicsAPI::Buffer* gpuGlobalUniformBufferObject = nullptr;
+
 		struct DeferredRendererImageSet {
 			GraphicsAPI::Image* gbufferDepthStencilTarget = nullptr;
 			GraphicsAPI::Image* litHdrRenderTarget = nullptr;
