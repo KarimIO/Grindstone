@@ -69,6 +69,12 @@ namespace Grindstone::GraphicsAPI {
 		uint32_t								size = 0;
 	};
 
+	struct BufferCopyRegion {
+		uint32_t								srcOffset = 0;
+		uint32_t								dstOffset = 0;
+		uint32_t								size = 0;
+	};
+
 	struct RenderAttachment {
 		Grindstone::GraphicsAPI::Image*			image = nullptr;
 		Grindstone::GraphicsAPI::ImageLayout	imageLayout;
@@ -119,6 +125,10 @@ namespace Grindstone::GraphicsAPI {
 			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) = 0;
+
+		virtual void CopyBufferRegions(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, BufferCopyRegion* regions, uint32_t regionCount) = 0;
+		virtual void CopyBufferRegion(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, uint64_t size = 0, uint32_t srcOffset = 0, uint32_t dstOffset = 0) = 0;
+
 		virtual void BindCommandBuffers(CommandBuffer** commandBuffers, uint32_t commandBuffersCount) = 0;
 		virtual void SetViewport(float offsetX, float offsetY, float width, float height, float depthMin = 0.0f, float depthMax = 1.0f) = 0;
 		virtual void SetScissor(int32_t offsetX, int32_t offsetY, uint32_t width, uint32_t height) = 0;
