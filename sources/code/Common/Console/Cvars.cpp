@@ -1,3 +1,4 @@
+#include "Cvars.hpp"
 #include <unordered_map>
 
 #include <array>
@@ -27,6 +28,10 @@ namespace Grindstone {
 
 		CvarArray(size_t size) {
 			cvars = Grindstone::Memory::AllocatorCore::AllocateArray<CvarStorage<T>>(size);
+		}
+
+		~CvarArray() {
+			Grindstone::Memory::AllocatorCore::Free(cvars);
 		}
 
 		CvarStorage<T>* GetCurrentStorage(int32_t index) {
@@ -74,6 +79,7 @@ namespace Grindstone {
 	class CvarSystemImpl : public CvarSystem {
 	public:
 		CvarParameter* GetCvar(Grindstone::HashedString name) override;
+		virtual ~CvarSystemImpl() override {}
 
 		virtual CvarParameter* CreateFloatCvar(const char* name, const char* description, double defaultValue, double currentValue, CvarFlags flags = CvarFlags::None) override;
 		virtual CvarParameter* CreateIntCvar(const char* name, const char* description, int32_t defaultValue, int32_t currentValue, CvarFlags flags = CvarFlags::None) override;

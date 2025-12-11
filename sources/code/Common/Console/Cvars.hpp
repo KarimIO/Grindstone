@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <unordered_map>
 
 #include "../HashedString.hpp"
 
@@ -43,6 +44,7 @@ namespace Grindstone {
 		static CvarSystem* GetInstance();
 		static void SetInstance(CvarSystem* ptr);
 		virtual CvarParameter* GetCvar(Grindstone::HashedString name) = 0;
+		virtual ~CvarSystem() {}
 
 		virtual size_t GetFloatCount() const = 0;
 		virtual size_t GetIntCount() const = 0;
