@@ -86,27 +86,25 @@ BoxColliderComponent BoxColliderComponent::Clone(Grindstone::WorldContextSet& cx
 }
 
 void BoxColliderComponent::Initialize() {
-	collisionShape = new JPH::BoxShape(
+	JPH::BoxShapeSettings boxShapeSettings(
 		JPH::Vec3(
 			size.x / 2.0f,
 			size.y / 2.0f,
 			size.z / 2.0f
-		),
-		0.05f,
-		nullptr
+		)
 	);
+	collisionShape = boxShapeSettings.Create().Get();
 }
 
 void BoxColliderComponent::SetSize(Float3 size) {
-	collisionShape = new JPH::BoxShape(
+	JPH::BoxShapeSettings boxShapeSettings(
 		JPH::Vec3(
 			size.x / 2.0f,
 			size.y / 2.0f,
 			size.z / 2.0f
-		),
-		0.05f,
-		nullptr
+		)
 	);
+	collisionShape = boxShapeSettings.Create().Get();
 
 	this->size = size;
 }

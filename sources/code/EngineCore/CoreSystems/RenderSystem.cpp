@@ -17,7 +17,7 @@
 std::vector<Grindstone::GraphicsAPI::CommandBuffer*> commandBuffers;
 
 namespace Grindstone {
-	void RenderSystem(entt::registry& registry) {
+	void RenderSystem(Grindstone::WorldContextSet& worldContextSet) {
 		GRIND_PROFILE_SCOPE("RenderSystem()");
 
 		EngineCore& engineCore = EngineCore::GetInstance();
@@ -46,6 +46,7 @@ namespace Grindstone {
 			}
 		}
 
+		entt::registry& registry = worldContextSet.GetEntityRegistry();
 		auto view = registry.view<entt::entity, const TransformComponent, const CameraComponent>();
 
 		view.each(

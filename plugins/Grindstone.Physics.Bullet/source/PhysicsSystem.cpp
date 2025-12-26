@@ -31,13 +31,13 @@ static void SimulatePhysicsForObject(
 }
 
 namespace Grindstone {
-	void PhysicsBulletSystem(entt::registry& registry) {
-		Physics::WorldContext* cxt = Physics::WorldContext::GetActiveContext();
+	void PhysicsBulletSystem(Grindstone::WorldContextSet& worldContextSet) {
+		Physics::WorldContext* cxt = static_cast<Physics::WorldContext*>(worldContextSet.GetContext(physicsWorldContextName));
 		if (cxt != nullptr) {
 			btScalar dt = 1.0f / 30.0f;
 			cxt->dynamicsWorld->stepSimulation(dt, 10);
 
-			registry.view<Physics::RigidBodyComponent, TransformComponent>()
+			worldContextSet.GetEntityRegistry().view<Physics::RigidBodyComponent, TransformComponent>()
 				.each(SimulatePhysicsForObject);
 		}
 	}

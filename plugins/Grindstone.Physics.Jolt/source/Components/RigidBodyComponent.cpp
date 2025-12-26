@@ -65,11 +65,11 @@ void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
 	TransformComponent* transformComponent,
 	ColliderComponent* colliderComponent
 ) {
-	JPH::Quat rotation(
-		transformComponent->rotation.x,
-		transformComponent->rotation.y,
-		transformComponent->rotation.z,
-		transformComponent->rotation.w
+	JPH::Quat rotation = JPH::Quat(
+		0.0f, //transformComponent->rotation.x,
+		0.0f, //transformComponent->rotation.y,
+		0.0f, //transformComponent->rotation.z,
+		1.0f //transformComponent->rotation.w
 	);
 	JPH::RVec3 position(
 		transformComponent->position.x,
@@ -78,7 +78,7 @@ void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
 	);
 
 	JPH::Shape* shape = colliderComponent->collisionShape;
-	JPH::BodyCreationSettings bodySettings(shape, position, rotation, JPH::EMotionType::Dynamic, Layers::MOVING);
+	JPH::BodyCreationSettings bodySettings(shape, position, rotation, rigidBodyComponent->mass == 0 ? JPH::EMotionType::Static : JPH::EMotionType::Dynamic, rigidBodyComponent->mass == 0 ? Layers::NON_MOVING : Layers::MOVING);
 
 	Grindstone::Physics::WorldContext* physWorldContext = static_cast<Grindstone::Physics::WorldContext*>(cxtSet.GetContext(physicsWorldContextName));
 	if (physWorldContext != nullptr) {

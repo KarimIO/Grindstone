@@ -9,8 +9,8 @@ using namespace Grindstone;
 using namespace Grindstone::Physics;
 
 namespace Grindstone {
-	void PhysicsJoltSystem(entt::registry& registry) {
-		Physics::WorldContext* cxt = Physics::WorldContext::GetActiveContext();
+	void PhysicsJoltSystem(Grindstone::WorldContextSet& worldContextSet) {
+		Physics::WorldContext* cxt = static_cast<Physics::WorldContext*>(worldContextSet.GetContext(physicsWorldContextName));
 		if (cxt != nullptr) {
 			const float deltaTime = 1.0f / 30.0f;
 			const int collisionSteps = 1;
@@ -19,7 +19,7 @@ namespace Grindstone {
 			JPH::JobSystem& jobSystem = cxt->GetJobSystem();
 			cxt->GetPhysicsSystem().Update(deltaTime, collisionSteps, &tempAllocator, &jobSystem);
 
-			registry.view<Physics::RigidBodyComponent, TransformComponent>()
+			worldContextSet.GetEntityRegistry().view<Physics::RigidBodyComponent, TransformComponent>()
 				.each(
 					[cxt](
 						RigidBodyComponent& rigidBodyComponent,

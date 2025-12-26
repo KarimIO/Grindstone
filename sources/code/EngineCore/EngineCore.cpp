@@ -182,7 +182,7 @@ void EngineCore::RunEditorLoopIteration() {
 	deferredDeletionQueue.DeleteForFrame();
 	assetManager->ReloadQueuedAssets();
 	CalculateDeltaTime();
-	systemRegistrar->EditorUpdate(GetEntityRegistry());
+	systemRegistrar->EditorUpdate(*worldContextManager->GetActiveWorldContextSet());
 	GRIND_PROFILE_END_SESSION();
 }
 
@@ -190,7 +190,7 @@ void EngineCore::RunLoopIteration() {
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
 	deferredDeletionQueue.DeleteForFrame();
 	CalculateDeltaTime();
-	systemRegistrar->Update(GetEntityRegistry());
+	systemRegistrar->Update(*worldContextManager->GetActiveWorldContextSet());
 	GRIND_PROFILE_END_SESSION();
 }
 

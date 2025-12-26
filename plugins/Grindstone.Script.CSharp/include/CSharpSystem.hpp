@@ -1,12 +1,12 @@
 #pragma once
 
-#include <entt/entt.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
 
 namespace Grindstone {
 	namespace Scripting {
 		namespace CSharp {
-			void UpdateSystem(entt::registry& registry);
-			void UpdateEditorSystem(entt::registry& registry);
+			void UpdateSystem(Grindstone::WorldContextSet& worldContextSet);
+			void UpdateEditorSystem(Grindstone::WorldContextSet& worldContextSet);
 		}
 	}
 }
