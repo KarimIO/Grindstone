@@ -16,7 +16,7 @@ namespace Grindstone::Physics {
 	struct ColliderComponent {
 		virtual void Initialize() = 0;
 
-		JPH::Shape* collisionShape = nullptr;
+		JPH::Ref<JPH::Shape> collisionShape = nullptr;
 	};
 
 	struct SphereColliderComponent : public ColliderComponent {

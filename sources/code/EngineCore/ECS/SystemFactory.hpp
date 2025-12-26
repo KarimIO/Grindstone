@@ -1,11 +1,11 @@
 #pragma once
 
-#include <entt/entt.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
 
 namespace Grindstone {
 	class EngineCore;
 
 	namespace ECS {
-		using SystemFactory = void(*)(entt::registry&);
+		using SystemFactory = void(*)(Grindstone::WorldContextSet&);
 	}
 }

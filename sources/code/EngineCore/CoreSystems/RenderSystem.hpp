@@ -1,6 +1,7 @@
 #pragma once
-#include <entt/entt.hpp>
+
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
 
 namespace Grindstone {
-	void RenderSystem(entt::registry& registry);
+	void RenderSystem(Grindstone::WorldContextSet& worldContextSet);
 }

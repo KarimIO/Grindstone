@@ -40,7 +40,7 @@ namespace Grindstone {
 
 			void SetBodyID(JPH::BodyID bodyId);
 			JPH::BodyID GetBodyID();
-		private:
+
 			float mass = 0.0f;
 			float friction = 0.0f;
 			float restitution = 0.0f;

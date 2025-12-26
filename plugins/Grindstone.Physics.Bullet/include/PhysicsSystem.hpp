@@ -1,7 +1,7 @@
 #pragma once
 
-#include <entt/entt.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
 
 namespace Grindstone {
-	void PhysicsBulletSystem(entt::registry& registry);
+	void PhysicsBulletSystem(Grindstone::WorldContextSet& worldContextSet);
 }
