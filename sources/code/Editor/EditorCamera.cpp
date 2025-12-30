@@ -248,7 +248,7 @@ EditorCamera::~EditorCamera() {
 void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuffer* commandBuffer, int x, int y) {
 	y = height - y;
 
-	if (x < 0 || y < 0 || x > width || y > height) {
+	if (x < 0 || y < 0 || x > static_cast<int>(width) || y > static_cast<int>(height)) {
 		return;
 	}
 

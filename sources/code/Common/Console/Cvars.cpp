@@ -34,23 +34,23 @@ namespace Grindstone {
 			Grindstone::Memory::AllocatorCore::Free(cvars);
 		}
 
-		CvarStorage<T>* GetCurrentStorage(int32_t index) {
+		CvarStorage<T>* GetCurrentStorage(size_t index) {
 			return &cvars[index];
 		}
 
-		T* GetCurrentPtr(int32_t index) {
+		T* GetCurrentPtr(size_t index) {
 			return &cvars[index].current;
 		};
 
-		T GetCurrent(int32_t index) {
+		T GetCurrent(size_t index) {
 			return cvars[index].current;
 		};
 
-		void SetCurrent(const T& val, int32_t index) {
+		void SetCurrent(const T& val, size_t index) {
 			cvars[index].current = val;
 		}
 
-		int Add(const T& value, CvarParameter* param) {
+		size_t Add(const T& value, CvarParameter* param) {
 			size_t index = count;
 
 			cvars[index].current = value;
@@ -62,7 +62,7 @@ namespace Grindstone {
 			return index;
 		}
 
-		int Add(const T& initialValue, const T& currentValue, CvarParameter* param) {
+		size_t Add(const T& initialValue, const T& currentValue, CvarParameter* param) {
 			size_t index = count;
 
 			cvars[index].current = currentValue;

@@ -8,7 +8,7 @@ bool Grindstone::Plugins::LoadPluginManifestLockFile(std::vector<ManifestData>& 
 	auto pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager*>(Grindstone::EngineCore::GetInstance().GetPluginManager());
 	const std::vector<std::filesystem::path> &pluginsFolders = pluginManager->GetPluginsFolders();
 
-	for (int i = manifestDataList.size() - 1; i >= 0; --i) {
+	for (int i = static_cast<int>(manifestDataList.size()) - 1; i >= 0; --i) {
 		ManifestData& manifestData = manifestDataList[i];
 		for (const std::filesystem::path& basePluginPath : pluginsFolders) {
 			std::filesystem::path metaFilePath = basePluginPath / manifestData.pluginName;
