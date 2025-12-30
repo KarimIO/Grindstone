@@ -12,7 +12,7 @@
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Logger.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanDescriptorSet.hpp>
-#include <Grindstone.Physics.Bullet/include/Components/ColliderComponent.hpp>
+#include <Grindstone.Physics.Jolt/include/Components/ColliderComponent.hpp>
 #include <Grindstone.Renderables.3D//include/Components/MeshComponent.hpp>
 
 #include "EditorCamera.hpp"
@@ -561,17 +561,27 @@ void EditorCamera::OffsetRotation(float xOffset, float yOffset) {
 	UpdateViewMatrix();
 }
 
-void EditorCamera::OffsetPosition(float x, float y, float z) {
+void EditorCamera::OffsetPosition(glm::vec3 offset) {
 	float deltaTime = (float)Editor::Manager::GetEngineCore().GetDeltaTime();
 
-	const float speed = 45.f;
+	const float speed = 20.f;
 	position += (
-		GetForward() * z +
-		GetRight() * x +
-		GetUp() * y
+		GetForward() * offset.z +
+		GetRight() * offset.x +
+		GetUp() * offset.y
 	) * deltaTime * speed;
 
 	UpdateViewMatrix();
+}
+
+void EditorCamera::SetPosition(glm::vec3 newPosition) {
+	position = newPosition;
+
+	UpdateViewMatrix();
+}
+
+glm::vec3 EditorCamera::GetPosition() const {
+	return position;
 }
 
 glm::vec3 EditorCamera::GetForward() const {

@@ -33,7 +33,8 @@ namespace Grindstone {
 			void Render(GraphicsAPI::CommandBuffer* commandBuffer);
 			void RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffer);
 			void OffsetRotation(float pitch, float yaw);
-			void OffsetPosition(float x, float y, float z);
+			void OffsetPosition(glm::vec3 offset);
+			void SetPosition(glm::vec3 newPosition);
 			void ResizeViewport(uint32_t width, uint32_t height);
 			void UpdateProjectionMatrix();
 			void UpdateViewMatrix();
@@ -41,14 +42,16 @@ namespace Grindstone {
 			glm::mat4& GetViewMatrix();
 			BaseRenderer* GetRenderer() const;
 
+			glm::vec3 GetPosition() const;
+			glm::vec3 GetForward() const;
+			glm::vec3 GetRight() const;
+			glm::vec3 GetUp() const;
+
 			bool isGridEnabled = true;
 			bool isBoundingSphereGizmoEnabled = false;
 			bool isBoundingBoxGizmoEnabled = false;
 			bool isColliderGizmoEnabled = true;
 		private:
-			glm::vec3 GetForward() const;
-			glm::vec3 GetRight() const;
-			glm::vec3 GetUp() const;
 
 			GizmoRenderer gizmoRenderer;
 			GridRenderer gridRenderer;

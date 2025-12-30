@@ -1,9 +1,14 @@
 #include <imgui.h>
 #include <imgui_stdlib.h>
 #include <entt/entt.hpp>
-#include "EngineCore/Scenes/Manager.hpp"
-#include "Editor/Commands/EntityCommands.hpp"
-#include "Editor/EditorManager.hpp"
+
+#include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
+#include <EngineCore/Scenes/Manager.hpp>
+#include <Editor/Commands/EntityCommands.hpp>
+#include <Editor/EditorManager.hpp>
+#include <Editor/ImguiEditor/ViewportPanel.hpp>
+#include <Editor/EditorCamera.hpp>
+
 #include "ImguiEditor.hpp"
 #include "SceneHeirarchyPanel.hpp"
 
@@ -146,7 +151,6 @@ void SceneHeirarchyPanel::RenderEntity(
 		ImGuiTreeNodeFlags_SpanAvailWidth |
 		ImGuiTreeNodeFlags_OpenOnArrow |
 		ImGuiTreeNodeFlags_DefaultOpen |
-		ImGuiTreeNodeFlags_OpenOnDoubleClick |
 		(isLeaf
 			? ImGuiTreeNodeFlags_Leaf
 			: 0
@@ -174,17 +178,26 @@ void SceneHeirarchyPanel::RenderEntity(
 		ImGui::EndDragDropSource();
 	}
 
-	if (ImGui::IsItemHovered() && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
-		if (ImGui::GetIO().KeyCtrl) {
-			if (selection.IsEntitySelected(entity)) {
-				selection.RemoveEntity(entity);
+	if (ImGui::IsItemHovered()) {
+		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+			Grindstone::TransformComponent& transform = entity.GetSceneEntityRegistry().get<Grindstone::TransformComponent>(entity.GetHandle());
+			Grindstone::Editor::Manager& editor = Grindstone::Editor::Manager::GetInstance();
+			Grindstone::Editor::EditorCamera* editorCamera = editor.GetImguiEditor().GetViewportPanel()->GetCamera();
+			glm::vec3 newPosition = transform.position + (editorCamera->GetForward() * -2.0f);
+			editorCamera->SetPosition(newPosition);
+		}
+		else if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+			if (ImGui::GetIO().KeyCtrl) {
+				if (selection.IsEntitySelected(entity)) {
+					selection.RemoveEntity(entity);
+				}
+				else {
+					selection.AddEntity(entity);
+				}
 			}
 			else {
-				selection.AddEntity(entity);
+				selection.SetSelectedEntity(entity);
 			}
-		}
-		else {
-			selection.SetSelectedEntity(entity);
 		}
 	}
 	

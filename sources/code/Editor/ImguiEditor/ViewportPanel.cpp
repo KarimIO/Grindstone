@@ -144,7 +144,7 @@ void ViewportPanel::HandleInput() {
 		float zOffset = (isWPressed ? 1.f : 0.f) + (isSPressed ? -1.f : 0.f);
 		float yOffset = (isSpacePressed ? 1.f : 0.f) + (isCtrlPressed ? -1.f : 0.f);
 
-		camera->OffsetPosition(xOffset, yOffset, zOffset);
+		camera->OffsetPosition(glm::vec3(xOffset, yOffset, zOffset));
 	}
 }
 
