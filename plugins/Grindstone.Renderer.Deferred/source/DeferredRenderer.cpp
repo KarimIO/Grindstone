@@ -1248,9 +1248,10 @@ void DeferredRenderer::CreateDescriptorSets(DeferredRendererImageSet& imageSet) 
 	}
 
 	{
+		Grindstone::TextureAsset* brdfLutTextureAsset = brdfLut.Get();
 		std::array<GraphicsAPI::DescriptorSet::Binding, 3> aoInputBinding = {
 			GraphicsAPI::DescriptorSet::Binding::SampledImage( imageSet.blurredAmbientOcclusionRenderTarget ),
-			GraphicsAPI::DescriptorSet::Binding::SampledImage( brdfLut.Get()->image ),
+			GraphicsAPI::DescriptorSet::Binding::SampledImage( brdfLutTextureAsset != nullptr ? brdfLutTextureAsset->image : nullptr ),
 			GraphicsAPI::DescriptorSet::Binding::SampledImage( nullptr )
 		};
 
@@ -2089,8 +2090,17 @@ void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAP
 		1u
 	);
 
-	commandBuffer->SetViewport(halfRenderArea.offset.x, halfRenderArea.offset.y, static_cast<float>(halfRenderArea.GetWidth()), static_cast<float>(halfRenderArea.GetHeight()), 0.0f, 1.0f);
-	commandBuffer->SetScissor(halfRenderArea.offset.x, halfRenderArea.offset.y, halfRenderArea.GetWidth(), halfRenderArea.GetHeight());
+	commandBuffer->SetViewport(
+		static_cast<float>(halfRenderArea.offset.x),
+		static_cast<float>(halfRenderArea.offset.y),
+		static_cast<float>(halfRenderArea.GetWidth()),
+		static_cast<float>(halfRenderArea.GetHeight()),
+		0.0f, 1.0f
+	);
+	commandBuffer->SetScissor(
+		halfRenderArea.offset.x, halfRenderArea.offset.y,
+		halfRenderArea.GetWidth(), halfRenderArea.GetHeight()
+	);
 
 	commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	commandBuffer->BindIndexBuffer(indexBuffer);
@@ -2115,8 +2125,17 @@ void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAP
 		nullptr
 	);
 
-	commandBuffer->SetViewport(halfRenderArea.offset.x, halfRenderArea.offset.y, static_cast<float>(halfRenderArea.GetWidth()), static_cast<float>(halfRenderArea.GetHeight()), 0.0f, 1.0f);
-	commandBuffer->SetScissor(halfRenderArea.offset.x, halfRenderArea.offset.y, halfRenderArea.GetWidth(), halfRenderArea.GetHeight());
+	commandBuffer->SetViewport(
+		static_cast<float>(halfRenderArea.offset.x),
+		static_cast<float>(halfRenderArea.offset.y),
+		static_cast<float>(halfRenderArea.GetWidth()),
+		static_cast<float>(halfRenderArea.GetHeight()),
+		0.0f, 1.0f
+	);
+	commandBuffer->SetScissor(
+		halfRenderArea.offset.x, halfRenderArea.offset.y,
+		halfRenderArea.GetWidth(), halfRenderArea.GetHeight()
+	);
 
 	commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 	commandBuffer->BindIndexBuffer(indexBuffer);
@@ -2291,7 +2310,7 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 				.renderArea = shadowRenderArea
 			};
 
-			commandBuffer->SetViewport(0.0f, 0.0f, resolution, resolution);
+			commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(resolution), static_cast<float>(resolution));
 			commandBuffer->SetScissor(0, 0, resolution, resolution);
 			assetManager->RenderQueue(
 				commandBuffer,

@@ -31,7 +31,7 @@ namespace Grindstone {
 	public:
 		friend class CvarSystemImpl;
 
-		int32_t arrayIndex;
+		size_t arrayIndex;
 
 		CvarType type = CvarType::Undefined;
 		CvarFlags flags = CvarFlags::None;
