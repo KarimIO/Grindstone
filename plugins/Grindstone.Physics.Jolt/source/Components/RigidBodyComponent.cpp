@@ -66,10 +66,10 @@ void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
 	ColliderComponent* colliderComponent
 ) {
 	JPH::Quat rotation = JPH::Quat(
-		0.0f, //transformComponent->rotation.x,
-		0.0f, //transformComponent->rotation.y,
-		0.0f, //transformComponent->rotation.z,
-		1.0f //transformComponent->rotation.w
+		transformComponent->rotation.x,
+		transformComponent->rotation.y,
+		transformComponent->rotation.z,
+		transformComponent->rotation.w
 	);
 	JPH::RVec3 position(
 		transformComponent->position.x,
