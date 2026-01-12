@@ -2,9 +2,11 @@
 
 #include <Jolt/Physics/Body/BodyID.h>
 
-#include "Common/Math.hpp"
-#include "EngineCore/ECS/Entity.hpp"
-#include "EngineCore/Reflection/ComponentReflection.hpp"
+#include <Common/Math.hpp>
+#include <Common/PhysicsLayer.hpp>
+#include <EngineCore/ECS/Entity.hpp>
+#include <EngineCore/Reflection/ComponentReflection.hpp>
+
 #include "ColliderComponent.hpp"
 
 class btRigidBody;
@@ -40,6 +42,9 @@ namespace Grindstone {
 
 			void SetBodyID(JPH::BodyID bodyId);
 			JPH::BodyID GetBodyID();
+
+			bool isStatic = false;
+			Grindstone::Physics::Layer layer = 0;
 
 			float mass = 0.0f;
 			float friction = 0.0f;

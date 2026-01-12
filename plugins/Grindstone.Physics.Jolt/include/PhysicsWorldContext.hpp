@@ -63,7 +63,7 @@ namespace Grindstone::Physics {
 			return BroadPhaseLayers::NUM_LAYERS;
 		}
 
-		virtual JPH::BroadPhaseLayer			GetBroadPhaseLayer(JPH::ObjectLayer inLayer) const override {
+		virtual JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer inLayer) const override {
 			JPH_ASSERT(inLayer < Layers::NUM_LAYERS);
 			return mObjectToBroadPhase[inLayer];
 		}

@@ -1,5 +1,6 @@
 #include <Jolt/Jolt.h>
 
+#include <EngineCore/Logger.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/Components/RigidBodyComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/PhysicsWorldContext.hpp>
@@ -19,11 +20,13 @@ namespace Grindstone {
 			JPH::JobSystem& jobSystem = cxt->GetJobSystem();
 			cxt->GetPhysicsSystem().Update(deltaTime, collisionSteps, &tempAllocator, &jobSystem);
 
-			worldContextSet.GetEntityRegistry().view<Physics::RigidBodyComponent, TransformComponent>()
-				.each(
-					[cxt](
-						RigidBodyComponent& rigidBodyComponent,
-						TransformComponent& transformComponent
+			entt::registry& registry = worldContextSet.GetEntityRegistry();
+			auto view = registry.view<Grindstone::Physics::RigidBodyComponent, Grindstone::TransformComponent>();
+
+			view.each(
+					[&cxt](
+						Grindstone::Physics::RigidBodyComponent& rigidBodyComponent,
+						Grindstone::TransformComponent& transformComponent
 					) {
 						JPH::BodyID bodyId = rigidBodyComponent.GetBodyID();
 						if (bodyId.IsInvalid()) {
@@ -33,8 +36,9 @@ namespace Grindstone {
 						JPH::RVec3 position = cxt->GetBodyInterface().GetCenterOfMassPosition(bodyId);
 						JPH::Quat rotation = cxt->GetBodyInterface().GetRotation(bodyId);
 
-						transformComponent.position = { position.GetX(), position.GetY(), position.GetZ() };
-						transformComponent.rotation = { rotation.GetX(), rotation.GetY(), rotation.GetZ(), rotation.GetW() };
+						transformComponent.position = Grindstone::Math::Float3( position.GetX(), position.GetY(), position.GetZ() );
+						GPRINT_INFO_V(Grindstone::LogSource::Physics, "Position: ({}, {}, {})", position.GetX(), position.GetY(), position.GetZ());
+						transformComponent.rotation = Grindstone::Math::Quaternion( rotation.GetW(), rotation.GetX(), rotation.GetY(), rotation.GetZ() );
 				}
 			);
 		}
