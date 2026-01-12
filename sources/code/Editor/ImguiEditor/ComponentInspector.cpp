@@ -21,6 +21,7 @@ using namespace Grindstone::Editor::ImguiEditor;
 
 const Grindstone::ConstHashedString parentComponentName("Parent");
 const Grindstone::ConstHashedString tagComponentName("Tag");
+const Grindstone::ConstHashedString transformComponentName("Transform");
 const Grindstone::ConstHashedString csharpComponentName("CSharpScript");
 
 /*
@@ -282,7 +283,7 @@ void ComponentInspector::RenderComponentCategory(
 		ImGui::TreePop();
 	}
 
-	if (ImGui::BeginTable("assetBrowserSplit", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
+	if (ImGui::BeginTable("inspectorSplit", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
 		for (auto& member : category.members) {
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
@@ -342,7 +343,7 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 				// Handle new value
 				assetReference->uuid = newUuid;
 				assetManager->IncrementAssetCount(assetType, newUuid);
-			};
+				};
 
 			imguiEditor->PromptAssetPicker(assetType, callback);
 		}
@@ -406,7 +407,7 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 		ImGui::InputText(
 			displayNamePtr,
-			(std::string *)offset
+			(std::string*)offset
 		);
 		ImGui::PopItemWidth();
 		break;
@@ -421,19 +422,19 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 	case Reflection::TypeDescriptor::ReflectionTypeData::Int2:
 		ImGui::InputInt2(
 			displayNamePtr,
-			(int *)offset
+			(int*)offset
 		);
 		break;
 	case Reflection::TypeDescriptor::ReflectionTypeData::Int3:
 		ImGui::InputInt3(
 			displayNamePtr,
-			(int *)offset
+			(int*)offset
 		);
 		break;
 	case Reflection::TypeDescriptor::ReflectionTypeData::Int4:
 		ImGui::InputInt4(
 			displayNamePtr,
-			(int *)offset
+			(int*)offset
 		);
 		break;
 	case Reflection::TypeDescriptor::ReflectionTypeData::Uint:
@@ -506,7 +507,7 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 			(double*)offset
 		);
 		break;
-	case Reflection::TypeDescriptor::ReflectionTypeData::Vector:
+	case Reflection::TypeDescriptor::ReflectionTypeData::Vector: {
 		const void* vector = static_cast<const void*>(offset);
 		auto vectorType = static_cast<Reflection::TypeDescriptor_StdVector*>(itemType);
 		size_t vectorSize = vectorType->getSize(offset);
@@ -534,5 +535,32 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 		}
 
 		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::PhysicsLayer: {
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		uint8_t* valueRef = (uint8_t*)offset;
+		int valueAsInt = static_cast<int>(*valueRef);
+		if (ImGui::InputInt(
+			displayNamePtr,
+			&valueAsInt
+		)) {
+			*valueRef = static_cast<uint8_t>(valueAsInt);
+		}
+		ImGui::PopItemWidth();
+		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::PhysicsLayerMask: {
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		uint32_t* valueRef = (uint32_t*)offset;
+		int valueAsInt = static_cast<int>(*valueRef);
+		if (ImGui::InputInt(
+			displayNamePtr,
+			&valueAsInt
+		)) {
+			*valueRef = static_cast<uint32_t>(valueAsInt);
+		}
+		ImGui::PopItemWidth();
+		break;
+	}
 	}
 }

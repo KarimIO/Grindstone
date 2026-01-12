@@ -30,7 +30,9 @@ namespace Grindstone::Reflection {
 			Double4,
 			Quaternion,
 			AssetReference,
-			Entity
+			Entity,
+			PhysicsLayer,
+			PhysicsLayerMask
 		};
 		ReflectionTypeData type;
 
