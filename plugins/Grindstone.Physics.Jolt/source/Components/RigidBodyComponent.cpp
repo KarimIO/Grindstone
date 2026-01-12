@@ -18,10 +18,6 @@ using namespace Grindstone::Physics;
 using namespace Grindstone::Memory;
 using namespace Grindstone::Math;
 
-namespace Layers {
-	JPH::ObjectLayer MOVING = 0;
-}
-
 static ColliderComponent* GetCollider(entt::registry& registry, entt::entity entityHandle) {
 	SphereColliderComponent* sphere = registry.try_get<SphereColliderComponent>(entityHandle);
 	if (sphere != nullptr) {
@@ -77,8 +73,12 @@ void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
 		transformComponent->position.z
 	);
 
+	JPH::EMotionType motionType = rigidBodyComponent->isStatic
+		? JPH::EMotionType::Static
+		: JPH::EMotionType::Dynamic;
+
 	JPH::Shape* shape = colliderComponent->collisionShape;
-	JPH::BodyCreationSettings bodySettings(shape, position, rotation, rigidBodyComponent->mass == 0 ? JPH::EMotionType::Static : JPH::EMotionType::Dynamic, rigidBodyComponent->mass == 0 ? Layers::NON_MOVING : Layers::MOVING);
+	JPH::BodyCreationSettings bodySettings(shape, position, rotation, motionType, rigidBodyComponent->layer.AsUint8());
 
 	Grindstone::Physics::WorldContext* physWorldContext = static_cast<Grindstone::Physics::WorldContext*>(cxtSet.GetContext(physicsWorldContextName));
 	if (physWorldContext != nullptr) {
@@ -188,6 +188,8 @@ JPH::BodyID Grindstone::Physics::RigidBodyComponent::GetBodyID() {
 }
 
 REFLECT_STRUCT_BEGIN(RigidBodyComponent)
+	REFLECT_STRUCT_MEMBER(isStatic)
+	REFLECT_STRUCT_MEMBER(layer)
 	REFLECT_STRUCT_MEMBER(mass)
 	REFLECT_STRUCT_MEMBER(friction)
 	REFLECT_STRUCT_MEMBER(restitution)
