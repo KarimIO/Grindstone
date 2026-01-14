@@ -9,6 +9,7 @@
 #include <EngineCore/Utils/Utilities.hpp>
 #include <EngineCore/Logger.hpp>
 #include <Common/Math.hpp>
+#include <Common/PhysicsLayer.hpp>
 
 #include "SceneWriterJson.hpp"
 #include "Scene.hpp"
@@ -135,6 +136,16 @@ void WriteParameter(SceneRapidjsonWriter& documentWriter, Reflection::TypeDescri
 		case Reflection::TypeDescriptor::ReflectionTypeData::Entity: {
 			entt::entity entity = *static_cast<entt::entity*>(dataPtr);
 			documentWriter.Uint(static_cast<unsigned int>(entity));
+			break;
+		}
+		case Reflection::TypeDescriptor::ReflectionTypeData::PhysicsLayer: {
+			Grindstone::Physics::Layer layer = *static_cast<Grindstone::Physics::Layer*>(dataPtr);
+			documentWriter.Uint(static_cast<unsigned int>(layer.AsUint8()));
+			break;
+		}
+		case Reflection::TypeDescriptor::ReflectionTypeData::PhysicsLayerMask: {
+			Grindstone::Physics::LayerMask mask = *static_cast<Grindstone::Physics::LayerMask*>(dataPtr);
+			documentWriter.Uint(static_cast<unsigned int>(mask.AsUint32()));
 			break;
 		}
 		case Reflection::TypeDescriptor::ReflectionTypeData::Quaternion:
@@ -277,6 +288,12 @@ void WriteArray(SceneRapidjsonWriter& documentWriter, void* memberPtr, Reflectio
 		break;
 	case ReflectionTypeData::Float4:
 		SetupArray<Math::Float4>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::PhysicsLayer:
+		SetupArray<Grindstone::Physics::Layer>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::PhysicsLayerMask:
+		SetupArray<Grindstone::Physics::LayerMask>(documentWriter, memberPtr, itemType);
 		break;
 	}
 }
