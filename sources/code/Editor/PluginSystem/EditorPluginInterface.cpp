@@ -4,6 +4,9 @@
 #include <Editor/EditorManager.hpp>
 #include <Editor/AssetTemplateRegistry.hpp>
 
+#include <Editor/ImguiEditor/ImguiEditor.hpp>
+#include <Editor/ImguiEditor/ProjectSettings/ProjectSettingsWindow.hpp>
+
 #include "EditorPluginInterface.hpp"
 
 using namespace Grindstone::Plugins;
@@ -66,4 +69,16 @@ void EditorPluginInterface::DeregisterThumbnailGenerator(AssetType assetType, bo
 	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
 	Grindstone::Editor::ThumbnailManager& thumbnailManager = manager.GetThumbnailManager();
 	thumbnailManager.DeregisterGenerator(assetType, fn);
+}
+
+void EditorPluginInterface::RegisterProjectSettingsPage(std::string displayName, Grindstone::UniquePtr<Grindstone::Editor::ImguiEditor::Settings::BasePage> page) {
+	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
+	Grindstone::Editor::ImguiEditor::ImguiEditor& imguiEditor = manager.GetImguiEditor();
+	imguiEditor.projectSettingsWindow->RegisterSettingsPage(displayName, std::move(page));
+}
+
+void EditorPluginInterface::DeregisterProjectSettingsPage(std::string displayName) {
+	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
+	Grindstone::Editor::ImguiEditor::ImguiEditor& imguiEditor = manager.GetImguiEditor();
+	imguiEditor.projectSettingsWindow->UnregisterSettingsPage(displayName);
 }

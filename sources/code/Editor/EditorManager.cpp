@@ -150,6 +150,8 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 
 	imguiEditor->CreateWindows();
 
+	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAfterUiSetup");
+
 	return true;
 }
 

@@ -16,6 +16,8 @@ source_group("Components\\Header Files" FILES ${JOLTPHYS_COMPONENTS_HEADER})
 source_group("Reflection\\Source Files" FILES ${SOURCE_REFLECTION})
 source_group("Reflection\\Header Files" FILES ${HEADER_REFLECTION})
 
+find_package(imgui CONFIG REQUIRED)
+
 add_library(
 	PluginJoltPhysics MODULE
 	${JOLTPHYS_SOURCES}
@@ -46,8 +48,22 @@ target_precompile_headers(PluginJoltPhysics PUBLIC ${INC}/pch.hpp)
 find_package(unofficial-joltphysics CONFIG REQUIRED)
 target_link_libraries(PluginJoltPhysics ${CORE_LIBS} Common unofficial::joltphysics::Jolt)
 
+add_library(PluginJoltPhysicsEditor MODULE ${SRC}/Editor.cpp ${CORE_UTILS})
+set_property(TARGET PluginJoltPhysicsEditor PROPERTY COMPILE_WARNING_AS_ERROR ON)
+target_compile_features(PluginJoltPhysicsEditor PRIVATE cxx_std_20)
+set_target_properties(PluginJoltPhysicsEditor PROPERTIES FOLDER Plugins/Editor)
+target_include_directories(PluginJoltPhysicsEditor PUBLIC ${CODE_DIR} ${PLUGIN_DIR})
+target_compile_definitions(PluginJoltPhysicsEditor PUBLIC "PHYSICS_EDITOR_DLL;GLM_ENABLE_EXPERIMENTAL")
+
+set_target_properties(PluginJoltPhysicsEditor PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY "${PHYSICS_JOLT_BIN}"
+	LIBRARY_OUTPUT_DIRECTORY "${PHYSICS_JOLT_LIB}"
+	ARCHIVE_OUTPUT_DIRECTORY "${PHYSICS_JOLT_LIB}"
+)
+target_link_libraries(PluginJoltPhysicsEditor ${CORE_LIBS} Common EditorCommon imgui::imgui)
+
 message(STATUS
-"PluginJoltPhysics provides CMake targets:
+"Grindstone.Physics.Jolt plugin provides CMake targets:
 
 - PHYSICS_JOLT_BASE => ${PHYSICS_JOLT_BASE}
 - PHYSICS_JOLT_INCLUDES => ${PHYSICS_JOLT_INCLUDES}

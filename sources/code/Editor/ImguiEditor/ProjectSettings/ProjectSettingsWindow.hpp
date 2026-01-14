@@ -11,5 +11,7 @@ namespace Grindstone::Editor::ImguiEditor::Settings {
 	class ProjectSettingsWindow : public SettingsWindow {
 	public:
 		ProjectSettingsWindow();
+		void RegisterSettingsPage(std::string displayName, Grindstone::UniquePtr<Grindstone::Editor::ImguiEditor::Settings::BasePage> page);
+		void UnregisterSettingsPage(std::string displayName);
 	};
 }

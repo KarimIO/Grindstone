@@ -12,13 +12,27 @@
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
 
+#include <Editor/PluginSystem/EditorPluginInterface.hpp>
+
 #include <Grindstone.Physics.Jolt/include/Components/ColliderComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/Components/RigidBodyComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/PhysicsSystem.hpp>
 #include <Grindstone.Physics.Jolt/include/PhysicsWorldContext.hpp>
 
+#include <imgui.h>
+
 using namespace Grindstone::Memory;
 using namespace Grindstone::Physics;
+
+class JoltPhysicsSettingsPage : public Grindstone::Editor::ImguiEditor::Settings::BasePage {
+	virtual void Open() {
+
+	}
+
+	virtual void Render() {
+		ImGui::Text("Jolt Physics is here!");
+	}
+};
 
 // Callback for traces, connect this to your own trace function if you have one
 static void TraceImpl(const char* inFMT, ...) {
@@ -102,11 +116,9 @@ extern "C" {
 		pluginInterface->RegisterWorldContextFactory<Grindstone::Physics::WorldContext>(physicsWorldContextName);
 		pluginInterface->RegisterComponent<RigidBodyComponent>(SetupRigidBodyComponent);
 		pluginInterface->RegisterSystem("PhysicsSystem", PhysicsJoltSystem);
-		pluginInterface->RegisterEditorSystem("PhysicsEditorSystem", PhysicsJoltSystem);
 	}
 
 	JOLT_PHYSICS_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
-		pluginInterface->UnregisterEditorSystem("PhysicsEditorSystem");
 		pluginInterface->UnregisterSystem("PhysicsSystem");
 		pluginInterface->UnregisterComponent<RigidBodyComponent>();
 		pluginInterface->UnregisterWorldContextFactory(physicsWorldContextName);

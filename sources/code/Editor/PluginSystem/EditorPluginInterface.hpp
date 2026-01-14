@@ -2,7 +2,9 @@
 
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Common/HashedString.hpp>
+#include <Common/Memory/SmartPointers/UniquePtr.hpp>
 #include <Editor/Importers/ImporterManager.hpp>
+#include <Editor/ImguiEditor/Settings/BaseSettingsPage.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
 
 struct ImGuiContext;
@@ -28,5 +30,9 @@ namespace Grindstone::Plugins {
 
 		virtual void RegisterThumbnailGenerator(AssetType assetType, bool (*fn)(Grindstone::Uuid));
 		virtual void DeregisterThumbnailGenerator(AssetType assetType, bool (*fn)(Grindstone::Uuid));
+
+		virtual void RegisterProjectSettingsPage(std::string displayName, Grindstone::UniquePtr<Grindstone::Editor::ImguiEditor::Settings::BasePage> page);
+		virtual void DeregisterProjectSettingsPage(std::string displayName);
+
 	};
 }
