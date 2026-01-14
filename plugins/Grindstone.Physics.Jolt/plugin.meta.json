@@ -11,6 +11,11 @@
 			"path": "lib/{Configuration}/PluginJoltPhysics",
 			"loadStage": "EndOfEngineSetup",
 			"cmakeTarget": "PluginJoltPhysics"
+		},
+		{
+			"path": "lib/{Configuration}/PluginJoltPhysicsEditor",
+			"loadStage": "EditorAfterUiSetup",
+			"cmakeTarget": "PluginJoltPhysicsEditor"
 		}
 	],
 	"cmake": "CMakeLists.txt"

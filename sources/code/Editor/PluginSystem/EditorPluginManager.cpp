@@ -16,11 +16,7 @@ using namespace Grindstone::Utilities;
 #include <vector>
 #include <thread>
 
-#if _DEBUG
-constexpr const char* configuration = "Debug";
-#else
-constexpr const char* configuration = "Release";
-#endif
+constexpr const char* configuration = CMAKE_INTDIR;
 
 static void ReadPipeLoop(HANDLE pipe, Grindstone::LogSeverity severity) {
 	DWORD bytesRead;
