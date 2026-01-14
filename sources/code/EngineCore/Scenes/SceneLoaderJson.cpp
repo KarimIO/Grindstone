@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <iostream>
 
+#include <Common/PhysicsLayer.hpp>
 #include "Common/Math.hpp"
 #include "EngineCore/Profiling.hpp"
 #include "EngineCore/EngineCore.hpp"
@@ -186,11 +187,21 @@ void SceneLoaderJson::ParseMember(
 ) {
 	switch (member->type) {
 	default:
-		GPRINT_ERROR(LogSource::EngineCore, "Unhandled reflection type in SceneLoaderJson!");
+		GPRINT_ERROR_V(LogSource::EngineCore, "Unhandled reflection type '{}' in SceneLoaderJson!", member->GetFullName());
 		break;
 	case ReflectionTypeData::Entity: {
 		entt::entity& entity = *(entt::entity*)memberPtr;
 		entity = static_cast<entt::entity>(parameter.GetUint());
+		break;
+	}
+	case ReflectionTypeData::PhysicsLayer: {
+		Grindstone::Physics::Layer& layer = *(Grindstone::Physics::Layer*)memberPtr;
+		layer.layer = static_cast<uint8_t>(parameter.GetUint());
+		break;
+	}
+	case ReflectionTypeData::PhysicsLayerMask: {
+		Grindstone::Physics::LayerMask& mask = *(Grindstone::Physics::LayerMask*)memberPtr;
+		mask.mask = static_cast<uint32_t>(parameter.GetUint());
 		break;
 	}
 	case ReflectionTypeData::AssetReference: {
@@ -381,6 +392,15 @@ void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* me
 			break;
 		case ReflectionTypeData::Float4:
 			SetupArray<Math::Float4>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Entity:
+			SetupArray<entt::entity>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::PhysicsLayer:
+			SetupArray<Grindstone::Physics::Layer>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::PhysicsLayerMask:
+			SetupArray<Grindstone::Physics::LayerMask>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 	}
 
