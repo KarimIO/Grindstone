@@ -2422,6 +2422,7 @@ void DeferredRenderer::RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffe
 void DeferredRenderer::PostProcess(
 	uint32_t imageIndex,
 	GraphicsAPI::RenderAttachment& outRenderAttachment,
+	GraphicsAPI::Image* outDepthTarget,
 	GraphicsAPI::CommandBuffer* currentCommandBuffer
 ) {
 	DeferredRendererImageSet& imageSet = deferredRendererImageSets[imageIndex];
@@ -2495,6 +2496,18 @@ void DeferredRenderer::PostProcess(
 		nullptr, 0,
 		&colorBarrier, 1u
 	);
+
+	if (outDepthTarget != nullptr) {
+		currentCommandBuffer->BlitImage(
+			imageSet.gbufferDepthStencilTarget,
+			outDepthTarget,
+			Grindstone::GraphicsAPI::ImageLayout::DepthRead,
+			Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+			outDepthTarget->GetWidth(),
+			outDepthTarget->GetHeight(),
+			1u
+		);
+	}
 
 	GraphicsAPI::ImageBarrier depthBarrier{
 		.image = imageSet.gbufferDepthStencilTarget,
@@ -2654,7 +2667,8 @@ void DeferredRenderer::Render(
 	glm::mat4 projectionMatrix,
 	glm::mat4 viewMatrix,
 	glm::vec3 eyePos,
-	GraphicsAPI::RenderAttachment& outRenderAttachment
+	GraphicsAPI::RenderAttachment& outRenderAttachment,
+	Grindstone::GraphicsAPI::Image* depthTarget
 ) {
 	Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
@@ -2972,7 +2986,7 @@ void DeferredRenderer::Render(
 	commandBuffer->BindIndexBuffer(indexBuffer);
 
 	if (renderMode == DeferredRenderMode::Default) {
-		PostProcess(imageIndex, outRenderAttachment, commandBuffer);
+		PostProcess(imageIndex, outRenderAttachment, depthTarget, commandBuffer);
 	}
 	else {
 		debugUboData.renderMode = static_cast<uint32_t>(renderMode);

@@ -106,7 +106,8 @@ namespace Grindstone {
 					projectionMatrix,
 					viewMatrix,
 					pos,
-					attachment
+					attachment,
+					nullptr
 				);
 
 				currentCommandBuffer->EndCommandBuffer();

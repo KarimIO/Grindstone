@@ -32,7 +32,8 @@ namespace Grindstone {
 			glm::mat4 projectionMatrix,
 			glm::mat4 viewMatrix,
 			glm::vec3 eyePos,
-			GraphicsAPI::RenderAttachment& outRenderAttachment
+			GraphicsAPI::RenderAttachment& outRenderAttachment,
+			Grindstone::GraphicsAPI::Image* depthTarget
 		) override;
 
 		virtual uint16_t GetRenderModeCount() const override;
@@ -135,7 +136,7 @@ namespace Grindstone {
 		void RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* commandBuffer);
 		void RenderShadowMaps(GraphicsAPI::CommandBuffer* commandBuffer, entt::registry& registry);
 		void RenderLights(uint32_t imageIndex, GraphicsAPI::CommandBuffer* currentCommandBuffer, entt::registry& registry);
-		void PostProcess(uint32_t imageIndex, GraphicsAPI::RenderAttachment& outRenderAttachment, GraphicsAPI::CommandBuffer* currentCommandBuffer);
+		void PostProcess(uint32_t imageIndex, GraphicsAPI::RenderAttachment& outRenderAttachment, GraphicsAPI::Image* outDepthTarget, GraphicsAPI::CommandBuffer* currentCommandBuffer);
 		void Debug(uint32_t imageIndex, GraphicsAPI::RenderAttachment& renderAttachment, GraphicsAPI::CommandBuffer* commandBuffer);
 
 		void CreateDepthOfFieldResources();
