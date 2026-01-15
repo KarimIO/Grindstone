@@ -85,10 +85,8 @@ void Build::Open() {
 }
 
 void Build::Render() {
-	ImGui::Text("Build Options");
-	ImGui::Separator();
-
-	const std::string listName = "Plugin List";
+	ImGui::Text("Scene List");
+	const std::string listName = "Scenes List";
 	Widgets::ListEditor(
 		listName,
 		&sceneList,
@@ -97,13 +95,9 @@ void Build::Render() {
 		OnAddScene,
 		OnRemoveScenes
 	);
-
-	if (ImGui::Button("Save")) {
-		WriteFile();
-	}
 }
 
-void Build::WriteFile() {
+void Build::Save() {
 	std::filesystem::path sceneListFile = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings/scenesManifest.txt";
 	std::filesystem::create_directories(sceneListFile.parent_path());
 	auto sceneListPath = sceneListFile.string();
@@ -122,3 +116,5 @@ void Build::WriteFile() {
 	outputFile << contents;
 	outputFile.close();
 }
+
+void Build::Reset() {}

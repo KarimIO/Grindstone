@@ -41,13 +41,9 @@ void Settings::CompilerProperties::Render() {
 	ImGui::Separator();
 	ImGui::Text("Preprocessor Defines:");
 	Widgets::StringListEditor(preprocessorDefinitions, "PreprocessorDefines");
-
-	if (ImGui::Button("Save")) {
-		WriteFile();
-	}
 }
 
-void Settings::CompilerProperties::WriteFile() {
+void Settings::CompilerProperties::Save() {
 	std::filesystem::path settingsFile = Editor::Manager::GetInstance().GetProjectPath() / "userSettings" / "compilerProperties.txt";
 	std::filesystem::create_directories(settingsFile.parent_path());
 	auto settingsPath = settingsFile.string();
@@ -59,16 +55,22 @@ void Settings::CompilerProperties::WriteFile() {
 
 	size_t numDefs = preprocessorDefinitions.size();
 
-	std::string contents = "";
-	for (auto i = 0; i < numDefs - 1; ++i) {
-		contents += preprocessorDefinitions[i] + ";";
-	}
-
-	if (numDefs > 0) {
-		contents += preprocessorDefinitions[numDefs - 1];
-	}
-
 	outputFile.clear();
+
+	std::string contents = "";
+	if (numDefs > 0) {
+		for (auto i = 0; i < numDefs - 1; ++i) {
+			contents += preprocessorDefinitions[i] + ";";
+		}
+
+		if (numDefs > 0) {
+			contents += preprocessorDefinitions[numDefs - 1];
+		}
+	}
+
 	outputFile << contents;
 	outputFile.close();
+}
+
+void Settings::CompilerProperties::Reset() {
 }

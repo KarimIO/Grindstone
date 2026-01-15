@@ -12,6 +12,8 @@ namespace Grindstone::Editor::ImguiEditor::Settings {
 	public:
 		virtual void Open() override;
 		virtual void Render() override;
+		virtual void Save() override;
+		virtual void Reset() override;
 
 		struct SceneData {
 			Grindstone::Uuid uuid;
@@ -25,7 +27,6 @@ namespace Grindstone::Editor::ImguiEditor::Settings {
 		};
 
 	protected:
-		void WriteFile();
 		std::vector<SceneData> sceneList;
 	};
 }
