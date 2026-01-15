@@ -148,7 +148,7 @@ void ViewportPanel::HandleInput() {
 	}
 }
 
-void ViewportPanel::HandleSelection() {
+bool ViewportPanel::HandleSelection() {
 	auto& editorManager = Editor::Manager::GetInstance();
 	Selection& selection = editorManager.GetSelection();
 	if (selection.GetSelectedEntityCount() == 1 && selection.GetSelectedFileCount() == 0) {
@@ -161,7 +161,7 @@ void ViewportPanel::HandleSelection() {
 		ECS::Entity selectedEntity = selection.GetSingleSelectedEntity();
 		TransformComponent* transformComponent = nullptr;
 		if (!selectedEntity.TryGetComponent<TransformComponent>(transformComponent)) {
-			return;
+			return false;
 		}
 
 		glm::mat4 transformMatrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
@@ -204,8 +204,12 @@ void ViewportPanel::HandleSelection() {
 			transformComponent->position = translation;
 			transformComponent->rotation = glm::quat(rotation);
 			transformComponent->scale = scale;
+
+			return true;
 		}
 	}
+
+	return false;
 }
 
 void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
@@ -321,15 +325,13 @@ void ViewportPanel::Render() {
 
 		PlayMode playMode = Editor::Manager::GetInstance().GetPlayMode();
 		bool isEditorMode = playMode == PlayMode::Editor;
-		if (isEditorMode) {
-			HandleInput();
-		}
-
 		DisplayCameraToPanel();
 		DisplayOptions();
 
 		if (isEditorMode) {
-			HandleSelection();
+			if (!HandleSelection()) {
+				HandleInput();
+			}
 		}
 
 		ImGui::End();
