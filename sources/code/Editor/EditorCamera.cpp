@@ -365,6 +365,7 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 	auto wgb = window->GetWindowGraphicsBinding();
 	uint32_t imageIndex = wgb->GetCurrentImageIndex();
 	Grindstone::GraphicsAPI::Image* image = renderTarget[imageIndex];
+	Grindstone::GraphicsAPI::Image* depthImage = depthTarget[imageIndex];
 
 	Grindstone::GraphicsAPI::RenderAttachment attachment{
 		.image = image,
@@ -379,9 +380,22 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		projection,
 		view,
 		position,
-		attachment
+		attachment,
+		depthImage
 	);
-	return;
+
+	Grindstone::GraphicsAPI::RenderAttachment gizmoAttachment{
+		.image = image,
+		.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+		.loadOp = Grindstone::GraphicsAPI::LoadOp::Load,
+	};
+
+	Grindstone::GraphicsAPI::RenderAttachment gizmoDepthAttachment{
+		.image = depthImage,
+		.imageLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+		.loadOp = Grindstone::GraphicsAPI::LoadOp::Load,
+		.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
+	};
 
 	glm::mat4 gizmoProjection = projection;
 	graphicsCore->AdjustPerspective(&gizmoProjection[0][0]);
@@ -393,7 +407,7 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 
 	Grindstone::GraphicsAPI::ClearColor clearColor{};
 	Grindstone::GraphicsAPI::ClearDepthStencil clearDepthStencil;
-	commandBuffer->BeginRendering("Editor Gizmo Pass", Grindstone::Math::IntRect2D(0, 0, width, height), &attachment, 1u);
+	commandBuffer->BeginRendering("Editor Gizmo Pass", Grindstone::Math::IntRect2D(0, 0, width, height), &gizmoAttachment, 1u, &gizmoDepthAttachment);
 	if (isGridEnabled) {
 		gridRenderer.Render(commandBuffer, renderScale, gizmoProjection, view, nearPlaneDistance, farPlaneDistance, glm::quat(), 0.0f);
 	}
@@ -538,7 +552,8 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 		projectionMatrix,
 		viewMatrix,
 		pos,
-		attachment
+		attachment,
+		nullptr
 	);
 }
 
