@@ -66,24 +66,56 @@ void SettingsWindow::RenderSideBar() {
 }
 
 void SettingsWindow::RenderSettingsPage() {
-	ImGuiID assetTopBar = ImGui::GetID("#SettingsWindow");
-	ImGui::BeginChildFrame(assetTopBar, ImVec2{}, ImGuiWindowFlags_NoBackground);
-	float availWidth = ImGui::GetContentRegionAvail().x;
-	ImVec2 size = ImVec2{ availWidth , 0 };
+	ImGuiID frameTitle = ImGui::GetID("#SettingsWindowMainSection");
 
-	if (settingIndex < 0 || settingIndex >= pages.size()) {
-		if (pages.size() == 0) {
-			ImGui::Text("No valid settings page.");
-			ImGui::EndChildFrame();
-		}
-		else {
-			settingIndex = 0;
-		}
+	if (pages.size() == 0) {
+		ImGui::BeginChild(frameTitle, ImVec2{0,  0}, ImGuiChildFlags_None);
+		ImGui::Text("No valid settings page.");
+		ImGui::EndChild();
+		return;
 	}
 
-	pages[settingIndex].page->Render();
+	const float saveFrameHeight = 36.0f;
+	float availHeight = ImGui::GetContentRegionAvail().y;
 
-	ImGui::EndChildFrame();
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
+
+	ImGui::BeginChild(frameTitle, ImVec2{ 0, availHeight - saveFrameHeight }, ImGuiChildFlags_None);
+
+	ImGui::PopStyleVar();
+
+	if (settingIndex < 0 || settingIndex >= pages.size()) {
+		settingIndex = 0;
+	}
+
+	Grindstone::UniquePtr<Grindstone::Editor::ImguiEditor::Settings::BasePage>& page = pages[settingIndex].page;
+	page->Render();
+
+	ImGui::EndChild();
+
+	ImGuiID saveFrameTitle = ImGui::GetID("#SettingsWindowSaveFrame");
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::BeginChild(saveFrameTitle, ImVec2{ 0, saveFrameHeight }, ImGuiWindowFlags_NoScrollbar | ImGuiChildFlags_FrameStyle);
+	ImGui::PopStyleVar();
+
+	float totalAvailWidth = ImGui::GetContentRegionAvail().x;
+	const float buttonsWidth = 80.0f;
+	const float buttonsSpacing = totalAvailWidth - buttonsWidth;
+	ImGui::SameLine(buttonsSpacing);
+
+	bool isSaved = ImGui::Button("Save##SettingsButton");
+	ImGui::SameLine();
+	bool isReset = ImGui::Button("Reset##SettingsButton");
+
+	if (isSaved) {
+		page->Save();
+	}
+
+	if (isReset) {
+		page->Reset();
+	}
+
+	ImGui::EndChild();
 }
 
 bool SettingsWindow::IsOpen() const {

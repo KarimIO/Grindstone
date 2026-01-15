@@ -4,19 +4,14 @@
 #include <string>
 #include "../Settings/BaseSettingsPage.hpp"
 
-namespace Grindstone {
-	namespace Editor {
-		namespace ImguiEditor {
-			namespace Settings {
-				class CompilerProperties {
-				public:
-					void Open();
-					void Render();
-					void WriteFile();
-				private:
-					std::vector<std::string> preprocessorDefinitions;
-				};
-			}
-		}
-	}
+namespace Grindstone::Editor::ImguiEditor::Settings {
+	class CompilerProperties {
+	public:
+		void Open();
+		void Render();
+		void Save();
+		void Reset();
+	private:
+		std::vector<std::string> preprocessorDefinitions;
+	};
 }

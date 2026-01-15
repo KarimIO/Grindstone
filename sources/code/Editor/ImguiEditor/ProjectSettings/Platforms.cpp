@@ -8,24 +8,28 @@
 using namespace Grindstone::Editor::ImguiEditor;
 
 Settings::Platforms::Platforms() {
-	platformPages.emplace_back(Grindstone::Memory::AllocatorCore::Allocate<PlatformWindows>());
-}
-
-Settings::Platforms::~Platforms() {
-	for (Grindstone::Editor::ImguiEditor::Settings::BasePage* page : platformPages) {
-		Grindstone::Memory::AllocatorCore::Free(page);
-	}
+	platformPages.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<PlatformWindows>());
 }
 
 void Settings::Platforms::Open() {
+	for (Grindstone::UniquePtr<BasePage>& page : platformPages) {
+		page->Open();
+	}
 }
 
 void Settings::Platforms::Render() {
 	ImGui::Text("Platforms");
-	ImGui::Separator();
-
 	platformPages[0]->Render();
 }
 
-void Settings::Platforms::WriteFile() {
+void Settings::Platforms::Save() {
+	for (Grindstone::UniquePtr<BasePage>& page : platformPages) {
+		page->Save();
+	}
+}
+
+void Settings::Platforms::Reset() {
+	for (Grindstone::UniquePtr<BasePage>& page : platformPages) {
+		page->Reset();
+	}
 }

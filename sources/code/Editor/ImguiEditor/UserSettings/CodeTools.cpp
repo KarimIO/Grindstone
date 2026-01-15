@@ -23,12 +23,9 @@ void Settings::CodeTools::Render() {
 	ImGui::Separator();
 
 	ImGui::InputText("MsBuild Path", &msBuildPath);
-	if (ImGui::Button("Save")) {
-		WriteFile();
-	}
 }
 
-void Settings::CodeTools::WriteFile() {
+void Settings::CodeTools::Save() {
 	std::filesystem::path settingsFile = Editor::Manager::GetInstance().GetProjectPath() / "userSettings" / "codeToolsPath.txt";
 	std::filesystem::create_directories(settingsFile.parent_path());
 	auto settingsPath = settingsFile.string();
@@ -41,4 +38,7 @@ void Settings::CodeTools::WriteFile() {
 	outputFile.clear();
 	outputFile << msBuildPath;
 	outputFile.close();
+}
+
+void Settings::CodeTools::Reset() {
 }
