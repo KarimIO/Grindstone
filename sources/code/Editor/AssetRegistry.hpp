@@ -21,6 +21,12 @@ namespace Grindstone::Editor {
 			std::string address;
 			std::filesystem::path path;
 			AssetType assetType;
+			std::filesystem::file_time_type sourceFileWrite;
+			std::filesystem::file_time_type metaFileWrite;
+			uint32_t assetImporterVersion;
+			uint32_t metaFileVersion;
+			uint64_t assetFileSize;
+			uint64_t metaFileSize;
 		};
 
 	public:
@@ -34,7 +40,13 @@ namespace Grindstone::Editor {
 			const std::string_view displayName,
 			const std::string_view address,
 			Uuid& uuid,
-			AssetType assetType
+			AssetType assetType,
+			std::filesystem::file_time_type sourceFileWrite,
+			std::filesystem::file_time_type metaFileWrite,
+			uint32_t assetImporterVersion,
+			uint32_t metaFileVersion,
+			uint64_t assetFileSize,
+			uint64_t metaFileSize
 		);
 		virtual void WriteFile();
 		virtual void ReadFile();

@@ -40,19 +40,31 @@ void AssetRegistry::UpdateEntry(
 	const std::string_view displayName,
 	const std::string_view address,
 	Uuid& uuid,
-	AssetType assetType
+	AssetType assetType,
+	std::filesystem::file_time_type sourceFileWrite,
+	std::filesystem::file_time_type metaFileWrite,
+	uint32_t assetImporterVersion,
+	uint32_t metaFileVersion,
+	uint64_t assetFileSize,
+	uint64_t metaFileSize
 ) {
 	std::filesystem::path mountedPath;
 	TryGetPathWithMountPoint(path, mountedPath);
 	Utils::FixPathSlashes(mountedPath);
 
 	assets[uuid] = Entry{
-		uuid,
-		std::string(displayName),
-		std::string(subassetIdentifier),
-		std::string(address),
-		mountedPath,
-		assetType
+		.uuid = uuid,
+		.displayName = std::string(displayName),
+		.subassetIdentifier = std::string(subassetIdentifier),
+		.address = std::string(address),
+		.path = mountedPath,
+		.assetType = assetType,
+		.sourceFileWrite = sourceFileWrite,
+		.metaFileWrite = metaFileWrite,
+		.assetImporterVersion = assetImporterVersion,
+		.metaFileVersion = metaFileVersion,
+		.assetFileSize = assetFileSize,
+		.metaFileSize = metaFileSize
 	};
 }
 
@@ -75,6 +87,20 @@ void AssetRegistry::WriteFile() {
 		documentWriter.String(entry.uuid.ToString().c_str());
 		documentWriter.Key("assetType");
 		documentWriter.String(GetAssetTypeToString(entry.assetType));
+		documentWriter.Key("sourceFileWriteTime");
+		auto systemAsseFiletWriteTime = std::chrono::clock_cast<std::chrono::system_clock>(entry.sourceFileWrite);
+		documentWriter.Int64(std::chrono::duration_cast<std::chrono::nanoseconds>(systemAsseFiletWriteTime.time_since_epoch()).count());
+		documentWriter.Key("metaFileWriteTime");
+		auto systemMetaFileWriteTime = std::chrono::clock_cast<std::chrono::system_clock>(entry.metaFileWrite);
+		documentWriter.Int64(std::chrono::duration_cast<std::chrono::nanoseconds>(systemMetaFileWriteTime.time_since_epoch()).count());
+		documentWriter.Key("assetImporterVersion");
+		documentWriter.Uint(entry.assetImporterVersion);
+		documentWriter.Key("metaFileVersion");
+		documentWriter.Uint(entry.metaFileVersion);
+		documentWriter.Key("assetFileSize");
+		documentWriter.Uint(entry.assetFileSize);
+		documentWriter.Key("metaFileSize");
+		documentWriter.Uint(entry.metaFileSize);
 		documentWriter.EndObject();
 	}
 	documentWriter.EndArray();
@@ -107,24 +133,57 @@ void AssetRegistry::ReadFile() {
 		++assetIterator
 	) {
 		rapidjson::Value& asset = *assetIterator;
-		const char* subassetIdentifier = asset["subassetIdentifier"].GetString();
-		const char* displayName = asset["displayName"].GetString();
-		const char* address = asset["address"].GetString();
-		const char* path = asset["path"].GetString();
+		const char* subassetIdentifier = asset.HasMember("subassetIdentifier") ? asset["subassetIdentifier"].GetString() : "";
+		const char* displayName = asset.HasMember("displayName") ? asset["displayName"].GetString() : "";
+		const char* address = asset.HasMember("address") ? asset["address"].GetString() : "";
+		const char* path = asset.HasMember("path") ? asset["path"].GetString() : "";
+
+		int64_t sourceFileWriteTime = asset.HasMember("sourceFileWriteTime") ? asset["sourceFileWriteTime"].GetInt64() : 0;
+		int64_t metaFileWriteTime = asset.HasMember("metaFileWriteTime") ? asset["metaFileWriteTime"].GetInt64() : 0;
+
+		std::filesystem::file_time_type sourceFileDuration = std::chrono::clock_cast<std::filesystem::file_time_type::clock>(
+			std::chrono::system_clock::time_point(
+				std::chrono::duration_cast<std::chrono::system_clock::duration>(
+					std::chrono::nanoseconds{ sourceFileWriteTime }
+				)
+			)
+		);
+		std::filesystem::file_time_type metaFileDuration = std::chrono::clock_cast<std::filesystem::file_time_type::clock>(
+			std::chrono::system_clock::time_point(
+				std::chrono::duration_cast<std::chrono::system_clock::duration>(
+					std::chrono::nanoseconds{ metaFileWriteTime }
+				)
+			)
+		);
+
+		unsigned int assetImporterVersion = asset.HasMember("assetImporterVersion") ? asset["assetImporterVersion"].GetUint() : 0;
+		unsigned int metaFileVersion = asset.HasMember("metaFileVersion") ? asset["metaFileVersion"].GetUint() : 0;
+		unsigned int assetFileSize = asset.HasMember("assetFileSize") ? asset["assetFileSize"].GetUint() : 0;
+		unsigned int metaFileSize = asset.HasMember("metaFileSize") ? asset["metaFileSize"].GetUint() : 0;
+
+		const char* uuidAsStr = asset.HasMember("uuid") ? asset["uuid"].GetString() : "";
+
 		Uuid uuid;
-		if (!Grindstone::Uuid::MakeFromString(asset["uuid"].GetString(), uuid)) {
-			GPRINT_FATAL_V(Grindstone::LogSource::EngineCore, "Unable to make uuid for asset from {}", asset["uuid"].GetString());
+		if (!Grindstone::Uuid::MakeFromString(uuidAsStr, uuid)) {
+			GPRINT_FATAL_V(Grindstone::LogSource::EngineCore, "Unable to make uuid for asset from {}", uuidAsStr);
 			continue;
 		}
+
 		const AssetType assetType = GetAssetTypeFromString(asset["assetType"].GetString());
 
 		assets[uuid] = Entry{
-			uuid,
-			std::string(displayName),
-			std::string(subassetIdentifier),
-			std::string(address),
-			path,
-			assetType
+			.uuid = uuid,
+			.displayName = std::string(displayName),
+			.subassetIdentifier = std::string(subassetIdentifier),
+			.address = std::string(address),
+			.path = path,
+			.assetType = assetType,
+			.sourceFileWrite = sourceFileDuration,
+			.metaFileWrite = metaFileDuration,
+			.assetImporterVersion = assetImporterVersion,
+			.metaFileVersion = metaFileVersion,
+			.assetFileSize = assetFileSize,
+			.metaFileSize = metaFileSize,
 		};
 	}
 }

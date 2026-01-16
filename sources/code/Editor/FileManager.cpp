@@ -218,7 +218,6 @@ void FileManager::DispatchTask(const std::filesystem::path& path) const {
 
 	std::string jobName = "Importing " + path.filename().string();
 	taskSystem.Execute(jobName, [path] {
-		GPRINT_TRACE_V(LogSource::Editor, "Importing {}", path.string().c_str());
 		std::filesystem::path nPath = path;
 		auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
 		importManager.Import(nPath);
@@ -290,18 +289,29 @@ void FileManager::PreprocessFilesOnMount(
 }
 
 static bool IsSubassetValid(
-	std::filesystem::file_time_type lastAssetWriteTime,
+	Grindstone::Editor::ImporterVersion importerVersion,
+	std::filesystem::file_time_type assetFileLastWriteTime,
+	std::filesystem::file_time_type metaFileLastWriteTime,
+	size_t assetFileSize,
+	size_t metaFileSize,
 	const std::filesystem::path& mountedPath,
 	Editor::AssetRegistry& assetRegistry,
 	MetaFile::Subasset& subasset
 ) {
 	AssetRegistry::Entry outEntry;
-	if (
-		!assetRegistry.TryGetAssetData(subasset.uuid, outEntry) ||
-		outEntry.assetType != subasset.assetType ||
-		// TODO: Fix this so path uses mount point
-		outEntry.path != mountedPath
-	) {
+	if (!assetRegistry.TryGetAssetData(subasset.uuid, outEntry)) {
+		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} not having an AssetRegistry entry.", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString());
+		return false;
+	}
+
+	if (outEntry.assetType != subasset.assetType) {
+		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching asset types (meta file says {} but AssetRegistry says {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), GetAssetTypeToString(subasset.assetType), GetAssetTypeToString(outEntry.assetType));
+		return false;
+	}
+
+	// TODO: Fix this so path uses mount point
+	if (outEntry.path != mountedPath) {
+		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} mismatching path {}.", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.path.string().c_str());
 		return false;
 	}
 
@@ -311,11 +321,32 @@ static bool IsSubassetValid(
 
 	std::filesystem::path assetPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / subasset.uuid.ToString();
 	if (!std::filesystem::exists(assetPath)) {
+		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} not having a compiledAsset file.", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString());
 		return false;
 	}
 
-	std::filesystem::file_time_type outputFileWriteTime = std::filesystem::last_write_time(assetPath);
-	if (lastAssetWriteTime > outputFileWriteTime) {
+	if (importerVersion != outEntry.assetImporterVersion) {
+		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching version ({} should be {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.assetImporterVersion, importerVersion);
+		return false;
+	}
+
+	if (assetFileLastWriteTime != outEntry.sourceFileWrite) {
+		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching source asset file write times ({} should be {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.sourceFileWrite, assetFileLastWriteTime);
+		return false;
+	}
+
+	if (metaFileLastWriteTime != outEntry.metaFileWrite) {
+		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching meta file write times ({} should be {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.metaFileWrite, metaFileLastWriteTime);
+		return false;
+	}
+
+	if (assetFileSize != outEntry.assetFileSize) {
+		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching source asset size (cached is {} but actual is {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.assetFileSize, assetFileSize);
+		return false;
+	}
+
+	if (metaFileSize != outEntry.metaFileSize) {
+		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching meta file size (cached is {} but actual is {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.metaFileSize, metaFileSize);
 		return false;
 	}
 
@@ -331,35 +362,43 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(const MountPoint& mountPoi
 
 	std::filesystem::path metaFilePath = path.string() + ".meta";
 	if (!std::filesystem::exists(metaFilePath)) {
+		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to missing meta file.", path.string().c_str());
 		return true;
 	}
-
-	std::filesystem::file_time_type metaFileLastWriteTime = std::filesystem::last_write_time(metaFilePath);
-	std::filesystem::file_time_type assetFileLastWriteTime = std::filesystem::last_write_time(path);
-
-	if (assetFileLastWriteTime > metaFileLastWriteTime) {
-		return true;
-	}
-
-	std::filesystem::file_time_type lastAssetWriteTime = std::max(metaFileLastWriteTime, assetFileLastWriteTime);
 
 	Grindstone::Editor::ImporterVersion importerVersion = importManager.GetImporterVersionByPath(path);
 	MetaFile metaFile(editorManager.GetAssetRegistry(), path);
-	if (metaFile.IsOutdatedMetaVersion() || metaFile.IsOutdatedImporterVersion(importerVersion) || !metaFile.IsValid()) {
+	if (metaFile.IsOutdatedMetaVersion()) {
+		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to outdated meta file version.", path.string().c_str());
 		return true;
 	}
+
+	if (metaFile.IsOutdatedImporterVersion(importerVersion)) {
+		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to outdated importer version {}.", path.string().c_str(), importerVersion);
+		return true;
+	}
+
+	if (!metaFile.IsValid()) {
+		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to invalid meta file.", path.string().c_str());
+		return true;
+	}
+
+	std::filesystem::file_time_type assetFileLastWriteTime = std::filesystem::last_write_time(path);
+	std::filesystem::file_time_type metaFileLastWriteTime = std::filesystem::last_write_time(metaFilePath);
+	size_t assetFileSize = std::filesystem::file_size(path);
+	size_t metaFileSize = std::filesystem::file_size(metaFilePath);
 
 	std::filesystem::path mountedPath = std::filesystem::path(mountPoint.mountPoint) / std::filesystem::relative(path, mountPoint.path);
 	Grindstone::Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
 	for (MetaFile::Subasset& subasset : metaFile) {
-		if (!IsSubassetValid(lastAssetWriteTime, mountedPath, assetRegistry, subasset)) {
+		if (!IsSubassetValid(importerVersion, assetFileLastWriteTime, metaFileLastWriteTime, assetFileSize, metaFileSize, mountedPath, assetRegistry, subasset)) {
 			return true;
 		}
 	}
 
 	MetaFile::Subasset defaultSubasset;
 	if (metaFile.TryGetDefaultSubasset(defaultSubasset)) {
-		if (!IsSubassetValid(lastAssetWriteTime, mountedPath, assetRegistry, defaultSubasset)) {
+		if (!IsSubassetValid(importerVersion, assetFileLastWriteTime, metaFileLastWriteTime, assetFileSize, metaFileSize, mountedPath, assetRegistry, defaultSubasset)) {
 			return true;
 		}
 	}
