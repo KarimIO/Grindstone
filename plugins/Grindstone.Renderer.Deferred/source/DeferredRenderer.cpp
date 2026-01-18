@@ -2497,23 +2497,66 @@ void DeferredRenderer::PostProcess(
 		&colorBarrier, 1u
 	);
 
+
+	Grindstone::GraphicsAPI::ImageLayout postBlitDepthLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead;
+	Grindstone::GraphicsAPI::AccessFlags postBlitDepthAccess = Grindstone::GraphicsAPI::AccessFlags::ShaderRead;
+	GraphicsAPI::PipelineStageBit postBlitDepthStage = GraphicsAPI::PipelineStageBit::FragmentShader;
+
 	if (outDepthTarget != nullptr) {
+		std::array<GraphicsAPI::ImageBarrier, 2u> depthPreBlitBarriers = {
+			GraphicsAPI::ImageBarrier {
+				.image = imageSet.gbufferDepthStencilTarget,
+				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead,
+				.newLayout = Grindstone::GraphicsAPI::ImageLayout::TransferSrc,
+				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ShaderRead,
+				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::TransferRead,
+				.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1
+			},
+			GraphicsAPI::ImageBarrier {
+				.image = outDepthTarget,
+				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
+				.newLayout = Grindstone::GraphicsAPI::ImageLayout::TransferDst,
+				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ShaderRead,
+				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::TransferWrite,
+				.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1
+			}
+		};
+
+		currentCommandBuffer->PipelineBarrier(
+			GraphicsAPI::PipelineStageBit::FragmentShader,
+			GraphicsAPI::PipelineStageBit::Transfer,
+			nullptr, 0,
+			depthPreBlitBarriers.data(), depthPreBlitBarriers.size()
+		);
+
 		currentCommandBuffer->BlitImage(
 			imageSet.gbufferDepthStencilTarget,
 			outDepthTarget,
-			Grindstone::GraphicsAPI::ImageLayout::DepthRead,
-			Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+			Grindstone::GraphicsAPI::ImageLayout::TransferSrc,
+			Grindstone::GraphicsAPI::ImageLayout::TransferDst,
 			outDepthTarget->GetWidth(),
 			outDepthTarget->GetHeight(),
 			1u
 		);
+
+		postBlitDepthLayout = Grindstone::GraphicsAPI::ImageLayout::TransferSrc;
+		postBlitDepthAccess = Grindstone::GraphicsAPI::AccessFlags::TransferRead;
+		postBlitDepthStage = GraphicsAPI::PipelineStageBit::Transfer;
 	}
 
 	GraphicsAPI::ImageBarrier depthBarrier{
 		.image = imageSet.gbufferDepthStencilTarget,
-		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead,
+		.oldLayout = postBlitDepthLayout,
 		.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
-		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ShaderRead,
+		.srcAccess = postBlitDepthAccess,
 		.dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite,
 		.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
 		.baseMipLevel = 0,
@@ -2523,70 +2566,12 @@ void DeferredRenderer::PostProcess(
 	};
 
 	currentCommandBuffer->PipelineBarrier(
-		GraphicsAPI::PipelineStageBit::FragmentShader,
+		postBlitDepthStage,
 		GraphicsAPI::PipelineStageBit::EarlyFragmentTests | GraphicsAPI::PipelineStageBit::LateFragmentTests,
 		nullptr, 0,
 		&depthBarrier, 1u
 	);
 
-	/*
-
-	GraphicsAPI::ImageBarrier blitBarrier{
-		.image = imageSet.gbufferDepthStencilTarget,
-		.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
-		.baseMipLevel = 0,
-		.levelCount = 1,
-		.baseArrayLayer = 0,
-		.layerCount = 1
-	};
-
-	/*
-	std::array<Grindstone::GraphicsAPI::ImageBarrier, 2> preBlitBarriers{ blitBarrier , blitBarrier };
-	preBlitBarriers[0].image = imageSet.gbufferDepthStencilTarget;
-	preBlitBarriers[0].oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead;
-	preBlitBarriers[0].newLayout = Grindstone::GraphicsAPI::ImageLayout::TransferSrc;
-	preBlitBarriers[0].srcAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite;
-	preBlitBarriers[0].dstAccess = Grindstone::GraphicsAPI::AccessFlags::TransferRead;
-
-	preBlitBarriers[1].image = framebuffer->GetDepthStencilTarget();
-	preBlitBarriers[1].oldLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead;
-	preBlitBarriers[1].newLayout = Grindstone::GraphicsAPI::ImageLayout::TransferDst;
-	preBlitBarriers[1].srcAccess = Grindstone::GraphicsAPI::AccessFlags::None;
-	preBlitBarriers[1].dstAccess = Grindstone::GraphicsAPI::AccessFlags::TransferWrite;
-
-	std::array<Grindstone::GraphicsAPI::ImageBarrier, 2> postBlitBarriers{ blitBarrier , blitBarrier };
-	postBlitBarriers[0].image = imageSet.gbufferDepthStencilTarget;
-	postBlitBarriers[0].oldLayout = Grindstone::GraphicsAPI::ImageLayout::TransferSrc;
-	postBlitBarriers[0].newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead;
-	postBlitBarriers[0].srcAccess = Grindstone::GraphicsAPI::AccessFlags::TransferRead;
-	postBlitBarriers[0].dstAccess = Grindstone::GraphicsAPI::AccessFlags::ShaderRead;
-
-	postBlitBarriers[1].image = framebuffer->GetDepthStencilTarget();
-	postBlitBarriers[1].oldLayout = Grindstone::GraphicsAPI::ImageLayout::TransferDst;
-	postBlitBarriers[1].newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthRead;
-	postBlitBarriers[1].srcAccess = Grindstone::GraphicsAPI::AccessFlags::TransferWrite;
-	postBlitBarriers[1].dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite;
-
-	currentCommandBuffer->PipelineBarrier(
-		GraphicsAPI::PipelineStageBit::LateFragmentTests,
-		GraphicsAPI::PipelineStageBit::Transfer,
-		nullptr, 0,
-		preBlitBarriers.data(), static_cast<uint32_t>(preBlitBarriers.size())
-	);
-	currentCommandBuffer->BlitImage(
-		imageSet.gbufferDepthStencilTarget,
-		framebuffer->GetDepthStencilTarget(),
-		Grindstone::GraphicsAPI::ImageLayout::TransferSrc,
-		Grindstone::GraphicsAPI::ImageLayout::TransferDst,
-		renderArea.GetWidth(), renderArea.GetHeight(), 1
-	);
-	currentCommandBuffer->PipelineBarrier(
-		GraphicsAPI::PipelineStageBit::Transfer,
-		GraphicsAPI::PipelineStageBit::FragmentShader | GraphicsAPI::PipelineStageBit::EarlyFragmentTests,
-		nullptr, 0,
-		postBlitBarriers.data(), static_cast<uint32_t>(postBlitBarriers.size())
-	);
-	*/
 }
 
 void DeferredRenderer::Debug(
