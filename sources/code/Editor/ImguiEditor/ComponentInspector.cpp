@@ -411,14 +411,46 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 		);
 		ImGui::PopItemWidth();
 		break;
-	case Reflection::TypeDescriptor::ReflectionTypeData::Int:
+	case Reflection::TypeDescriptor::ReflectionTypeData::Int8: {
+		int8_t* intPtr = (int8_t*)offset;
+		int value = *intPtr;
 		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-		ImGui::InputInt(
-			displayNamePtr,
-			(int*)offset
-		);
+		if (ImGui::InputInt(displayNamePtr, &value)) {
+			*intPtr = static_cast<int8_t>(value);
+		}
 		ImGui::PopItemWidth();
 		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::Int16: {
+		int16_t* intPtr = (int16_t*)offset;
+		int value = *intPtr;
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		if (ImGui::InputInt(displayNamePtr, &value)) {
+			*intPtr = static_cast<int16_t>(value);
+		}
+		ImGui::PopItemWidth();
+		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::Int32: {
+		int32_t* intPtr = (int32_t*)offset;
+		int value = *intPtr;
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		if (ImGui::InputInt(displayNamePtr, &value)) {
+			*intPtr = static_cast<int32_t>(value);
+		}
+		ImGui::PopItemWidth();
+		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::Int64: {
+		int64_t* intPtr = (int64_t*)offset;
+		int value = *intPtr;
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		if (ImGui::InputInt(displayNamePtr, &value)) {
+			*intPtr = static_cast<int64_t>(value);
+		}
+		ImGui::PopItemWidth();
+		break;
+	}
 	case Reflection::TypeDescriptor::ReflectionTypeData::Int2:
 		ImGui::InputInt2(
 			displayNamePtr,
@@ -437,15 +469,46 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 			(int*)offset
 		);
 		break;
-	case Reflection::TypeDescriptor::ReflectionTypeData::Uint:
+	case Reflection::TypeDescriptor::ReflectionTypeData::Uint8: {
+		uint8_t* intPtr = (uint8_t*)offset;
+		int value = *intPtr;
 		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-		ImGui::InputScalar(
-			displayNamePtr,
-			ImGuiDataType_U32,
-			(uint32_t*)offset
-		);
+		if (ImGui::InputInt(displayNamePtr, &value)) {
+			*intPtr = static_cast<uint8_t>(value);
+		}
 		ImGui::PopItemWidth();
 		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::Uint16: {
+		uint16_t* intPtr = (uint16_t*)offset;
+		int value = *intPtr;
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		if (ImGui::InputInt(displayNamePtr, &value)) {
+			*intPtr = static_cast<uint16_t>(value);
+		}
+		ImGui::PopItemWidth();
+		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::Uint32: {
+		uint32_t* intPtr = (uint32_t*)offset;
+		int value = *intPtr;
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		if (ImGui::InputInt(displayNamePtr, &value)) {
+			*intPtr = static_cast<uint32_t>(value);
+		}
+		ImGui::PopItemWidth();
+		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::Uint64: {
+		uint64_t* intPtr = (uint64_t*)offset;
+		int value = *intPtr;
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		if (ImGui::InputInt(displayNamePtr, &value)) {
+			*intPtr = static_cast<uint64_t>(value);
+		}
+		ImGui::PopItemWidth();
+		break;
+	}
 	case Reflection::TypeDescriptor::ReflectionTypeData::Uint2:
 		ImGui::InputScalarN(
 			displayNamePtr,
@@ -532,6 +595,18 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 
 		if (itemToDelete != -1) {
 			vectorType->erase(offset, itemToDelete);
+		}
+
+		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::FixedArray: {
+		const void* vector = static_cast<const void*>(offset);
+		auto vectorType = static_cast<Reflection::TypeDescriptor_StdVector*>(itemType);
+		size_t vectorSize = vectorType->getSize(offset);
+
+		for (size_t i = 0; i < vectorSize; ++i) {
+			std::string fieldName = std::string("##") + std::to_string(i) + displayNamePtr;
+			RenderComponentMember(std::string_view(fieldName), vectorType->itemType, vectorType->getItem(offset, i), entity);
 		}
 
 		break;
