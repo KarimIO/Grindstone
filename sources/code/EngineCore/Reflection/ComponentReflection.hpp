@@ -10,6 +10,7 @@
 #include "DefaultResolver.hpp"
 #include "TypeDescriptorStruct.hpp"
 #include "TypeDescriptorAsset.hpp"
+#include "TypeDescriptorArray.hpp"
 #include "TypeDescriptorVector.hpp"
 #include "PrintReflectionData.hpp"
 

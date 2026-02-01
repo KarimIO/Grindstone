@@ -159,8 +159,17 @@ void WriteParameter(SceneRapidjsonWriter& documentWriter, Reflection::TypeDescri
 			documentWriter.String(str.c_str());
 			break;
 		}
-		case Reflection::TypeDescriptor::ReflectionTypeData::Int:
+		case Reflection::TypeDescriptor::ReflectionTypeData::Int8:
+			documentWriter.Int(*static_cast<int8_t*>(dataPtr));
+			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::Int16:
+			documentWriter.Int(*static_cast<int16_t*>(dataPtr));
+			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::Int32:
 			documentWriter.Int(*static_cast<int32_t*>(dataPtr));
+			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::Int64:
+			documentWriter.Int64(*static_cast<int64_t*>(dataPtr));
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Int2:
 			WriteArrayInt(documentWriter, static_cast<int32_t*>(dataPtr), 2);
@@ -171,8 +180,17 @@ void WriteParameter(SceneRapidjsonWriter& documentWriter, Reflection::TypeDescri
 		case Reflection::TypeDescriptor::ReflectionTypeData::Int4:
 			WriteArrayInt(documentWriter, static_cast<int32_t*>(dataPtr), 4);
 			break;
-		case Reflection::TypeDescriptor::ReflectionTypeData::Uint:
+		case Reflection::TypeDescriptor::ReflectionTypeData::Uint8:
+			documentWriter.Uint(*static_cast<uint8_t*>(dataPtr));
+			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::Uint16:
+			documentWriter.Uint(*static_cast<uint16_t*>(dataPtr));
+			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::Uint32:
 			documentWriter.Uint(*static_cast<uint32_t*>(dataPtr));
+			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::Uint64:
+			documentWriter.Uint64(*static_cast<uint64_t*>(dataPtr));
 			break;
 		case Reflection::TypeDescriptor::ReflectionTypeData::Uint2:
 			WriteArrayUint(documentWriter, static_cast<uint32_t*>(dataPtr), 2);
@@ -210,6 +228,9 @@ void WriteParameter(SceneRapidjsonWriter& documentWriter, Reflection::TypeDescri
 		case Reflection::TypeDescriptor::ReflectionTypeData::Vector:
 			WriteArray(documentWriter, dataPtr, member);
 			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::FixedArray:
+			WriteArray(documentWriter, dataPtr, member);
+			break;
 	}
 }
 
@@ -231,11 +252,20 @@ inline void SetupArray(SceneRapidjsonWriter& documentWriter, void* memberPtr, Re
 	documentWriter.EndArray();
 }
 
-using ReflectionTypeData = Reflection::TypeDescriptor_Struct::ReflectionTypeData;
-void WriteArray(SceneRapidjsonWriter& documentWriter, void* memberPtr, Reflection::TypeDescriptor* member) {
+static void WriteFixedArray(SceneRapidjsonWriter& documentWriter, void* memberPtr, Reflection::TypeDescriptor* member) {
 	Reflection::TypeDescriptor_StdVector* vectorTypeDescriptor = static_cast<Reflection::TypeDescriptor_StdVector*>(member);
 	Reflection::TypeDescriptor* itemType = vectorTypeDescriptor->itemType;
-	
+	WriteArray(documentWriter, memberPtr, itemType);
+}
+
+static void WriteVectorArray(SceneRapidjsonWriter& documentWriter, void* memberPtr, Reflection::TypeDescriptor* member) {
+	Reflection::TypeDescriptor_FixedArray* vectorTypeDescriptor = static_cast<Reflection::TypeDescriptor_FixedArray*>(member);
+	Reflection::TypeDescriptor* itemType = vectorTypeDescriptor->itemType;
+	WriteArray(documentWriter, memberPtr, itemType);
+}
+
+using ReflectionTypeData = Reflection::TypeDescriptor_Struct::ReflectionTypeData;
+static void WriteArray(SceneRapidjsonWriter & documentWriter, void* memberPtr, Reflection::TypeDescriptor* itemType) {
 	switch (itemType->type) {
 	case ReflectionTypeData::Struct: break;
 	case ReflectionTypeData::AssetReference:
@@ -265,8 +295,17 @@ void WriteArray(SceneRapidjsonWriter& documentWriter, void* memberPtr, Reflectio
 	case ReflectionTypeData::Double4:
 		SetupArray<Math::Double4>(documentWriter, memberPtr, itemType);
 		break;
-	case ReflectionTypeData::Int:
-		SetupArray<Math::Int>(documentWriter, memberPtr, itemType);
+	case ReflectionTypeData::Int8:
+		SetupArray<int8_t>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Int16:
+		SetupArray<int16_t>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Int32:
+		SetupArray<int32_t>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Int64:
+		SetupArray<int64_t>(documentWriter, memberPtr, itemType);
 		break;
 	case ReflectionTypeData::Int2:
 		SetupArray<Math::Int2>(documentWriter, memberPtr, itemType);
@@ -276,6 +315,27 @@ void WriteArray(SceneRapidjsonWriter& documentWriter, void* memberPtr, Reflectio
 		break;
 	case ReflectionTypeData::Int4:
 		SetupArray<Math::Int4>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Uint8:
+		SetupArray<uint8_t>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Uint16:
+		SetupArray<uint16_t>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Uint32:
+		SetupArray<uint32_t>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Uint64:
+		SetupArray<uint64_t>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Uint2:
+		SetupArray<Math::Uint2>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Uint3:
+		SetupArray<Math::Uint3>(documentWriter, memberPtr, itemType);
+		break;
+	case ReflectionTypeData::Uint4:
+		SetupArray<Math::Uint4>(documentWriter, memberPtr, itemType);
 		break;
 	case ReflectionTypeData::Float:
 		SetupArray<Math::Float>(documentWriter, memberPtr, itemType);

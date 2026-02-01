@@ -1,8 +1,11 @@
 #pragma once
 
 #include <stdint.h>
+#include "Assert.hpp"
 
 namespace Grindstone::Physics {
+	constexpr uint32_t MaxLayerCount = 32;
+
 	struct LayerMask;
 
 	struct Layer {
@@ -12,8 +15,12 @@ namespace Grindstone::Physics {
 		Layer& operator=(const Layer& other) = default;
 		Layer& operator=(Layer&& other) noexcept = default;
 
-		Layer(uint8_t value) : layer(value) {}
+		Layer(uint8_t value) : layer(value) {
+			GS_ASSERT(value < MaxLayerCount);
+		}
+
 		Layer& operator=(uint8_t value) {
+			GS_ASSERT(value < MaxLayerCount);
 			layer = value;
 			return *this;
 		}
