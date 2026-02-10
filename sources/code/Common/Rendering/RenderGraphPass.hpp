@@ -26,20 +26,6 @@ namespace Grindstone::Renderer {
 		void AddInputOutputBuffer(HashedString inName, HashedString outName, BufferInfo bufferInfo);
 		void AddOutputBuffer(HashedString name, BufferInfo bufferInfo);
 
-		void RenderEnabled();
-		void RenderDisabled();
-
-		// Set up the pass for rendering in the future
-		RenderGraphPass& SetOnSetup(std::function<void* ()> fn);
-
-		// Set up the pass for rendering in the future
-		RenderGraphPass& SetOnDestroy(std::function<void(void*)> fn);
-
-		// The real rendering of a pass.
-		RenderGraphPass& SetOnRenderEnabled(std::function<void(void*)> fn);
-
-		// For when rendering a system is disabled but resources still need to be cleared, etc.
-		RenderGraphPass& SetOnRenderDisabledCallback(std::function<void(void*)> fn);
 		HashedString GetName() const;
 
 		struct ContextData {
@@ -68,14 +54,5 @@ namespace Grindstone::Renderer {
 
 		// Set up the pass for rendering in the future
 		std::function<void* ()> OnSetup;
-
-		// Set up the pass for rendering in the future
-		std::function<void(void*)> OnDestroy;
-
-		// The real rendering of a pass.
-		std::function<void(void*)> OnRenderEnabled;
-
-		// For when rendering a system is disabled but resources still need to be cleared, etc.
-		std::function<void(void*)> OnRenderDisabled;
 	};
 }

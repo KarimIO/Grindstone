@@ -102,7 +102,7 @@ namespace Grindstone {
 
 				cameraComponent.renderer->Render(
 					currentCommandBuffer,
-					registry,
+					worldContextSet,
 					projectionMatrix,
 					viewMatrix,
 					pos,

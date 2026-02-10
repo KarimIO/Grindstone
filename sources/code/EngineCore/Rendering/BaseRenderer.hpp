@@ -5,6 +5,7 @@
 
 #include <Common/Rendering/GeometryRenderingStats.hpp>
 #include <Common/Graphics/CommandBuffer.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -28,7 +29,7 @@ namespace Grindstone {
 		virtual void Resize(uint32_t width, uint32_t height) = 0;
 		virtual void Render(
 			GraphicsAPI::CommandBuffer* commandBuffer,
-			entt::registry& registry,
+			Grindstone::WorldContextSet& worldContextSet,
 			glm::mat4 projectionMatrix,
 			glm::mat4 viewMatrix,
 			glm::vec3 eyePos,

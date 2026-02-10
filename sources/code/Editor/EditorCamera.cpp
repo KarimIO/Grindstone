@@ -373,10 +373,12 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		.clearValue = Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f)
 	};
 	
-	entt::registry& registry = scene->GetEntityRegistry();
+	Grindstone::WorldContextSet* cxtSet = engineCore.GetWorldContextManager()->GetActiveWorldContextSet();
+	GS_ASSERT(cxtSet != nullptr);
+
 	renderer->Render(
 		commandBuffer,
-		registry,
+		*cxtSet,
 		projection,
 		view,
 		position,
@@ -476,23 +478,11 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 	EngineCore& engineCore = Editor::Manager::GetInstance().GetEngineCore();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-	SceneManagement::SceneManager* sceneManager = engineCore.GetSceneManager();
+	
+	Grindstone::WorldContextSet* cxtSet = engineCore.GetWorldContextManager()->GetActiveWorldContextSet();
+	GS_ASSERT(cxtSet != nullptr);
 
-	if (sceneManager == nullptr) {
-		return;
-	}
-
-	if (sceneManager->scenes.size() == 0) {
-		return;
-	}
-
-	SceneManagement::Scene* scene = sceneManager->scenes.begin()->second;
-
-	if (scene == nullptr) {
-		return;
-	}
-
-	entt::registry& registry = scene->GetEntityRegistry();
+	entt::registry& registry = cxtSet->GetEntityRegistry();
 	entt::entity entity = entt::null;
 	const TransformComponent* transformComponent = nullptr;
 	CameraComponent* cameraComponent = nullptr;
@@ -546,9 +536,10 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 		.clearValue = Grindstone::GraphicsAPI::ClearColor()
 	};
 
+	GS_ASSERT(cxtSet != nullptr);
 	renderer->Render(
 		commandBuffer,
-		registry,
+		*cxtSet,
 		projectionMatrix,
 		viewMatrix,
 		pos,

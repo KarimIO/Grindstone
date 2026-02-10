@@ -62,11 +62,11 @@ set(CSHARP_HEADERS ${INC}/CSharpManager.hpp ${INC}/CSharpSystem.hpp ${INC}/Scrip
 
 file(GLOB_RECURSE CSHARP_COMPONENTS_SOURCES "${SRC}/Components/*.cpp")
 file(GLOB_RECURSE CSHARP_COMPONENTS_HEADER "${INC}/Components/*.hpp")
-source_group("Components\\Source Files" FILES ${CSHARP_COMPONENTS_SOURCES})
-source_group("Components\\Header Files" FILES ${CSHARP_COMPONENTS_HEADER})
+source_group("Source Files\\Components" FILES ${CSHARP_COMPONENTS_SOURCES})
+source_group("Header Files\\Components" FILES ${CSHARP_COMPONENTS_HEADER})
 
-source_group("Reflection\\Source Files" FILES ${SOURCE_REFLECTION})
-source_group("Reflection\\Header Files" FILES ${HEADER_REFLECTION})
+source_group("Source Files\\Reflection" FILES ${SOURCE_REFLECTION})
+source_group("Header Files\\Reflection" FILES ${HEADER_REFLECTION})
 
 add_library(
 	PluginScriptCSharp MODULE
