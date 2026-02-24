@@ -4,35 +4,68 @@
 #include <Grindstone.Renderer.Deferred/include/Passes/TonemapPass.hpp>
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
 
-struct PostProcessUbo {
-	glm::vec4 vignetteColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	float vignetteRadius = 0.75f;
-	float vignetteSoftness = 0.8f;
-	float grainAmount = 0.0007f;
-	float grainPixelSize = 1.0f;
-	glm::vec2 chromaticDistortionRedOffset = glm::vec2(0.00045f, 0.00045f);
-	glm::vec2 chromaticDistortionGreenOffset = glm::vec2(0.0003f, 0.0003f);
-	glm::vec2 chromaticDistortionBlueOffset = glm::vec2(-0.0003f, -0.0003f);
-	float paniniDistortionStrength = 0.0f;
-	bool isAnimated = true;
-
-};
-
 bool Grindstone::Renderer::TonemapPass::Initialize() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+
 	tonemapPipelineSet = engineCore.assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/postProcessing/tonemapping");
+
+	GraphicsAPI::Buffer::CreateInfo postProcessingUboCreateInfo{
+		.content = nullptr,
+		.bufferSize = sizeof(PostProcessSettings),
+		.bufferUsage =
+			GraphicsAPI::BufferUsage::TransferDst |
+			GraphicsAPI::BufferUsage::TransferSrc |
+			GraphicsAPI::BufferUsage::Uniform,
+		.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU,
+	};
+
+	GraphicsAPI::DescriptorSetLayout::Binding postProcessingDescriptorSetLayoutBinding{
+		.bindingId = 0,
+		.count = 1,
+		.type = Grindstone::GraphicsAPI::BindingType::UniformBuffer,
+		.stages = GraphicsAPI::ShaderStageBit::Fragment,
+	};
+
+	GraphicsAPI::DescriptorSetLayout::CreateInfo postProcessingDescriptorSetLayoutCreateInfo{
+		.debugName = "Post Processing Settings Descriptor Set Layout",
+		.bindings = &postProcessingDescriptorSetLayoutBinding,
+		.bindingCount = 1u,
+	};
+
+	descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(postProcessingDescriptorSetLayoutCreateInfo);
+
+	GraphicsAPI::DescriptorSet::CreateInfo postProcessingDescriptorSetsCreateInfo{
+		.layout = descriptorSetLayout,
+		.bindingCount = 1u
+	};
+
+	for (size_t i = 0; i < 3; ++i) {
+		std::string uboDebugName = std::vformat("Post Processing UBO [{}]", std::make_format_args(i));
+		postProcessingUboCreateInfo.debugName = uboDebugName.c_str();
+		tonemapSettingsUniformBuffer[i] = graphicsCore->CreateBuffer(postProcessingUboCreateInfo);
+
+		std::string descriptorSetDebugName = std::vformat("Post Processing UBO [{}]", std::make_format_args(i));
+		GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(tonemapSettingsUniformBuffer[i]);
+		postProcessingDescriptorSetsCreateInfo.bindings = &binding;
+		postProcessingDescriptorSetsCreateInfo.debugName = descriptorSetDebugName.c_str();
+		tonemapSettingsDescriptorSet[i] = graphicsCore->CreateDescriptorSet(postProcessingDescriptorSetsCreateInfo);
+	}
+
+	return true;
 }
 
-void Grindstone::Renderer::TonemapPass::AddPass(Grindstone::Renderer::RenderGraph& renderGraph) {
+void Grindstone::Renderer::TonemapPass::AddPass(Grindstone::Renderer::RenderGraph& renderGraph, PostProcessSettings settings) {
 	renderGraph.AddGraphicsPass(
-		"Tonemapping",
+		"Tonemapping"_hash,
 		[](Renderer::RenderGraph::RenderPass& renderPass) {
 			renderPass.ReadColorAttachment(attachmentNameAlbedo, attachmentAlbedo);
 		},
-		[&tonemapPipelineSet = tonemapPipelineSet](const Renderer::RenderGraph::RenderGraphContext& cxt, Renderer::RenderGraph::RenderPassExecution& renderPassExecution) {
+		[this, settings](const Renderer::RenderGraph::RenderGraphContext& cxt, Renderer::RenderGraph::RenderPassExecution& renderPassExecution) {
 			Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 			Grindstone::WorldContextSet* cxtSet = cxt.worldContextSet;
 			Grindstone::GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
+			uint8_t swapchainIndex = cxt.swapchainIndex;
 
 			Grindstone::GraphicsPipelineAsset* tonemapPipelineAsset = tonemapPipelineSet.Get();
 			if (tonemapPipelineAsset == nullptr) {
@@ -44,15 +77,15 @@ void Grindstone::Renderer::TonemapPass::AddPass(Grindstone::Renderer::RenderGrap
 				return;
 			}
 
-			tonemapPostProcessingUniformBufferObject->UploadData(&postProcessUboData);
-
-			std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> descriptorSets{};
-			descriptorSets[0] = engineDescriptorSet;
-			descriptorSets[1] = gbufferDescriptorSet;
-			descriptorSets[2] = tonemapDescriptorSet;
+			tonemapSettingsUniformBuffer[swapchainIndex]->UploadData(&settings);
 
 			cmd->BindGraphicsPipeline(tonemapPipeline);
-			cmd->BindGraphicsDescriptorSet(tonemapPipeline, descriptorSets.data(), 0, static_cast<uint32_t>(descriptorSets.size()));
+			cmd->BindGraphicsDescriptorSet(
+				tonemapPipeline,
+				&tonemapSettingsDescriptorSet[swapchainIndex],
+				2u, // Offset
+				1u // Count
+			);
 			cmd->DrawIndices(0, 6, 0, 1, 0);
 		}
 	);

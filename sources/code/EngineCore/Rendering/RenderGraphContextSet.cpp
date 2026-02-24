@@ -27,10 +27,6 @@ void Grindstone::Rendering::RenderGraphWorldContext::SetAsActive() {
 void Grindstone::Rendering::RenderGraphWorldContext::StartFrame() {
 }
 
-void Grindstone::Rendering::RenderGraphWorldContext::JoinRenderGraphBuilder(Grindstone::Renderer::RenderGraphBuilder& otherBuilder) {
-	renderGraphBuilder.JoinBuilder(otherBuilder);
-}
-
-Grindstone::Renderer::RenderGraphBuilder& Grindstone::Rendering::RenderGraphWorldContext::GetBuilder() {
-	return renderGraphBuilder;
+Grindstone::Renderer::RenderGraph& Grindstone::Rendering::RenderGraphWorldContext::GetRenderGraph() {
+	return renderGraph;
 }

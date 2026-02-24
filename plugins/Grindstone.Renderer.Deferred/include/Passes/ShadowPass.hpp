@@ -9,5 +9,12 @@ namespace Grindstone::Renderer {
 	public:
 		bool Initialize();
 		void AddPass(Grindstone::Renderer::RenderGraph& renderGraph);
+
+	protected:
+		void PrepareAtlas(uint32_t totalShadowMapCount);
+		bool GetAtlasRenderArea(Grindstone::Math::IntRect2D& rect);
+		uint32_t currentAtlasIndex = 0;
+		uint32_t shadowResolution = 512;
+		uint32_t maxAtlasCount = 0;
 	};
 }

@@ -31,6 +31,7 @@ bool Grindstone::Renderer::ScreenSpaceReflectionsPass::Initialize() {
 	ssrDescriptorSetLayoutCreateInfo.bindings = ssrLayoutBindings.data();
 	ssrDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ssrDescriptorSetLayoutCreateInfo);
 
+	return true;
 }
 
 void Grindstone::Renderer::ScreenSpaceReflectionsPass::AddPass(Grindstone::Renderer::RenderGraph& renderGraph) {

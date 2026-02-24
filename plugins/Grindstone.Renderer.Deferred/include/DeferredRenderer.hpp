@@ -83,6 +83,11 @@ namespace Grindstone {
 		GraphicsAPI::Buffer* indexBuffer;
 		GraphicsAPI::VertexArrayObject* planePostProcessVao = nullptr;
 
+		Grindstone::GraphicsAPI::DescriptorSetLayout* globalDescriptorSetLayout;
+		Grindstone::GraphicsAPI::Buffer* globalStagingUniformBufferObject;
+		std::array<Grindstone::GraphicsAPI::Buffer*, 3> globalUniformBufferObject;
+		std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> globalDescriptorSet;
+
 		DeferredRenderMode renderMode;
 
 		Grindstone::Renderer::ShadowPass shadows;

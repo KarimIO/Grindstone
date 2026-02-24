@@ -15,6 +15,7 @@
 #include <EngineCore/Rendering/RenderPassRegistry.hpp>
 #include <EngineCore/WorldContext/WorldContextManager.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/Rendering/RenderGraphContextSet.hpp>
 #include <Common/Event/WindowEvent.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Console/Cvars.hpp>
@@ -107,6 +108,7 @@ bool EngineCore::Initialize(LateCreateInfo& createInfo) {
 	}
 
 	worldContextManager = AllocatorCore::Allocate<Grindstone::WorldContextManager>();
+	pluginInterface->RegisterWorldContextFactory<Grindstone::Rendering::RenderGraphWorldContext>(Rendering::renderGraphWorldContextName);
 
 	{
 		GRIND_PROFILE_SCOPE("Initialize Graphics Core");
@@ -219,6 +221,7 @@ EngineCore::~EngineCore() {
 	}
 
 	if (worldContextManager != nullptr) {
+		pluginInterface->UnregisterWorldContextFactory(Rendering::renderGraphWorldContextName);
 		worldContextManager->ClearContextSets();
 	}
 

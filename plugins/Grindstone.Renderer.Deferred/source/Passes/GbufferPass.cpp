@@ -9,18 +9,20 @@ bool Grindstone::Renderer::GbufferPass::Initialize() {
 }
 
 void Grindstone::Renderer::GbufferPass::AddPass(glm::mat4& projectionMatrix, glm::mat4 viewMatrix, Grindstone::Renderer::RenderGraph& renderGraph) {
+	using namespace Grindstone::GraphicsAPI;
+
 	renderGraph.AddGraphicsPass(
-		"Gbuffer Geometry Opaque",
+		"Gbuffer Geometry Opaque"_hash,
 		[](Renderer::RenderGraph::RenderPass& renderPass) {
-			renderPass.WriteColorAttachment(attachmentNameAlbedo, attachmentAlbedo, Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
-			renderPass.WriteColorAttachment(attachmentNameNormal, attachmentNormal, Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
-			renderPass.WriteColorAttachment(attachmentNameSpecularRoughness, attachmentSpecularRoughness, Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
-			renderPass.WriteDepthStencilAttachment(attachmentNameDepthStencil, attachmentDepthStencil, Grindstone::GraphicsAPI::ClearDepthStencil(1.0f, 0u));
+			renderPass.WriteColorAttachment(attachmentNameAlbedo, attachmentAlbedo, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+			renderPass.WriteColorAttachment(attachmentNameNormal, attachmentNormal, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+			renderPass.WriteColorAttachment(attachmentNameSpecularRoughness, attachmentSpecularRoughness, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+			renderPass.WriteDepthStencilAttachment(attachmentNameDepthStencil, attachmentDepthStencil, ClearDepthStencil(1.0f, 0u));
 		},
 		[projectionMatrix, viewMatrix](const Renderer::RenderGraph::RenderGraphContext& cxt, Renderer::RenderGraph::RenderPassExecution& renderPassExecution) {
 			Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 			Grindstone::WorldContextSet* cxtSet = cxt.worldContextSet;
-			Grindstone::GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
+			CommandBuffer* cmd = cxt.commandBuffer;
 
 			Grindstone::Rendering::RenderViewData renderViewData{
 				.projectionMatrix = projectionMatrix,

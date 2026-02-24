@@ -445,6 +445,7 @@ namespace Grindstone::GraphicsAPI {
 		DepthStencil = static_cast<uint8_t>(FormatDepthStencilType::Depth) | static_cast<uint8_t>(FormatDepthStencilType::Stencil)
 	};
 
+	ImageAspectBits GetFormatAspect(Format format);
 	FormatDepthStencilType GetFormatDepthStencilType(Format format);
 	bool IsFormatCompressed(Format format);
 	uint8_t GetCompressedFormatBlockSize(Format format);

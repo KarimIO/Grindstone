@@ -16,5 +16,6 @@ namespace Grindstone::Renderer {
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> pointLightPipelineSet;
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> directionalLightPipelineSet;
 
+		Grindstone::GraphicsAPI::Image* currentEnvironmentMapImage = nullptr;
 	};
 }

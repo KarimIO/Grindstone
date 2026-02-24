@@ -13,12 +13,12 @@
 
 using namespace Grindstone;
 
-Grindstone::GraphicsAPI::Image* currentEnvironmentMapImage = nullptr;
-
 static void PerformImageBasedLighting(
 	entt::registry& registry,
 	GraphicsAPI::CommandBuffer* cmd,
-	GraphicsPipelineAsset* imageBasedLightingAsset
+	GraphicsAPI::DescriptorSet* ambientOcclusionDescriptorSet,
+	GraphicsPipelineAsset* imageBasedLightingAsset,
+	Grindstone::GraphicsAPI::Image*& currentEnvironmentMapImage
 ) {
 	if (imageBasedLightingAsset != nullptr) {
 		GraphicsAPI::GraphicsPipeline* imageBasedLightingPipeline = imageBasedLightingAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
@@ -30,7 +30,7 @@ static void PerformImageBasedLighting(
 
 			bool hasEnvMap = false;
 			view.each(
-				[&hasEnvMap](const EnvironmentMapComponent& environmentMapComponent) {
+				[&hasEnvMap, &currentEnvironmentMapImage, &ambientOcclusionDescriptorSet](const EnvironmentMapComponent& environmentMapComponent) {
 					// Valid env map found - ignore ther est.
 					if (hasEnvMap) {
 						return;
@@ -57,11 +57,12 @@ static void PerformImageBasedLighting(
 			);
 
 			if (hasEnvMap) {
-				std::array<GraphicsAPI::DescriptorSet*, 3> iblDescriptors{};
-				iblDescriptors[0] = engineDescriptorSet;
-				iblDescriptors[1] = gbufferDescriptorSet;
-				iblDescriptors[2] = ambientOcclusionDescriptorSet;
-				cmd->BindGraphicsDescriptorSet(imageBasedLightingPipeline, iblDescriptors.data(), 0, static_cast<uint32_t>(iblDescriptors.size()));
+				cmd->BindGraphicsDescriptorSet(
+					imageBasedLightingPipeline,
+					&ambientOcclusionDescriptorSet,
+					2u, // Offset
+					1u // Count
+				);
 				cmd->DrawIndices(0, 6, 0, 1, 0);
 			}
 
@@ -69,7 +70,6 @@ static void PerformImageBasedLighting(
 		}
 	}
 }
-
 
 bool Renderer::LightingPass::Initialize() {
 	EngineCore& engineCore = EngineCore::GetInstance();
@@ -85,18 +85,19 @@ bool Renderer::LightingPass::Initialize() {
 
 void Renderer::LightingPass::AddPass(GraphicsAPI::Buffer* vertexBuffer, GraphicsAPI::Buffer* indexBuffer, Renderer::RenderGraph& renderGraph) {
 	renderGraph.AddGraphicsPass(
-		"Lighting Pass",
+		"Lighting Pass"_hash,
 		[&](Renderer::RenderGraph::RenderPass& renderPass) {
 			renderPass.ReadColorAttachment(attachmentNameAlbedo, attachmentAlbedo);
 			renderPass.ReadColorAttachment(attachmentNameNormal, attachmentNormal);
 			renderPass.ReadColorAttachment(attachmentNameSpecularRoughness, attachmentSpecularRoughness);
 			renderPass.ReadDepthStencilAttachment(attachmentNameDepthStencil, attachmentDepthStencil);
-			renderPass.WriteColorAttachment(attachmentNameLighting, attachmentlighting);
+			renderPass.WriteColorAttachment(attachmentNameLighting, attachmentlighting, GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 		},
-		[&](Renderer::RenderGraph::RenderGraphContext& cxt, Renderer::RenderGraph::RenderPassExecution& renderPassExecution) {
+		[vertexBuffer, indexBuffer, this](Renderer::RenderGraph::RenderGraphContext& cxt, Renderer::RenderGraph::RenderPassExecution& renderPassExecution) {
 			GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
 			EngineCore& engineCore = EngineCore::GetInstance();
 			entt::registry& registry = cxt.worldContextSet->GetEntityRegistry();
+			GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
 			// TODO: We should be able to get transforms below without a scene.
 			Grindstone::SceneManagement::SceneManager* sceneManager = engineCore.GetSceneManager();
@@ -105,8 +106,6 @@ void Renderer::LightingPass::AddPass(GraphicsAPI::Buffer* vertexBuffer, Graphics
 			cmd->BindVertexBuffers(&vertexBuffer, 1);
 			cmd->BindIndexBuffer(indexBuffer);
 
-			EngineCore& engineCore = EngineCore::GetInstance();
-			GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
 			const glm::mat4 bias = glm::mat4(
 				0.5f, 0.0f, 0.0f, 0.0f,
@@ -115,16 +114,12 @@ void Renderer::LightingPass::AddPass(GraphicsAPI::Buffer* vertexBuffer, Graphics
 				0.5f, 0.5f, 0.0f, 1.0f
 			);
 
-
 			GraphicsPipelineAsset* pointLightAsset = pointLightPipelineSet.Get();
 			if (pointLightAsset != nullptr) {
 				GraphicsAPI::GraphicsPipeline* pointLightPipeline = pointLightAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
 				if (pointLightPipeline != nullptr) {
 					cmd->BeginDebugLabelSection("Point Lighting", nullptr);
 					cmd->BindGraphicsPipeline(pointLightPipeline);
-
-					std::array<GraphicsAPI::DescriptorSet*, 2> pointLightDescriptors{};
-					pointLightDescriptors[0] = gbufferDescriptorSet;
 
 					auto view = registry.view<const entt::entity, PointLightComponent>();
 					view.each(
@@ -137,13 +132,12 @@ void Renderer::LightingPass::AddPass(GraphicsAPI::Buffer* vertexBuffer, Graphics
 								pointLightComponent.intensity
 							};
 
-							pointLightDescriptors[1] = pointLightComponent.descriptorSet;
 							pointLightComponent.uniformBufferObject->UploadData(&lightmapStruct);
 							cmd->BindGraphicsDescriptorSet(
 								pointLightPipeline,
-								pointLightDescriptors.data(),
-								1,
-								static_cast<uint32_t>(pointLightDescriptors.size())
+								&pointLightComponent.descriptorSet,
+								2u, // Offset
+								1u // Count
 							);
 							cmd->DrawIndices(0, 6, 0, 1, 0);
 						}
@@ -158,9 +152,6 @@ void Renderer::LightingPass::AddPass(GraphicsAPI::Buffer* vertexBuffer, Graphics
 				if (spotLightPipeline != nullptr) {
 					cmd->BeginDebugLabelSection("Spot Lighting", nullptr);
 					cmd->BindGraphicsPipeline(spotLightPipeline);
-
-					std::array<GraphicsAPI::DescriptorSet*, 2> spotLightDescriptors{};
-					spotLightDescriptors[0] = gbufferDescriptorSet;
 
 					auto view = registry.view<const entt::entity, SpotLightComponent>();
 					view.each(
@@ -181,12 +172,11 @@ void Renderer::LightingPass::AddPass(GraphicsAPI::Buffer* vertexBuffer, Graphics
 
 							spotLightComponent.uniformBufferObject->UploadData(&lightStruct);
 
-							spotLightDescriptors[1] = spotLightComponent.descriptorSet;
 							cmd->BindGraphicsDescriptorSet(
 								spotLightPipeline,
-								spotLightDescriptors.data(),
-								1,
-								static_cast<uint32_t>(spotLightDescriptors.size())
+								&spotLightComponent.descriptorSet,
+								2u, // Offset
+								1u // Count
 							);
 							cmd->DrawIndices(0, 6, 0, 1, 0);
 						}
@@ -201,9 +191,6 @@ void Renderer::LightingPass::AddPass(GraphicsAPI::Buffer* vertexBuffer, Graphics
 				if (directionalLightPipeline != nullptr) {
 					cmd->BeginDebugLabelSection("Directional Lighting", nullptr);
 					cmd->BindGraphicsPipeline(directionalLightPipeline);
-
-					std::array<GraphicsAPI::DescriptorSet*, 2> directionalLightDescriptors{};
-					directionalLightDescriptors[0] = gbufferDescriptorSet;
 
 					auto view = registry.view<const entt::entity, const TransformComponent, DirectionalLightComponent>();
 					view.each(
@@ -221,12 +208,11 @@ void Renderer::LightingPass::AddPass(GraphicsAPI::Buffer* vertexBuffer, Graphics
 
 							directionalLightComponent.uniformBufferObject->UploadData(&lightStruct);
 
-							directionalLightDescriptors[1] = directionalLightComponent.descriptorSet;
 							cmd->BindGraphicsDescriptorSet(
 								directionalLightPipeline,
-								directionalLightDescriptors.data(),
-								1,
-								static_cast<uint32_t>(directionalLightDescriptors.size())
+								&directionalLightComponent.descriptorSet,
+								2u, // Offset
+								1u // Count
 							);
 							cmd->DrawIndices(0, 6, 0, 1, 0);
 						}

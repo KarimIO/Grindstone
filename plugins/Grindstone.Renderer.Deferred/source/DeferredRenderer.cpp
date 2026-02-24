@@ -83,8 +83,75 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 	screenSamplerCreateInfo.options.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat;
 	screenSamplerCreateInfo.options.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat;
 	// TODO: Use this Sampler
-	auto screenSampler = graphicsCore->CreateSampler(screenSamplerCreateInfo);
+	Grindstone::GraphicsAPI::Sampler* screenSampler = graphicsCore->CreateSampler(screenSamplerCreateInfo);
 
+
+	GraphicsAPI::Buffer::CreateInfo globalUboCreateInfo{
+		.content = nullptr,
+		.bufferSize = sizeof(EngineUboStruct),
+		.bufferUsage =
+			GraphicsAPI::BufferUsage::TransferDst |
+			GraphicsAPI::BufferUsage::TransferSrc |
+			GraphicsAPI::BufferUsage::Uniform,
+		.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU,
+	};
+
+	GraphicsAPI::DescriptorSetLayout::Binding globalDescriptorSetLayoutBinding{
+		.bindingId = 0,
+		.count = 1,
+		.type = Grindstone::GraphicsAPI::BindingType::UniformBuffer,
+		.stages = GraphicsAPI::ShaderStageBit::Fragment,
+	};
+
+	GraphicsAPI::DescriptorSetLayout::CreateInfo globalDescriptorSetLayoutCreateInfo{
+		.debugName = "Global UBO Descriptor Set Layout",
+		.bindings = &globalDescriptorSetLayoutBinding,
+		.bindingCount = 1u,
+	};
+
+	globalDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(globalDescriptorSetLayoutCreateInfo);
+
+	GraphicsAPI::DescriptorSet::CreateInfo globalDescriptorSetsCreateInfo{
+		.layout = globalDescriptorSetLayout,
+		.bindingCount = 1u
+	};
+
+	globalUboCreateInfo.debugName = "Global Staging UBO";
+	globalStagingUniformBufferObject = graphicsCore->CreateBuffer(globalUboCreateInfo);
+
+	for (size_t i = 0; i < 3; ++i) {
+		std::string uboDebugName = std::vformat("Global UBO [{}]", std::make_format_args(i));
+		globalUboCreateInfo.debugName = uboDebugName.c_str();
+		globalUniformBufferObject[i] = graphicsCore->CreateBuffer(globalUboCreateInfo);
+
+		std::string descriptorSetDebugName = std::vformat("Global UBO [{}]", std::make_format_args(i));
+		GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(globalUniformBufferObject[i]);
+		globalDescriptorSetsCreateInfo.bindings = &binding;
+		globalDescriptorSetsCreateInfo.debugName = descriptorSetDebugName.c_str();
+		globalDescriptorSet[i] = graphicsCore->CreateDescriptorSet(globalDescriptorSetsCreateInfo);
+	}
+
+	GraphicsAPI::Buffer::CreateInfo vboCi{};
+	vboCi.debugName = "Light Vertex Position Buffer";
+	vboCi.bufferUsage =
+		GraphicsAPI::BufferUsage::TransferDst |
+		GraphicsAPI::BufferUsage::TransferSrc |
+		GraphicsAPI::BufferUsage::Vertex;
+	vboCi.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly;
+	vboCi.content = lightPositions;
+	vboCi.bufferSize = sizeof(lightPositions);
+	vertexBuffer = graphicsCore->CreateBuffer(vboCi);
+
+	GraphicsAPI::Buffer::CreateInfo iboCi{};
+	iboCi.debugName = "Light Index Buffer";
+	iboCi.bufferUsage =
+		GraphicsAPI::BufferUsage::TransferDst |
+		GraphicsAPI::BufferUsage::TransferSrc |
+		GraphicsAPI::BufferUsage::Index;
+	iboCi.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly;
+	iboCi.content = lightIndices;
+	iboCi.bufferSize = sizeof(lightIndices);
+	indexBuffer = graphicsCore->CreateBuffer(iboCi);
 }
 
 DeferredRenderer::~DeferredRenderer() {
@@ -104,6 +171,9 @@ bool DeferredRenderer::OnWindowResize(Events::BaseEvent* ev) {
 	}
 
 	return false;
+}
+
+void Grindstone::DeferredRenderer::Resize(uint32_t width, uint32_t height) {
 }
 
 void DeferredRenderer::Render(
@@ -145,8 +215,8 @@ void DeferredRenderer::Render(
 		.time = static_cast<float>(engineCore.GetTimeSinceLaunch())
 	};
 
-	// globalUniformBufferObject->UploadData(&engineUboStruct);
-	// commandBuffer->CopyBufferRegion(imageSet.globalUniformBufferObject, gpuGlobalUniformBufferObject);
+	globalStagingUniformBufferObject->UploadData(&engineUboStruct);
+	commandBuffer->CopyBufferRegion(globalStagingUniformBufferObject, globalUniformBufferObject[imageIndex]);
 
 	Grindstone::Rendering::RenderViewData renderViewData{
 		.projectionMatrix = projectionMatrix,
@@ -154,7 +224,7 @@ void DeferredRenderer::Render(
 		.renderArea = renderArea,
 	};
 
-	// assetManager->SetEngineDescriptorSet(imageSet.engineDescriptorSet);
+	assetManager->SetEngineDescriptorSet(globalDescriptorSet[imageIndex]);
 
 	// auto shadowOutput = shadows.AddPass(renderGraph);
 	gbuffer.AddPass(projectionMatrix, viewMatrix, renderGraph);
@@ -166,7 +236,7 @@ void DeferredRenderer::Render(
 	// auto bloomOutput = bloom.AddBloomChain(renderGraph, dofOutput);
 
 	if (renderMode == DeferredRenderMode::Default) {
-		tonemap.AddPass(renderGraph);
+		tonemap.AddPass(renderGraph, {});
 	}
 	/*
 	else {
@@ -175,9 +245,11 @@ void DeferredRenderer::Render(
 	*/
 
 	Grindstone::Renderer::RenderGraph::RenderGraphContext context{
+		.globalDescriptorSet = globalDescriptorSet[imageIndex],
 		.swapchainSize = renderArea.extent,
 		.commandBuffer = commandBuffer,
 		.worldContextSet = &worldContextSet,
+		.swapchainIndex = imageIndex
 	};
 
 	renderGraph.ExecuteGraph(context);

@@ -1,6 +1,102 @@
+#include <EngineCore/Scenes/Manager.hpp>
+#include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
+#include <EngineCore/CoreComponents/Lights/DirectionalLightComponent.hpp>
+#include <EngineCore/CoreComponents/Lights/PointLightComponent.hpp>
+#include <EngineCore/CoreComponents/Lights/SpotLightComponent.hpp>
+
+#include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
 #include <Grindstone.Renderer.Deferred/include/Passes/ShadowPass.hpp>
 
-void RenderSpotShadowPass(const char* shadowPassName) {
+static void RenderShadowMap(
+	Grindstone::WorldContextSet* cxtSet,
+	Grindstone::Rendering::RenderViewData renderViewData,
+	Grindstone::EngineCore& engineCore,
+	Grindstone::GraphicsAPI::CommandBuffer* cmd
+) {
+	cmd->SetViewport(0.0f, 0.0f, static_cast<float>(renderViewData.renderArea.GetWidth()), static_cast<float>(renderViewData.renderArea.GetHeight()));
+	cmd->SetScissor(0, 0, renderViewData.renderArea.GetWidth(), renderViewData.renderArea.GetHeight());
+
+	// TODO: Get Rendering Stats
+	engineCore.assetRendererManager->RenderQueue(cmd, renderViewData, cxtSet->GetEntityRegistry(), shadowMapRenderPassKey);
+}
+
+static void RenderSpotLightComponent(
+	Grindstone::Math::IntRect2D renderArea,
+	Grindstone::GraphicsAPI::CommandBuffer* cmd,
+	Grindstone::WorldContextSet* cxtSet, 
+	const ECS::Entity entity,
+	Grindstone::SpotLightComponent& spotLightComponent
+) {
+	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+	float fov = glm::radians(spotLightComponent.outerAngle * 2.0f);
+	float aspectRatio = 1.0f;
+	float nearDist = 0.1f;
+	float farDist = spotLightComponent.attenuationRadius;
+
+	const glm::vec3 forwardVector = entity.GetWorldForward();
+	const glm::vec3 pos = entity.GetWorldPosition();
+
+	glm::mat4 projectionMatrix = glm::perspective(fov, aspectRatio, nearDist, farDist);
+	const glm::mat4 viewMatrix = glm::lookAt(pos, pos + forwardVector, entity.GetWorldUp());
+
+	engineCore.GetGraphicsCore()->AdjustPerspective(&projectionMatrix[0][0]);
+
+	spotLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
+	spotLightComponent.shadowMapUniformBufferObject->UploadData(&spotLightComponent.shadowMatrix);
+	engineCore.assetRendererManager->SetEngineDescriptorSet(spotLightComponent.shadowMapDescriptorSet);
+
+	Grindstone::Rendering::RenderViewData renderViewData{
+		.projectionMatrix = projectionMatrix,
+		.viewMatrix = viewMatrix,
+		.renderArea = renderArea
+	};
+
+	RenderShadowMap(cxtSet, renderViewData, engineCore, cmd);
+}
+
+static void RenderDirectionalLightComponent(
+	Grindstone::Math::IntRect2D renderArea,
+	Grindstone::GraphicsAPI::CommandBuffer* cmd,
+	Grindstone::WorldContextSet* cxtSet,
+	const ECS::Entity entity,
+	Grindstone::DirectionalLightComponent& directionalLightComponent
+) {
+	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+	float aspectRatio = 1.0f;
+	float nearDist = 0.1f;
+
+	const glm::vec3 forwardVector = entity.GetWorldForward();
+	const glm::vec3 pos = entity.GetWorldPosition();
+
+	const float shadowHalfSize = 40.0f;
+	glm::mat4 projectionMatrix = glm::ortho<float>(-shadowHalfSize, shadowHalfSize, -shadowHalfSize, shadowHalfSize, 0, 160.0f);
+	engineCore.GetGraphicsCore()->AdjustPerspective(&projectionMatrix[0][0]);
+
+	Math::Float3 forward = entity.GetWorldForward();
+
+	// TODO: Calculate bounds of camera frustum and use it here.
+	glm::vec3 lightPos = forward * -100.0f;
+	const glm::mat4 viewMatrix = glm::lookAt(
+		lightPos,
+		glm::vec3(0, 0, 0),
+		entity.GetWorldUp()
+	);
+
+	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
+
+	directionalLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
+	directionalLightComponent.shadowMapUniformBufferObject->UploadData(&directionalLightComponent.shadowMatrix);
+	engineCore.assetRendererManager->SetEngineDescriptorSet(directionalLightComponent.shadowMapDescriptorSet);
+
+	Grindstone::Rendering::RenderViewData renderViewData{
+		.projectionMatrix = projectionMatrix,
+		.viewMatrix = viewMatrix,
+		.renderArea = renderArea
+	};
+
+	RenderShadowMap(cxtSet, renderViewData, engineCore, cmd);
 }
 
 bool Grindstone::Renderer::ShadowPass::Initialize() {
@@ -8,269 +104,90 @@ bool Grindstone::Renderer::ShadowPass::Initialize() {
 }
 
 void Grindstone::Renderer::ShadowPass::AddPass(Grindstone::Renderer::RenderGraph& renderGraph) {
-	EngineCore& engineCore = EngineCore::GetInstance();
-	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-	AssetRendererManager* assetManager = engineCore.assetRendererManager;
-	SceneManagement::Scene* scene = engineCore.GetSceneManager()->scenes.begin()->second;
+	renderGraph.AddGraphicsPass(
+		"Shadow"_hash,
+		[](Renderer::RenderGraph::RenderPass& renderPass) {
+			renderPass.WriteDepthStencilAttachment(attachmentNameShadowDepthStencil, attachmentShadowDepthStencil, Grindstone::GraphicsAPI::ClearDepthStencil(1.0f, 0u));
+		},
+		[this](const Renderer::RenderGraph::RenderGraphContext& cxt, Renderer::RenderGraph::RenderPassExecution& renderPassExecution) {
+			Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+			Grindstone::WorldContextSet* cxtSet = cxt.worldContextSet;
+			Grindstone::GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
+			entt::registry& registry = cxtSet->GetEntityRegistry();
 
-	GraphicsAPI::ClearDepthStencil clearDepthStencil{};
-	clearDepthStencil.depth = 1.0f;
-	clearDepthStencil.stencil = 0;
+			Grindstone::SceneManagement::Scene* scene = engineCore.GetSceneManager()->scenes.begin()->second;
 
-	/* TODO: Finish with Point Light Shadows eventually
-	{
-		auto view = registry.view<const TransformComponent, PointLightComponent>();
-		view.each([&](const TransformComponent& transformComponent, PointLightComponent& pointLightComponent) {
-			float farDist = pointLightComponent.attenuationRadius;
+			// TODO: Point Light Shadows
 
-			const glm::vec3 forwardVector = transformComponent.GetForward();
-			const glm::vec3 pos = transformComponent.position;
+			uint32_t totalShadowMapCount = 0;
 
-			const auto viewMatrix = glm::lookAt(
-				pos,
-				pos + forwardVector,
-				transformComponent.GetUp()
+			auto spotLightView = registry.view<const entt::entity, Grindstone::SpotLightComponent>();
+			auto directionalLightView = registry.view<const entt::entity, Grindstone::DirectionalLightComponent>();
+
+			spotLightView.each(
+				[&totalShadowMapCount](const entt::entity entityHandle, Grindstone::SpotLightComponent& spotLightComponent) {
+					++totalShadowMapCount;
+				}
 			);
 
-			constexpr float fov = 90.0f;
-			auto projectionMatrix = glm::perspective(
-				fov,
-				1.0f,
-				0.1f,
-				farDist
+			directionalLightView.each(
+				[&totalShadowMapCount](const entt::entity entityHandle, Grindstone::DirectionalLightComponent& directionalLightComponent) {
+					++totalShadowMapCount;
+				}
 			);
 
-			graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
+			PrepareAtlas(totalShadowMapCount);
 
-			glm::mat4 shadowPass = projectionMatrix * viewMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(0.02f));
-			// pointLightComponent.shadowMatrix = projectionMatrix * viewMatrix * glm::mat4(1.0f);
-
-			uint32_t resolution = static_cast<uint32_t>(pointLightComponent.shadowResolution);
-
-			pointLightComponent.shadowMapUniformBufferObject->UploadData(&shadowPass);
-
-			commandBuffer->BeginRendering(
-				"Point Shadow Pass",
-				pointLightComponent.framebuffer,
-				resolution,
-				resolution,
-				nullptr,
-				0,
-				clearDepthStencil
+			spotLightView.each(
+				[this, &cxtSet, cmd, scene](const entt::entity entityHandle, Grindstone::SpotLightComponent& spotLightComponent) {
+					const ECS::Entity entity = ECS::Entity(entityHandle, scene);
+					Grindstone::Math::IntRect2D renderArea;
+					if (GetAtlasRenderArea(renderArea)) {
+						RenderSpotLightComponent(renderArea, cmd, cxtSet, entity, spotLightComponent);
+					}
+				}
 			);
 
-			commandBuffer->BindGraphicsPipeline(shadowMappingPipeline);
-
-			float resF = static_cast<float>(resolution);
-			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
-			commandBuffer->SetScissor(0, 0, resolution, resolution);
-
-			commandBuffer->BindGraphicsDescriptorSet(shadowMappingPipeline, &pointLightComponent.shadowMapDescriptorSet, 0, 1);
-			assetManager->RenderShadowMap(
-				commandBuffer,
-				spotLightComponent.shadowMapDescriptorSet,
-				registry,
-				transformComponent.position
+			directionalLightView.each(
+				[this, &cxtSet, cmd, scene](const entt::entity entityHandle, DirectionalLightComponent& directionalLightComponent) {
+					const ECS::Entity entity = ECS::Entity(entityHandle, scene);
+					Grindstone::Math::IntRect2D renderArea;
+					if (GetAtlasRenderArea(renderArea)) {
+						RenderDirectionalLightComponent(renderArea, cmd, cxtSet, entity, directionalLightComponent);
+					}
+				}
 			);
+		}
+	);
+}
 
-			commandBuffer->EndRendering();
-		});
+void Grindstone::Renderer::ShadowPass::PrepareAtlas(uint32_t totalShadowMapCount) {
+	currentAtlasIndex = 0;
+
+	maxAtlasCount = 1;
+	shadowResolution = shadowAtlasResolution;
+
+	for (uint32_t i = 1; i < 16; ++i) {
+		maxAtlasCount = i * i;
+		shadowResolution /= 2;
+
+		if (maxAtlasCount >= totalShadowMapCount) {
+			break;
+		}
 	}
-	*/
+}
 
-	{
-		auto view = registry.view<const entt::entity, SpotLightComponent>();
-		view.each([&](const entt::entity entityHandle, SpotLightComponent& spotLightComponent) {
-			const ECS::Entity entity = ECS::Entity(entityHandle, scene);
+bool Grindstone::Renderer::ShadowPass::GetAtlasRenderArea(Grindstone::Math::IntRect2D& rect) {
+	++currentAtlasIndex;
 
-			float fov = glm::radians(spotLightComponent.outerAngle * 2.0f);
-			float farDist = spotLightComponent.attenuationRadius;
-
-			const glm::vec3 forwardVector = entity.GetWorldForward();
-			const glm::vec3 pos = entity.GetWorldPosition();
-
-			const auto viewMatrix = glm::lookAt(
-				pos,
-				pos + forwardVector,
-				entity.GetWorldUp()
-			);
-
-			auto projectionMatrix = glm::perspective(
-				fov,
-				1.0f,
-				0.1f,
-				farDist
-			);
-
-			graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
-
-			spotLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
-
-			if (spotLightComponent.shadowResolution != spotLightComponent.cachedShadowResolution) {
-				graphicsCore->WaitUntilIdle();
-				spotLightComponent.shadowResolution = std::clamp(spotLightComponent.shadowResolution, 8u, 16192u);
-				spotLightComponent.cachedShadowResolution = spotLightComponent.shadowResolution;
-				spotLightComponent.depthTarget->Resize(spotLightComponent.shadowResolution, spotLightComponent.shadowResolution);
-				spotLightComponent.framebuffer->Resize(spotLightComponent.shadowResolution, spotLightComponent.shadowResolution);
-				GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::SampledImage(spotLightComponent.depthTarget);
-				spotLightComponent.descriptorSet->ChangeBindings(&binding, 1, 1);
-			}
-
-			GraphicsAPI::ImageBarrier depthTargetBarrier = {
-				.image = spotLightComponent.depthTarget,
-				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
-				.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
-				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
-				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite,
-				.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
-				.baseMipLevel = 0,
-				.levelCount = 1,
-				.baseArrayLayer = 0,
-				.layerCount = 1
-			};
-
-			commandBuffer->PipelineBarrier(
-				GraphicsAPI::PipelineStageBit::TopOfPipe,
-				GraphicsAPI::PipelineStageBit::EarlyFragmentTests,
-				nullptr, 0,
-				&depthTargetBarrier, 1u
-			);
-
-			uint32_t resolution = spotLightComponent.shadowResolution;
-
-			spotLightComponent.shadowMapUniformBufferObject->UploadData(&spotLightComponent.shadowMatrix);
-			assetManager->SetEngineDescriptorSet(spotLightComponent.shadowMapDescriptorSet);
-
-			Grindstone::GraphicsAPI::RenderAttachment shadowRenderAttachment{
-				.image = spotLightComponent.depthTarget,
-				.imageLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
-				.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
-				.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
-				.clearValue = clearDepthStencil
-			};
-
-			Grindstone::Math::IntRect2D shadowRenderArea = Grindstone::Math::IntRect2D(0u, 0u, resolution, resolution);
-
-			commandBuffer->BeginRendering(
-				"Spot Light Pass",
-				shadowRenderArea,
-				nullptr,
-				0u,
-				&shadowRenderAttachment,
-				nullptr
-			);
-
-			Grindstone::Rendering::RenderViewData renderViewData{
-				.projectionMatrix = projectionMatrix,
-				.viewMatrix = viewMatrix,
-				.renderArea = shadowRenderArea
-			};
-
-			commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(resolution), static_cast<float>(resolution));
-			commandBuffer->SetScissor(0, 0, resolution, resolution);
-			assetManager->RenderQueue(
-				commandBuffer,
-				renderViewData,
-				registry,
-				shadowMapRenderPassKey
-			);
-
-			commandBuffer->EndRendering();
-			});
+	if (currentAtlasIndex > maxAtlasCount) {
+		GS_ASSERT_ENGINE_WITH_MESSAGE(false, "Too many shadows! {} found, {} maximum expected.", currentAtlasIndex, maxAtlasCount);
+		return false;
 	}
 
-	{
-		auto view = registry.view<const entt::entity, DirectionalLightComponent>();
-		view.each([&](const entt::entity entityHandle, DirectionalLightComponent& directionalLightComponent) {
-			const ECS::Entity entity = ECS::Entity(entityHandle, scene);
+	int32_t x = (currentAtlasIndex * shadowResolution) % shadowAtlasResolution;
+	int32_t y = (currentAtlasIndex * shadowResolution) / shadowAtlasResolution;
 
-			const float shadowHalfSize = 40.0f;
-			glm::mat4 projectionMatrix = glm::ortho<float>(-shadowHalfSize, shadowHalfSize, -shadowHalfSize, shadowHalfSize, 0, 160.0f);
-			graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
-
-			Math::Float3 forward = entity.GetWorldForward();
-
-			glm::vec3 lightPos = forward * -100.0f;
-			glm::mat4 viewMatrix = glm::lookAt(
-				lightPos,
-				glm::vec3(0, 0, 0),
-				entity.GetWorldUp()
-			);
-
-			glm::mat4 projView = projectionMatrix * viewMatrix;
-			directionalLightComponent.shadowMatrix = projView;
-
-			if (directionalLightComponent.shadowResolution != directionalLightComponent.cachedShadowResolution) {
-				graphicsCore->WaitUntilIdle();
-				directionalLightComponent.shadowResolution = std::clamp(directionalLightComponent.shadowResolution, 8u, 16192u);
-				directionalLightComponent.cachedShadowResolution = directionalLightComponent.shadowResolution;
-				directionalLightComponent.depthTarget->Resize(directionalLightComponent.shadowResolution, directionalLightComponent.shadowResolution);
-				directionalLightComponent.framebuffer->Resize(directionalLightComponent.shadowResolution, directionalLightComponent.shadowResolution);
-				GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::SampledImage(directionalLightComponent.depthTarget);
-				directionalLightComponent.descriptorSet->ChangeBindings(&binding, 1, 1);
-			}
-
-			GraphicsAPI::ImageBarrier depthTargetBarrier = {
-				.image = directionalLightComponent.depthTarget,
-				.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
-				.newLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
-				.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
-				.dstAccess = Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite,
-				.imageAspect = GraphicsAPI::ImageAspectBits::Depth,
-				.baseMipLevel = 0,
-				.levelCount = 1,
-				.baseArrayLayer = 0,
-				.layerCount = 1
-			};
-
-			commandBuffer->PipelineBarrier(
-				GraphicsAPI::PipelineStageBit::TopOfPipe,
-				GraphicsAPI::PipelineStageBit::EarlyFragmentTests,
-				nullptr, 0,
-				&depthTargetBarrier, 1u
-			);
-
-			uint32_t resolution = directionalLightComponent.shadowResolution;
-
-			directionalLightComponent.shadowMapUniformBufferObject->UploadData(&projView);
-			assetManager->SetEngineDescriptorSet(directionalLightComponent.shadowMapDescriptorSet);
-
-			Grindstone::GraphicsAPI::RenderAttachment shadowRenderAttachment{
-				.image = directionalLightComponent.depthTarget,
-				.imageLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
-				.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
-				.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
-				.clearValue = clearDepthStencil
-			};
-
-			float resF = static_cast<float>(resolution);
-			Grindstone::Math::IntRect2D shadowRenderArea = Grindstone::Math::IntRect2D(0u, 0u, resolution, resolution);
-
-			commandBuffer->BeginRendering(
-				"Directional Shadow Map Pass",
-				shadowRenderArea,
-				nullptr,
-				0u,
-				&shadowRenderAttachment,
-				nullptr
-			);
-
-			Grindstone::Rendering::RenderViewData renderViewData{
-				.projectionMatrix = projectionMatrix,
-				.viewMatrix = viewMatrix,
-				.renderArea = shadowRenderArea,
-			};
-
-			commandBuffer->SetViewport(0.0f, 0.0f, resF, resF);
-			commandBuffer->SetScissor(0, 0, resolution, resolution);
-			assetManager->RenderQueue(
-				commandBuffer,
-				renderViewData,
-				registry,
-				shadowMapRenderPassKey
-			);
-
-			commandBuffer->EndRendering();
-		});
-	}
+	rect = Grindstone::Math::IntRect2D(x, y, shadowResolution, shadowResolution);
+	return true;
 }

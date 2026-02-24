@@ -2,7 +2,7 @@
 #include <Grindstone.Renderer.Deferred/include/Passes/DebugPass.hpp>
 
 bool Grindstone::Renderer::DebugPass::Initialize() {
-	Grindstone::EngineCore engineCore = Grindstone::EngineCore::GetInstance();
+	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 	debugPipelineSet = engineCore.assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/editor/debug");
 	return true;
 }

@@ -1,8 +1,9 @@
+#include <random>
+
 #include <Common/Math.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 
 #include <Grindstone.Renderer.Deferred/include/Passes/ScreenSpaceAmbientOcclusionPass.hpp>
-
 const size_t ssaoKernelSize = 64;
 struct SsaoUboStruct {
 	Grindstone::Math::Float4 kernels[ssaoKernelSize];
@@ -10,11 +11,14 @@ struct SsaoUboStruct {
 	float bias;
 };
 
-Grindstone::Renderer::ScreenSpaceAmbientOcclusionPass::ScreenSpaceAmbientOcclusionPass() {
+bool Grindstone::Renderer::ScreenSpaceAmbientOcclusionPass::Initialize() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 	Grindstone::Assets::AssetManager* assetManager = engineCore.assetManager;
 
 	ssaoPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/postProcessing/screenSpaceAmbientOcclusion");
+	CreateSsaoKernelAndNoise();
+
+	return true;
 }
 
 void Grindstone::Renderer::ScreenSpaceAmbientOcclusionPass::CreateSsaoKernelAndNoise() {
@@ -126,6 +130,9 @@ void Grindstone::Renderer::ScreenSpaceAmbientOcclusionPass::CreateSsaoKernelAndN
 		engineDescriptorSetCreateInfo.bindings = ssaoLayoutBindings.data();
 		ssaoInputDescriptorSet = graphicsCore->CreateDescriptorSet(engineDescriptorSetCreateInfo);
 	}
+}
+
+void Grindstone::Renderer::ScreenSpaceAmbientOcclusionPass::AddPass(Grindstone::Renderer::RenderGraph& renderGraph) {
 }
 
 /*
