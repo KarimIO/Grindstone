@@ -7,6 +7,7 @@
 #include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
+#include <EngineCore/Rendering/RenderGraphContextSet.hpp>
 #include <EngineCore/Rendering/RenderPassRegistry.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/EngineCore.hpp>
@@ -95,6 +96,7 @@ EditorCamera::EditorCamera() {
 	renderTargetCreateInfo.height = framebufferHeight;
 	renderTargetCreateInfo.format = GraphicsAPI::Format::R8G8B8A8_UNORM;
 	renderTargetCreateInfo.imageUsage =
+		GraphicsAPI::ImageUsageFlags::TransferDst |
 		GraphicsAPI::ImageUsageFlags::Sampled |
 		GraphicsAPI::ImageUsageFlags::RenderTarget;
 
@@ -367,25 +369,33 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 	Grindstone::GraphicsAPI::Image* image = renderTarget[imageIndex];
 	Grindstone::GraphicsAPI::Image* depthImage = depthTarget[imageIndex];
 
-	Grindstone::GraphicsAPI::RenderAttachment attachment{
-		.image = image,
-		.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
-		.clearValue = Grindstone::GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f)
-	};
-	
 	Grindstone::WorldContextSet* cxtSet = engineCore.GetWorldContextManager()->GetActiveWorldContextSet();
 	GS_ASSERT(cxtSet != nullptr);
 
+	Grindstone::Rendering::RenderGraphWorldContext* renderingContext = static_cast<Grindstone::Rendering::RenderGraphWorldContext*>(
+		cxtSet->GetContext(Grindstone::Rendering::renderGraphWorldContextName)
+	);
+
+	GS_ASSERT(renderingContext != nullptr);
+
+	Grindstone::Renderer::RenderGraphBuilder renderGraphBuilder;
+	
 	renderer->Render(
 		commandBuffer,
 		*cxtSet,
 		projection,
 		view,
-		position,
-		attachment,
-		depthImage
+		position
 	);
 
+	renderGraphBuilder.CreateTransferPass("Transfer to Imgui"_hash);
+
+	Grindstone::Renderer::RenderGraph renderGraph = renderGraphBuilder.Compile();
+	renderGraph.ExecuteGraph(context);
+
+	return;
+
+	/*
 	Grindstone::GraphicsAPI::RenderAttachment gizmoAttachment{
 		.image = image,
 		.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
@@ -473,6 +483,7 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		gizmoRenderer.Render(commandBuffer, projView);
 	}
 	commandBuffer->EndRendering();
+	*/
 }
 
 void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
@@ -542,9 +553,7 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 		*cxtSet,
 		projectionMatrix,
 		viewMatrix,
-		pos,
-		attachment,
-		nullptr
+		pos
 	);
 }
 

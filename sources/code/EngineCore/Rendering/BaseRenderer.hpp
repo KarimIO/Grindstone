@@ -32,9 +32,7 @@ namespace Grindstone {
 			Grindstone::WorldContextSet& worldContextSet,
 			glm::mat4 projectionMatrix,
 			glm::mat4 viewMatrix,
-			glm::vec3 eyePos,
-			Grindstone::GraphicsAPI::RenderAttachment& outAttachment,
-			Grindstone::GraphicsAPI::Image* depthTarget
+			glm::vec3 eyePos
 		) = 0;
 		virtual uint16_t GetRenderModeCount() const = 0;
 		virtual const RenderMode* GetRenderModes() const = 0;

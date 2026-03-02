@@ -83,6 +83,7 @@ namespace Grindstone::GraphicsAPI {
 		Grindstone::GraphicsAPI::ClearUnion		clearValue;
 	};
 
+
 	/*! CommandBuffers are an object that hold a list of commands to be executed
 		by your graphics card. After recording any commands you wish to use for
 		a frame, you can send them to a queue to be processed.
@@ -142,14 +143,16 @@ namespace Grindstone::GraphicsAPI {
 		virtual void DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) = 0;
 		virtual void DispatchCompute(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) = 0;
 		virtual void BlitImage(
-			Image* src, Image* dst,
+			Image* src,
+			Image* dst,
 			Grindstone::GraphicsAPI::ImageLayout oldLayout,
 			Grindstone::GraphicsAPI::ImageLayout newLayout,
-			uint32_t width, uint32_t height, uint32_t depth
+			Grindstone::GraphicsAPI::TextureFilter filter,
+			Grindstone::Math::IntBox3D srcRegion,
+			Grindstone::Math::IntBox3D dstRegion
 		) = 0;
 
 		virtual void PipelineBarrier(
-			GraphicsAPI::PipelineStageBit srcPipelineStageMask, GraphicsAPI::PipelineStageBit dstPipelineStageMask,
 			const GraphicsAPI::BufferBarrier* bufferBarriers, uint32_t bufferBarrierCount,
 			const GraphicsAPI::ImageBarrier* imageBarriers, uint32_t imageBarrierCount
 		) = 0;

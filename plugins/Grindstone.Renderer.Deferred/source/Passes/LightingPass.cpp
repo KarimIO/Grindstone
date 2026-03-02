@@ -83,16 +83,15 @@ bool Renderer::LightingPass::Initialize() {
 	return true;
 }
 
-void Renderer::LightingPass::AddPass(GraphicsAPI::Buffer* vertexBuffer, GraphicsAPI::Buffer* indexBuffer, Renderer::RenderGraph& renderGraph) {
-	renderGraph.AddGraphicsPass(
-		"Lighting Pass"_hash,
-		[&](Renderer::RenderGraph::RenderPass& renderPass) {
-			renderPass.ReadColorAttachment(attachmentNameAlbedo, attachmentAlbedo);
-			renderPass.ReadColorAttachment(attachmentNameNormal, attachmentNormal);
-			renderPass.ReadColorAttachment(attachmentNameSpecularRoughness, attachmentSpecularRoughness);
-			renderPass.ReadDepthStencilAttachment(attachmentNameDepthStencil, attachmentDepthStencil);
-			renderPass.WriteColorAttachment(attachmentNameLighting, attachmentlighting, GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-		},
+void Renderer::LightingPass::AddPass(GraphicsAPI::Buffer* vertexBuffer, GraphicsAPI::Buffer* indexBuffer, Renderer::RenderGraphBuilder& renderGraph) {
+	Grindstone::Renderer::GraphicsRenderGraphBuilderPass* lightingPass = renderGraph.CreateGraphicsPass("Lighting Pass"_hash);
+	
+	lightingPass->ReadColorAttachment(attachmentNameAlbedo, attachmentAlbedo);
+	lightingPass->ReadColorAttachment(attachmentNameNormal, attachmentNormal);
+	lightingPass->ReadColorAttachment(attachmentNameSpecularRoughness, attachmentSpecularRoughness);
+	lightingPass->ReadDepthStencilAttachment(attachmentNameDepthStencil, attachmentDepthStencil);
+	lightingPass->WriteColorAttachment(attachmentNameLighting, attachmentlighting, GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+	lightingPass->SetExecutionCallback(
 		[vertexBuffer, indexBuffer, this](Renderer::RenderGraph::RenderGraphContext& cxt, Renderer::RenderGraph::RenderPassExecution& renderPassExecution) {
 			GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
 			EngineCore& engineCore = EngineCore::GetInstance();

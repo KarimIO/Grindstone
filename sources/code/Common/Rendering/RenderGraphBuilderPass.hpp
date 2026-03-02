@@ -4,17 +4,15 @@
 #include <functional>
 
 #include <Common/HashedString.hpp>
-#include <Common/Graphics/CommandBuffer.hpp>
-#include "GpuPassType.hpp"
 #include "RenderGraphContext.hpp"
+#include "RenderGraphPass.hpp"
+#include "GpuPassType.hpp"
 #include "AttachmentInfo.hpp"
 #include "BufferInfo.hpp"
 
 namespace Grindstone::Renderer {
-	class RenderGraphPass {
+	class RenderGraphBuilderPass {
 	public:
-		virtual void Execute(Grindstone::Renderer::RenderGraphContext& context) = 0;
-
 		Grindstone::HashedString name;
 
 		GpuPassType type;
@@ -23,46 +21,26 @@ namespace Grindstone::Renderer {
 		std::vector<ResourceRead> reads;
 		std::vector<ResourceReadWrite> readWrites;
 
-		std::vector<Grindstone::GraphicsAPI::ImageBarrier> imageBarriers;
-		std::vector<Grindstone::GraphicsAPI::BufferBarrier> bufferBarriers;
-
-	protected:
-
-		void SubmitBarriers(Grindstone::Renderer::RenderGraphContext& context);
-
+		std::function<void(RenderGraphContext&, Grindstone::Renderer::RenderGraph::RenderPassExecution&)> execution;
 	};
 
-	class PipelineRenderGraphPass : public RenderGraphPass {
+	class PipelineRenderGraphBuilderPass : public RenderGraphBuilderPass {
 	public:
-		void ReadStorageImage(Grindstone::HashedString inputName, ImageDescription resource);
+		void ReadImage(Grindstone::HashedString inputName, ImageDescription resource);
 		void ReadWriteStorageImage(Grindstone::HashedString inputName, Grindstone::HashedString outputName, ImageDescription resource);
-		void WriteStorageImage(Grindstone::HashedString outputName, ImageDescription resource);
+		void WriteImage(Grindstone::HashedString outputName, ImageDescription resource);
 
 		void ReadBuffer(Grindstone::HashedString inputname, BufferDescription resource);
 		void WriteBuffer(Grindstone::HashedString outputName, BufferDescription resource);
 		void ReadWriteBuffer(Grindstone::HashedString inputName, Grindstone::HashedString outputName, BufferDescription resource);
 
-		Grindstone::HashedString name;
-
-		GpuQueue type;
-
 		std::vector<ResourceWrite> writes;
 		std::vector<ResourceRead> reads;
 		std::vector<ResourceReadWrite> readWrites;
-
-		Grindstone::GraphicsAPI::DescriptorSet* GetPassDescriptorSet() const;
-
-	protected:
-		Grindstone::GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
-
 	};
 
-	class GraphicsRenderGraphPass;
-	using GraphicsExecutionCallback = std::function<void(Grindstone::Renderer::RenderGraphContext&, Grindstone::Renderer::GraphicsRenderGraphPass*)>;
-	class GraphicsRenderGraphPass : public PipelineRenderGraphPass {
+	class GraphicsRenderGraphBuilderPass : public PipelineRenderGraphBuilderPass {
 	public:
-		virtual void Execute(Grindstone::Renderer::RenderGraphContext& context) override;
-
 		void ReadColorAttachment(Grindstone::HashedString inputName, ImageDescription resource);
 		void ReadWriteColorAttachment(Grindstone::HashedString inputName, Grindstone::HashedString outputName, ImageDescription resource);
 		void WriteColorAttachment(Grindstone::HashedString outputName, ImageDescription resource, Grindstone::GraphicsAPI::ClearColor clearValue);
@@ -71,23 +49,22 @@ namespace Grindstone::Renderer {
 		void ReadWriteDepthStencilAttachment(Grindstone::HashedString inputName, Grindstone::HashedString outputName, ImageDescription resource);
 		void WriteDepthStencilAttachment(Grindstone::HashedString outputName, ImageDescription resource, Grindstone::GraphicsAPI::ClearDepthStencil clearValue);
 
+		void SetExecutionCallback(GraphicsExecutionCallback callback);
+
 	protected:
-		GraphicsExecutionCallback executionCallback;
+		GraphicsExecutionCallback execution;
 
 	};
 
-	class ComputeRenderGraphPass;
-	using ComputeExecutionCallback = std::function<void(Grindstone::Renderer::RenderGraphContext&, Grindstone::Renderer::ComputeRenderGraphPass*)>;
-	class ComputeRenderGraphPass : public PipelineRenderGraphPass {
+	class ComputeRenderGraphBuilderPass : public PipelineRenderGraphBuilderPass {
 	public:
-		virtual void Execute(Grindstone::Renderer::RenderGraphContext& context) override;
+
+		void SetExecutionCallback(ComputeExecutionCallback callback);
 
 	protected:
-		ComputeExecutionCallback executionCallback;
+		ComputeExecutionCallback execution;
 
 	};
-
-	using TGResourceHandle = uint32_t;
 
 	struct ImageTransfer {
 		TGResourceHandle dst;
@@ -103,18 +80,19 @@ namespace Grindstone::Renderer {
 		uint64_t size;
 	};
 
-	class TransferRenderGraphPass : public RenderGraphPass {
+	class TransferRenderGraphBuilderPass : public RenderGraphBuilderPass {
 	public:
-		virtual void Execute(Grindstone::Renderer::RenderGraphContext& context) override;
+
+
+	};
+
+	class PresentRenderGraphBuilderPass : public RenderGraphBuilderPass {
+	public:
+
 
 	protected:
-		std::vector<ImageTransfer> imageTransfers;
-		std::vector<BufferTransfer> bufferTransfers;
-	};
-
-	class PresentRenderGraphPass : public RenderGraphPass {
-	public:
-		virtual void Execute(Grindstone::Renderer::RenderGraphContext& context) override;
+		std::function<void(RenderGraphContext&, Grindstone::Renderer::RenderGraph::RenderPassExecution&)> execution;
 
 	};
+
 }

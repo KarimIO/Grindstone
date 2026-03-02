@@ -152,6 +152,10 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 	iboCi.content = lightIndices;
 	iboCi.bufferSize = sizeof(lightIndices);
 	indexBuffer = graphicsCore->CreateBuffer(iboCi);
+
+	gbuffer.Initialize();
+	lighting.Initialize();
+	tonemap.Initialize();
 }
 
 DeferredRenderer::~DeferredRenderer() {
@@ -174,6 +178,9 @@ bool DeferredRenderer::OnWindowResize(Events::BaseEvent* ev) {
 }
 
 void Grindstone::DeferredRenderer::Resize(uint32_t width, uint32_t height) {
+	renderArea = Math::IntRect2D(width, height);
+	framebufferWidth = width;
+	framebufferHeight = height;
 }
 
 void DeferredRenderer::Render(
@@ -181,9 +188,7 @@ void DeferredRenderer::Render(
 	Grindstone::WorldContextSet& worldContextSet,
 	glm::mat4 projectionMatrix,
 	glm::mat4 viewMatrix,
-	glm::vec3 eyePos,
-	GraphicsAPI::RenderAttachment& outRenderAttachment,
-	Grindstone::GraphicsAPI::Image* depthTarget
+	glm::vec3 eyePos
 ) {
 	entt::registry& registry = worldContextSet.GetEntityRegistry();
 	Grindstone::Rendering::RenderGraphWorldContext* renderingContext = static_cast<Grindstone::Rendering::RenderGraphWorldContext*>(
@@ -227,10 +232,10 @@ void DeferredRenderer::Render(
 	assetManager->SetEngineDescriptorSet(globalDescriptorSet[imageIndex]);
 
 	// auto shadowOutput = shadows.AddPass(renderGraph);
-	gbuffer.AddPass(projectionMatrix, viewMatrix, renderGraph);
+	gbuffer.AddPass(projectionMatrix, viewMatrix, renderGraphBuilder);
 	// auto ssaoOutput = ssao.AddPass(renderGraph, gbufferOutput);
 	// auto ssaoBlurredOutput = blur.AddTwoPassBlur(renderGraph, ssaoOutput);
-	lighting.AddPass(vertexBuffer, indexBuffer, renderGraph);
+	lighting.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder);
 	// auto ssrOutput = ssr.AddPass(renderGraph, lightingOutput);
 	// auto dofOutput = dof.AddPass(renderGraph, ssrOutput);
 	// auto bloomOutput = bloom.AddBloomChain(renderGraph, dofOutput);

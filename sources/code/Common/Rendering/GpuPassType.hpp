@@ -3,9 +3,11 @@
 #include <stdint.h>
 
 namespace Grindstone::Renderer {
-	enum class GpuQueue : uint8_t {
+	enum class GpuPassType : uint8_t {
 		None,
 		Graphics,
-		Compute
+		Compute,
+		Transfer,
+		Present
 	};
 }

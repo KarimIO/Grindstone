@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Common/Rendering/RenderGraph.hpp>
+#include <Common/Rendering/RenderGraphBuilder.hpp>
 #include <EngineCore/Assets/AssetReference.hpp>
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 
@@ -8,7 +8,7 @@ namespace Grindstone::Renderer {
 	class LightingPass {
 	public:
 		bool Initialize();
-		void AddPass(GraphicsAPI::Buffer* vertexBuffer, GraphicsAPI::Buffer* indexBuffer, Grindstone::Renderer::RenderGraph& renderGraph);
+		void AddPass(GraphicsAPI::Buffer* vertexBuffer, GraphicsAPI::Buffer* indexBuffer, Grindstone::Renderer::RenderGraphBuilder& renderGraph);
 
 	private:
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> imageBasedLightingPipelineSet;

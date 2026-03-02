@@ -105,9 +105,7 @@ namespace Grindstone {
 					worldContextSet,
 					projectionMatrix,
 					viewMatrix,
-					pos,
-					attachment,
-					nullptr
+					pos
 				);
 
 				currentCommandBuffer->EndCommandBuffer();

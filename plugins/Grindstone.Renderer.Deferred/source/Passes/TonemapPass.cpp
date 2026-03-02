@@ -58,10 +58,11 @@ bool Grindstone::Renderer::TonemapPass::Initialize() {
 void Grindstone::Renderer::TonemapPass::AddPass(Grindstone::Renderer::RenderGraph& renderGraph, PostProcessSettings settings) {
 	renderGraph.AddGraphicsPass(
 		"Tonemapping"_hash,
-		[](Renderer::RenderGraph::RenderPass& renderPass) {
-			renderPass.ReadColorAttachment(attachmentNameAlbedo, attachmentAlbedo);
+		[](Renderer::GraphicsRenderGraphBuilderPass& renderPass) {
+			renderPass.ReadColorAttachment(attachmentNameLighting, attachmentlighting);
+			renderPass.WriteColorAttachment(attachmentNameOutput, attachmentOutput, GraphicsAPI::ClearColor{});
 		},
-		[this, settings](const Renderer::RenderGraph::RenderGraphContext& cxt, Renderer::RenderGraph::RenderPassExecution& renderPassExecution) {
+		[this, settings](const Renderer::RenderGraph::RenderGraphContext& cxt, Renderer::GraphicsRenderGraphPass& renderPassExecution) {
 			Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 			Grindstone::WorldContextSet* cxtSet = cxt.worldContextSet;
 			Grindstone::GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;

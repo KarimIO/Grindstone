@@ -7,7 +7,7 @@
 
 #include <Common/HashedString.hpp>
 #include <Common/Rect.hpp>
-#include "GpuQueue.hpp"
+#include "GpuPassType.hpp"
 
 #include <Common/Graphics/Formats.hpp>
 #include <Common/Graphics/Buffer.hpp>
@@ -15,6 +15,8 @@
 #include <Common/Graphics/CommandBuffer.hpp>
 
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
+
+#include "RenderGraphPass.hpp"
 
 namespace Grindstone::GraphicsAPI {
 	class CommandBuffer;
@@ -24,36 +26,6 @@ namespace Grindstone::GraphicsAPI {
 }
 
 namespace Grindstone::Renderer {
-	enum class ImageSizeType {
-		Absolute,
-		SwapchainRelative
-	};
-
-	struct ImageDescription {
-		ImageSizeType sizeClass = ImageSizeType::SwapchainRelative;
-		float width = 1.0f;
-		float height = 1.0f;
-		uint32_t samples = 1;
-		uint32_t mipLevels = 1;
-		uint32_t depth = 1;
-		uint32_t arrayLayers = 1;
-		Grindstone::GraphicsAPI::Format format;
-
-		GraphicsAPI::ImageDimension imageDimensions = GraphicsAPI::ImageDimension::Dimension2D;
-		GraphicsAPI::MemoryUsage memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly;
-		Grindstone::Containers::BitsetFlags<GraphicsAPI::ImageUsageFlags> imageUsage;
-
-		bool operator==(const ImageDescription& other) const {
-			return sizeClass == other.sizeClass &&
-				width == other.width &&
-				height == other.height &&
-				samples == other.samples &&
-				mipLevels == other.mipLevels &&
-				depth == other.depth &&
-				format == other.format;
-		}
-	};
-
 	struct TransientImageDescription {
 		uint32_t width = 1u;
 		uint32_t height = 1u;
@@ -162,47 +134,10 @@ namespace Grindstone::Renderer {
 		TransientBufferData buffer;
 	};
 
-	class TransientResourceManager {
-	public:
-
-		void StartFrame();
-
-		std::tuple<TransientImageData, size_t> AddTrackedImage(uint32_t viewportWidth, uint32_t viewportHeight, ImageDescription desc);
-		std::tuple<TransientBufferData, size_t> AddTrackedBuffer(BufferDescription desc);
-
-		Grindstone::Renderer::TransientImageData& GetTrackedImage(uint32_t viewportWidth, uint32_t viewportHeight, ImageDescription inDesc, size_t index);
-		Grindstone::Renderer::TransientBufferData& GetTrackedBuffer(BufferDescription desc, size_t index);
-
-	protected:
-
-		struct TransientImage {
-			bool isUsedThisFrame = false;
-			int8_t lifetime;
-			TransientImageData data;
-		};
-
-		struct TransientBuffer {
-			bool isUsedThisFrame = false;
-			int8_t lifetime;
-			TransientBufferData data;
-		};
-		std::unordered_map<TransientImageDescription, std::vector<TransientImage>> images;
-		std::unordered_map<BufferDescription, std::vector<TransientBuffer>> buffers;
-
-	};
-
 	struct PassNode {};
 
 	class RenderGraph {
 	public:
-
-		struct RenderGraphContext {
-			Grindstone::GraphicsAPI::DescriptorSet* globalDescriptorSet = nullptr;
-			Grindstone::Math::Extent2D swapchainSize;
-			Grindstone::GraphicsAPI::CommandBuffer* commandBuffer = nullptr;
-			Grindstone::WorldContextSet* worldContextSet = nullptr;
-			uint32_t swapchainIndex = 0;
-		};
 
 		using ResourceIndex = int32_t;
 
@@ -348,55 +283,12 @@ namespace Grindstone::Renderer {
 
 		using ResourceId = size_t;
 
-		class RenderPassExecution {
-			Grindstone::GraphicsAPI::DescriptorSet* GetPassDescriptorSet() const;
-		public:
-			Grindstone::GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
-		};
-
-		class RenderPass {
-		public:
-			void ReadStorageImage(Grindstone::HashedString inputName, ImageDescription resource);
-			void ReadWriteStorageImage(Grindstone::HashedString inputName, Grindstone::HashedString outputName, ImageDescription resource);
-			void WriteStorageImage(Grindstone::HashedString outputName, ImageDescription resource);
-
-			void ReadColorAttachment(Grindstone::HashedString inputName, ImageDescription resource);
-			void ReadWriteColorAttachment(Grindstone::HashedString inputName, Grindstone::HashedString outputName, ImageDescription resource);
-			void WriteColorAttachment(Grindstone::HashedString outputName, ImageDescription resource, Grindstone::GraphicsAPI::ClearColor clearValue);
-
-			void ReadDepthStencilAttachment(Grindstone::HashedString inputName, ImageDescription resource);
-			void ReadWriteDepthStencilAttachment(Grindstone::HashedString inputName, Grindstone::HashedString outputName, ImageDescription resource);
-			void WriteDepthStencilAttachment(Grindstone::HashedString outputName, ImageDescription resource, Grindstone::GraphicsAPI::ClearDepthStencil clearValue);
-
-			void ReadBuffer(Grindstone::HashedString inputname, BufferDescription resource);
-			void WriteBuffer(Grindstone::HashedString outputName, BufferDescription resource);
-			void ReadWriteBuffer(Grindstone::HashedString inputName, Grindstone::HashedString outputName, BufferDescription resource);
-
-			Grindstone::HashedString name;
-
-			GpuQueue type;
-
-			std::vector<ResourceWrite> writes;
-			std::vector<ResourceRead> reads;
-			std::vector<ResourceReadWrite> readWrites;
-
-			std::function<void(RenderGraphContext&, Grindstone::Renderer::RenderGraph::RenderPassExecution&)> execution;
-		};
-
-		void AddComputePass(Grindstone::HashedString name, std::function<void(RenderPass&)> setup, std::function<void(RenderGraphContext&, RenderPassExecution&)> exec);
-		void AddGraphicsPass(Grindstone::HashedString name, std::function<void(RenderPass&)> setup, std::function<void(RenderGraphContext&, RenderPassExecution&)> exec);
-
-		void ExecuteGraph(Grindstone::Renderer::RenderGraph::RenderGraphContext context);
+		void ExecuteGraph(Grindstone::Renderer::RenderGraphContext context);
 
 	protected:
 
-		void SortPasses();
-		void SetupDependencies(
-			std::vector<ResourceWrite>& resources,
-			std::map<Grindstone::HashedString, ResourceId>& namesToResourceIds
-		);
-
-		std::vector<Grindstone::Renderer::RenderGraph::RenderPass> passes;
+		std::unordered_map<Grindstone::HashedString, TransientResourceUnion> outputResources;
+		std::vector<Grindstone::Renderer::RenderGraphPass*> passes;
 		Grindstone::Renderer::TransientResourceManager transientResourceManager;
 
 	};
