@@ -8,18 +8,29 @@ bool Grindstone::Renderer::GbufferPass::Initialize() {
 	return true;
 }
 
-void Grindstone::Renderer::GbufferPass::AddPass(glm::mat4& projectionMatrix, glm::mat4 viewMatrix, Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder) {
+Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(glm::mat4& projectionMatrix, glm::mat4 viewMatrix, Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder) {
 	using namespace Grindstone::GraphicsAPI;
 
-	renderGraphBuilder.CreateGraphicsPass<void>(
+	return renderGraphBuilder.CreateGraphicsPass<Grindstone::Renderer::GbufferData>(
 		"Gbuffer Geometry Opaque"_hash,
-		[](Renderer::GraphicsRenderGraphBuilderPass& renderPass) {
-			renderPass.WriteColorAttachment(attachmentNameAlbedo, attachmentAlbedo, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
-			renderPass.WriteColorAttachment(attachmentNameNormal, attachmentNormal, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
-			renderPass.WriteColorAttachment(attachmentNameSpecularRoughness, attachmentSpecularRoughness, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
-			renderPass.WriteDepthStencilAttachment(attachmentNameDepthStencil, attachmentDepthStencil, ClearDepthStencil(1.0f, 0u));
+		[](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::GbufferData>& renderPass) -> Grindstone::Renderer::GbufferData {
+			TGBImageRef albedoRef = renderPass.WriteColorAttachment(attachmentAlbedo, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+			TGBImageRef normalRef = renderPass.WriteColorAttachment(attachmentNormal, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+			TGBImageRef specularRoughnessRef = renderPass.WriteColorAttachment(attachmentSpecularRoughness, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+			TGBImageRef depthRef = renderPass.WriteDepthStencilAttachment(attachmentDepthStencil, ClearDepthStencil(1.0f, 0u));
+
+			return Grindstone::Renderer::GbufferData{
+				.albedoRef = albedoRef,
+				.normalRef = normalRef,
+				.specularRoughnessRef = specularRoughnessRef,
+				.depthRef = depthRef,
+			};
 		},
-		[projectionMatrix, viewMatrix](Grindstone::Renderer::RenderGraphContext& cxt, Grindstone::Renderer::GraphicsRenderGraphPass* pass) {
+		[projectionMatrix, viewMatrix](
+			const Renderer::RenderGraphContext& cxt,
+			Renderer::GraphicsRenderGraphPass<Grindstone::Renderer::GbufferData>& renderPassExecution,
+			Grindstone::Renderer::GbufferData& data
+		) {
 			Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 			Grindstone::WorldContextSet* cxtSet = cxt.worldContextSet;
 			CommandBuffer* cmd = cxt.commandBuffer;

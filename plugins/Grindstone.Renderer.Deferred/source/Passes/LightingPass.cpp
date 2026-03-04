@@ -83,16 +83,30 @@ bool Renderer::LightingPass::Initialize() {
 	return true;
 }
 
-void Renderer::LightingPass::AddPass(GraphicsAPI::Buffer* vertexBuffer, GraphicsAPI::Buffer* indexBuffer, Renderer::RenderGraphBuilder& renderGraph) {
-	Grindstone::Renderer::GraphicsRenderGraphBuilderPass* lightingPass = renderGraph.CreateGraphicsPass("Lighting Pass"_hash);
-	
-	lightingPass->ReadColorAttachment(attachmentNameAlbedo, attachmentAlbedo);
-	lightingPass->ReadColorAttachment(attachmentNameNormal, attachmentNormal);
-	lightingPass->ReadColorAttachment(attachmentNameSpecularRoughness, attachmentSpecularRoughness);
-	lightingPass->ReadDepthStencilAttachment(attachmentNameDepthStencil, attachmentDepthStencil);
-	lightingPass->WriteColorAttachment(attachmentNameLighting, attachmentlighting, GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-	lightingPass->SetExecutionCallback(
-		[vertexBuffer, indexBuffer, this](Renderer::RenderGraph::RenderGraphContext& cxt, Renderer::RenderGraph::RenderPassExecution& renderPassExecution) {
+Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
+	GraphicsAPI::Buffer* vertexBuffer,
+	GraphicsAPI::Buffer* indexBuffer,
+	Renderer::RenderGraphBuilder& renderGraph,
+	Grindstone::Renderer::GbufferData& gbufferData
+) {
+	return renderGraph.CreateGraphicsPass<LightingPassReturnData>(
+		"Lighting Pass"_hash,
+		[&gbufferData](Renderer::GraphicsRenderGraphBuilderPass<LightingPassReturnData>& renderPass) -> LightingPassReturnData {
+			renderPass.ReadColorAttachment(gbufferData.albedoRef);
+			renderPass.ReadColorAttachment(gbufferData.normalRef);
+			renderPass.ReadColorAttachment(gbufferData.specularRoughnessRef);
+			renderPass.ReadDepthStencilAttachment(gbufferData.depthRef);
+			TGBImageRef layoutImgRef = renderPass.WriteColorAttachment(attachmentlighting, GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+
+			return LightingPassReturnData{
+				.lightingOutputRef = layoutImgRef
+			};
+		},
+		[vertexBuffer, indexBuffer, this](
+			const Renderer::RenderGraphContext& cxt,
+			Renderer::GraphicsRenderGraphPass<LightingPassReturnData>& renderPassExecution,
+			LightingPassReturnData& lightingImageRef
+		) {
 			GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
 			EngineCore& engineCore = EngineCore::GetInstance();
 			entt::registry& registry = cxt.worldContextSet->GetEntityRegistry();

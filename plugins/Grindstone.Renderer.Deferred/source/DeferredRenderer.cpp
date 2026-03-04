@@ -197,7 +197,7 @@ void DeferredRenderer::Render(
 
 	GS_ASSERT(renderingContext != nullptr);
 
-	Grindstone::Renderer::RenderGraph& renderGraph = renderingContext->GetRenderGraph();
+	Grindstone::Renderer::RenderGraphBuilder renderGraphBuilder;
 
 	Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
@@ -232,16 +232,17 @@ void DeferredRenderer::Render(
 	assetManager->SetEngineDescriptorSet(globalDescriptorSet[imageIndex]);
 
 	// auto shadowOutput = shadows.AddPass(renderGraph);
-	gbuffer.AddPass(projectionMatrix, viewMatrix, renderGraphBuilder);
+	Grindstone::Renderer::GbufferData gbufferData = gbuffer.AddPass(projectionMatrix, viewMatrix, renderGraphBuilder);
 	// auto ssaoOutput = ssao.AddPass(renderGraph, gbufferOutput);
 	// auto ssaoBlurredOutput = blur.AddTwoPassBlur(renderGraph, ssaoOutput);
-	lighting.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder);
+	Grindstone::Renderer::LightingPassReturnData lightingData = lighting.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData);
 	// auto ssrOutput = ssr.AddPass(renderGraph, lightingOutput);
 	// auto dofOutput = dof.AddPass(renderGraph, ssrOutput);
 	// auto bloomOutput = bloom.AddBloomChain(renderGraph, dofOutput);
 
 	if (renderMode == DeferredRenderMode::Default) {
-		tonemap.AddPass(renderGraph, {});
+		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef);
+		renderGraphBuilder.CreatePresentPass(data.postProcessOutput);
 	}
 	/*
 	else {
@@ -249,7 +250,7 @@ void DeferredRenderer::Render(
 	}
 	*/
 
-	Grindstone::Renderer::RenderGraph::RenderGraphContext context{
+	Grindstone::Renderer::RenderGraphContext context{
 		.globalDescriptorSet = globalDescriptorSet[imageIndex],
 		.swapchainSize = renderArea.extent,
 		.commandBuffer = commandBuffer,
@@ -257,6 +258,7 @@ void DeferredRenderer::Render(
 		.swapchainIndex = imageIndex
 	};
 
+	auto renderGraph = renderGraphBuilder.Compile();
 	renderGraph.ExecuteGraph(context);
 }
 

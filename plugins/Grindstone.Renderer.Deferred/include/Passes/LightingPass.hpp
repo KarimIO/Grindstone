@@ -5,10 +5,14 @@
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 
 namespace Grindstone::Renderer {
+	struct LightingPassReturnData {
+		TGBImageRef lightingOutputRef;
+	};
+
 	class LightingPass {
 	public:
 		bool Initialize();
-		void AddPass(GraphicsAPI::Buffer* vertexBuffer, GraphicsAPI::Buffer* indexBuffer, Grindstone::Renderer::RenderGraphBuilder& renderGraph);
+		LightingPassReturnData AddPass(GraphicsAPI::Buffer* vertexBuffer, GraphicsAPI::Buffer* indexBuffer, Grindstone::Renderer::RenderGraphBuilder& renderGraph, Grindstone::Renderer::GbufferData& gbufferData);
 
 	private:
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> imageBasedLightingPipelineSet;

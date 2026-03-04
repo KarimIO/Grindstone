@@ -6,81 +6,72 @@
 
 // Storage
 
-void Grindstone::Renderer::PipelineRenderGraphBuilderPass::ReadStorageImage(Grindstone::HashedString inputName, ImageDescription resource) {
-	GS_ASSERT(type == GpuQueue::Compute);
+void Grindstone::Renderer::PipelineRenderGraphBuilderPass::ReadImage(Grindstone::Renderer::TGBImageRef inputHandle) {
 	reads.emplace_back(ResourceRead(inputName, UnionResource(ResourceType::StorageImage, resource)));
 }
 
-void Grindstone::Renderer::PipelineRenderGraphBuilderPass::ReadWriteStorageImage(Grindstone::HashedString inputName, Grindstone::HashedString outputName, ImageDescription resource) {
-	GS_ASSERT(type == GpuQueue::Compute);
+Grindstone::Renderer::TGBImageRef Grindstone::Renderer::PipelineRenderGraphBuilderPass::ReadWriteImage(Grindstone::Renderer::TGBImageRef inputHandle) {
 	readWrites.emplace_back(ResourceReadWrite(inputName, inputName, UnionResource(ResourceType::StorageImage, resource)));
 }
 
-void Grindstone::Renderer::PipelineRenderGraphBuilderPass::WriteStorageImage(Grindstone::HashedString outputName, ImageDescription resource) {
-	GS_ASSERT(type == GpuQueue::Compute);
+Grindstone::Renderer::TGBImageRef Grindstone::Renderer::PipelineRenderGraphBuilderPass::WriteImage(ImageDescription resource) {
 	writes.emplace_back(ResourceWrite(outputName, UnionResource(ResourceType::StorageImage, resource)));
 }
 
 // Buffers
 
-void Grindstone::Renderer::PipelineRenderGraphBuilderPass::ReadBuffer(Grindstone::HashedString inputName, BufferDescription resource) {
+void Grindstone::Renderer::PipelineRenderGraphBuilderPass::ReadBuffer(Grindstone::Renderer::TGBBufferRef inputHandle) {
 	reads.emplace_back(ResourceRead(inputName, UnionResource(resource)));
 }
 
-void Grindstone::Renderer::PipelineRenderGraphBuilderPass::ReadWriteBuffer(Grindstone::HashedString inputName, Grindstone::HashedString outputName, BufferDescription resource) {
+Grindstone::Renderer::TGBBufferRef Grindstone::Renderer::PipelineRenderGraphBuilderPass::ReadWriteBuffer(Grindstone::Renderer::TGBBufferRef inputHandle) {
 	readWrites.emplace_back(ResourceReadWrite(inputName, outputName, UnionResource(resource)));
 }
 
-void Grindstone::Renderer::PipelineRenderGraphBuilderPass::WriteBuffer(Grindstone::HashedString outputName, BufferDescription resource) {
+Grindstone::Renderer::TGBBufferRef Grindstone::Renderer::PipelineRenderGraphBuilderPass::WriteBuffer(BufferDescription resource) {
 	writes.emplace_back(ResourceWrite(outputName, UnionResource(resource)));
-}
-
-// ============================================
-// Compute Pass
-// ============================================
-
-void Grindstone::Renderer::ComputeRenderGraphBuilderPass::SetExecutionCallback(ComputeExecutionCallback callback) {
-	execution = callback;
 }
 
 // ============================================
 // Graphics Pass
 // ============================================
 
-void Grindstone::Renderer::GraphicsRenderGraphBuilderPass::SetExecutionCallback(GraphicsExecutionCallback callback) {
-	execution = callback;
-}
-
 // Color Attachment
 
-void Grindstone::Renderer::GraphicsRenderGraphBuilderPass::ReadColorAttachment(Grindstone::HashedString inputName, ImageDescription resource) {
-	GS_ASSERT(type == GpuQueue::Graphics);
+void Grindstone::Renderer::GraphicsRenderGraphBuilderPassBase::ReadColorAttachment(Grindstone::Renderer::TGBImageRef inputHandle) {
 	reads.emplace_back(ResourceRead(inputName, UnionResource(ResourceType::ColorAttachment, resource)));
 }
 
-void Grindstone::Renderer::GraphicsRenderGraphBuilderPass::ReadWriteColorAttachment(Grindstone::HashedString inputName, Grindstone::HashedString outputName, ImageDescription resource) {
-	GS_ASSERT(type == GpuQueue::Graphics);
+Grindstone::Renderer::TGBImageRef Grindstone::Renderer::GraphicsRenderGraphBuilderPassBase::ReadWriteColorAttachment(Grindstone::Renderer::TGBImageRef inputHandle) {
 	readWrites.emplace_back(ResourceReadWrite(inputName, inputName, UnionResource(ResourceType::ColorAttachment, resource)));
 }
 
-void Grindstone::Renderer::GraphicsRenderGraphBuilderPass::WriteColorAttachment(Grindstone::HashedString outputName, ImageDescription resource, Grindstone::GraphicsAPI::ClearColor clearValue) {
-	GS_ASSERT(type == GpuQueue::Graphics);
+Grindstone::Renderer::TGBImageRef Grindstone::Renderer::GraphicsRenderGraphBuilderPassBase::WriteColorAttachment(ImageDescription resource, Grindstone::GraphicsAPI::ClearColor clearValue) {
 	writes.emplace_back(ResourceWrite(outputName, UnionResource(ResourceType::ColorAttachment, resource)));
 }
 
 // Depth Stencil Attachment
 
-void Grindstone::Renderer::GraphicsRenderGraphBuilderPass::ReadDepthStencilAttachment(Grindstone::HashedString inputName, ImageDescription resource) {
-	GS_ASSERT(type == GpuQueue::Graphics);
+void Grindstone::Renderer::GraphicsRenderGraphBuilderPassBase::ReadDepthStencilAttachment(Grindstone::Renderer::TGBImageRef inputName) {
 	reads.emplace_back(ResourceRead(inputName, UnionResource(ResourceType::DepthAttachment, resource)));
 }
 
-void Grindstone::Renderer::GraphicsRenderGraphBuilderPass::ReadWriteDepthStencilAttachment(Grindstone::HashedString inputName, Grindstone::HashedString outputName, ImageDescription resource) {
-	GS_ASSERT(type == GpuQueue::Graphics);
+Grindstone::Renderer::TGBImageRef Grindstone::Renderer::GraphicsRenderGraphBuilderPassBase::ReadWriteDepthStencilAttachment(Grindstone::Renderer::TGBImageRef inputHandle) {
 	readWrites.emplace_back(ResourceReadWrite(inputName, outputName, UnionResource(ResourceType::DepthAttachment, resource)));
 }
 
-void Grindstone::Renderer::GraphicsRenderGraphBuilderPass::WriteDepthStencilAttachment(Grindstone::HashedString outputName, ImageDescription resource, Grindstone::GraphicsAPI::ClearDepthStencil clearValue) {
-	GS_ASSERT(type == GpuQueue::Graphics);
+Grindstone::Renderer::TGBImageRef Grindstone::Renderer::GraphicsRenderGraphBuilderPassBase::WriteDepthStencilAttachment(ImageDescription resource, Grindstone::GraphicsAPI::ClearDepthStencil clearValue) {
 	writes.emplace_back(ResourceWrite(outputName, UnionResource(ResourceType::DepthAttachment, resource)));
+}
+
+void Grindstone::Renderer::TransferRenderGraphBuilderPass::AddImageTransfer(ImageTransfer transfer) {
+	imageTransfers.push_back(transfer);
+}
+
+void Grindstone::Renderer::TransferRenderGraphBuilderPass::AddBufferTransfer(BufferTransfer transfer) {
+	bufferTransfers.push_back(transfer);
+}
+
+void Grindstone::Renderer::PresentRenderGraphBuilderPass::SetPresentationImage(TGBImageRef targetImage) {
+	this->targetImage = targetImage;
 }

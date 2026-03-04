@@ -33,7 +33,9 @@ if %ERRORLEVEL% EQU 0 (
 		echo Vcpkg is already installed.
 	) else (
 		set /P "VCPKG_PATH=Enter a path to install vcpkg to (if empty, uses %ProgramFiles(x86)%\vcpkg\): " || set "VCPKG_PATH=%ProgramFiles(x86)%\vcpkg"
+
 		if not exist "!VCPKG_PATH!" (
+			md "!VCPKG_PATH!"
 			git clone https://github.com/Microsoft/vcpkg.git "!VCPKG_PATH!"
 		)
 

@@ -55,14 +55,22 @@ bool Grindstone::Renderer::TonemapPass::Initialize() {
 	return true;
 }
 
-void Grindstone::Renderer::TonemapPass::AddPass(Grindstone::Renderer::RenderGraph& renderGraph, PostProcessSettings settings) {
-	renderGraph.AddGraphicsPass(
+Grindstone::Renderer::TonemapPassReturnData Grindstone::Renderer::TonemapPass::AddPass(Grindstone::Renderer::RenderGraphBuilder& renderGraph, PostProcessSettings settings, TGBImageRef lightingImageRef) {
+	return renderGraph.CreateGraphicsPass<Grindstone::Renderer::TonemapPassReturnData>(
 		"Tonemapping"_hash,
-		[](Renderer::GraphicsRenderGraphBuilderPass& renderPass) {
-			renderPass.ReadColorAttachment(attachmentNameLighting, attachmentlighting);
-			renderPass.WriteColorAttachment(attachmentNameOutput, attachmentOutput, GraphicsAPI::ClearColor{});
+		[lightingImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::TonemapPassReturnData>& renderPass) {
+			renderPass.ReadColorAttachment(lightingImageRef);
+			TGBImageRef postProcessOutput = renderPass.WriteColorAttachment(attachmentOutput, GraphicsAPI::ClearColor{});
+
+			return Grindstone::Renderer::TonemapPassReturnData{
+				.postProcessOutput = postProcessOutput
+			};
 		},
-		[this, settings](const Renderer::RenderGraph::RenderGraphContext& cxt, Renderer::GraphicsRenderGraphPass& renderPassExecution) {
+		[this, settings](
+			const Renderer::RenderGraphContext& cxt,
+			Renderer::GraphicsRenderGraphPass<Grindstone::Renderer::TonemapPassReturnData>& renderPassExecution,
+			Grindstone::Renderer::TonemapPassReturnData& data
+		) {
 			Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 			Grindstone::WorldContextSet* cxtSet = cxt.worldContextSet;
 			Grindstone::GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;

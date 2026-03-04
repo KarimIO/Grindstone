@@ -26,116 +26,6 @@ namespace Grindstone::GraphicsAPI {
 }
 
 namespace Grindstone::Renderer {
-	struct TransientImageDescription {
-		uint32_t width = 1u;
-		uint32_t height = 1u;
-		uint32_t samples = 1u;
-		uint32_t mipLevels = 1u;
-		uint32_t depth = 1u;
-		uint32_t arrayLayers = 1u;
-		Grindstone::GraphicsAPI::Format format;
-
-		GraphicsAPI::ImageDimension imageDimensions = GraphicsAPI::ImageDimension::Dimension2D;
-		GraphicsAPI::MemoryUsage memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly;
-		Grindstone::Containers::BitsetFlags<GraphicsAPI::ImageUsageFlags> imageUsage;
-
-		bool operator==(const TransientImageDescription& other) const {
-			return width == other.width &&
-				height == other.height &&
-				samples == other.samples &&
-				mipLevels == other.mipLevels &&
-				depth == other.depth &&
-				arrayLayers == other.arrayLayers &&
-				format == other.format &&
-				imageDimensions == other.imageDimensions &&
-				memoryUsage == other.memoryUsage &&
-				imageUsage == other.imageUsage;
-		}
-	};
-
-	struct BufferDescription {
-		uint64_t size;
-		Grindstone::GraphicsAPI::BufferUsage bufferUsage;
-		Grindstone::GraphicsAPI::MemoryUsage memoryUsage;
-
-		BufferDescription() = default;
-		BufferDescription(const BufferDescription& other) = default;
-		BufferDescription(BufferDescription&& other) noexcept = default;
-		BufferDescription& operator=(const BufferDescription& other) = default;
-		BufferDescription& operator=(BufferDescription&& other) noexcept = default;
-
-		bool operator==(const BufferDescription& other) const {
-			return size == other.size &&
-				bufferUsage == other.bufferUsage;
-		}
-	};
-}
-
-namespace std {
-	template<>
-	struct std::hash<Grindstone::Renderer::BufferDescription> {
-		std::size_t operator()(const Grindstone::Renderer::BufferDescription& desc) const noexcept {
-			size_t result = std::hash<size_t>{}(
-				static_cast<size_t>(desc.bufferUsage) |
-				static_cast<size_t>(desc.memoryUsage) << 32
-				);
-			result ^= std::hash<size_t>{}(static_cast<size_t>(desc.size));
-			return result;
-		}
-	};
-
-	template<>
-	struct std::hash<Grindstone::Renderer::TransientImageDescription> {
-		std::size_t operator()(const Grindstone::Renderer::TransientImageDescription& desc) const noexcept {
-			size_t result = std::hash<size_t>{}(
-				static_cast<size_t>(desc.width) |
-				static_cast<size_t>(desc.height) << 32
-				);
-
-			result ^= std::hash<size_t>{}(
-				static_cast<size_t>(desc.samples) |
-				static_cast<size_t>(desc.mipLevels) << 32
-				);
-
-			result ^= std::hash<size_t>{}(
-				static_cast<size_t>(desc.depth) |
-				static_cast<size_t>(desc.arrayLayers) << 32
-				);
-
-			result ^= std::hash<size_t>{}(
-				static_cast<size_t>(desc.format) |
-				static_cast<size_t>(desc.imageDimensions) << 32
-				);
-
-			result ^= std::hash<size_t>{}(
-				static_cast<size_t>(desc.memoryUsage) |
-				static_cast<size_t>(desc.imageUsage.GetValueUnderlying()) << 32
-				);
-
-			return result;
-		}
-	};
-}
-
-namespace Grindstone::Renderer {
-	struct TransientImageData {
-		GraphicsAPI::Image* image;
-		GraphicsAPI::ImageLayout currentLayout;
-		GraphicsAPI::AccessFlags currentAccessFlags;
-	};
-
-	struct TransientBufferData {
-		GraphicsAPI::Buffer* buffer;
-		GraphicsAPI::AccessFlags currentAccessFlags;
-	};
-
-	union TransientResourceUnion {
-		TransientImageData image;
-		TransientBufferData buffer;
-	};
-
-	struct PassNode {};
-
 	class RenderGraph {
 	public:
 
@@ -287,9 +177,7 @@ namespace Grindstone::Renderer {
 
 	protected:
 
-		std::unordered_map<Grindstone::HashedString, TransientResourceUnion> outputResources;
-		std::vector<Grindstone::Renderer::RenderGraphPass*> passes;
-		Grindstone::Renderer::TransientResourceManager transientResourceManager;
+		std::vector<Grindstone::UniquePtr<Grindstone::Renderer::RenderGraphPass>> passes;
 
 	};
 }

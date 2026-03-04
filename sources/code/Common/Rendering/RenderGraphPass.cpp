@@ -11,13 +11,17 @@ void Grindstone::Renderer::RenderGraphPass::SubmitBarriers(Grindstone::Renderer:
 
 	context.commandBuffer->PipelineBarrier(
 		bufferBarriers.data(),
-		static_cast<uint32_t>(bufferBarriers.size(),
+		static_cast<uint32_t>(bufferBarriers.size()),
 		imageBarriers.data(),
-		static_cast<uint32_t>(imageBarriers.size()))
+		static_cast<uint32_t>(imageBarriers.size())
 	);
 }
 
-void Grindstone::Renderer::GraphicsRenderGraphPass::Execute(Grindstone::Renderer::RenderGraphContext& context) {
+void Grindstone::Renderer::ComputeRenderGraphPassBase::PrepareComputePass(Grindstone::Renderer::RenderGraphContext& context) {
+	SubmitBarriers(context);
+}
+
+void Grindstone::Renderer::GraphicsRenderGraphPassBase::PrepareGraphicsPass(Grindstone::Renderer::RenderGraphContext& context) {
 	SubmitBarriers(context);
 
 	Grindstone::Math::IntRect2D rect;
@@ -33,14 +37,10 @@ void Grindstone::Renderer::GraphicsRenderGraphPass::Execute(Grindstone::Renderer
 		colorAttachments.size(),
 		hasDepthAttachment ? &depthAttachment : nullptr
 	);
-	executionCallback(context, this);
-	context.commandBuffer->EndRendering();
 }
 
-void Grindstone::Renderer::ComputeRenderGraphPass::Execute(Grindstone::Renderer::RenderGraphContext& context) {
-	SubmitBarriers(context);
-
-	executionCallback(context, this);
+void Grindstone::Renderer::GraphicsRenderGraphPassBase::EndGraphicsPass(Grindstone::Renderer::RenderGraphContext& context) {
+	context.commandBuffer->EndRendering();
 }
 
 void Grindstone::Renderer::TransferRenderGraphPass::Execute(Grindstone::Renderer::RenderGraphContext& context) {

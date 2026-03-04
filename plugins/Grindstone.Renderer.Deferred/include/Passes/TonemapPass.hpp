@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Common/Rendering/RenderGraph.hpp>
+#include <Common/Rendering/RenderGraphBuilder.hpp>
 #include <EngineCore/Assets/AssetReference.hpp>
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 
@@ -24,10 +24,14 @@ namespace Grindstone::Renderer {
 		bool isAnimated = true;
 	};
 
+	struct TonemapPassReturnData {
+		TGBImageRef postProcessOutput;
+	};
+
 	class TonemapPass {
 	public:
 		bool Initialize();
-		void AddPass(Grindstone::Renderer::RenderGraph& renderGraph, PostProcessSettings settings);
+		TonemapPassReturnData AddPass(Grindstone::Renderer::RenderGraphBuilder& renderGraph, PostProcessSettings settings, TGBImageRef lightingImageRef);
 
 	private:
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> tonemapPipelineSet;

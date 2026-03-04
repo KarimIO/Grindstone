@@ -26,6 +26,14 @@ namespace Grindstone::Renderer {
 			SizeBits = ~static_cast<uint32_t>(MetaBits)
 		};
 
+		bool operator==(const MetaSize& other) const {
+			return value == other.value;
+		}
+
+		explicit operator uint32_t() const {
+			return value;
+		}
+
 		static const MetaSize Viewport() { MetaSize{ static_cast<uint32_t>(ImageSizeInfo::ViewportRelative) }; };
 		static const MetaSize Swapchain() { MetaSize{ static_cast<uint32_t>(ImageSizeInfo::SwapchainRelative) }; };
 		static MetaSize MultiplyViewport(uint32_t x) { MetaSize{ static_cast<uint32_t>(ImageSizeInfo::ViewportRelative) | static_cast<uint32_t>(ImageSizeInfo::Multiply) | x }; }
@@ -69,6 +77,7 @@ namespace Grindstone::Renderer {
 	};
 
 	struct ImageDescription {
+		Grindstone::String name;
 		MetaSize width;
 		MetaSize height;
 		uint32_t samples = 1;
@@ -92,4 +101,44 @@ namespace Grindstone::Renderer {
 				format == other.format;
 		}
 	};
+
+	struct AttachmentInfo {
+		size_t imageResourceIndex;
+		Grindstone::GraphicsAPI::ClearUnion clearValue;
+	};
 }
+
+namespace std {
+	template<>
+	struct std::hash<Grindstone::Renderer::ImageDescription> {
+		std::size_t operator()(const Grindstone::Renderer::ImageDescription& desc) const noexcept {
+			size_t result = std::hash<size_t>{}(
+				static_cast<size_t>(static_cast<uint32_t>(desc.width)) |
+				static_cast<size_t>(static_cast<uint32_t>(desc.height)) << 32
+				);
+
+			result ^= std::hash<size_t>{}(
+				static_cast<size_t>(desc.samples) |
+				static_cast<size_t>(desc.mipLevels) << 32
+				);
+
+			result ^= std::hash<size_t>{}(
+				static_cast<size_t>(desc.depth) |
+				static_cast<size_t>(desc.arrayLayers) << 32
+				);
+
+			result ^= std::hash<size_t>{}(
+				static_cast<size_t>(desc.format) |
+				static_cast<size_t>(desc.imageDimensions) << 32
+				);
+
+			result ^= std::hash<size_t>{}(
+				static_cast<size_t>(desc.memoryUsage) |
+				static_cast<size_t>(desc.imageUsage.GetValueUnderlying()) << 32
+				);
+
+			return result;
+		}
+	};
+}
+

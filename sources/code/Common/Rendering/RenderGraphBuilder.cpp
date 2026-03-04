@@ -9,39 +9,31 @@
 
 // TODO: These should be allocted on a lienar allocator.
 
-Grindstone::Renderer::GraphicsRenderGraphBuilderPass* Grindstone::Renderer::RenderGraphBuilder::CreateGraphicsPass(Grindstone::HashedString name) {
-	auto& uniquePtr = passes[name] = Grindstone::Memory::AllocatorCore::AllocateUnique<GraphicsRenderGraphBuilderPass>();
-	return static_cast<GraphicsRenderGraphBuilderPass*>(uniquePtr.Get());
-}
-
-Grindstone::Renderer::ComputeRenderGraphBuilderPass* Grindstone::Renderer::RenderGraphBuilder::CreateComputePass(Grindstone::HashedString name) {
-	auto& uniquePtr = passes[name] = Grindstone::Memory::AllocatorCore::AllocateUnique<ComputeRenderGraphBuilderPass>();
-	return static_cast<ComputeRenderGraphBuilderPass*>(uniquePtr.Get());
-}
-
-Grindstone::Renderer::TransferRenderGraphBuilderPass* Grindstone::Renderer::RenderGraphBuilder::CreateTransferPass(Grindstone::HashedString name) {
-	auto& uniquePtr = passes[name] = Grindstone::Memory::AllocatorCore::AllocateUnique<TransferRenderGraphBuilderPass>();
-	return static_cast<TransferRenderGraphBuilderPass*>(uniquePtr.Get());
-}
-
 Grindstone::Renderer::TransferRenderGraphBuilderPass* Grindstone::Renderer::RenderGraphBuilder::CreateTransferPass(
-	Grindstone::HashedString name,
+	Grindstone::StringRef name,
 	std::function<void(Grindstone::Renderer::TransferRenderGraphBuilderPass&)> setupImmediateCallback
 ) {
-	Grindstone::Renderer::TransferRenderGraphBuilderPass* pass = CreateTransferPass(name);
+	auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<TransferRenderGraphBuilderPass>());
+	auto pass = static_cast<TransferRenderGraphBuilderPass*>(uniquePtr.Get());
+	pass->name = name;
 	setupImmediateCallback(*pass);
+	return pass;
 }
 
-Grindstone::Renderer::PresentRenderGraphBuilderPass* Grindstone::Renderer::RenderGraphBuilder::CreatePresentPass() {
-	Grindstone::HashedString name = "Present to ScreenSwapchain"_hash;
-	auto& uniquePtr = passes[name] = Grindstone::Memory::AllocatorCore::AllocateUnique<PresentRenderGraphBuilderPass>();
-	return static_cast<PresentRenderGraphBuilderPass*>(uniquePtr.Get());
+Grindstone::Renderer::PresentRenderGraphBuilderPass* Grindstone::Renderer::RenderGraphBuilder::CreatePresentPass(TGBImageRef imageRef) {
+	auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<PresentRenderGraphBuilderPass>());
+	auto pass = static_cast<PresentRenderGraphBuilderPass*>(uniquePtr.Get());
+	pass->name = "Present to Screen";
+	pass->SetPresentationImage(imageRef);
+	return pass;
 }
 
-Grindstone::Renderer::PresentRenderGraphBuilderPass* Grindstone::Renderer::RenderGraphBuilder::CreatePresentPass(
+void Grindstone::Renderer::RenderGraphBuilder::CreatePresentPass(
 	std::function<void(Grindstone::Renderer::PresentRenderGraphBuilderPass&)> setupImmediateCallback
 ) {
-	Grindstone::Renderer::PresentRenderGraphBuilderPass* pass = CreatePresentPass();
+	auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<Grindstone::Renderer::PresentRenderGraphBuilderPass>());
+	auto pass = static_cast<PresentRenderGraphBuilderPass*>(uniquePtr.Get());
+	pass->name = "Present to Screen";
 	setupImmediateCallback(*pass);
 }
 
@@ -50,14 +42,15 @@ Grindstone::Renderer::PresentRenderGraphBuilderPass* Grindstone::Renderer::Rende
 // ===============================================================
 
 static void SetupBarriers();
-static std::set<ResourceId> CullUnusedPasses(
-	std::vector<ResourceId>& externalOutputs,
-	std::vector<std::vector<ResourceId>>& passDependencies,
-	std::vector<PassId>& resourceSourcePasses,
-	ResourceId presentationResource
+static std::set<Grindstone::Renderer::PassId> CullUnusedPasses(
+	std::vector<Grindstone::Renderer::ResourceId>& externalOutputs,
+	std::vector<std::vector<Grindstone::Renderer::ResourceId>>& passDependencies,
+	std::vector<Grindstone::Renderer::PassId>& resourceSourcePasses,
+	Grindstone::Renderer::ResourceId presentationResource
 );
 static void SortPasses();
 static void SetupResourceGraph(
+	std::vector<Grindstone::UniquePtr<Grindstone::Renderer::RenderGraphBuilderPass>>& passes,
 	std::vector<ResourceWrite>& resources,
 	std::map<Grindstone::HashedString, ResourceId>& namesToResourceIds
 );
@@ -70,96 +63,16 @@ Grindstone::Renderer::RenderGraph Grindstone::Renderer::RenderGraphBuilder::Comp
 
 	std::vector<ResourceWrite> resources;
 	std::map<Grindstone::HashedString, ResourceId> resourceNamesToPassIndices;
-	std::map<Grindstone::HashedString, ResourceId> resourceNamesToResourceIds;
 	std::vector<std::pair<TransientResourceUnion, size_t>> trackedResources;
 
-	SetupResourceGraph(resources, namesToResourceIds);
-	std::set<PassId> remaininPasses = CullUnusedPasses();
+	SetupResourceGraph(passes);
+	std::set<PassId> remainingPasses = CullUnusedPasses();
 	SortPasses();
 	SetupBarriers();
 	RealizeResources();
 	SetupAttachments();
 
-		switch (pass.type) {
-		case GpuPassType::Graphics: {
-			std::vector<Grindstone::GraphicsAPI::RenderAttachment> colorAttachments;
-			Grindstone::GraphicsAPI::RenderAttachment depthAttachment;
-			uint32_t depthAttachments = 0; // Should be one
-
-			for (RenderGraph::ResourceReadWrite& readWrite : pass.readWrites) {
-				ResourceId resourceId = namesToResourceIds[readWrite.output];
-				TransientImageData& imageData = transientResourceManager.GetTrackedImage(context.swapchainSize.x, context.swapchainSize.y, readWrite.resource.image, trackedResources[resourceId].second);
-				Grindstone::GraphicsAPI::Image* image = static_cast<Grindstone::GraphicsAPI::Image*>(imageData.image);
-
-				if (readWrite.resource.resourceType == ResourceType::ColorAttachment) {
-					Grindstone::GraphicsAPI::ImageLayout imageLayout = imageData.currentLayout;
-					colorAttachments.emplace_back(
-						Grindstone::GraphicsAPI::RenderAttachment{
-							.image = image,
-							.imageLayout = imageLayout,
-							.loadOp = Grindstone::GraphicsAPI::LoadOp::Load,
-							.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
-						}
-						);
-				}
-				else if (readWrite.resource.resourceType == ResourceType::DepthAttachment) {
-					Grindstone::GraphicsAPI::ImageLayout imageLayout = imageData.currentLayout;
-					depthAttachment = Grindstone::GraphicsAPI::RenderAttachment{
-						.image = image,
-						.imageLayout = imageLayout,
-						.loadOp = Grindstone::GraphicsAPI::LoadOp::Load,
-						.storeOp = Grindstone::GraphicsAPI::StoreOp::Store
-					};
-					++depthAttachments;
-				}
-			}
-
-			for (RenderGraph::ResourceWrite& write : pass.writes) {
-				ResourceId resourceId = namesToResourceIds[write.name];
-				TransientImageData& imageData = transientResourceManager.GetTrackedImage(context.swapchainSize.x, context.swapchainSize.y, write.resource.image, trackedResources[resourceId].second);
-
-				Grindstone::GraphicsAPI::Image* image = static_cast<Grindstone::GraphicsAPI::Image*>(imageData.image);
-				if (write.resource.resourceType == ResourceType::ColorAttachment) {
-					Grindstone::GraphicsAPI::ClearUnion clearValue = GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-					Grindstone::GraphicsAPI::ImageLayout imageLayout = imageData.currentLayout;
-					colorAttachments.emplace_back(
-						Grindstone::GraphicsAPI::RenderAttachment{
-							.image = image,
-							.imageLayout = imageLayout,
-							.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
-							.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
-							.clearValue = clearValue
-						}
-					);
-				}
-				else if (write.resource.resourceType == ResourceType::DepthAttachment) {
-					Grindstone::GraphicsAPI::ClearUnion clearValue = GraphicsAPI::ClearDepthStencil{ .depth = 1.0f, .stencil = 0 };
-					Grindstone::GraphicsAPI::ImageLayout imageLayout = imageData.currentLayout;
-					depthAttachment = Grindstone::GraphicsAPI::RenderAttachment{
-						.image = image,
-						.imageLayout = imageLayout,
-						.loadOp = Grindstone::GraphicsAPI::LoadOp::Clear,
-						.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
-						.clearValue = clearValue
-					};
-					++depthAttachments;
-				}
-			}
-
-			GS_ASSERT(depthAttachments <= 1);
-		}
-
-		// TODO: Pool Descriptor Sets
-		engineCore.PushDeletion(
-			[descriptorSet] {
-				Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
-				Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-				graphicsCore->DeleteDescriptorSet(descriptorSet);
-			}
-		);
-	}
-
-	Cleanup();
+	passes.clear();
 
 	return Grindstone::Renderer::RenderGraph();
 }

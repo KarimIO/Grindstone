@@ -5,10 +5,17 @@
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 
 namespace Grindstone::Renderer {
+	struct GbufferData {
+		TGBImageRef albedoRef;
+		TGBImageRef normalRef;
+		TGBImageRef specularRoughnessRef;
+		TGBImageRef depthRef;
+	};
+
 	class GbufferPass {
 	public:
 		bool Initialize();
-		void AddPass(glm::mat4& projectionMatrix, glm::mat4 viewMatrix, Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder);
+		GbufferData AddPass(glm::mat4& projectionMatrix, glm::mat4 viewMatrix, Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder);
 
 	private:
 	};
