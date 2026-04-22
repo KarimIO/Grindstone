@@ -4,9 +4,11 @@
 #include <EngineCore/Assets/AssetReference.hpp>
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 
+#include "GbufferPass.hpp"
+
 namespace Grindstone::Renderer {
 	struct LightingPassReturnData {
-		TGBImageRef lightingOutputRef;
+		RenderGraphBuilderResourceRef lightingOutputRef;
 	};
 
 	class LightingPass {

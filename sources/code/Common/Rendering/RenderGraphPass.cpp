@@ -24,17 +24,11 @@ void Grindstone::Renderer::ComputeRenderGraphPassBase::PrepareComputePass(Grinds
 void Grindstone::Renderer::GraphicsRenderGraphPassBase::PrepareGraphicsPass(Grindstone::Renderer::RenderGraphContext& context) {
 	SubmitBarriers(context);
 
-	Grindstone::Math::IntRect2D rect;
-
-	std::vector<Grindstone::GraphicsAPI::RenderAttachment> colorAttachments;
-	Grindstone::GraphicsAPI::RenderAttachment depthAttachment;
-	bool hasDepthAttachment = false;
-
 	context.commandBuffer->BeginRendering(
-		name.ToString().c_str(),
-		rect,
+		name.c_str(),
+		renderingArea,
 		colorAttachments.data(),
-		colorAttachments.size(),
+		static_cast<uint32_t>(colorAttachments.size()),
 		hasDepthAttachment ? &depthAttachment : nullptr
 	);
 }
@@ -48,21 +42,22 @@ void Grindstone::Renderer::TransferRenderGraphPass::Execute(Grindstone::Renderer
 
 	for (const ImageTransfer& copy : imageTransfers) {
 		GraphicsAPI::ImageAspectBits aspect = GraphicsAPI::ImageAspectBits::Color;
-		const Grindstone::GraphicsAPI::Image* srcImg = data->taskGraph->GetTexture(copy.src);
-		const Grindstone::GraphicsAPI::Image* dstImg = data->taskGraph->GetTexture(copy.dst);
+		Grindstone::GraphicsAPI::Image* srcImg = copy.src;
+		Grindstone::GraphicsAPI::Image* dstImg = copy.dst;
+
 		context.commandBuffer->BlitImage(
 			srcImg, dstImg,
 			GraphicsAPI::ImageLayout::TransferSrc,
 			GraphicsAPI::ImageLayout::TransferDst,
-			srcTex->GetWidth(),
-			srcTex->GetHeight(),
-			1u
+			copy.filter,
+			copy.srcRegion,
+			copy.dstRegion
 		);
 	}
 
 	for (const BufferTransfer& copy : bufferTransfers) {
-		const GraphicsAPI::Buffer* dstBuffer = data->taskGraph->GetBuffer(copy.dstBuff);
-		const GraphicsAPI::Buffer* srcBuffer = data->taskGraph->GetBuffer(copy.srcBuff);
+		GraphicsAPI::Buffer* dstBuffer = copy.dstBuff;
+		GraphicsAPI::Buffer* srcBuffer = copy.srcBuff;
 
 		context.commandBuffer->CopyBufferRegion(
 			srcBuffer,

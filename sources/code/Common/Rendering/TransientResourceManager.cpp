@@ -1,8 +1,42 @@
 #include <Common/Graphics/Core.hpp>
 
+#include <EngineCore/EngineCore.hpp>
+
 #include "TransientResourceManager.hpp"
 
 const int8_t USED_LIFETIME = 18;
+
+static Grindstone::Renderer::TransientImageDescription ToTransient(
+	Grindstone::Renderer::ImageDescription desc,
+	Grindstone::Math::Uint2 viewportResolution,
+	Grindstone::Math::Uint2 swapchainResolution
+) {
+	uint32_t width = desc.size.x.Resolve(viewportResolution.x, swapchainResolution.x);
+	uint32_t height = desc.size.y.Resolve(viewportResolution.y, swapchainResolution.y);
+
+	return {
+		.size = Grindstone::Math::Uint2(width, height),
+		.samples = desc.samples,
+		.mipLevels = desc.mipLevels,
+		.depth = desc.depth,
+		.arrayLayers = desc.arrayLayers,
+		.format = desc.format,
+
+		.imageDimensions = desc.imageDimensions,
+		.memoryUsage = desc.memoryUsage,
+		.imageUsage = desc.imageUsage
+	};
+}
+
+static Grindstone::Renderer::TransientBufferDescription ToTransient(
+	Grindstone::Renderer::BufferDescription desc
+) {
+	return {
+		.size = desc.size,
+		.bufferUsage = desc.bufferUsage,
+		.memoryUsage = desc.memoryUsage
+	};
+}
 
 void Grindstone::Renderer::TransientResourceManager::StartFrame() {
 	Grindstone::GraphicsAPI::Core* graphicsCore = Grindstone::EngineCore::GetInstance().GetGraphicsCore();
@@ -42,32 +76,8 @@ void Grindstone::Renderer::TransientResourceManager::StartFrame() {
 	std::erase_if(buffers, [](auto& kv) { return kv.second.empty(); });
 }
 
-std::tuple<Grindstone::Renderer::TransientImageData, size_t> Grindstone::Renderer::TransientResourceManager::AddTrackedImage(uint32_t viewportWidth, uint32_t viewportHeight, ImageDescription inDesc) {
-	uint32_t width;
-	uint32_t height;
-
-	if (inDesc.sizeClass == Grindstone::Renderer::ImageSizeType::SwapchainRelative) {
-		width = static_cast<uint32_t>(static_cast<float>(viewportWidth) * inDesc.width + 0.5f);
-		height = static_cast<uint32_t>(static_cast<float>(viewportHeight) * inDesc.height + 0.5f);
-	}
-	else {
-		width = static_cast<uint32_t>(inDesc.width + 0.5f);
-		height = static_cast<uint32_t>(inDesc.height + 0.5f);
-	}
-
-	TransientImageDescription desc{
-		.width = width,
-		.height = height,
-		.samples = inDesc.samples,
-		.mipLevels = inDesc.mipLevels,
-		.depth = inDesc.depth,
-		.arrayLayers = inDesc.arrayLayers,
-		.format = inDesc.format,
-
-		.imageDimensions = inDesc.imageDimensions,
-		.memoryUsage = inDesc.memoryUsage,
-		.imageUsage = inDesc.imageUsage
-	};
+std::tuple<Grindstone::Renderer::TransientImageData, size_t> Grindstone::Renderer::TransientResourceManager::AddTrackedImage(Math::Uint2 viewportResolution, Math::Uint2 swapchainResolution, ImageDescription inDesc) {
+	TransientImageDescription desc = ToTransient(inDesc, viewportResolution, swapchainResolution);
 
 	auto it = images.find(desc);
 	if (it != images.end()) {
@@ -84,8 +94,8 @@ std::tuple<Grindstone::Renderer::TransientImageData, size_t> Grindstone::Rendere
 
 	Grindstone::GraphicsAPI::Image::CreateInfo createInfo{
 		.debugName = "TRACKED Image",
-		.width = width,
-		.height = height,
+		.width = desc.size.x,
+		.height = desc.size.y,
 		.depth = desc.depth,
 		.mipLevels = desc.mipLevels,
 		.arrayLayers = desc.arrayLayers,
@@ -120,7 +130,9 @@ std::tuple<Grindstone::Renderer::TransientImageData, size_t> Grindstone::Rendere
 	return { newImage.data, index };
 }
 
-std::tuple<Grindstone::Renderer::TransientBufferData, size_t> Grindstone::Renderer::TransientResourceManager::AddTrackedBuffer(BufferDescription desc) {
+std::tuple<Grindstone::Renderer::TransientBufferData, size_t> Grindstone::Renderer::TransientResourceManager::AddTrackedBuffer(BufferDescription inDesc) {
+	TransientBufferDescription desc = ToTransient(inDesc);
+
 	auto it = buffers.find(desc);
 	if (it != buffers.end()) {
 		auto& arr = it->second;
@@ -165,32 +177,11 @@ std::tuple<Grindstone::Renderer::TransientBufferData, size_t> Grindstone::Render
 	return { bufferData.data, index };
 }
 
-Grindstone::Renderer::TransientImageData& Grindstone::Renderer::TransientResourceManager::GetTrackedImage(uint32_t viewportWidth, uint32_t viewportHeight, ImageDescription inDesc, size_t index) {
-	uint32_t width;
-	uint32_t height;
+Grindstone::Renderer::TransientImageData& Grindstone::Renderer::TransientResourceManager::GetTrackedImage(Math::Uint2 viewportResolution, Math::Uint2 swapchainResolution, ImageDescription inDesc, size_t index) {
+	uint32_t width = inDesc.size.x.Resolve(viewportResolution.x, swapchainResolution.x);
+	uint32_t height = inDesc.size.y.Resolve(viewportResolution.y, swapchainResolution.y);
 
-	if (inDesc.sizeClass == Grindstone::Renderer::ImageSizeType::SwapchainRelative) {
-		width = static_cast<uint32_t>(static_cast<float>(viewportWidth) * inDesc.width + 0.5f);
-		height = static_cast<uint32_t>(static_cast<float>(viewportHeight) * inDesc.height + 0.5f);
-	}
-	else {
-		width = static_cast<uint32_t>(inDesc.width + 0.5f);
-		height = static_cast<uint32_t>(inDesc.height + 0.5f);
-	}
-
-	TransientImageDescription desc{
-		.width = width,
-		.height = height,
-		.samples = inDesc.samples,
-		.mipLevels = inDesc.mipLevels,
-		.depth = inDesc.depth,
-		.arrayLayers = inDesc.arrayLayers,
-		.format = inDesc.format,
-
-		.imageDimensions = inDesc.imageDimensions,
-		.memoryUsage = inDesc.memoryUsage,
-		.imageUsage = inDesc.imageUsage
-	};
+	TransientImageDescription desc = ToTransient(inDesc, viewportResolution, swapchainResolution);
 
 	auto it = images.find(desc);
 	GS_ASSERT(it != images.end());
@@ -198,7 +189,8 @@ Grindstone::Renderer::TransientImageData& Grindstone::Renderer::TransientResourc
 	return it->second[index].data;
 }
 
-Grindstone::Renderer::TransientBufferData& Grindstone::Renderer::TransientResourceManager::GetTrackedBuffer(BufferDescription desc, size_t index) {
+Grindstone::Renderer::TransientBufferData& Grindstone::Renderer::TransientResourceManager::GetTrackedBuffer(BufferDescription inDesc, size_t index) {
+	TransientBufferDescription desc = ToTransient(inDesc);
 	auto it = buffers.find(desc);
 	GS_ASSERT(it != buffers.end());
 

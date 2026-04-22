@@ -42,9 +42,7 @@ static Grindstone::Renderer::ImageDescription attachmentOutput{ .format = Grinds
 
 static const uint32_t shadowAtlasResolution = 4096u;
 static Grindstone::Renderer::ImageDescription attachmentShadowDepthStencil{
-	.sizeClass = Grindstone::Renderer::ImageSizeType::Absolute,
-	.width = static_cast<float>(shadowAtlasResolution),
-	.height = static_cast<float>(shadowAtlasResolution),
+	.size = Grindstone::Renderer::MetaSize2D{shadowAtlasResolution, shadowAtlasResolution},
 	.format = depthFormat,
 	.imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::DepthStencil | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled
 };

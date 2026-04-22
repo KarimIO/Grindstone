@@ -12,12 +12,13 @@ Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(glm
 	using namespace Grindstone::GraphicsAPI;
 
 	return renderGraphBuilder.CreateGraphicsPass<Grindstone::Renderer::GbufferData>(
-		"Gbuffer Geometry Opaque"_hash,
+		"Gbuffer Geometry Opaque",
+		MetaRect::Swapchain(),
 		[](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::GbufferData>& renderPass) -> Grindstone::Renderer::GbufferData {
-			TGBImageRef albedoRef = renderPass.WriteColorAttachment(attachmentAlbedo, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
-			TGBImageRef normalRef = renderPass.WriteColorAttachment(attachmentNormal, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
-			TGBImageRef specularRoughnessRef = renderPass.WriteColorAttachment(attachmentSpecularRoughness, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
-			TGBImageRef depthRef = renderPass.WriteDepthStencilAttachment(attachmentDepthStencil, ClearDepthStencil(1.0f, 0u));
+			RenderGraphBuilderResourceRef albedoRef = renderPass.WriteColorAttachment(attachmentAlbedo, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+			RenderGraphBuilderResourceRef normalRef = renderPass.WriteColorAttachment(attachmentNormal, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+			RenderGraphBuilderResourceRef specularRoughnessRef = renderPass.WriteColorAttachment(attachmentSpecularRoughness, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+			RenderGraphBuilderResourceRef depthRef = renderPass.WriteDepthStencilAttachment(attachmentDepthStencil, ClearDepthStencil(1.0f, 0u));
 
 			return Grindstone::Renderer::GbufferData{
 				.albedoRef = albedoRef,
@@ -27,6 +28,7 @@ Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(glm
 			};
 		},
 		[projectionMatrix, viewMatrix](
+			Grindstone::Math::IntRect2D viewportArea,
 			const Renderer::RenderGraphContext& cxt,
 			Renderer::GraphicsRenderGraphPass<Grindstone::Renderer::GbufferData>& renderPassExecution,
 			Grindstone::Renderer::GbufferData& data
@@ -38,11 +40,8 @@ Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(glm
 			Grindstone::Rendering::RenderViewData renderViewData{
 				.projectionMatrix = projectionMatrix,
 				.viewMatrix = viewMatrix,
-				.renderArea = cxt.swapchainSize
+				.renderArea = viewportArea
 			};
-
-			cmd->SetViewport(0.0f, 0.0f, static_cast<float>(renderViewData.renderArea.GetWidth()), static_cast<float>(renderViewData.renderArea.GetHeight()));
-			cmd->SetScissor(0, 0, renderViewData.renderArea.GetWidth(), renderViewData.renderArea.GetHeight());
 
 			// TODO: Get Rendering Stats
 			engineCore.assetRendererManager->RenderQueue(cmd, renderViewData, cxtSet->GetEntityRegistry(), geometryOpaqueRenderPassKey);

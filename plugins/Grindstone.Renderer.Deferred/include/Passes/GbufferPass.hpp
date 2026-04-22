@@ -6,10 +6,10 @@
 
 namespace Grindstone::Renderer {
 	struct GbufferData {
-		TGBImageRef albedoRef;
-		TGBImageRef normalRef;
-		TGBImageRef specularRoughnessRef;
-		TGBImageRef depthRef;
+		RenderGraphBuilderResourceRef albedoRef;
+		RenderGraphBuilderResourceRef normalRef;
+		RenderGraphBuilderResourceRef specularRoughnessRef;
+		RenderGraphBuilderResourceRef depthRef;
 	};
 
 	class GbufferPass {

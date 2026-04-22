@@ -5,10 +5,18 @@
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 
 namespace Grindstone::Renderer {
+	struct ShadowPassReturnData {
+		Renderer::RenderGraphBuilderResourceRef shadowOutputRef;
+	};
+
+
 	class ShadowPass {
 	public:
 		bool Initialize();
-		void AddPass(Grindstone::Renderer::RenderGraph& renderGraph);
+		ShadowPassReturnData AddShadowPasses(
+			Grindstone::Renderer::RenderGraphBuilder& renderGraph,
+			Grindstone::WorldContextSet& worldContextSet
+		);
 
 	protected:
 		void PrepareAtlas(uint32_t totalShadowMapCount);

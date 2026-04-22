@@ -388,10 +388,10 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		position
 	);
 
-	renderGraphBuilder.CreateTransferPass("Transfer to Imgui"_hash);
+	// renderGraphBuilder.CreateTransferPass("Transfer to Imgui");
 
 	Grindstone::Renderer::RenderGraph renderGraph = renderGraphBuilder.Compile();
-	renderGraph.ExecuteGraph(context);
+	// renderGraph.ExecuteGraph(context);
 
 	return;
 

@@ -25,13 +25,17 @@ namespace Grindstone::Renderer {
 	};
 
 	struct TonemapPassReturnData {
-		TGBImageRef postProcessOutput;
+		RenderGraphBuilderResourceRef postProcessOutput;
 	};
 
 	class TonemapPass {
 	public:
 		bool Initialize();
-		TonemapPassReturnData AddPass(Grindstone::Renderer::RenderGraphBuilder& renderGraph, PostProcessSettings settings, TGBImageRef lightingImageRef);
+		TonemapPassReturnData AddPass(
+			Grindstone::Renderer::RenderGraphBuilder& renderGraph,
+			PostProcessSettings settings,
+			Renderer::RenderGraphBuilderResourceRef lightingImageRef
+		);
 
 	private:
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> tonemapPipelineSet;

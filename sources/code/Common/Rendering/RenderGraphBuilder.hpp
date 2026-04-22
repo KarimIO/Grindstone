@@ -8,21 +8,21 @@
 #include "RenderGraph.hpp"
 
 namespace Grindstone::Renderer {
-	using PassId = size_t;
-	using ResourceId = size_t;
-	const size_t invalidResourceId = std::numeric_limits<size_t>().max();
-
 	class RenderGraphBuilder {
 	public:
-		template<typename ReturnType>
+		template<typename ReturnType, typename SetupCallback, typename ExecutionCallback>
 		ReturnType CreateGraphicsPass(
 			Grindstone::StringRef name,
-			std::function<ReturnType(Grindstone::Renderer::GraphicsRenderGraphBuilderPass<ReturnType>&)> setupImmediateCallback,
-			std::function<void(Grindstone::Renderer::RenderGraphContext&, Grindstone::Renderer::GraphicsRenderGraphPass<ReturnType>&, ReturnType&)> executionCallback
+			Grindstone::Renderer::MetaRect metaRect,
+			SetupCallback setupImmediateCallback,
+			ExecutionCallback executionCallback
 		) {
+			static_assert(std::is_invocable_r_v<ReturnType, SetupCallback, Grindstone::Renderer::GraphicsRenderGraphBuilderPass<ReturnType>&>, "Rendergraph setup callback must match expected signature.");
+			static_assert(std::is_invocable_r_v<void, ExecutionCallback, Grindstone::Math::IntRect2D, const Grindstone::Renderer::RenderGraphContext&, Grindstone::Renderer::GraphicsRenderGraphPass<ReturnType>&, ReturnType&>, "Rendergraph execution callback must match expected signature.");
 			auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<GraphicsRenderGraphBuilderPass<ReturnType>>());
 			auto pass = static_cast<GraphicsRenderGraphBuilderPass<ReturnType>*>(uniquePtr.Get());
 			pass->name = name;
+			pass->renderGraphBuilder = this;
 			pass->SetExecutionCallback(executionCallback);
 			return setupImmediateCallback(*pass);
 		}
@@ -36,6 +36,7 @@ namespace Grindstone::Renderer {
 			auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<ComputeRenderGraphBuilderPass<ReturnType>>());
 			auto pass = static_cast<ComputeRenderGraphBuilderPass<ReturnType>*>(uniquePtr.Get());
 			pass->name = name;
+			pass->renderGraphBuilder = this;
 			pass->SetExecutionCallback(executionCallback);
 			return setupImmediateCallback(*pass);
 		}
@@ -45,12 +46,20 @@ namespace Grindstone::Renderer {
 			std::function<void(Grindstone::Renderer::TransferRenderGraphBuilderPass&)> setupImmediateCallback
 		);
 
-		PresentRenderGraphBuilderPass* CreatePresentPass(TGBImageRef imageRef);
+		PresentRenderGraphBuilderPass* CreatePresentPass(RenderGraphBuilderResourceRef imageRef);
 		void CreatePresentPass(
 			std::function<void(Grindstone::Renderer::PresentRenderGraphBuilderPass&)> setupImmediateCallback
 		);
 
-		Grindstone::Renderer::RenderGraph Compile();
+		Grindstone::Renderer::RenderGraphBuilderResourceRef AddImage(ImageDescription imageDesc, Renderer::PassId passId = Renderer::invalidPassId);
+		Grindstone::Renderer::RenderGraphBuilderResourceRef AddBuffer(BufferDescription bufferDesc, Renderer::PassId passId = Renderer::invalidPassId);
+
+		Grindstone::Renderer::RenderGraph Compile() const;
+
+		void Clear();
+
+		using GetExternalImageCallback = std::function<Grindstone::GraphicsAPI::Image*>;
+		using GetExternalBufferCallback = std::function<Grindstone::GraphicsAPI::Buffer*>;
 
 	protected:
 

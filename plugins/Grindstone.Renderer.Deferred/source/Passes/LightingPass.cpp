@@ -90,19 +90,21 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 	Grindstone::Renderer::GbufferData& gbufferData
 ) {
 	return renderGraph.CreateGraphicsPass<LightingPassReturnData>(
-		"Lighting Pass"_hash,
+		"Lighting Pass",
+		MetaRect::Viewport(),
 		[&gbufferData](Renderer::GraphicsRenderGraphBuilderPass<LightingPassReturnData>& renderPass) -> LightingPassReturnData {
-			renderPass.ReadColorAttachment(gbufferData.albedoRef);
-			renderPass.ReadColorAttachment(gbufferData.normalRef);
-			renderPass.ReadColorAttachment(gbufferData.specularRoughnessRef);
-			renderPass.ReadDepthStencilAttachment(gbufferData.depthRef);
-			TGBImageRef layoutImgRef = renderPass.WriteColorAttachment(attachmentlighting, GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+			renderPass.ReadImage(gbufferData.albedoRef);
+			renderPass.ReadImage(gbufferData.normalRef);
+			renderPass.ReadImage(gbufferData.specularRoughnessRef);
+			renderPass.ReadImage(gbufferData.depthRef);
+			RenderGraphBuilderResourceRef layoutImgRef = renderPass.WriteColorAttachment(attachmentlighting, GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 
 			return LightingPassReturnData{
 				.lightingOutputRef = layoutImgRef
 			};
 		},
 		[vertexBuffer, indexBuffer, this](
+			Grindstone::Math::IntRect2D viewportArea,
 			const Renderer::RenderGraphContext& cxt,
 			Renderer::GraphicsRenderGraphPass<LightingPassReturnData>& renderPassExecution,
 			LightingPassReturnData& lightingImageRef
@@ -118,7 +120,6 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 
 			cmd->BindVertexBuffers(&vertexBuffer, 1);
 			cmd->BindIndexBuffer(indexBuffer);
-
 
 			const glm::mat4 bias = glm::mat4(
 				0.5f, 0.0f, 0.0f, 0.0f,

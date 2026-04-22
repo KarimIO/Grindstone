@@ -7,12 +7,14 @@
 
 #include <Common/HashedString.hpp>
 #include <Common/Rect.hpp>
-#include "GpuQueue.hpp"
-
 #include <Common/Graphics/Formats.hpp>
 #include <Common/Graphics/Buffer.hpp>
 #include <Common/Graphics/Image.hpp>
 #include <Common/Graphics/CommandBuffer.hpp>
+
+#include "AttachmentInfo.hpp"
+#include "BufferInfo.hpp"
+#include "GpuPassType.hpp"
 
 namespace Grindstone::GraphicsAPI {
 	class CommandBuffer;
@@ -22,6 +24,45 @@ namespace Grindstone::GraphicsAPI {
 }
 
 namespace Grindstone::Renderer {
+	struct TransientImageDescription {
+		Math::Uint2 size;
+		uint32_t samples = 1;
+		uint32_t mipLevels = 1;
+		uint32_t depth = 1;
+		uint32_t arrayLayers = 1;
+		Grindstone::GraphicsAPI::Format format;
+
+		GraphicsAPI::ImageDimension imageDimensions = GraphicsAPI::ImageDimension::Dimension2D;
+		GraphicsAPI::MemoryUsage memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly;
+		Grindstone::Containers::BitsetFlags<GraphicsAPI::ImageUsageFlags> imageUsage;
+
+		bool operator==(const TransientImageDescription& other) const {
+			return
+				size == other.size &&
+				samples == other.samples &&
+				mipLevels == other.mipLevels &&
+				arrayLayers == other.arrayLayers &&
+				depth == other.depth &&
+				format == other.format;
+		}
+	};
+
+	struct TransientBufferDescription {
+		size_t size = 0;
+		Grindstone::GraphicsAPI::BufferUsage bufferUsage;
+		Grindstone::GraphicsAPI::MemoryUsage memoryUsage;
+
+		bool operator==(const TransientBufferDescription& other) const {
+			return size == other.size &&
+				bufferUsage == other.bufferUsage &&
+				memoryUsage == other.memoryUsage;
+		}
+
+		bool operator!=(const TransientBufferDescription& other) const {
+			return !(*this == other);
+		}
+	};
+
 	struct TransientImageData {
 		GraphicsAPI::Image* image;
 		GraphicsAPI::ImageLayout currentLayout;
@@ -37,16 +78,67 @@ namespace Grindstone::Renderer {
 		TransientImageData image;
 		TransientBufferData buffer;
 	};
+}
 
+namespace std {
+	template<>
+	struct std::hash<Grindstone::Renderer::TransientImageDescription> {
+		std::size_t operator()(const Grindstone::Renderer::TransientImageDescription& desc) const noexcept {
+			size_t result = std::hash<size_t>{}(
+				static_cast<size_t>(desc.size.x) |
+				static_cast<size_t>(desc.size.y) << 32
+				);
+
+			result ^= std::hash<size_t>{}(
+				static_cast<size_t>(desc.samples) |
+				static_cast<size_t>(desc.mipLevels) << 32
+				);
+
+			result ^= std::hash<size_t>{}(
+				static_cast<size_t>(desc.depth) |
+				static_cast<size_t>(desc.arrayLayers) << 32
+				);
+
+			result ^= std::hash<size_t>{}(
+				static_cast<size_t>(desc.format) |
+				static_cast<size_t>(desc.imageDimensions) << 32
+				);
+
+			result ^= std::hash<size_t>{}(
+				static_cast<size_t>(desc.memoryUsage) |
+				static_cast<size_t>(desc.imageUsage.GetValueUnderlying()) << 32
+				);
+
+			return result;
+		}
+	};
+}
+
+namespace std {
+	template<>
+	struct std::hash<Grindstone::Renderer::TransientBufferDescription> {
+		std::size_t operator()(const Grindstone::Renderer::TransientBufferDescription& desc) const noexcept {
+			size_t result = std::hash<size_t>{}(
+				static_cast<size_t>(desc.bufferUsage) |
+				static_cast<size_t>(desc.memoryUsage) << 32
+				);
+
+			result ^= std::hash<size_t>{}(static_cast<size_t>(desc.size));
+			return result;
+		}
+	};
+}
+
+namespace Grindstone::Renderer {
 	class TransientResourceManager {
 	public:
 
 		void StartFrame();
 
-		std::tuple<TransientImageData, size_t> AddTrackedImage(uint32_t viewportWidth, uint32_t viewportHeight, ImageDescription desc);
+		std::tuple<TransientImageData, size_t> AddTrackedImage(Math::Uint2 viewportResolution, Math::Uint2 swapchainResolution, ImageDescription desc);
 		std::tuple<TransientBufferData, size_t> AddTrackedBuffer(BufferDescription desc);
 
-		Grindstone::Renderer::TransientImageData& GetTrackedImage(uint32_t viewportWidth, uint32_t viewportHeight, ImageDescription inDesc, size_t index);
+		Grindstone::Renderer::TransientImageData& GetTrackedImage(Math::Uint2 viewportResolution, Math::Uint2 swapchainResolution, ImageDescription inDesc, size_t index);
 		Grindstone::Renderer::TransientBufferData& GetTrackedBuffer(BufferDescription desc, size_t index);
 
 	protected:
@@ -62,8 +154,9 @@ namespace Grindstone::Renderer {
 			int8_t lifetime;
 			TransientBufferData data;
 		};
+
 		std::unordered_map<TransientImageDescription, std::vector<TransientImage>> images;
-		std::unordered_map<BufferDescription, std::vector<TransientBuffer>> buffers;
+		std::unordered_map<TransientBufferDescription, std::vector<TransientBuffer>> buffers;
 
 	};
 }

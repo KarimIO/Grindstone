@@ -84,6 +84,7 @@ namespace Grindstone::Renderer {
 				return *this;
 			}
 			UnionResource& operator=(UnionResource&& other) noexcept = default;
+			~UnionResource() {}
 
 
 			bool operator==(const UnionResource& other) const {
@@ -173,6 +174,8 @@ namespace Grindstone::Renderer {
 
 		using ResourceId = size_t;
 
+		RenderGraph() = default;
+		RenderGraph(std::vector<Grindstone::UniquePtr<Grindstone::Renderer::RenderGraphPass>>&& passes);
 		void ExecuteGraph(Grindstone::Renderer::RenderGraphContext context);
 
 	protected:

@@ -1,39 +1,47 @@
 #include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Logger.hpp>
 #include <Common/Graphics/Core.hpp>
 
+#include "TransientResourceManager.hpp"
 #include "RenderGraphBuilder.hpp"
+
+using namespace Grindstone::Renderer;
 
 // ===============================================================
 // - Setup Phase
 // ===============================================================
 
-// TODO: These should be allocted on a lienar allocator.
+// TODO: These should be allocated on a linear allocator.
 
-Grindstone::Renderer::TransferRenderGraphBuilderPass* Grindstone::Renderer::RenderGraphBuilder::CreateTransferPass(
+TransferRenderGraphBuilderPass* RenderGraphBuilder::CreateTransferPass(
 	Grindstone::StringRef name,
-	std::function<void(Grindstone::Renderer::TransferRenderGraphBuilderPass&)> setupImmediateCallback
+	std::function<void(TransferRenderGraphBuilderPass&)> setupImmediateCallback
 ) {
 	auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<TransferRenderGraphBuilderPass>());
 	auto pass = static_cast<TransferRenderGraphBuilderPass*>(uniquePtr.Get());
 	pass->name = name;
+	pass->renderGraphBuilder = this;
 	setupImmediateCallback(*pass);
 	return pass;
 }
 
-Grindstone::Renderer::PresentRenderGraphBuilderPass* Grindstone::Renderer::RenderGraphBuilder::CreatePresentPass(TGBImageRef imageRef) {
+const char* presentPassName = "Present to Screen";
+PresentRenderGraphBuilderPass* RenderGraphBuilder::CreatePresentPass(RenderGraphBuilderResourceRef imageRef) {
 	auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<PresentRenderGraphBuilderPass>());
 	auto pass = static_cast<PresentRenderGraphBuilderPass*>(uniquePtr.Get());
-	pass->name = "Present to Screen";
+	pass->name = presentPassName;
+	pass->renderGraphBuilder = this;
 	pass->SetPresentationImage(imageRef);
 	return pass;
 }
 
-void Grindstone::Renderer::RenderGraphBuilder::CreatePresentPass(
-	std::function<void(Grindstone::Renderer::PresentRenderGraphBuilderPass&)> setupImmediateCallback
+void RenderGraphBuilder::CreatePresentPass(
+	std::function<void(PresentRenderGraphBuilderPass&)> setupImmediateCallback
 ) {
-	auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<Grindstone::Renderer::PresentRenderGraphBuilderPass>());
+	auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<PresentRenderGraphBuilderPass>());
 	auto pass = static_cast<PresentRenderGraphBuilderPass*>(uniquePtr.Get());
-	pass->name = "Present to Screen";
+	pass->name = presentPassName;
+	pass->renderGraphBuilder = this;
 	setupImmediateCallback(*pass);
 }
 
@@ -41,60 +49,145 @@ void Grindstone::Renderer::RenderGraphBuilder::CreatePresentPass(
 // - Compile Phase
 // ===============================================================
 
+using RenderGraphPassList = std::vector<Grindstone::UniquePtr<RenderGraphBuilderPass>>;
+
 static void SetupBarriers();
-static std::set<Grindstone::Renderer::PassId> CullUnusedPasses(
-	std::vector<Grindstone::Renderer::ResourceId>& externalOutputs,
-	std::vector<std::vector<Grindstone::Renderer::ResourceId>>& passDependencies,
-	std::vector<Grindstone::Renderer::PassId>& resourceSourcePasses,
-	Grindstone::Renderer::ResourceId presentationResource
-);
-static void SortPasses();
-static void SetupResourceGraph(
-	std::vector<Grindstone::UniquePtr<Grindstone::Renderer::RenderGraphBuilderPass>>& passes,
-	std::vector<ResourceWrite>& resources,
-	std::map<Grindstone::HashedString, ResourceId>& namesToResourceIds
+static bool OptimizeRenderGraph(
+	const RenderGraphPassList& passes,
+	std::vector<PassId>& sortedAndCulledPasses
 );
 static void RealizeResources();
 static void SetupAttachments();
+static void CreatePasses(
+	const RenderGraphPassList& passes,
+	const std::vector<PassId>& sortedPassesIndices,
+	std::vector<Grindstone::UniquePtr<RenderGraphPass>>& compiledPasses
+);
 
-Grindstone::Renderer::RenderGraph Grindstone::Renderer::RenderGraphBuilder::Compile() {
+RenderGraphBuilderResourceRef RenderGraphBuilder::AddImage(ImageDescription imageDesc, Renderer::PassId passId) {
+	size_t imageIndex = images.size();
+	images.emplace_back(imageDesc);
+
+	return {
+		.resourceIndex = static_cast<Renderer::ResourceId>(imageIndex),
+		.passIndex = passId
+	};
+}
+
+RenderGraphBuilderResourceRef RenderGraphBuilder::AddBuffer(BufferDescription bufferDesc, Renderer::PassId passId) {
+	size_t bufferIndex = buffers.size();
+	buffers.emplace_back(bufferDesc);
+
+	return {
+		.resourceIndex = static_cast<Renderer::ResourceId>(bufferIndex),
+		.passIndex = passId
+	};
+}
+
+RenderGraph RenderGraphBuilder::Compile() const {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
-	std::vector<ResourceWrite> resources;
-	std::map<Grindstone::HashedString, ResourceId> resourceNamesToPassIndices;
-	std::vector<std::pair<TransientResourceUnion, size_t>> trackedResources;
+	std::vector<PassId> sortedPassesIndices;
 
-	SetupResourceGraph(passes);
-	std::set<PassId> remainingPasses = CullUnusedPasses();
-	SortPasses();
+	for (PassId i = 0; i < static_cast<PassId>(passes.size()); ++i) {
+		sortedPassesIndices.emplace_back(i);
+	}
+
+	bool isGraphValid = true; // OptimizeRenderGraph(passes, sortedPassesIndices);
+	if (!isGraphValid) {
+		GPRINT_ERROR(LogSource::RenderingBackend, "Render graph has a cycle - we cannot compile it. Ensure passes do not depend on passes that depend on themselves");
+		throw "";
+		// return RenderGraph();
+	}
+
+	std::vector<Grindstone::UniquePtr<RenderGraphPass>> compiledPasses;
+	CreatePasses(passes, sortedPassesIndices, compiledPasses);
 	SetupBarriers();
 	RealizeResources();
 	SetupAttachments();
 
-	passes.clear();
-
-	return Grindstone::Renderer::RenderGraph();
+	return RenderGraph(std::move(compiledPasses));
 }
 
-template<typename IdType>
-static std::vector<IdType> TopologicalSortKahn(std::vector<std::vector<IdType>>& graph) {
-	IdType n = static_cast<IdType>(graph.size());
-	std::vector<IdType> indegree(n, 0);
-	std::vector<IdType> list;
+void RenderGraphBuilder::Clear() {
+	passes.clear();
+	images.clear();
+	buffers.clear();
+	presentationResourceId = invalidResourceId;
+}
+
+/*!
+	\brief Sort and cull the Render Graph so that we can execute them in order based off of the resources of each pass.
+	\param passes The list of all render graph builder passes.
+	\param sortedAndCulledPasses The output indices of each pass, culled and sorted.
+	\return Whether the render graph is valid (ie has no cyclic dependencies).
+*/
+/*
+static bool OptimizeRenderGraph(
+	const RenderGraphPassList& passes,
+	std::vector<PassId>& sortedAndCulledPasses
+) {
+	using namespace Grindstone::Renderer;
+
+	PassId totalPassCount = static_cast<PassId>(passes.size());
+	std::vector<PassId> indegree(totalPassCount, 0);
+
+	size_t n = passes.size();
+
+	passDependencies.resize(n);
+	for (size_t index = 0; index < n; ++index) {
+		const Grindstone::UniquePtr<RenderGraphBuilderPass>& pass = passes[index];
+
+		for (const PassBufferDesc& buffer : pass->bufferRefs) {
+			passDependencies[index].insert(buffer.ref.passIndex);
+		}
+
+		for (const PassImageDesc& image : pass->imageRefs) {
+			passDependencies[index].insert(image.ref.passIndex);
+		}
+
+		if (pass->type == )
+	}
+
+	std::set<PassId> usedPasses;
+	std::queue<PassId> passesToProcess;
+
+	for (PassId passId : externalOutputs) {
+		passesToProcess.push(passId);
+	}
+
+	// For each resource in resources queue:
+	while (!passesToProcess.empty()) {
+		PassId passId = passesToProcess.front();
+		passesToProcess.pop();
+
+		// Don't iterate if we already used this pass.
+		if (usedPasses.contains(passId)) {
+			continue;
+		}
+
+		// Mark this resource's source pass as used.
+		usedPasses.insert(passId);
+
+		const std::set<PassId>& passInputs = passDependencies[passId];
+		for (PassId passInput : passInputs) {
+			passesToProcess.push(passInput);
+		}
+	}
 
 	// Compute indegrees (number of dependencies) for each pass.
-	for (IdType i = 0; i < n; i++) {
-		for (IdType next : graph[i]) {
+	for (PassId i = 0; i < totalPassCount; i++) {
+		for (PassId next : passes[i].tex) {
 			indegree[next]++;
 		}
 	}
 
-	std::queue<IdType> queue;
+	std::queue<PassId> queue;
 
 	// Add all nodes with indegree 0 into the front of the queue
 	// because they should be as early as possible.
-	for (IdType i = 0; i < n; i++) {
+	for (PassId i = 0; i < totalPassCount; i++) {
 		if (indegree[i] == 0) {
 			queue.push(i);
 		}
@@ -102,10 +195,10 @@ static std::vector<IdType> TopologicalSortKahn(std::vector<std::vector<IdType>>&
 
 	// Kahn's Algorithm (BFS)
 	while (!queue.empty()) {
-		IdType top = queue.front();
+		PassId top = queue.front();
 		queue.pop();
-		list.push_back(top);
-		for (IdType next : graph[top]) {
+		sortedOutput.push_back(top);
+		for (PassId next : graph[top]) {
 			indegree[next]--;
 			if (indegree[next] == 0) {
 				queue.push(next);
@@ -113,162 +206,36 @@ static std::vector<IdType> TopologicalSortKahn(std::vector<std::vector<IdType>>&
 		}
 	}
 
-	return list;
+	// A cycle is contained if the generated output does not have the same number of nodes
+	// as the input graph.
+	return (sortedOutput.size() == totalPassCount);
 }
+*/
 
-static std::set<Grindstone::Renderer::PassId> CullUnusedPasses(
-	std::vector<Grindstone::Renderer::ResourceId>& externalOutputs,
-	std::vector<std::vector<Grindstone::Renderer::ResourceId>>& passDependencies,
-	std::vector<Grindstone::Renderer::PassId>& resourceSourcePasses,
-	Grindstone::Renderer::ResourceId presentationResource
+static void CreatePasses(
+	const RenderGraphPassList& builderPasses,
+	const std::vector<PassId>& sortedPassesIndices,
+	std::vector<Grindstone::UniquePtr<RenderGraphPass>>& compiledPasses
 ) {
-	using namespace Grindstone::Renderer;
+	compiledPasses.reserve(sortedPassesIndices.size());
 
-	std::set<PassId> usedPasses;
-	std::queue<ResourceId> resourcesToProcess;
-
-	// Place external output resources in the queue, so we can begin tracing which passes are required to compute them.
-	for (ResourceId resourceId : externalOutputs) {
-		resourcesToProcess.push(resourceId);
-	}
-
-	// Also add the present resource, which is also considered essential so we can compute which passes are required.
-	if (presentationResource != invalidResourceId) {
-		resourcesToProcess.push(presentationResource);
-	}
-
-	// For each resource in resources queue:
-	while (!resourcesToProcess.empty()) {
-		ResourceId top = resourcesToProcess.front();
-		resourcesToProcess.pop();
-
-		PassId resourceSourcePass = resourceSourcePasses[top];
-
-		// Mark this resource's source pass as used.
-		usedPasses.insert(resourceSourcePass);
-
-		std::vector<ResourceId>& passInputs = passDependencies[resourceSourcePass];
-		for (ResourceId passInput : passInputs) {
-			// NOTE: This works as long as we don't have ciruclar dependencies.
-			// - maybe we should check if this resource has already been evaluated?
-			resourcesToProcess.push(passInput);
-		}
-	}
-
-	return usedPasses;
-}
-
-static void SortPasses() {
-	const uint32_t numPasses = static_cast<uint32_t>(passes.size());
-
-	std::map<Grindstone::HashedString, uint32_t> dependencySources;
-	std::map<Grindstone::HashedString, UnionResource> dependencyDefinition;
-
-	// Prepare for topological sort.
-	std::vector<std::vector<int>> passesToSort;
-	passesToSort.resize(numPasses);
-	for (size_t i = 0; i < numPasses; ++i) {
-		Grindstone::Renderer::RenderGraphBuilderPass& pass = passes[i];
-
-		for (ResourceWrite& resource : pass.writes) {
-			dependencySources[resource.name] = i;
-			dependencyDefinition[resource.name] = resource.resource;
-		}
-
-		for (ResourceReadWrite& resource : pass.readWrites) {
-			dependencySources[resource.output] = i;
-			dependencyDefinition[resource.output] = resource.resource;
-		}
-	}
-
-	for (size_t i = 0; i < numPasses; ++i) {
-		Grindstone::Renderer::RenderGraphBuilderPass& pass = passes[i];
-		if (pass.reads.empty() && pass.readWrites.empty()) {
-			continue;
-		}
-
-		std::vector<int>& deps = passesToSort.emplace_back();
-		for (ResourceWrite& resource : pass.writes) {
-			GS_ASSERT(dependencyDefinition[resource.name] == resource.resource);
-
-			auto it = dependencySources.find(resource.name);
-			GS_ASSERT(it != dependencySources.end());
-			deps.emplace_back(it->second);
-		}
-
-		for (ResourceReadWrite& resource : pass.readWrites) {
-			GS_ASSERT(dependencyDefinition[resource.input] == resource.resource);
-
-			auto it = dependencySources.find(resource.input);
-			GS_ASSERT(it != dependencySources.end());
-			deps.emplace_back(it->second);
-		}
-	}
-
-	// Do topological sort.
-	auto sortedIndices = TopologicalSortKahn(passesToSort);
-
-	// Add the sorted passes to the Graph.
-	sortedPasses.reserve(numPasses);
-	for (uint32_t i = 0; i < numPasses; i++) {
-		sortedPasses.push_back(passes[sortedIndices[i]]);
+	for (PassId passId : sortedPassesIndices) {
+		const Grindstone::UniquePtr<RenderGraphBuilderPass>& builderPass = builderPasses[passId];
+		compiledPasses.emplace_back(std::move(builderPass->ConstructExecutionPass()));
 	}
 }
 
-static void Grindstone::Renderer::RenderGraphBuilder::SetupDependencies(
-	std::vector<ResourceWrite>& resources,
-	std::map<Grindstone::HashedString, ResourceId>& namesToResourceIds
-) {
-	// Create resources in Writes
-	std::queue<Grindstone::Renderer::RenderGraphBuilderPass*> passesWithReads;
-	for (Grindstone::Renderer::RenderGraphBuilderPass& pass : passes) {
-		for (RenderGraph::ResourceWrite& resource : pass.writes) {
-			RenderGraph::ResourceId resourceId = resources.size();
-			GS_ASSERT(namesToResourceIds.find(resource.name) == namesToResourceIds.end()); // Resource Writes should be unique!
-			namesToResourceIds[resource.name] = resourceId;
-			resources.emplace_back(resource.name, resource.resource);
-		}
+void SetupBarriers() {}
+void SetupAttachments() {}
 
-		if (pass.reads.size() > 0 || pass.readWrites.size() > 0) {
-			passesWithReads.push(&pass);
-		}
-	}
-
-	// Try to link ReadWrites to original Writes
-	while (!passesWithReads.empty()) {
-		Grindstone::Renderer::RenderGraphBuilderPass& pass = *passesWithReads.front();
-		passesWithReads.pop();
-
-		bool isMissingResource = false;
-		for (RenderGraph::ResourceReadWrite& resource : pass.readWrites) {
-			auto iterator = namesToResourceIds.find(resource.input);
-			if (iterator != namesToResourceIds.end()) {
-				namesToResourceIds[resource.output] = iterator->second;
-			}
-			else {
-				isMissingResource = true;
-			}
-		}
-
-		if (isMissingResource) {
-			passesWithReads.push(&pass);
-		}
-	}
-}
-
-enum class AccessType {
-	Read,
-	Write,
-	ReadWrite
-};
-
+/*
 static std::tuple<
 	Grindstone::GraphicsAPI::ImageLayout,
 	Grindstone::GraphicsAPI::AccessFlags,
 	Grindstone::GraphicsAPI::PipelineStageBit
 > InferBarrierData(
-	Grindstone::Renderer::GpuPassType gpuQueue,
-	Grindstone::Renderer::RenderGraphBuilder::ResourceType resourceType,
+	GpuPassType gpuQueue,
+	RenderGraphBuilder::ResourceType resourceType,
 	AccessType accessType
 	// Grindstone::GraphicsAPI::ShaderStageBit stages
 ) {
@@ -314,9 +281,9 @@ static std::tuple<
 }
 
 static void SetupBarriers() {
-	for (Grindstone::Renderer::RenderGraphPass& pass : passes) {
-		GraphicsAPI::PipelineStageBit srcPipelineStageMask = GraphicsAPI::PipelineStageBit::AllGraphics;
-		GraphicsAPI::PipelineStageBit dstPipelineStageMask = GraphicsAPI::PipelineStageBit::None;
+	for (RenderGraphPass& pass : passes) {
+		Grindstone::GraphicsAPI::PipelineStageBit srcPipelineStageMask = Grindstone::GraphicsAPI::PipelineStageBit::AllGraphics;
+		Grindstone::GraphicsAPI::PipelineStageBit dstPipelineStageMask = Grindstone::GraphicsAPI::PipelineStageBit::None;
 		std::vector<Grindstone::GraphicsAPI::ImageBarrier> imageBarriers;
 		std::vector<Grindstone::GraphicsAPI::BufferBarrier> bufferBarriers;
 
@@ -528,9 +495,12 @@ static void SetupBarriers() {
 			}
 			}
 		}
+	}
 }
+*/
 
 static void RealizeResources() {
+	/*
 	for (size_t i = 0; i < resources.size(); ++i) {
 		ResourceWrite& resource = resources[i];
 		void* trackedResource = nullptr;
@@ -567,4 +537,5 @@ static void RealizeResources() {
 			GS_ASSERT_LOG("Invalid ResourceType!");
 		}
 	}
+	*/
 }

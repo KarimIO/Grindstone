@@ -55,18 +55,24 @@ bool Grindstone::Renderer::TonemapPass::Initialize() {
 	return true;
 }
 
-Grindstone::Renderer::TonemapPassReturnData Grindstone::Renderer::TonemapPass::AddPass(Grindstone::Renderer::RenderGraphBuilder& renderGraph, PostProcessSettings settings, TGBImageRef lightingImageRef) {
+Grindstone::Renderer::TonemapPassReturnData Grindstone::Renderer::TonemapPass::AddPass(
+	Grindstone::Renderer::RenderGraphBuilder& renderGraph,
+	PostProcessSettings settings,
+	Renderer::RenderGraphBuilderResourceRef lightingImageRef
+) {
 	return renderGraph.CreateGraphicsPass<Grindstone::Renderer::TonemapPassReturnData>(
-		"Tonemapping"_hash,
+		"Tonemapping",
+		MetaRect::Viewport(),
 		[lightingImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::TonemapPassReturnData>& renderPass) {
-			renderPass.ReadColorAttachment(lightingImageRef);
-			TGBImageRef postProcessOutput = renderPass.WriteColorAttachment(attachmentOutput, GraphicsAPI::ClearColor{});
+			renderPass.ReadImage(lightingImageRef);
+			RenderGraphBuilderResourceRef postProcessOutput = renderPass.WriteColorAttachment(attachmentOutput, GraphicsAPI::ClearColor{});
 
 			return Grindstone::Renderer::TonemapPassReturnData{
 				.postProcessOutput = postProcessOutput
 			};
 		},
 		[this, settings](
+			Grindstone::Math::IntRect2D renderingArea,
 			const Renderer::RenderGraphContext& cxt,
 			Renderer::GraphicsRenderGraphPass<Grindstone::Renderer::TonemapPassReturnData>& renderPassExecution,
 			Grindstone::Renderer::TonemapPassReturnData& data
