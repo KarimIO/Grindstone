@@ -322,8 +322,8 @@ void Vulkan::CommandBuffer::BindCommandBuffers(
 }
 
 void Vulkan::CommandBuffer::BlitImage(
-	Image* src,
-	Image* dst,
+	Grindstone::GraphicsAPI::Image* src,
+	Grindstone::GraphicsAPI::Image* dst,
 	Grindstone::GraphicsAPI::ImageLayout oldLayout,
 	Grindstone::GraphicsAPI::ImageLayout newLayout,
 	Grindstone::GraphicsAPI::TextureFilter filter,
@@ -540,12 +540,16 @@ void Vulkan::CommandBuffer::PipelineBarrier(
 		Vulkan::Image* vulkanImage = static_cast<Vulkan::Image*>(barrier.image);
 
 		vkImageBarriers.emplace_back(
-			VkImageMemoryBarrier2 {
+			VkImageMemoryBarrier2{
 				.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-				.srcAccessMask = (VkAccessFlags)(barrier.srcAccess),
-				.dstAccessMask = (VkAccessFlags)(barrier.dstAccess),
+				.srcStageMask = (VkPipelineStageFlags2)(barrier.srcStageMask),
+				.srcAccessMask = (VkAccessFlags2)(barrier.srcAccess),
+				.dstStageMask = (VkPipelineStageFlags2)(barrier.dstStageMask),
+				.dstAccessMask = (VkAccessFlags2)(barrier.dstAccess),
 				.oldLayout = TranslateImageLayoutToVulkan(barrier.oldLayout),
 				.newLayout = TranslateImageLayoutToVulkan(barrier.newLayout),
+				.srcQueueFamilyIndex = 0,
+				.dstQueueFamilyIndex = 0,
 				.image = vulkanImage->GetImage(),
 				.subresourceRange = {
 					.aspectMask = TranslateImageAspectBitsToVulkan(barrier.imageAspect),
@@ -566,8 +570,12 @@ void Vulkan::CommandBuffer::PipelineBarrier(
 		vkBufferBarriers.emplace_back(
 			VkBufferMemoryBarrier2 {
 				.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
-				.srcAccessMask = (VkAccessFlags)(barrier.srcAccess),
-				.dstAccessMask = (VkAccessFlags)(barrier.dstAccess),
+				.srcStageMask = (VkPipelineStageFlags2)(barrier.srcStageMask),
+				.srcAccessMask = (VkAccessFlags2)(barrier.srcAccess),
+				.dstStageMask = (VkPipelineStageFlags2)(barrier.dstStageMask),
+				.dstAccessMask = (VkAccessFlags2)(barrier.dstAccess),
+				.srcQueueFamilyIndex = 0,
+				.dstQueueFamilyIndex = 0,
 				.buffer = vulkanBuffer->GetBuffer(),
 				.offset = static_cast<VkDeviceSize>(barrier.offset),
 				.size = static_cast<VkDeviceSize>(barrier.size)

@@ -50,6 +50,8 @@ namespace Grindstone::GraphicsAPI {
 
 	struct ImageBarrier {
 		Grindstone::GraphicsAPI::Image*				image = nullptr;
+		Grindstone::GraphicsAPI::PipelineStageBit	srcStageMask;
+		Grindstone::GraphicsAPI::PipelineStageBit	dstStageMask;
 		Grindstone::GraphicsAPI::ImageLayout		oldLayout;
 		Grindstone::GraphicsAPI::ImageLayout		newLayout;
 		Grindstone::GraphicsAPI::AccessFlags		srcAccess;
@@ -62,11 +64,13 @@ namespace Grindstone::GraphicsAPI {
 	};
 
 	struct BufferBarrier {
-		Grindstone::GraphicsAPI::Buffer*		buffer = nullptr;
-		Grindstone::GraphicsAPI::AccessFlags	srcAccess;
-		Grindstone::GraphicsAPI::AccessFlags	dstAccess;
-		uint32_t								offset = 0;
-		uint32_t								size = 0;
+		Grindstone::GraphicsAPI::Buffer*			buffer = nullptr;
+		Grindstone::GraphicsAPI::PipelineStageBit	srcStageMask;
+		Grindstone::GraphicsAPI::PipelineStageBit	dstStageMask;
+		Grindstone::GraphicsAPI::AccessFlags		srcAccess;
+		Grindstone::GraphicsAPI::AccessFlags		dstAccess;
+		uint32_t									offset = 0;
+		uint32_t									size = 0;
 	};
 
 	struct BufferCopyRegion {
@@ -143,8 +147,8 @@ namespace Grindstone::GraphicsAPI {
 		virtual void DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) = 0;
 		virtual void DispatchCompute(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) = 0;
 		virtual void BlitImage(
-			Image* src,
-			Image* dst,
+			Grindstone::GraphicsAPI::Image* src,
+			Grindstone::GraphicsAPI::Image* dst,
 			Grindstone::GraphicsAPI::ImageLayout oldLayout,
 			Grindstone::GraphicsAPI::ImageLayout newLayout,
 			Grindstone::GraphicsAPI::TextureFilter filter,

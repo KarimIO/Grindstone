@@ -477,6 +477,7 @@ namespace Grindstone::GraphicsAPI {
 #define GSExpandEntry(key, bit) key = bit
 		SHADER_STAGE_TYPES,
 #undef GSExpandEntry
+		Count = 8,
 		AllGraphics = Vertex | TesselationEvaluation | TesselationControl | Geometry | Fragment | Task | Mesh,
 		All = AllGraphics | Compute
 	};

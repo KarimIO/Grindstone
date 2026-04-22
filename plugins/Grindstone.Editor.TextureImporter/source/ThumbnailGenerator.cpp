@@ -121,6 +121,8 @@ bool Grindstone::Editor::Importers::GenerateTextureThumbnail(Grindstone::Uuid uu
 
 	GraphicsAPI::ImageBarrier preImageBarrier{
 		.image = renderTarget,
+		.srcStageMask = GraphicsAPI::PipelineStageBit::TopOfPipe,
+		.dstStageMask = GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
 		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
 		.newLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
 		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
@@ -134,6 +136,8 @@ bool Grindstone::Editor::Importers::GenerateTextureThumbnail(Grindstone::Uuid uu
 
 	GraphicsAPI::ImageBarrier postImageBarrier{
 		.image = image,
+		.srcStageMask = GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
+		.dstStageMask = GraphicsAPI::PipelineStageBit::BottomOfPipe,
 		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
 		.newLayout = Grindstone::GraphicsAPI::ImageLayout::Present,
 		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
@@ -147,8 +151,6 @@ bool Grindstone::Editor::Importers::GenerateTextureThumbnail(Grindstone::Uuid uu
 
 	thumbnailGeneratorContext.commandBuffer->BeginCommandBuffer();
 	thumbnailGeneratorContext.commandBuffer->PipelineBarrier(
-		GraphicsAPI::PipelineStageBit::TopOfPipe,
-		GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
 		nullptr, 0,
 		&preImageBarrier, 1u
 	);
@@ -166,8 +168,6 @@ bool Grindstone::Editor::Importers::GenerateTextureThumbnail(Grindstone::Uuid uu
 	thumbnailGeneratorContext.commandBuffer->DrawVertices(6, 0, 1, 0);
 	thumbnailGeneratorContext.commandBuffer->EndRendering();
 	thumbnailGeneratorContext.commandBuffer->PipelineBarrier(
-		GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
-		GraphicsAPI::PipelineStageBit::BottomOfPipe,
 		nullptr, 0,
 		&postImageBarrier, 1u
 	);

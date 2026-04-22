@@ -318,6 +318,8 @@ uint32_t EditorCamera::GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandB
 
 	GraphicsAPI::BufferBarrier bufferBarrier{
 		.buffer = buffer,
+		.srcStageMask = GraphicsAPI::PipelineStageBit::FragmentShader,
+		.dstStageMask = GraphicsAPI::PipelineStageBit::Host,
 		.srcAccess = GraphicsAPI::AccessFlags::ShaderWrite,
 		.dstAccess = GraphicsAPI::AccessFlags::HostRead,
 		.offset = 0,
@@ -325,8 +327,6 @@ uint32_t EditorCamera::GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandB
 	};
 
 	commandBuffer->PipelineBarrier(
-		GraphicsAPI::PipelineStageBit::FragmentShader,
-		GraphicsAPI::PipelineStageBit::Host,
 		&bufferBarrier, 1,
 		nullptr, 0
 	);

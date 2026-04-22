@@ -274,37 +274,42 @@ void Vulkan::Core::CreateLogicalDevice() {
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
-	VkPhysicalDeviceVulkan13Features deviceFeatures13 = {};
-	deviceFeatures13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
-	deviceFeatures13.dynamicRendering = VK_TRUE;
+	VkPhysicalDeviceVulkan13Features deviceFeatures13 {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+		.synchronization2 = VK_TRUE,
+		.dynamicRendering = VK_TRUE,
+	};
 
-	VkPhysicalDeviceVulkan12Features deviceFeatures12 = {};
-	deviceFeatures12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-	deviceFeatures12.pNext = &deviceFeatures13;
+	VkPhysicalDeviceVulkan12Features deviceFeatures12 {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+		.pNext = &deviceFeatures13
+	};
 
-	VkPhysicalDeviceVulkan11Features deviceFeatures11 = {};
-	deviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
-	deviceFeatures11.shaderDrawParameters = VK_TRUE;
-	deviceFeatures11.pNext = &deviceFeatures12;
+	VkPhysicalDeviceVulkan11Features deviceFeatures11 {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+		.pNext = &deviceFeatures12,
+		.shaderDrawParameters = VK_TRUE,
+	};
 
-	VkPhysicalDeviceFeatures2 deviceFeatures2 = {};
-	deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-	deviceFeatures2.features.fragmentStoresAndAtomics = VK_TRUE;
-	deviceFeatures2.features.fillModeNonSolid = VK_TRUE;
-	deviceFeatures2.features.multiDrawIndirect = VK_TRUE;
-	deviceFeatures2.features.samplerAnisotropy = VK_TRUE;
-	deviceFeatures2.pNext = &deviceFeatures11;
+	VkPhysicalDeviceFeatures2 deviceFeatures2 {
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+		.pNext = &deviceFeatures11,
+		.features = {
+			.multiDrawIndirect = VK_TRUE,
+			.fillModeNonSolid = VK_TRUE,
+			.samplerAnisotropy = VK_TRUE,
+			.fragmentStoresAndAtomics = VK_TRUE,
+		},
+	};
 
-	VkDeviceCreateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-
-	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-	createInfo.pQueueCreateInfos = queueCreateInfos.data();
-
-	createInfo.pNext = &deviceFeatures2;
-
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
-	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+	VkDeviceCreateInfo createInfo {
+		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+		.pNext = &deviceFeatures2,
+		.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),
+		.pQueueCreateInfos = queueCreateInfos.data(),
+		.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size()),
+		.ppEnabledExtensionNames = deviceExtensions.data(),
+	};
 
 	if (enableValidationLayers) {
 		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
