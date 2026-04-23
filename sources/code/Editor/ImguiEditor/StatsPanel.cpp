@@ -1,5 +1,6 @@
-#include <imgui.h>
 #include <vector>
+#include <inttypes.h>
+#include <imgui.h>
 
 #include <Editor/EditorCamera.hpp>
 #include <Editor/EditorManager.hpp>
@@ -148,7 +149,11 @@ void StatsPanel::RenderContents() {
 		frameCountSinceLastRender = 0;
 	}
 
+#ifdef _WIN32
 	ImGui::Text("Total Frame Count: %I64u", totalFrameCount);
+#else // #ifdef _WIN32
+	ImGui::Text("Total Frame Count: %I64lld", totalFrameCount);
+#endif // #else #ifdef _WIN32
 	ImGui::Text("Frame Time (Seconds): %f", lastRenderedDeltaTime);
 	ImGui::Text("Frames Per Second: %f", 1 / lastRenderedDeltaTime);
 
