@@ -1,6 +1,10 @@
 #include <filesystem>
 #include <cstdarg>
 #include <chrono>
+
+#define __STDC_WANT_LIB_EXT1__ 1
+#include <time.h>
+
 #ifdef _MSC_VER
 #include <windows.h>
 #endif
@@ -60,7 +64,7 @@ void Grindstone::Logger::Print(
 	const char* str
 ) {
 	std::scoped_lock lock(loggerState->mutex);
-	
+
 	if (logSeverity > LogSeverity::Fatal) {
 		logSeverity = LogSeverity::Error;
 	}
@@ -72,7 +76,11 @@ void Grindstone::Logger::Print(
 	const unsigned long long milliseconds = fine.time_since_epoch().count() % 1000u;
 
 	tm tm;
+#ifdef _WIN32
 	localtime_s(&tm, &coarse);
+#else
+	localtime_r(&coarse, &tm);
+#endif
 
 	char timeBuffer[sizeof("23:59:59.999")]{};
 	size_t timeOffset = std::strftime(timeBuffer, sizeof timeBuffer - 3, "%T.", &tm);
@@ -136,7 +144,7 @@ void Grindstone::Logger::Print(
 			loggerState->dispatcher->Dispatch(printEvent);
 		}
 	}
-	
+
 #ifdef _MSC_VER
 	::OutputDebugString(completeMessage.c_str());
 #endif

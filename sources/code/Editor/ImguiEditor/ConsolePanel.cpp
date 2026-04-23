@@ -192,7 +192,11 @@ void ConsolePanel::RenderMessage(size_t index, EditorConsoleMessage& msg) {
 		const unsigned long long milliseconds = fine.time_since_epoch().count() % 1000u;
 
 		tm tm;
+#ifdef _WIN32
 		localtime_s(&tm, &coarse);
+#else
+		localtime_r(&coarse, &tm);
+#endif
 
 		char timeBuffer[sizeof("23:59:59.999")]{};
 		size_t timeOffset = std::strftime(timeBuffer, sizeof timeBuffer - 3, "%T.", &tm);
