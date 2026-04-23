@@ -21,7 +21,7 @@ static void Label(const char* label, float textWidth) {
 
 	ImVec2 startPos = ImGui::GetCursorScreenPos();
 
-	ImGui::Text(label);
+	ImGui::Text("%s", label);
 
 	ImVec2 finalPos = { startPos.x + fullWidth, startPos.y };
 
@@ -61,7 +61,7 @@ static void RenderFieldValue(Grindstone::CvarSystem* cvarSystem, Grindstone::Cva
 
 	if (ImGui::IsItemHovered())
 	{
-		ImGui::SetTooltip(p->description.c_str());
+		ImGui::SetTooltip("%s", p->description.c_str());
 	}
 }
 

@@ -297,7 +297,7 @@ void MaterialInspector::RenderParameters() {
 	for (auto & uniformBuffer : materialUniformBuffers) {
 		if (ImGui::TreeNode(uniformBuffer.name.c_str())) {
 			for (auto & member : uniformBuffer.members) {
-				ImGui::Text(member.name.c_str());
+				ImGui::Text("%s", member.name.c_str());
 			}
 			ImGui::TreePop();
 		}
@@ -344,7 +344,7 @@ void MaterialInspector::OnSelectedTexture(Uuid uuid, std::string name) {
 void MaterialInspector::RenderTexture(Sampler& sampler) {
 	ImGui::TableNextRow();
 	ImGui::TableNextColumn();
-	ImGui::Text(sampler.name.c_str());
+	ImGui::Text("%s", sampler.name.c_str());
 
 	ImGui::TableNextColumn();
 
@@ -386,7 +386,7 @@ void MaterialInspector::RenderParameter(MaterialParameter& parameter) {
 	for (auto& uniformBuffer : materialUniformBuffers) {
 		if (ImGui::TreeNode(uniformBuffer.name.c_str())) {
 			for (auto& member : uniformBuffer.members) {
-				ImGui::Text(member.name.c_str());
+				ImGui::Text("%s", member.name.c_str());
 			}
 			ImGui::TreePop();
 		}

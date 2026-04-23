@@ -25,7 +25,7 @@ void TaskPanel::Render() {
 			const char* stringText = "No background tasks running.";
 			ImVec2 textSize = ImGui::CalcTextSize(stringText);
 			ImGui::SetCursorPos(ImVec2((WINDOW_SIZE.x - textSize.x) / 2.0f, (WINDOW_SIZE.y - textSize.y) / 2.0f));
-			ImGui::Text(stringText);
+			ImGui::Text("%s", stringText);
 		}
 		else if (ImGui::BeginTable("TaskPanelTable", 2, ImGuiTableFlags_SizingFixedFit)) {
 			ImGui::TableSetupColumn("Job Name", 0, WINDOW_SIZE.x - STATUS_COLUMN_WIDTH);

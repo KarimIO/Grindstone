@@ -287,7 +287,7 @@ void ComponentInspector::RenderComponentCategory(
 		for (auto& member : category.members) {
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
-			ImGui::Text(member.displayName.c_str());
+			ImGui::Text("%s", member.displayName.c_str());
 			ImGui::TableNextColumn();
 			RenderComponentMember(member, componentPtr, entity);
 		}

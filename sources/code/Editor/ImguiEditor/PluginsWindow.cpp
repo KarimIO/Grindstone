@@ -105,16 +105,16 @@ static size_t OnRenderPluginSidebar(const std::vector<PluginListElement>& plugin
 		ImGui::BeginChild(rowName.c_str(), ImVec2(ImGui::GetContentRegionAvail().x, 0.0f), ImGuiChildFlags_FrameStyle | ImGuiChildFlags_AutoResizeY);
 
 		ImGui::PushFont(imguiEditor.GetFont(FontType::H3));
-		ImGui::Text(plugin.metaData.displayName.c_str());
+		ImGui::Text("%s", plugin.metaData.displayName.c_str());
 		ImGui::PopFont();
 
 		ImGui::PushFont(imguiEditor.GetFont(FontType::Italic));
 		ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
-		ImGui::Text(plugin.metaData.author.c_str());
+		ImGui::Text("%s", plugin.metaData.author.c_str());
 		ImGui::PopStyleColor();
 		ImGui::PopFont();
 
-		ImGui::TextWrapped(plugin.metaData.description.c_str());
+		ImGui::TextWrapped("%s", plugin.metaData.description.c_str());
 		ImGui::EndChild();
 
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
@@ -144,16 +144,16 @@ static void OnRenderPluginPageSuccess(std::vector<PluginListElement>& pluginsLis
 	const ImguiEditor& imguiEditor = Grindstone::Editor::Manager::GetInstance().GetImguiEditor();
 
 	ImGui::PushFont(imguiEditor.GetFont(FontType::H1));
-	ImGui::Text(pluginManifestCache.metaData.displayName.c_str());
+	ImGui::Text("%s", pluginManifestCache.metaData.displayName.c_str());
 	ImGui::PopFont();
 
 	ImGui::PushFont(imguiEditor.GetFont(FontType::Italic));
 	ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetColorU32(ImGuiCol_TextDisabled));
-	ImGui::Text(pluginManifestCache.metaData.author.c_str());
+	ImGui::Text("%s", pluginManifestCache.metaData.author.c_str());
 	ImGui::PopStyleColor();
 	ImGui::PopFont();
 
-	ImGui::TextWrapped(pluginManifestCache.metaData.description.c_str());
+	ImGui::TextWrapped("%s", pluginManifestCache.metaData.description.c_str());
 	switch (pluginManifestCache.installationState) {
 	case PluginInstallationState::NotInstalled:
 		if (ImGui::Button("Install")) {

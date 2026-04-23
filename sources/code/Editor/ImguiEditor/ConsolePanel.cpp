@@ -184,7 +184,7 @@ void ConsolePanel::RenderMessage(size_t index, EditorConsoleMessage& msg) {
 	auto icon = GetLogSeverityIcon(msg.base.severity);
 	ImGui::Image(icon, ImVec2(20.0f, 20.0f));
 	ImGui::TableNextColumn();
-	ImGui::TextWrapped(msg.base.message.c_str());
+	ImGui::TextWrapped("%s", msg.base.message.c_str());
 	if (ImGui::IsItemHovered()) {
 		time_t coarse = std::chrono::system_clock::to_time_t(msg.base.timepoint);
 		std::chrono::time_point<std::chrono::system_clock, std::chrono::milliseconds> fine =

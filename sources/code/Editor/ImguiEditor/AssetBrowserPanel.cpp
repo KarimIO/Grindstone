@@ -586,7 +586,7 @@ void AssetBrowserPanel::RenderAllPlugins() {
 		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 			SetCurrentPlugin(plugin.name);
 		}
-		ImGui::TextWrapped(plugin.name.c_str());
+		ImGui::TextWrapped("%s", plugin.name.c_str());
 	}
 }
 
@@ -613,7 +613,7 @@ void AssetBrowserPanel::RenderPlugins() {
 				std::filesystem::path path(plugin.pluginResolvedPath / asset.assetDirectoryRelativePath);
 				SetCurrentAssetDirectory(path);
 			}
-			ImGui::TextWrapped(assetDirectoryString.c_str());
+			ImGui::TextWrapped("%s", assetDirectoryString.c_str());
 		}
 
 		for (Grindstone::Plugins::MetaData::Binary& binary : plugin.binaries) {
@@ -638,7 +638,7 @@ void AssetBrowserPanel::RenderPlugins() {
 
 			std::string buttonString = binary.buildTarget + "##AssetButton";
 			RenderAssetElement(false, buttonString.c_str(), ImGui::GetCursorPosX(), iconCoords);
-			ImGui::TextWrapped(binary.buildTarget.c_str());
+			ImGui::TextWrapped("%s", binary.buildTarget.c_str());
 		}
 
 		return;
@@ -670,7 +670,7 @@ void AssetBrowserPanel::RenderFolders() {
 			}
 		}
 		else {
-			ImGui::TextWrapped(filenameString.c_str());
+			ImGui::TextWrapped("%s", filenameString.c_str());
 		}
 	}
 }
@@ -719,7 +719,7 @@ void AssetBrowserPanel::RenderFile(size_t fileIndex) {
 		}
 	}
 	else {
-		ImGui::TextWrapped(filename.c_str());
+		ImGui::TextWrapped("%s", filename.c_str());
 	}
 
 	if (item.subassets.size() > 0) {
@@ -766,7 +766,7 @@ void AssetBrowserPanel::RenderFile(size_t fileIndex) {
 					ImGui::EndDragDropSource();
 				}
 
-				ImGui::TextWrapped(subasset.name.c_str());
+				ImGui::TextWrapped("%s", subasset.name.c_str());
 			}
 		}
 	}

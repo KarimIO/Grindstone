@@ -168,10 +168,10 @@ void InspectorPanel::RenderContents() {
 	}
 
 	if (selectedEntityCount > 0) {
-		ImGui::Text("%i entities selected.", selectedEntityCount);
+		ImGui::Text("%zu entities selected.", selectedEntityCount);
 	}
 
 	if (selectedFileCount > 0) {
-		ImGui::Text("%i files selected.", selectedFileCount);
+		ImGui::Text("%zu files selected.", selectedFileCount);
 	}
 }

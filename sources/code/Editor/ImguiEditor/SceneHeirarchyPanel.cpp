@@ -160,7 +160,7 @@ void SceneHeirarchyPanel::RenderEntity(
 			: 0
 		);
 
-	bool isOpened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entityHandle, treeFlags, entityTag);
+	bool isOpened = ImGui::TreeNodeEx((void*)(uint64_t)(uint32_t)entityHandle, treeFlags, "%s", entityTag);
 
 	if (ImGui::BeginDragDropTarget()) {
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity")) {

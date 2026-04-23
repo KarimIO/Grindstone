@@ -1,7 +1,11 @@
+#include <cstdint>
 #include <fstream>
+
 #include <imgui.h>
 #include <imgui_stdlib.h>
+
 #include "ListEditor.hpp"
+
 using namespace Grindstone::Editor::ImguiEditor;
 
 void Widgets::StringListEditor(std::vector<std::string>& list, std::string fieldName) {

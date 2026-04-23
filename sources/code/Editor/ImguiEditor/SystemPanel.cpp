@@ -21,6 +21,6 @@ namespace Grindstone::Editor::ImguiEditor {
 	}
 
 	void SystemPanel::RenderSystem(const char *system) {
-		ImGui::Text(system);
+		ImGui::Text("%s", system);
 	}
 }

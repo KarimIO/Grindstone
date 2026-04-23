@@ -148,7 +148,7 @@ void StatsPanel::RenderContents() {
 		frameCountSinceLastRender = 0;
 	}
 
-	ImGui::Text("Total Frame Count: %I64u", totalFrameCount);
+	ImGui::Text("Total Frame Count: %I64llu", totalFrameCount);
 	ImGui::Text("Frame Time (Seconds): %f", lastRenderedDeltaTime);
 	ImGui::Text("Frames Per Second: %f", 1 / lastRenderedDeltaTime);
 

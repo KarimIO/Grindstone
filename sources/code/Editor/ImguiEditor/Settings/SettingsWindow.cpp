@@ -95,7 +95,7 @@ void SettingsWindow::RenderSettingsPage() {
 
 	ImGuiID saveFrameTitle = ImGui::GetID("#SettingsWindowSaveFrame");
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-	ImGui::BeginChild(saveFrameTitle, ImVec2{ 0, saveFrameHeight }, ImGuiWindowFlags_NoScrollbar | ImGuiChildFlags_FrameStyle);
+	ImGui::BeginChild(saveFrameTitle, ImVec2{ 0, saveFrameHeight }, ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_NoScrollbar);
 	ImGui::PopStyleVar();
 
 	float totalAvailWidth = ImGui::GetContentRegionAvail().x;

@@ -90,15 +90,15 @@ void StatusBar::RenderGitWhenLoaded() {
 	ImGui::SetCursorPosY(iconY);
 	ImGui::Image(gitAheadBehindIcon, ImVec2(iconSize, iconSize));
 	ImGui::SetCursorPosY(cursorY);
-	ImGui::Text(aheadBehindText.c_str());
+	ImGui::Text("%s", aheadBehindText.c_str());
 	ImGui::SetCursorPosY(iconY);
 	ImGui::Image(gitChangesIcon, ImVec2(iconSize, iconSize));
 	ImGui::SetCursorPosY(cursorY);
-	ImGui::Text(changesText.c_str());
+	ImGui::Text("%s", changesText.c_str());
 	ImGui::SetCursorPosY(iconY);
 	ImGui::Image(gitBranchIcon, ImVec2(iconSize, iconSize));
 	ImGui::SetCursorPosY(cursorY);
-	ImGui::Text(gitBranchName.c_str());
+	ImGui::Text("%s", gitBranchName.c_str());
 	ImGui::SetCursorPosY(cursorY);
 }
 
@@ -108,5 +108,5 @@ void StatusBar::AlignToRight(float widthNeeded) {
 
 void StatusBar::RightAlignedText(const char* text) {
 	AlignToRight(ImGui::CalcTextSize(text).x + ImGui::GetStyle().FramePadding.x * 2.f);
-	ImGui::Text(text);
+	ImGui::Text("%s", text);
 }

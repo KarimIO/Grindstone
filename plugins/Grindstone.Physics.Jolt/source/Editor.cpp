@@ -69,13 +69,13 @@ namespace Grindstone::Physics {
 					ImGui::TableNextColumn();
 					ImGui::Text("Layer 0");
 					ImGui::TableNextColumn();
-					ImGui::Text(layerNames[0].c_str());
+					ImGui::Text("%s", layerNames[0].c_str());
 
 					for (size_t layerIndex = 1; layerIndex < layerNames.size(); ++layerIndex) {
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn();
 						std::string layerName = "Layer " + std::to_string(layerIndex);
-						ImGui::Text(layerName.c_str());
+						ImGui::Text("%s", layerName.c_str());
 						ImGui::TableNextColumn();
 						std::string layerStringName = "##" + layerName;
 						ImGui::InputText(layerStringName.c_str(), &layerNames[layerIndex]);
@@ -111,7 +111,7 @@ namespace Grindstone::Physics {
 					for (size_t layerIndex = 0; layerIndex < layerNames.size(); ++layerIndex) {
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn();
-						ImGui::Text(layerNames[layerIndex].c_str());
+						ImGui::Text("%s", layerNames[layerIndex].c_str());
 						ImGui::TableNextColumn();
 						for (size_t cellIndex = 0; cellIndex < (layerNames.size() - layerIndex); ++cellIndex) {
 							std::string cellName = "##layerMatrixCell_" + std::to_string(layerIndex) + "_" + std::to_string(cellIndex);
