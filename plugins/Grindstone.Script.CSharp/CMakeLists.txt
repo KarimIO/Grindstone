@@ -125,7 +125,7 @@ set_target_properties(PluginScriptCSharp PROPERTIES
 )
 
 if (WIN32)
-	set(DOTNET_NETHOST_LIB, "${DOTNET_ROOT}/nethost.lib")
+	set(DOTNET_NETHOST_LIB "${DOTNET_ROOT}/nethost.lib")
 	add_custom_command(
 			TARGET PluginScriptCSharp POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -133,7 +133,7 @@ if (WIN32)
 				"${SCRIPT_CSHARP_LIB}/$<CONFIG>/nethost.dll"
 	)
 else()
-	set(DOTNET_NETHOST_LIB, "${DOTNET_ROOT}/libnethost.a")
+	set(DOTNET_NETHOST_LIB "${DOTNET_ROOT}/libnethost.a")
 	add_custom_command(
 			TARGET PluginScriptCSharp POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy_if_different

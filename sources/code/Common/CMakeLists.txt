@@ -123,7 +123,13 @@ set(COMMON_HEADERS
 
 add_library(Common STATIC ${COMMON_SOURCES} ${COMMON_HEADERS})
 find_package(glfw3 CONFIG REQUIRED)
-find_package(unofficial-libuuid CONFIG REQUIRED)
+
+if (WIN32)
+	target_link_libraries(Common glfw)
+else()
+	find_package(unofficial-libuuid CONFIG REQUIRED)
+	target_link_libraries(Common glfw unofficial::UUID::uuid)
+endif()
 
 file(MAKE_DIRECTORY "${COMMON_BIN}")
 file(MAKE_DIRECTORY "${COMMON_LIB}")
@@ -134,7 +140,6 @@ set_target_properties(Common PROPERTIES
 )
 set_property(TARGET Common PROPERTY COMPILE_WARNING_AS_ERROR ON)
 target_compile_features(Common PRIVATE cxx_std_20)
-target_link_libraries(Common glfw unofficial::UUID::uuid)
 set_property(TARGET Common PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(Common PUBLIC ${COMMON_DIR} ${CODE_DIR} ${PLUGIN_DIR})
 target_compile_definitions(Common PUBLIC NOMINMAX)

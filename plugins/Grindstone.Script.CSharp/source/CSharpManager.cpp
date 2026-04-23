@@ -210,16 +210,17 @@ static bool LoadHostFxr() {
 
 static bool LoadGrindstoneCoreFunction(std::wstring_view dllPath, std::string_view functionName, void** fn) {
 	std::wstring wfuncName = std::wstring(functionName.begin(), functionName.end());
-	std::string smallName = std::string(dllPath.begin(), dllPath.end());
 
-	int rc = csharpGlobals.LoadAssemblyAndGetFunctionPointer(
 #ifdef _WIN32
-		// Windows expects wide characters
+	// Windows expects wide characters
+	int rc = csharpGlobals.LoadAssemblyAndGetFunctionPointer(
 		dllPath.data(),
 		L"Grindstone.HostBridge, CSharpCore",
 		wfuncName.c_str(),
 #else // #ifdef _WIN32
-		// Unix expects regular characters
+	// Unix expects regular characters
+	std::string smallName = std::string(dllPath.begin(), dllPath.end());
+	int rc = csharpGlobals.LoadAssemblyAndGetFunctionPointer(
 		smallName.c_str(),
 		"Grindstone.HostBridge, CSharpCore",
 		functionName.data(),

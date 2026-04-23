@@ -24,7 +24,10 @@
 		"imguizmo",
 		"joltphysics",
 		"libgit2",
-		"libuuid",
+		{
+			"name": "libuuid",
+			"platform": "!osx & !windows"
+		},
 		"opengl",
 		"opengl-registry",
 		"rapidjson",

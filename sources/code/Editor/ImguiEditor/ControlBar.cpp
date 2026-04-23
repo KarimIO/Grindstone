@@ -16,10 +16,14 @@ ControlBar::ControlBar(ImguiRenderer* imguiRenderer) {
 }
 
 void ControlBar::Render() {
-	ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
-	if (ImGui::Begin("ControlBar", nullptr, flags)) {
-		Editor::Manager& editorManager = Grindstone::Editor::Manager::GetInstance();
+	ImGuiViewport* viewport = (ImGuiViewport*)(void*)ImGui::GetMainViewport();
+	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_MenuBar;
+	float height = ImGui::GetFrameHeight();
 
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	if (ImGui::BeginViewportSideBar("##ControlBar", viewport, ImGuiDir_Up, height, windowFlags)) {
+		ImGui::SetCursorPosY(0);
+		Editor::Manager& editorManager = Grindstone::Editor::Manager::GetInstance();
 		float centerX = ImGui::GetWindowContentRegionMax().x / 2.0f - 12.0f;
 
 		selectedColor = ImGui::GetStyleColorVec4(ImGuiCol_Button);
@@ -56,6 +60,7 @@ void ControlBar::Render() {
 
 		ImGui::End();
 	}
+	ImGui::PopStyleVar();
 }
 
 bool ControlBar::RenderButton(ImTextureID icon, bool isSelected) {
