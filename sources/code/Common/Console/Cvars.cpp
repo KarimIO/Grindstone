@@ -4,6 +4,7 @@
 #include <array>
 #include <algorithm>
 #include <shared_mutex>
+#include <mutex>
 
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 
@@ -127,21 +128,6 @@ namespace Grindstone {
 		template<typename T>
 		CvarArray<T>* GetCvarArray();
 
-		template<>
-		CvarArray<int32_t>* GetCvarArray() {
-			return &intCvars;
-		}
-
-		template<>
-		CvarArray<double>* GetCvarArray() {
-			return &floatCvars;
-		}
-
-		template<>
-		CvarArray<std::string>* GetCvarArray() {
-			return &stringCvars;
-		}
-
 		//templated get-set cvar versions for syntax sugar
 		template<typename T>
 		T* GetCvarCurrent(Grindstone::HashedString hash) {
@@ -172,6 +158,21 @@ namespace Grindstone {
 		CvarParameter* InitCvar(const char* name, const char* description);
 		std::unordered_map<Grindstone::HashValue, CvarParameter> savedCvars;
 	};
+}
+
+template<>
+CvarArray<int32_t>* CvarSystemImpl::GetCvarArray() {
+	return &intCvars;
+}
+
+template<>
+CvarArray<double>* CvarSystemImpl::GetCvarArray() {
+	return &floatCvars;
+}
+
+template<>
+CvarArray<std::string>* CvarSystemImpl::GetCvarArray() {
+	return &stringCvars;
 }
 
 CvarSystem* Grindstone::CreateCvarSystemInstance() {
