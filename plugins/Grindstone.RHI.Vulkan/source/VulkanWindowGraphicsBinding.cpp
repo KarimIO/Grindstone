@@ -7,7 +7,7 @@
 
 #include <algorithm>
 
-#include <glfw/glfw3.h>
+#include <GLFW/glfw3.h>
 
 #include <Common/Window/GlfwWindow.hpp>
 #include <EngineCore/Logger.hpp>
@@ -65,7 +65,7 @@ bool Vulkan::WindowGraphicsBinding::Initialize(Window *window) {
 
 Vulkan::WindowGraphicsBinding::~WindowGraphicsBinding() {
 	Vulkan::Core& vkCore = Vulkan::Core::Get();
-			
+
 	// Delete rt imageview
 	vkDestroySwapchainKHR(vkCore.GetDevice(), swapChain, nullptr);
 	vkDestroySurfaceKHR(vkCore.GetInstance(), surface, nullptr);
