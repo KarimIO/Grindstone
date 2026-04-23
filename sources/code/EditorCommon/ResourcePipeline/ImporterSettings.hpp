@@ -3,6 +3,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <stdint.h>
 
 namespace Grindstone::Editor {
 	struct ImporterSettings {
@@ -13,7 +14,7 @@ namespace Grindstone::Editor {
 			Double,
 			Bool
 		};
-		
+
 		struct Value {
 			Grindstone::Editor::ImporterSettings::Type type;
 			std::string value;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <EngineCore/Utils/MemoryAllocator.hpp>
+#include <cstring>
 
 #include "Assert.hpp"
 #include "Containers/Span.hpp"

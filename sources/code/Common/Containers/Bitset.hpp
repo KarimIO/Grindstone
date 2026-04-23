@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limits.h>
+#include <cmath>
 
 #include "../EnumTraits.hpp"
 #include "../Assert.hpp"

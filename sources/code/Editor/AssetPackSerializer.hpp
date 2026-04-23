@@ -1,5 +1,7 @@
 #pragma once
 
+#include <filesystem>
+
 #include "Editor/BuildProcess.hpp"
 
 namespace Grindstone::Assets::AssetPackSerializer {

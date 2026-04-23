@@ -8,7 +8,7 @@
 
 namespace Grindstone::Assets {
 	struct ArchiveDirectoryFile {
-		const static uint32_t CURRENT_VERSION = 1;
+		constexpr static uint32_t CURRENT_VERSION = 1;
 
 		struct Header {
 			const char signature[4] = { 'G', 'D', 'I', 'R' };

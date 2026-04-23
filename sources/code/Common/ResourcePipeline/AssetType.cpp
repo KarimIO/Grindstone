@@ -1,4 +1,6 @@
 #include <string>
+#include <cstring>
+
 #include "AssetType.hpp"
 
 const char* assetTypeStrings[] = {

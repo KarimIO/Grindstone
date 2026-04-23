@@ -1,6 +1,9 @@
 #include <iostream>
+#include <cstring>
+
 #include <Common/Utilities/ModuleLoading.hpp>
 #include <EngineCore/EngineCore.hpp>
+
 using namespace Grindstone;
 
 #ifdef _WIN32
@@ -81,7 +84,9 @@ int main(int argc, char** argv) {
 	}
 	catch (std::runtime_error& e) {
 		std::cerr << e.what() << std::endl;
+#ifdef _WIN32
 		OutputDebugString(e.what());
+#endif
 	}
 
 	return 0;

@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include "AssetTemplateRegistry.hpp"
 
 using namespace Grindstone::Editor;

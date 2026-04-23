@@ -1,4 +1,7 @@
+#include <EngineCore/pch.hpp>
+
 #include <iostream>
+#include <cstring>
 
 #include <EngineCore/Events/Dispatcher.hpp>
 #include <EngineCore/EngineCore.hpp>
