@@ -2,7 +2,7 @@
 
 #include "DdsParser.hpp"
 
-static Grindstone::GraphicsAPI::Format MapFourCC(DWORD fourcc, bool hasAlpha) {
+static Grindstone::GraphicsAPI::Format MapFourCC(uint32_t fourcc, bool hasAlpha) {
 	using Format = Grindstone::GraphicsAPI::Format;
 	switch (fourcc) {
 	case Grindstone::Formats::DDS::FOURCC_BC1_UNORM: return hasAlpha ? Format::BC1_RGBA_UNORM_BLOCK : Format::BC1_RGB_UNORM_BLOCK;

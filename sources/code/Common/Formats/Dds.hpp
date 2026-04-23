@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 namespace Grindstone::Formats::DDS {
-	using DWORD = unsigned long;
+	using DWORD = uint32_t;
 
 	struct DDS_PIXELFORMAT {
 		DWORD dwSize = 32;
