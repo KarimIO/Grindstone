@@ -1,6 +1,9 @@
 #pragma once
 
+#ifdef _WIN32
 #include <Windows.h>
+#endif
+
 #include <Common/Window/Window.hpp>
 #include <Common/Graphics/WindowGraphicsBinding.hpp>
 
@@ -73,7 +76,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		Window* window = nullptr;
 		RenderPass* renderPass = nullptr;
 		std::vector<ImageSet> imageSets;
-			
+
 		Format swapchainFormat = Format::Invalid;
 		VkFormat swapchainVulkanFormat;
 

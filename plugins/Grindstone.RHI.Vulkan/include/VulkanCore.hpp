@@ -2,7 +2,11 @@
 
 #include <functional>
 
+#ifdef _WIN32
 #include <vma/vk_mem_alloc.h>
+#else
+#include <vk_mem_alloc.h>
+#endif
 
 #include <Common/Logging.hpp>
 #include <Common/Graphics/Core.hpp>
@@ -107,7 +111,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual GraphicsAPI::Image* CreateImage(const GraphicsAPI::Image::CreateInfo& ci) override;
 		virtual GraphicsAPI::DescriptorSet* CreateDescriptorSet(const GraphicsAPI::DescriptorSet::CreateInfo& ci) override;
 		virtual GraphicsAPI::DescriptorSetLayout* CreateDescriptorSetLayout(const GraphicsAPI::DescriptorSetLayout::CreateInfo& ci) override;
-		
+
 		virtual GraphicsAPI::GraphicsPipeline* GetOrCreateGraphicsPipelineFromCache(const GraphicsPipeline::PipelineData& pipelineData, const VertexInputLayout* vertexInputLayout) override;
 
 		virtual inline bool ShouldUseImmediateMode() const override;
