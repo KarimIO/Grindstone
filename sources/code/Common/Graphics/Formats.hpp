@@ -4,6 +4,14 @@
 #include <utility>
 #include <stdint.h>
 
+#ifdef None
+#undef None
+#endif
+
+#ifdef Always
+#undef Always
+#endif
+
 namespace Grindstone::GraphicsAPI {
 	/*! Values to clear an attachment with. Use the unions with the correct data type
 		that represents the attachment, and use each of the 4 members of the array
@@ -60,18 +68,18 @@ namespace Grindstone::GraphicsAPI {
 	};
 
 	enum class LoadOp {
-		Load = 0,
+		Load,
 		Clear,
 		DontCare
 	};
 
 	enum class StoreOp {
-		Store = 0,
+		Store,
 		DontCare
 	};
 
 	enum class TextureWrapMode : uint8_t {
-		Repeat = 0,
+		Repeat,
 		ClampToEdge,
 		ClampToBorder,
 		MirroredRepeat,
@@ -79,7 +87,7 @@ namespace Grindstone::GraphicsAPI {
 	};
 
 	enum class TextureFilter : uint8_t {
-		Nearest = 0,
+		Nearest,
 		Linear
 	};
 
@@ -119,7 +127,7 @@ namespace Grindstone::GraphicsAPI {
 	};
 
 	enum class ImageAspectBits : uint16_t {
-		None = 0,
+		None,
 		Color = 0x00000001,
 		Depth = 0x00000002,
 		Stencil = 0x00000004,
@@ -143,7 +151,7 @@ namespace Grindstone::GraphicsAPI {
 	}
 
 	enum class PipelineStageBit : uint32_t {
-		None = 0,
+		None,
 		TopOfPipe = 0x00000001,
 		DrawIndirect = 0x00000002,
 		VertexInput = 0x00000004,
@@ -439,7 +447,7 @@ namespace Grindstone::GraphicsAPI {
 	};
 
 	enum class FormatDepthStencilType : uint8_t {
-		NotDepthStencil = 0,
+		NotDepthStencil,
 		Depth = 1 << 0,
 		Stencil = 1 << 1,
 		DepthStencil = static_cast<uint8_t>(FormatDepthStencilType::Depth) | static_cast<uint8_t>(FormatDepthStencilType::Stencil)
@@ -472,7 +480,7 @@ namespace Grindstone::GraphicsAPI {
 	constexpr uint8_t numShaderTotalStage = static_cast<uint8_t>(ShaderStage::Count);
 
 	enum class ShaderStageBit : uint8_t {
-		None = 0,
+		None,
 #define GSExpandEntry(key, bit) key = bit
 		SHADER_STAGE_TYPES,
 #undef GSExpandEntry
@@ -759,7 +767,7 @@ namespace Grindstone::GraphicsAPI {
 	}
 
 	enum class ColorMask : uint8_t {
-		None = 0,
+		None,
 		Red = 0x1,
 		Green = 0x2,
 		Blue = 0x4,
@@ -809,7 +817,7 @@ namespace Grindstone::GraphicsAPI {
 	}
 
 	enum class CullMode : uint8_t {
-		None = 0,
+		None,
 		Front,
 		Back,
 		Both
