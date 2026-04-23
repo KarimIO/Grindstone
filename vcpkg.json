@@ -24,6 +24,7 @@
 		"imguizmo",
 		"joltphysics",
 		"libgit2",
+		"libuuid",
 		"opengl",
 		"opengl-registry",
 		"rapidjson",

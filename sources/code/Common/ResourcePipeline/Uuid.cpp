@@ -41,10 +41,11 @@ std::string Grindstone::Uuid::ToString() const {
 }
 #else
 #include <uuid/uuid.h>
+#include <cstring>
 
 Grindstone::Uuid Grindstone::Uuid::CreateRandom() {
-	Uuid newUuid();
-	uuid_generate_random((uuid_t)newUuid.asUint64);
+	Uuid newUuid;
+	uuid_generate_random((unsigned char*)newUuid.asUint64);
 	return newUuid;
 }
 
@@ -54,12 +55,12 @@ bool Grindstone::Uuid::MakeFromString(const char* str, Grindstone::Uuid& outUuid
 		return false;
 	}
 
-	return uuid_parse(str, (uuint_t)outUuid.asUint64) == 0;
+	return uuid_parse(str, (unsigned char*)outUuid.asUint64) == 0;
 }
 
 std::string Grindstone::Uuid::ToString() const {
 	char uuidStr[37];
-	uuid_unparse((uuid_t)&outUuid.asUint64[0], uuidStr);
+	uuid_unparse((unsigned char*)&asUint64[0], uuidStr);
 
 	return uuidStr;
 }
