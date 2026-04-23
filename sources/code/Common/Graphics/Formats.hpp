@@ -1003,7 +1003,7 @@ inline Grindstone::GraphicsAPI::ColorMask& operator^=(Grindstone::GraphicsAPI::C
 
 namespace std {
 	template<>
-	struct std::hash<Grindstone::GraphicsAPI::VertexBindingDescription> {
+	struct hash<Grindstone::GraphicsAPI::VertexBindingDescription> {
 		std::size_t operator()(const Grindstone::GraphicsAPI::VertexBindingDescription& binding) const noexcept {
 			size_t result = std::hash<size_t>{}(
 				static_cast<size_t>(binding.bindingIndex) << 8 |
@@ -1015,7 +1015,7 @@ namespace std {
 	};
 
 	template<>
-	struct std::hash<Grindstone::GraphicsAPI::VertexAttributeDescription> {
+	struct hash<Grindstone::GraphicsAPI::VertexAttributeDescription> {
 		std::size_t operator()(const Grindstone::GraphicsAPI::VertexAttributeDescription& attribute) const noexcept {
 			size_t result = std::hash<size_t>{}(
 				static_cast<size_t>(attribute.attributeUsage) |
@@ -1036,7 +1036,7 @@ namespace std {
 	};
 
 	template<>
-	struct std::hash<Grindstone::GraphicsAPI::VertexInputLayout> {
+	struct hash<Grindstone::GraphicsAPI::VertexInputLayout> {
 		std::size_t operator()(const Grindstone::GraphicsAPI::VertexInputLayout& vertexInputLayout) const noexcept {
 			size_t result = std::hash<size_t>{}(vertexInputLayout.attributes.size()) ^ std::hash<size_t>{}(vertexInputLayout.bindings.size());
 

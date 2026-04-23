@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <xkeycheck.h>
 
 #include <Common/Hash.hpp>
 #include "Formats.hpp"
@@ -70,7 +69,7 @@ namespace Grindstone::GraphicsAPI {
 
 namespace std {
 	template<>
-	struct std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::ShaderStageData> {
+	struct hash<Grindstone::GraphicsAPI::GraphicsPipeline::ShaderStageData> {
 		std::size_t operator()(const Grindstone::GraphicsAPI::GraphicsPipeline::ShaderStageData& stage) const noexcept {
 			size_t result = stage.size;
 			result ^= std::hash<uint8_t>{}(static_cast<uint8_t>(stage.type));
@@ -80,7 +79,7 @@ namespace std {
 	};
 
 	template<>
-	struct std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::AttachmentData> {
+	struct hash<Grindstone::GraphicsAPI::GraphicsPipeline::AttachmentData> {
 		std::size_t operator()(const Grindstone::GraphicsAPI::GraphicsPipeline::AttachmentData& attachment) const noexcept {
 			size_t result =
 				static_cast<size_t>(attachment.colorMask) |
@@ -95,7 +94,7 @@ namespace std {
 	};
 
 	template<>
-	struct std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::PipelineData> {
+	struct hash<Grindstone::GraphicsAPI::GraphicsPipeline::PipelineData> {
 		std::size_t operator()(const Grindstone::GraphicsAPI::GraphicsPipeline::PipelineData& pipelineData) const noexcept {
 			size_t result =
 				static_cast<size_t>(pipelineData.cullMode) |
