@@ -1,4 +1,8 @@
+#ifdef _WIN32
 #include <Windows.h>
+#endif
+
+#include <stdexcept>
 
 #include "TaskSystem.hpp"
 
@@ -44,7 +48,9 @@ void TaskSystem::Execute(std::string jobName, std::function<void()> jobPtr) {
 			jobPtr();
 		}
 		catch (std::runtime_error e) {
+#ifdef _WIN32
 			OutputDebugString(e.what());
+#endif
 		}
 		std::scoped_lock lock(mutex);
 		tasks[uuid].status = Task::Status::Done;
