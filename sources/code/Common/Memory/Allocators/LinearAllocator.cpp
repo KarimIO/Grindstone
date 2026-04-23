@@ -1,4 +1,5 @@
 #include <memory>
+#include <cstring>
 
 #include "../../Assert.hpp"
 #include "LinearAllocator.hpp"
@@ -45,7 +46,7 @@ void* LinearAllocator::Allocate(size_t size) {
 
 void LinearAllocator::Destroy() {
 	if (hasAllocatedOwnMemory && memory != nullptr) {
-		delete memory;
+		free(memory);
 	}
 }
 

@@ -1,6 +1,7 @@
 #include <memory>
 #include <iostream>
 #include <sstream>
+#include <cstring>
 
 #include <EngineCore/Logger.hpp>
 
@@ -277,7 +278,7 @@ DynamicAllocator::~DynamicAllocator() {
 #endif
 
 	if (startMemory && hasAllocatedOwnMemory) {
-		delete[] startMemory;
+		free(startMemory);
 	}
 }
 

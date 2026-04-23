@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include "../../Assert.hpp"
 #include "PoolAllocator.hpp"
 
@@ -21,7 +23,7 @@ void BasePoolAllocator::ClearAndZero() {
 
 void BasePoolAllocator::Destroy() {
 	if (hasAllocatedOwnMemory && memory != nullptr) {
-		delete memory;
+		free(memory);
 	}
 }
 

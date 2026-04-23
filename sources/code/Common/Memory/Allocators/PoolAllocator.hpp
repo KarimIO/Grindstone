@@ -89,6 +89,7 @@ namespace Grindstone::Memory::Allocators {
 			};
 
 			SetupLinkedList();
+			return true;
 		}
 
 		bool Initialize(size_t maxChunkCount) {

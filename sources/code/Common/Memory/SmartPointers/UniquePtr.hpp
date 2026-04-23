@@ -79,7 +79,7 @@ namespace Grindstone {
 		}
 
 		bool operator==(const Grindstone::UniquePtr<T>& other) const noexcept {
-			return ptr == other.ptr && deleteFn == other.deleteFn;
+			return ptr == other.ptr && deleteFn.target<void(void)>() == other.deleteFn.target<void(void)>();
 		}
 
 		bool operator==(const T* other) const noexcept {

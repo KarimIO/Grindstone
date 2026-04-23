@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 namespace Grindstone::Memory::Allocators {
 	/**
 	 * \brief A stack allocator where memory can only be deallocated in order (LIFO).
