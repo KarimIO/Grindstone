@@ -28,7 +28,7 @@ void ComponentRegistrar::CopyRegistry(WorldContextSet& dst, WorldContextSet& src
 	);
 
 	for (auto& fns : componentFunctionsList) {
-		fns.second.CopyRegistryComponentsFn(dst, src);
+		fns.second.copyRegistryComponentsFn(dst, src);
 	}
 }
 
@@ -39,8 +39,8 @@ void ComponentRegistrar::DestroyEntity(ECS::Entity entity) {
 
 	for (auto& compFnPair : componentFunctionsList) {
 		ComponentFunctions& compFns = compFnPair.second;
-		if (compFns.HasComponentFn(registry, entityHandle) && compFns.DestroyComponentFn) {
-			compFns.DestroyComponentFn(cxtSet, entityHandle);
+		if (compFns.hasComponentFn(registry, entityHandle) && compFns.destroyComponentFn) {
+			compFns.destroyComponentFn(cxtSet, entityHandle);
 		}
 	}
 
@@ -55,8 +55,8 @@ void ComponentRegistrar::CallCreateOnRegistry(Grindstone::WorldContextSet& world
 		ComponentFunctions& compFns = compFnPair.second;
 
 		for (entt::entity entity : entityView) {
-			if (compFns.SetupComponentFn != nullptr && compFns.HasComponentFn(registry, entity)) {
-				compFns.SetupComponentFn(worldContextSet, entity);
+			if (compFns.setupComponentFn != nullptr && compFns.hasComponentFn(registry, entity)) {
+				compFns.setupComponentFn(worldContextSet, entity);
 			}
 		}
 	}
@@ -70,10 +70,10 @@ void ComponentRegistrar::CallDestroyOnRegistry(Grindstone::WorldContextSet& worl
 	for (auto& compFnPair : componentFunctionsList) {
 		ComponentFunctions& compFns = compFnPair.second;
 
-		if (compFns.DestroyComponentFn != nullptr) {
+		if (compFns.destroyComponentFn != nullptr) {
 			for (entt::entity entity : entityView) {
-				if (compFns.HasComponentFn(registry, entity)) {
-					compFns.DestroyComponentFn(cxtSet, entity);
+				if (compFns.hasComponentFn(registry, entity)) {
+					compFns.destroyComponentFn(cxtSet, entity);
 				}
 			}
 		}
@@ -107,11 +107,11 @@ void* ComponentRegistrar::CreateComponentWithSetup(Grindstone::HashedString name
 	entt::registry& registry = GetEntityRegistry();
 
 	auto& fns = selectedFactory->second;
-	auto comp = fns.CreateComponentFn(registry, entity.GetHandle());
+	auto comp = fns.createComponentFn(registry, entity.GetHandle());
 
-	if (fns.SetupComponentFn) {
+	if (fns.setupComponentFn) {
 		Grindstone::WorldContextSet& cxtSet = GetActiveWorldContextSet();
-		fns.SetupComponentFn(cxtSet, entity.GetHandle());
+		fns.setupComponentFn(cxtSet, entity.GetHandle());
 	}
 
 	return comp;
@@ -126,10 +126,10 @@ void* ComponentRegistrar::CreateComponentWithSetup(WorldContextSet& worldContext
 	entt::registry& registry = GetEntityRegistry();
 
 	auto& fns = selectedFactory->second;
-	auto comp = fns.CreateComponentFn(registry, entity.GetHandle());
+	auto comp = fns.createComponentFn(registry, entity.GetHandle());
 
-	if (fns.SetupComponentFn) {
-		fns.SetupComponentFn(worldContextSet, entity.GetHandle());
+	if (fns.setupComponentFn) {
+		fns.setupComponentFn(worldContextSet, entity.GetHandle());
 	}
 
 	return comp;
@@ -142,7 +142,7 @@ void* ComponentRegistrar::CreateComponent(Grindstone::HashedString name, ECS::En
 	}
 
 	entt::registry& registry = GetEntityRegistry();
-	return selectedFactory->second.CreateComponentFn(registry, entity.GetHandle());
+	return selectedFactory->second.createComponentFn(registry, entity.GetHandle());
 }
 
 void ComponentRegistrar::RemoveComponent(Grindstone::HashedString name, ECS::Entity entity) {
@@ -152,12 +152,12 @@ void ComponentRegistrar::RemoveComponent(Grindstone::HashedString name, ECS::Ent
 	}
 
 	auto& fns = selectedFactory->second;
-	if (fns.DestroyComponentFn) {
-		fns.DestroyComponentFn(GetActiveWorldContextSet(), entity.GetHandle());
+	if (fns.destroyComponentFn) {
+		fns.destroyComponentFn(GetActiveWorldContextSet(), entity.GetHandle());
 	}
 
 	entt::registry& registry = GetEntityRegistry();
-	fns.RemoveComponentFn(registry, entity.GetHandle());
+	fns.removeComponentFn(registry, entity.GetHandle());
 }
 
 bool ComponentRegistrar::HasComponent(Grindstone::HashedString name, ECS::Entity entity) {
@@ -167,7 +167,7 @@ bool ComponentRegistrar::HasComponent(Grindstone::HashedString name, ECS::Entity
 	}
 
 	entt::registry& registry = GetEntityRegistry();
-	return selectedFactory->second.HasComponentFn(registry, entity.GetHandle());
+	return selectedFactory->second.hasComponentFn(registry, entity.GetHandle());
 }
 
 bool ComponentRegistrar::TryGetComponent(Grindstone::HashedString name, ECS::Entity entity, void*& outComponent) {
@@ -177,7 +177,7 @@ bool ComponentRegistrar::TryGetComponent(Grindstone::HashedString name, ECS::Ent
 	}
 
 	entt::registry& registry = GetEntityRegistry();
-	return selectedFactory->second.TryGetComponentFn(registry, entity.GetHandle(), outComponent);
+	return selectedFactory->second.tryGetComponentFn(registry, entity.GetHandle(), outComponent);
 }
 
 bool ComponentRegistrar::TryGetComponentReflectionData(Grindstone::HashedString name, Grindstone::Reflection::TypeDescriptor_Struct& outReflectionData) {
@@ -186,7 +186,7 @@ bool ComponentRegistrar::TryGetComponentReflectionData(Grindstone::HashedString 
 		return false;
 	}
 
-	outReflectionData = selectedFactory->second.GetComponentReflectionDataFn();
+	outReflectionData = selectedFactory->second.getComponentReflectionDataFn();
 	return true;
 }
 
@@ -197,8 +197,8 @@ void ComponentRegistrar::SetupComponent(Grindstone::HashedString name, ECS::Enti
 	}
 
 	auto& fns = selectedFactory->second;
-	if (fns.SetupComponentFn) {
-		fns.SetupComponentFn(GetActiveWorldContextSet(), entity.GetHandle());
+	if (fns.setupComponentFn) {
+		fns.setupComponentFn(GetActiveWorldContextSet(), entity.GetHandle());
 	}
 }
 
@@ -209,8 +209,8 @@ void ComponentRegistrar::SetupComponent(WorldContextSet& worldContextSet, Grinds
 	}
 
 	auto& fns = selectedFactory->second;
-	if (fns.SetupComponentFn) {
-		fns.SetupComponentFn(worldContextSet, entity.GetHandle());
+	if (fns.setupComponentFn) {
+		fns.setupComponentFn(worldContextSet, entity.GetHandle());
 	}
 }
 

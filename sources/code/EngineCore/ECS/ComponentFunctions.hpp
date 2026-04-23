@@ -17,17 +17,17 @@ namespace Grindstone {
 		using CreateComponentFn = void*(*)(entt::registry&, entt::entity);
 		using RemoveComponentFn = void(*)(entt::registry&, entt::entity);
 		using CopyRegistryComponentsFn = void(*)(WorldContextSet& dst, WorldContextSet& src);
-		
+
 		class ComponentFunctions {
 		public:
-			SetupComponentFn SetupComponentFn = nullptr;
-			DestroyComponentFn DestroyComponentFn = nullptr;
-			CreateComponentFn CreateComponentFn = nullptr;
-			RemoveComponentFn RemoveComponentFn = nullptr;
-			HasComponentFn HasComponentFn = nullptr;
-			TryGetComponentFn TryGetComponentFn = nullptr;
-			GetComponentReflectionDataFn GetComponentReflectionDataFn = nullptr;
-			CopyRegistryComponentsFn CopyRegistryComponentsFn = nullptr;
+			SetupComponentFn setupComponentFn = nullptr;
+			DestroyComponentFn destroyComponentFn = nullptr;
+			CreateComponentFn createComponentFn = nullptr;
+			RemoveComponentFn removeComponentFn = nullptr;
+			HasComponentFn hasComponentFn = nullptr;
+			TryGetComponentFn tryGetComponentFn = nullptr;
+			GetComponentReflectionDataFn getComponentReflectionDataFn = nullptr;
+			CopyRegistryComponentsFn copyRegistryComponentsFn = nullptr;
 		};
 	}
 }

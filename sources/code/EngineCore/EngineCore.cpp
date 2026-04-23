@@ -5,7 +5,7 @@
 #include <EngineCore/ECS/SystemRegistrar.hpp>
 #include <EngineCore/ECS/ComponentRegistrar.hpp>
 #include <EngineCore/CoreComponents/setupCoreComponents.hpp>
-#include <EngineCore/CoreSystems/setupCoreSystems.hpp>
+#include <EngineCore/CoreSystems/SetupCoreSystems.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/PluginSystem/DefaultPluginManager.hpp>
 #include <EngineCore/Events/InputManager.hpp>

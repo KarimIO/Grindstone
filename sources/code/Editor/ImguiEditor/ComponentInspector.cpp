@@ -152,8 +152,8 @@ void ComponentInspector::Render(ECS::Entity entity) {
 	std::vector<ECS::ComponentFunctions> unusedComponentsFunctions;
 	for (auto& componentEntry : componentRegistrar) {
 		Grindstone::HashedString componentTypeName = componentEntry.first;
-		auto componentReflectionData = componentEntry.second.GetComponentReflectionDataFn();
-		auto tryGetComponentFn = componentEntry.second.TryGetComponentFn;
+		auto componentReflectionData = componentEntry.second.getComponentReflectionDataFn();
+		auto tryGetComponentFn = componentEntry.second.tryGetComponentFn;
 
 		void* outComponent = nullptr;
 		if (entity.TryGetComponent(componentTypeName, outComponent)) {
