@@ -1,4 +1,5 @@
 #include <iostream>
+#include <filesystem>
 #include "ModuleLoading.hpp"
 
 using namespace Grindstone::Utilities;
@@ -10,11 +11,14 @@ Handle Modules::Load(std::string name) {
 	auto library = LoadLibrary(name.c_str());
 	return library;
 #elif defined(__linux__)
-	name = "./lib" + name + ".so";
+	std::filesystem::path path = name;
+	std::filesystem::path parentPath = path.parent_path();
+	path = (parentPath.empty() ? "./" : parentPath) / std::filesystem::path("lib" + path.filename().string() + ".so");
+	std::string pathAsStr = path.string();
 
-	void* library = dlopen(name.c_str(), RTLD_NOW);
+	void* library = dlopen(pathAsStr.c_str(), RTLD_NOW);
 	if (!library) {
-		fprintf(stderr, "dlopen failed: %s\n", dlerror());
+		fprintf(stderr, "dlopen failed: %s - %s\n", pathAsStr.c_str(), dlerror());
 		return nullptr;
 	};
 

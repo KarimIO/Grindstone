@@ -208,9 +208,13 @@ void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
 			if (binary.loadStage == stageName) {
 				std::filesystem::path binaryPath = metaData.pluginResolvedPath / binary.libraryRelativePath;
 				std::filesystem::path parentPath = binaryPath.parent_path();
+#ifdef _WIN32
 				DLL_DIRECTORY_COOKIE dllCookie = AddDllDirectory(parentPath.wstring().c_str());
 				LoadModule(binaryPath);
 				RemoveDllDirectory(dllCookie);
+#else
+				LoadModule(binaryPath);
+#endif
 			}
 		}
 
@@ -274,7 +278,10 @@ bool EditorPluginManager::LoadModule(const std::filesystem::path& path) {
 		return true;
 	}
 
+#ifdef _WIN32
 	SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_USER_DIRS);
+#endif // #ifdef _WIN32
+
 	auto handle = Modules::Load(path.string().c_str());
 
 	if (handle) {
@@ -323,7 +330,7 @@ void EditorPluginManager::UnloadModule(const std::filesystem::path& path) {
 
 	Grindstone::Utilities::Modules::Handle handle = it->second;
 	if (handle) {
-		auto releaseModuleFnPtr = static_cast<void (*)(Interface*)>(Modules::GetFunction(handle, "ReleaseModule"));
+		auto releaseModuleFnPtr = reinterpret_cast<void (*)(Interface*)>(Modules::GetFunction(handle, "ReleaseModule"));
 
 		if (releaseModuleFnPtr) {
 			releaseModuleFnPtr(EngineCore::GetInstance().GetPluginInterface());
@@ -410,9 +417,13 @@ void EditorPluginManager::ProcessQueuedPluginInstallsAndUninstalls() {
 			for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
 				std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
 				std::filesystem::path parentPath = binaryPath.parent_path();
+#ifdef _WIN32
 				DLL_DIRECTORY_COOKIE dllCookie = AddDllDirectory(parentPath.wstring().c_str());
 				LoadModule(binaryPath);
 				RemoveDllDirectory(dllCookie);
+#else
+				LoadModule(binaryPath);
+#endif
 			}
 		}
 

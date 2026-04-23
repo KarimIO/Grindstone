@@ -60,7 +60,9 @@ bool DefaultPluginManager::LoadModule(const std::string& path) {
 		return true;
 	}
 
-	SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_USER_DIRS);
+#ifdef _WIN32
+SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_USER_DIRS);
+#endif
 	auto handle = Modules::Load(path.c_str());
 
 	if (handle) {
@@ -105,7 +107,7 @@ void DefaultPluginManager::UnloadModule(const std::string& path) {
 	if (it != pluginModules.end()) {
 		Grindstone::Utilities::Modules::Handle handle = it->second;
 		if (handle) {
-			auto releaseModuleFnPtr = static_cast<void (*)(Interface*)>(Modules::GetFunction(handle, "ReleaseModule"));
+			auto releaseModuleFnPtr = reinterpret_cast<void (*)(Interface*)>(Modules::GetFunction(handle, "ReleaseModule"));
 
 			if (releaseModuleFnPtr) {
 				releaseModuleFnPtr(EngineCore::GetInstance().GetPluginInterface());

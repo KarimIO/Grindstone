@@ -283,7 +283,7 @@ bool Manager::LoadEngine() {
 	}
 
 	CreateEngineFunction* createEngineFn =
-		static_cast<CreateEngineFunction*>(Utilities::Modules::GetFunction(engineCoreLibraryHandle, "CreateEngine"));
+		reinterpret_cast<CreateEngineFunction*>(Utilities::Modules::GetFunction(engineCoreLibraryHandle, "CreateEngine"));
 	if (createEngineFn == nullptr) {
 		std::cerr << "Failed to load CreateEngine in EngineCore Module.\n";
 		return false;
@@ -371,7 +371,7 @@ Manager::~Manager() {
 			using DestroyEngineFunction = void *();
 
 			DestroyEngineFunction* destroyEngineFn =
-				static_cast<DestroyEngineFunction*>(Utilities::Modules::GetFunction(engineCoreLibraryHandle, "DestroyEngine"));
+				reinterpret_cast<DestroyEngineFunction*>(Utilities::Modules::GetFunction(engineCoreLibraryHandle, "DestroyEngine"));
 			if (destroyEngineFn != nullptr) {
 				destroyEngineFn();
 			}
