@@ -4,6 +4,10 @@
 #include <hostfxr.h>
 #include <coreclr_delegates.h>
 
+#ifndef _WIN32
+#include <dlfcn.h>
+#endif // #ifndef _WIN32
+
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/ECS/Entity.hpp>
 #include <EngineCore/ECS/ComponentRegistrar.hpp>
@@ -63,7 +67,7 @@ namespace Grindstone {
 
 Grindstone::CsharpGlobals csharpGlobals;
 
-static const char* GetDotNetErrorMessage(int rc) {
+static const char* GetDotNetErrorMessage(unsigned int rc) {
 	switch (rc) {
 		case 0x0: return "Success";
 
@@ -114,7 +118,7 @@ static void* GetModuleExport(void* h, const char* name) {
 }
 #else
 static void* LoadModuleFile(const char_t* path) {
-	void* h = dlopen(path, RTLD_LAZY | RTLD_LOCAL);
+	void* h = dlopen(path, RTLD_NOW);
 	assert(h != nullptr);
 	return h;
 }
@@ -129,7 +133,13 @@ static void* GetModuleExport(void* h, const char* name) {
 static bool LoadHostFxr() {
 	get_hostfxr_parameters params{ sizeof(get_hostfxr_parameters), nullptr, nullptr };
 	// Pre-allocate a large buffer for the path to hostfxr
+
+#ifdef MAX_PATH
 	char_t buffer[MAX_PATH];
+#else // #ifdef MAX_PATH
+	char_t buffer[4096];
+#endif // #else #ifdef MAX_PATH
+
 	size_t bufferSize = sizeof(buffer) / sizeof(char_t);
 	int rc = get_hostfxr_path(buffer, &bufferSize, &params);
 	if (rc != 0) {
@@ -152,8 +162,8 @@ static bool LoadHostFxr() {
 		csharpGlobals.GetDelegate == nullptr ||
 		csharpGlobals.RunApp == nullptr ||
 		csharpGlobals.Close == nullptr
-		) {
-		GPRINT_ERROR_V(Grindstone::LogSource::Scripting, "Failed to get hostfxr functions.");
+	) {
+		GPRINT_ERROR(Grindstone::LogSource::Scripting, "Failed to get hostfxr functions.");
 		return false;
 	}
 
@@ -200,11 +210,20 @@ static bool LoadHostFxr() {
 
 static bool LoadGrindstoneCoreFunction(std::wstring_view dllPath, std::string_view functionName, void** fn) {
 	std::wstring wfuncName = std::wstring(functionName.begin(), functionName.end());
+	std::string smallName = std::string(dllPath.begin(), dllPath.end());
 
 	int rc = csharpGlobals.LoadAssemblyAndGetFunctionPointer(
+#ifdef _WIN32
+		// Windows expects wide characters
 		dllPath.data(),
 		L"Grindstone.HostBridge, CSharpCore",
 		wfuncName.c_str(),
+#else // #ifdef _WIN32
+		// Unix expects regular characters
+		smallName.c_str(),
+		"Grindstone.HostBridge, CSharpCore",
+		functionName.data(),
+#endif // #else #ifdef _WIN32
 		UNMANAGEDCALLERSONLY_METHOD,
 		nullptr,
 		fn
@@ -285,9 +304,9 @@ void CSharpManager::Initialize() {
 	_putenv("DOTNET_EnableDiagnostics=1");
 	_putenv("COMPlus_EnableDiagnostics=1");
 #else
-	setenv("DOTNET_STARTUP_HOOKS=");
-	setenv("DOTNET_EnableDiagnostics=1");
-	setenv("COMPlus_EnableDiagnostics=1");
+	setenv("DOTNET_STARTUP_HOOKS", "", true);
+	setenv("DOTNET_EnableDiagnostics", "1", true);
+	setenv("COMPlus_EnableDiagnostics", "1", true);
 #endif
 
 	if (!LoadHostFxr()) {
@@ -381,7 +400,7 @@ void CSharpManager::SetupComponent(Grindstone::WorldContextSet& cxtSet, entt::en
 		component.scriptNamespace.empty()
 		? component.scriptClass
 		: component.scriptNamespace + "." + component.scriptClass;
-	
+
 	auto it = assemblies.find(component.assembly);
 
 	AssemblyHash assemblyHash;
