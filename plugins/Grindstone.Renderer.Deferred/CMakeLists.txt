@@ -22,6 +22,8 @@ set_target_properties(PluginRendererDeferred PROPERTIES FOLDER Plugins/Renderer)
 
 find_path(GLM_INCLUDE_DIRS "glm/glm.hpp")
 
+file(MAKE_DIRECTORY "${RENDERER_DEFERRED_BIN}")
+file(MAKE_DIRECTORY "${RENDERER_DEFERRED_LIB}")
 set_target_properties(PluginRendererDeferred PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${RENDERER_DEFERRED_BIN}"
 	LIBRARY_OUTPUT_DIRECTORY "${RENDERER_DEFERRED_LIB}"

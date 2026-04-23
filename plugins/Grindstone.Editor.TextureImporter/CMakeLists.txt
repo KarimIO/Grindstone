@@ -34,6 +34,8 @@ set_property(TARGET PluginEditorTextureImporter PROPERTY COMPILE_WARNING_AS_ERRO
 target_compile_features(PluginEditorTextureImporter PRIVATE cxx_std_20)
 set_target_properties(PluginEditorTextureImporter PROPERTIES FOLDER "Plugins/Editor/Importers")
 
+file(MAKE_DIRECTORY "${EDITOR_TEXTURE_IMPORTER_BIN}")
+file(MAKE_DIRECTORY "${EDITOR_TEXTURE_IMPORTER_LIB}")
 set_target_properties(PluginEditorTextureImporter PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${EDITOR_TEXTURE_IMPORTER_BIN}"
 	LIBRARY_OUTPUT_DIRECTORY "${EDITOR_TEXTURE_IMPORTER_LIB}"

@@ -38,6 +38,8 @@ target_compile_definitions(PluginJoltPhysics PUBLIC "JOLT_PHYSICS;PHYSICS_DLL;GL
 target_compile_definitions(PluginJoltPhysics PUBLIC "$<$<CONFIG:Debug>:JPH_DEBUG_RENDERER;JPH_PROFILE_ENABLED>")
 target_include_directories(PluginJoltPhysics PUBLIC ${CODE_DIR} ${ENTT_INCLUDE_DIRS} ${PLUGIN_DIR})
 
+file(MAKE_DIRECTORY "${PHYSICS_JOLT_BIN}")
+file(MAKE_DIRECTORY "${PHYSICS_JOLT_LIB}")
 set_target_properties(PluginJoltPhysics PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${PHYSICS_JOLT_BIN}"
 	LIBRARY_OUTPUT_DIRECTORY "${PHYSICS_JOLT_LIB}"

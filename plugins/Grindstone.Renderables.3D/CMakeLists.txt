@@ -36,6 +36,8 @@ set_target_properties(PluginRenderables3D PROPERTIES FOLDER Plugins/Renderables)
 
 find_path(GLM_INCLUDE_DIRS "glm/glm.hpp")
 
+file(MAKE_DIRECTORY "${RENDERABLES_3D_BIN}")
+file(MAKE_DIRECTORY "${RENDERABLES_3D_LIB}")
 set_target_properties(PluginRenderables3D PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${RENDERABLES_3D_BIN}"
 	LIBRARY_OUTPUT_DIRECTORY "${RENDERABLES_3D_LIB}"

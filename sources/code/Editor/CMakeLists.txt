@@ -105,6 +105,7 @@ find_package(unofficial-libgit2 CONFIG REQUIRED)
 
 add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
 
+file(MAKE_DIRECTORY "${BUILD_DIRECTORY}")
 set_target_properties(Editor PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${BUILD_DIRECTORY}"
 	LIBRARY_OUTPUT_DIRECTORY "${BUILD_DIRECTORY}"
@@ -140,7 +141,6 @@ target_link_libraries(
 	unofficial::libgit2::libgit2
 	unofficial::gl3w::gl3w
 	glm::glm
-	opengl32
 	imgui::imgui unofficial::imguizmo::imguizmo
 	${CMAKE_DL_LIBS}
 	Common EditorCommon

@@ -35,6 +35,8 @@ find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")
 target_compile_definitions(PluginBulletPhysics PUBLIC BULLET_PHYSICS PHYSICS_DLL GLM_ENABLE_EXPERIMENTAL)
 target_include_directories(PluginBulletPhysics PUBLIC ${CODE_DIR} ${ENTT_INCLUDE_DIRS} ${PLUGIN_DIR})
 
+file(MAKE_DIRECTORY "${PHYSICS_BULLET_BIN}")
+file(MAKE_DIRECTORY "${PHYSICS_BULLET_LIB}")
 set_target_properties(PluginBulletPhysics PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${PHYSICS_BULLET_BIN}"
 	LIBRARY_OUTPUT_DIRECTORY "${PHYSICS_BULLET_LIB}"

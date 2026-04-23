@@ -31,6 +31,8 @@ set_property(TARGET PluginAudioOpenAL PROPERTY COMPILE_WARNING_AS_ERROR ON)
 target_compile_features(PluginAudioOpenAL PRIVATE cxx_std_20)
 set_target_properties(PluginAudioOpenAL PROPERTIES FOLDER "Plugins/Audio")
 
+file(MAKE_DIRECTORY "${AUDIO_OPENAL_BIN}")
+file(MAKE_DIRECTORY "${AUDIO_OPENAL_LIB}")
 set_target_properties(PluginAudioOpenAL PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${AUDIO_OPENAL_BIN}"
 	LIBRARY_OUTPUT_DIRECTORY "${AUDIO_OPENAL_LIB}"

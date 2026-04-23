@@ -71,6 +71,8 @@ else()
     target_compile_definitions(PluginRhiVulkan PRIVATE ${Vk_PLATFORM})
 endif()
 
+file(MAKE_DIRECTORY "${RHI_VULKAN_BIN}")
+file(MAKE_DIRECTORY "${RHI_VULKAN_LIB}")
 set_target_properties(PluginRhiVulkan PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${RHI_VULKAN_BIN}"
 	LIBRARY_OUTPUT_DIRECTORY "${RHI_VULKAN_LIB}"

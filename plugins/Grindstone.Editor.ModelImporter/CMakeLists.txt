@@ -26,7 +26,7 @@ set(EDITORMODELIMPORTER_HEADERS
 	${INC}/pch.hpp
 )
 
-find_package(Assimp CONFIG REQUIRED)
+find_package(assimp CONFIG REQUIRED)
 find_path(FMT_INCLUDE_DIRS "fmt/format.h")
 
 add_library(
@@ -38,6 +38,8 @@ add_library(
 
 find_package(imgui CONFIG REQUIRED)
 
+file(MAKE_DIRECTORY "${EDITOR_MODEL_IMPORTER_BIN}")
+file(MAKE_DIRECTORY "${EDITOR_MODEL_IMPORTER_LIB}")
 set_target_properties(PluginEditorModelImporter PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${EDITOR_MODEL_IMPORTER_BIN}"
 	LIBRARY_OUTPUT_DIRECTORY "${EDITOR_MODEL_IMPORTER_LIB}"

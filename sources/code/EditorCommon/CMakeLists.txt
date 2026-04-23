@@ -26,6 +26,8 @@ set(EDITOR_COMMON_HEADERS
 
 add_library(EditorCommon STATIC ${EDITOR_COMMON_SOURCES} ${EDITOR_COMMON_HEADERS})
 
+file(MAKE_DIRECTORY "${EDITOR_COMMON_BIN}")
+file(MAKE_DIRECTORY "${EDITOR_COMMON_LIB}")
 set_target_properties(EditorCommon PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${EDITOR_COMMON_BIN}"
 	LIBRARY_OUTPUT_DIRECTORY "${EDITOR_COMMON_LIB}"
@@ -33,7 +35,7 @@ set_target_properties(EditorCommon PROPERTIES
 )
 set_property(TARGET EditorCommon PROPERTY COMPILE_WARNING_AS_ERROR ON)
 target_compile_features(EditorCommon PRIVATE cxx_std_20)
-
+set_property(TARGET EditorCommon PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(EditorCommon PUBLIC ${CODE_DIR} ${PLUGIN_DIR})
 
 target_link_libraries(

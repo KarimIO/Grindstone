@@ -41,7 +41,12 @@ set(CORE_UTILS
 	${ENGINECORE_DIR}/Utils/MemoryAllocator.cpp ${ENGINECORE_DIR}/Utils/MemoryAllocator.hpp
 	${ENGINECORE_DIR}/Utils/DeferredDeletionQueue.cpp ${ENGINECORE_DIR}/Utils/DeferredDeletionQueue.hpp
 )
+
+if (WIN32)
 set(CORE_LIBS fmt::fmt Rpcrt4.lib)
+else()
+set(CORE_LIBS fmt::fmt)
+endif()
 
 set(ENGINE_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/sources/code/EngineCore)
 file(GLOB_RECURSE SOURCE_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.cpp")
