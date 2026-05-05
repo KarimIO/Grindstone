@@ -1,3 +1,4 @@
+#include <Common/Graphics/Buffer.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
 
@@ -58,23 +59,24 @@ bool Grindstone::Renderer::TonemapPass::Initialize() {
 Grindstone::Renderer::TonemapPassReturnData Grindstone::Renderer::TonemapPass::AddPass(
 	Grindstone::Renderer::RenderGraphBuilder& renderGraph,
 	PostProcessSettings settings,
-	Renderer::RenderGraphBuilderResourceRef lightingImageRef
+	Renderer::RenderGraphBuilderResourceRef lightingImageRef,
+	Renderer::RenderGraphBuilderResourceRef outputImageRef
 ) {
 	return renderGraph.CreateGraphicsPass<Grindstone::Renderer::TonemapPassReturnData>(
 		"Tonemapping",
-		MetaRect::Viewport(),
-		[lightingImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::TonemapPassReturnData>& renderPass) {
-			renderPass.ReadImage(lightingImageRef);
-			RenderGraphBuilderResourceRef postProcessOutput = renderPass.WriteColorAttachment(attachmentOutput, GraphicsAPI::ClearColor{});
+		MetaRect::Swapchain(),
+		[lightingImageRef, outputImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::TonemapPassReturnData>& renderPass) {
+			renderPass.ReadSampledImage(lightingImageRef);
+			renderPass.WriteColorAttachment(outputImageRef, GraphicsAPI::LoadOp::DontCare, GraphicsAPI::ClearColor{});
 
 			return Grindstone::Renderer::TonemapPassReturnData{
-				.postProcessOutput = postProcessOutput
+				.postProcessOutput = outputImageRef
 			};
 		},
 		[this, settings](
 			Grindstone::Math::IntRect2D renderingArea,
 			const Renderer::RenderGraphContext& cxt,
-			Renderer::GraphicsRenderGraphPass<Grindstone::Renderer::TonemapPassReturnData>& renderPassExecution,
+			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
 			Grindstone::Renderer::TonemapPassReturnData& data
 		) {
 			Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();

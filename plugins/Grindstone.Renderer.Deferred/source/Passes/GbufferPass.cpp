@@ -15,10 +15,10 @@ Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(glm
 		"Gbuffer Geometry Opaque",
 		MetaRect::Swapchain(),
 		[](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::GbufferData>& renderPass) -> Grindstone::Renderer::GbufferData {
-			RenderGraphBuilderResourceRef albedoRef = renderPass.WriteColorAttachment(attachmentAlbedo, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
-			RenderGraphBuilderResourceRef normalRef = renderPass.WriteColorAttachment(attachmentNormal, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
-			RenderGraphBuilderResourceRef specularRoughnessRef = renderPass.WriteColorAttachment(attachmentSpecularRoughness, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
-			RenderGraphBuilderResourceRef depthRef = renderPass.WriteDepthStencilAttachment(attachmentDepthStencil, ClearDepthStencil(1.0f, 0u));
+			RenderGraphBuilderResourceRef albedoRef = renderPass.WriteColorAttachment(attachmentAlbedo, GraphicsAPI::LoadOp::Clear, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+			RenderGraphBuilderResourceRef normalRef = renderPass.WriteColorAttachment(attachmentNormal, GraphicsAPI::LoadOp::Clear, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+			RenderGraphBuilderResourceRef specularRoughnessRef = renderPass.WriteColorAttachment(attachmentSpecularRoughness, GraphicsAPI::LoadOp::Clear, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
+			RenderGraphBuilderResourceRef depthRef = renderPass.WriteDepthStencilAttachment(attachmentDepthStencil, GraphicsAPI::LoadOp::Clear, ClearDepthStencil(1.0f, 0u));
 
 			return Grindstone::Renderer::GbufferData{
 				.albedoRef = albedoRef,
@@ -30,7 +30,7 @@ Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(glm
 		[projectionMatrix, viewMatrix](
 			Grindstone::Math::IntRect2D viewportArea,
 			const Renderer::RenderGraphContext& cxt,
-			Renderer::GraphicsRenderGraphPass<Grindstone::Renderer::GbufferData>& renderPassExecution,
+			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
 			Grindstone::Renderer::GbufferData& data
 		) {
 			Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();

@@ -52,7 +52,7 @@ namespace Grindstone::GraphicsAPI {
 			const char* debugName;
 			const void* content;
 			size_t bufferSize;
-			Grindstone::Containers::BitsetFlags<BufferUsage> bufferUsage;
+			Grindstone::Containers::BitsetFlags<Grindstone::GraphicsAPI::BufferUsage> bufferUsage;
 			MemoryUsage memoryUsage;
 		};
 

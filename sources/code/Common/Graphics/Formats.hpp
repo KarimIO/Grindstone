@@ -4,6 +4,8 @@
 #include <utility>
 #include <stdint.h>
 
+#include <Common/EnumTraits.hpp>
+
 namespace Grindstone::GraphicsAPI {
 	/*! Values to clear an attachment with. Use the unions with the correct data type
 		that represents the attachment, and use each of the 4 members of the array
@@ -84,11 +86,12 @@ namespace Grindstone::GraphicsAPI {
 	};
 
 	enum class ClearMode : uint8_t {
-		Color = 1,
-		Depth = 2,
-		ColorAndDepth = 3,
-		Stencil = 4,
-		All = 7
+		Color = 1 << 0,
+		Depth = 1 << 1,
+		Stencil = 1 << 2,
+
+		ColorAndDepth = Color | Depth,
+		All = ColorAndDepth | Stencil
 	};
 
 	enum class ImageLayout : uint8_t {
@@ -133,15 +136,6 @@ namespace Grindstone::GraphicsAPI {
 		MemoryPlane3 = 0x00000400,
 	};
 
-	inline ImageAspectBits operator|(ImageAspectBits a, ImageAspectBits b) {
-		return static_cast<ImageAspectBits>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
-	}
-
-	inline ImageAspectBits& operator|=(ImageAspectBits& a, ImageAspectBits b) {
-		a = a | b;
-		return a;
-	}
-
 	enum class PipelineStageBit : uint32_t {
 		None = 0,
 		TopOfPipe = 0x00000001,
@@ -171,15 +165,6 @@ namespace Grindstone::GraphicsAPI {
 		TaskShader = 0x00080000,
 		MeshShader = 0x00100000,
 	};
-
-	inline PipelineStageBit operator|(PipelineStageBit a, PipelineStageBit b) {
-		return static_cast<PipelineStageBit>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
-	}
-
-	inline PipelineStageBit& operator|=(PipelineStageBit& a, PipelineStageBit b) {
-		a = a | b;
-		return a;
-	}
 
 	enum class Format {
 		Invalid,
@@ -933,75 +918,12 @@ inline Grindstone::GraphicsAPI::ShaderStageBit ToShaderStageBit(const Grindstone
 	return static_cast<Grindstone::GraphicsAPI::ShaderStageBit>(1 << static_cast<ShaderStageType>(stage));
 }
 
-inline Grindstone::GraphicsAPI::ShaderStageBit operator~(const Grindstone::GraphicsAPI::ShaderStageBit stages) {
-	using ShaderStageBitType = uint8_t;
-	return static_cast<Grindstone::GraphicsAPI::ShaderStageBit>(~static_cast<ShaderStageBitType>(stages));
-}
-
-inline Grindstone::GraphicsAPI::ShaderStageBit operator|(const Grindstone::GraphicsAPI::ShaderStageBit a, const Grindstone::GraphicsAPI::ShaderStageBit b) {
-	using ShaderStageBitType = uint8_t;
-	return static_cast<Grindstone::GraphicsAPI::ShaderStageBit>(static_cast<ShaderStageBitType>(a) | static_cast<ShaderStageBitType>(b));
-}
-
-inline Grindstone::GraphicsAPI::ShaderStageBit operator&(const Grindstone::GraphicsAPI::ShaderStageBit a, const Grindstone::GraphicsAPI::ShaderStageBit b) {
-	using ShaderStageBitType = uint8_t;
-	return static_cast<Grindstone::GraphicsAPI::ShaderStageBit>(static_cast<ShaderStageBitType>(a) & static_cast<ShaderStageBitType>(b));
-}
-
-inline Grindstone::GraphicsAPI::ShaderStageBit operator^(const Grindstone::GraphicsAPI::ShaderStageBit a, const Grindstone::GraphicsAPI::ShaderStageBit b) {
-	using ShaderStageBitType = uint8_t;
-	return static_cast<Grindstone::GraphicsAPI::ShaderStageBit>(static_cast<ShaderStageBitType>(a) ^ static_cast<ShaderStageBitType>(b));
-}
-
-inline Grindstone::GraphicsAPI::ShaderStageBit& operator|=(Grindstone::GraphicsAPI::ShaderStageBit& a, const Grindstone::GraphicsAPI::ShaderStageBit b) {
-	a = a | b;
-	return a;
-}
-
-inline Grindstone::GraphicsAPI::ShaderStageBit& operator&=(Grindstone::GraphicsAPI::ShaderStageBit& a, const Grindstone::GraphicsAPI::ShaderStageBit b) {
-	a = a & b;
-	return a;
-}
-
-inline Grindstone::GraphicsAPI::ShaderStageBit& operator^=(Grindstone::GraphicsAPI::ShaderStageBit& a, const Grindstone::GraphicsAPI::ShaderStageBit b) {
-	a = a ^ b;
-	return a;
-}
-
-inline Grindstone::GraphicsAPI::ColorMask operator~(const Grindstone::GraphicsAPI::ColorMask stages) {
-	using ColorMaskType = uint8_t;
-	return static_cast<Grindstone::GraphicsAPI::ColorMask>(~static_cast<ColorMaskType>(stages));
-}
-
-inline Grindstone::GraphicsAPI::ColorMask operator|(const Grindstone::GraphicsAPI::ColorMask a, const Grindstone::GraphicsAPI::ColorMask b) {
-	using ColorMaskType = uint8_t;
-	return static_cast<Grindstone::GraphicsAPI::ColorMask>(static_cast<ColorMaskType>(a) | static_cast<ColorMaskType>(b));
-}
-
-inline Grindstone::GraphicsAPI::ColorMask operator&(const Grindstone::GraphicsAPI::ColorMask a, const Grindstone::GraphicsAPI::ColorMask b) {
-	using ColorMaskType = uint8_t;
-	return static_cast<Grindstone::GraphicsAPI::ColorMask>(static_cast<ColorMaskType>(a) & static_cast<ColorMaskType>(b));
-}
-
-inline Grindstone::GraphicsAPI::ColorMask operator^(const Grindstone::GraphicsAPI::ColorMask a, const Grindstone::GraphicsAPI::ColorMask b) {
-	using ColorMaskType = uint8_t;
-	return static_cast<Grindstone::GraphicsAPI::ColorMask>(static_cast<ColorMaskType>(a) ^ static_cast<ColorMaskType>(b));
-}
-
-inline Grindstone::GraphicsAPI::ColorMask& operator|=(Grindstone::GraphicsAPI::ColorMask& a, const Grindstone::GraphicsAPI::ColorMask b) {
-	a = a | b;
-	return a;
-}
-
-inline Grindstone::GraphicsAPI::ColorMask& operator&=(Grindstone::GraphicsAPI::ColorMask& a, const Grindstone::GraphicsAPI::ColorMask b) {
-	a = a & b;
-	return a;
-}
-
-inline Grindstone::GraphicsAPI::ColorMask& operator^=(Grindstone::GraphicsAPI::ColorMask& a, const Grindstone::GraphicsAPI::ColorMask b) {
-	a = a ^ b;
-	return a;
-}
+GS_ENUM_FLAGS_FUNCS(Grindstone::GraphicsAPI::ClearMode)
+GS_ENUM_FLAGS_FUNCS(Grindstone::GraphicsAPI::ImageAspectBits)
+GS_ENUM_FLAGS_FUNCS(Grindstone::GraphicsAPI::PipelineStageBit)
+GS_ENUM_FLAGS_FUNCS(Grindstone::GraphicsAPI::FormatDepthStencilType)
+GS_ENUM_FLAGS_FUNCS(Grindstone::GraphicsAPI::ShaderStageBit)
+GS_ENUM_FLAGS_FUNCS(Grindstone::GraphicsAPI::ColorMask)
 
 namespace std {
 	template<>

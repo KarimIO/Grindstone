@@ -378,19 +378,17 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 
 	GS_ASSERT(renderingContext != nullptr);
 
-	Grindstone::Renderer::RenderGraphBuilder renderGraphBuilder;
-	
 	renderer->Render(
 		commandBuffer,
 		*cxtSet,
 		projection,
 		view,
-		position
+		position,
+		image,
+		depthImage
 	);
 
-	// renderGraphBuilder.CreateTransferPass("Transfer to Imgui");
-
-	Grindstone::Renderer::RenderGraph renderGraph = renderGraphBuilder.Compile();
+	// Grindstone::Renderer::RenderGraph renderGraph = renderGraphBuilder.Compile();
 	// renderGraph.ExecuteGraph(context);
 
 	return;
@@ -541,19 +539,15 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 	uint32_t imageIndex = wgb->GetCurrentImageIndex();
 	Grindstone::GraphicsAPI::Image* image = renderTarget[imageIndex];
 
-	Grindstone::GraphicsAPI::RenderAttachment attachment{
-		.image = image,
-		.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
-		.clearValue = Grindstone::GraphicsAPI::ClearColor()
-	};
-
 	GS_ASSERT(cxtSet != nullptr);
 	renderer->Render(
 		commandBuffer,
 		*cxtSet,
 		projectionMatrix,
 		viewMatrix,
-		pos
+		pos,
+		image,
+		nullptr
 	);
 }
 

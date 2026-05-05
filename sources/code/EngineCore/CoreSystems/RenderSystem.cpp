@@ -105,7 +105,9 @@ namespace Grindstone {
 					worldContextSet,
 					projectionMatrix,
 					viewMatrix,
-					pos
+					pos,
+					image,
+					nullptr // TODO: Depth
 				);
 
 				currentCommandBuffer->EndCommandBuffer();

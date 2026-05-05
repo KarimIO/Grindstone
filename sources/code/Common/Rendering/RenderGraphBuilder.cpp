@@ -65,8 +65,8 @@ static void CreatePasses(
 );
 
 RenderGraphBuilderResourceRef RenderGraphBuilder::AddImage(ImageDescription imageDesc, Renderer::PassId passId) {
-	size_t imageIndex = images.size();
-	images.emplace_back(imageDesc);
+	size_t imageIndex = resources.size();
+	resources.emplace_back(imageDesc);
 
 	return {
 		.resourceIndex = static_cast<Renderer::ResourceId>(imageIndex),
@@ -75,8 +75,8 @@ RenderGraphBuilderResourceRef RenderGraphBuilder::AddImage(ImageDescription imag
 }
 
 RenderGraphBuilderResourceRef RenderGraphBuilder::AddBuffer(BufferDescription bufferDesc, Renderer::PassId passId) {
-	size_t bufferIndex = buffers.size();
-	buffers.emplace_back(bufferDesc);
+	size_t bufferIndex = resources.size();
+	resources.emplace_back(bufferDesc);
 
 	return {
 		.resourceIndex = static_cast<Renderer::ResourceId>(bufferIndex),
@@ -107,13 +107,12 @@ RenderGraph RenderGraphBuilder::Compile() const {
 	RealizeResources();
 	SetupAttachments();
 
-	return RenderGraph(std::move(compiledPasses));
+	return RenderGraph(std::move(compiledPasses), resources);
 }
 
 void RenderGraphBuilder::Clear() {
 	passes.clear();
-	images.clear();
-	buffers.clear();
+	resources.clear();
 	presentationResourceId = invalidResourceId;
 }
 

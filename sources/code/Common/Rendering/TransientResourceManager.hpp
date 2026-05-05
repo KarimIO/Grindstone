@@ -82,7 +82,7 @@ namespace Grindstone::Renderer {
 
 namespace std {
 	template<>
-	struct std::hash<Grindstone::Renderer::TransientImageDescription> {
+	struct hash<Grindstone::Renderer::TransientImageDescription> {
 		std::size_t operator()(const Grindstone::Renderer::TransientImageDescription& desc) const noexcept {
 			size_t result = std::hash<size_t>{}(
 				static_cast<size_t>(desc.size.x) |
@@ -112,11 +112,9 @@ namespace std {
 			return result;
 		}
 	};
-}
 
-namespace std {
 	template<>
-	struct std::hash<Grindstone::Renderer::TransientBufferDescription> {
+	struct hash<Grindstone::Renderer::TransientBufferDescription> {
 		std::size_t operator()(const Grindstone::Renderer::TransientBufferDescription& desc) const noexcept {
 			size_t result = std::hash<size_t>{}(
 				static_cast<size_t>(desc.bufferUsage) |
@@ -130,33 +128,42 @@ namespace std {
 }
 
 namespace Grindstone::Renderer {
+	struct TransientImageKey {
+		TransientImageDescription poolkey;
+		size_t poolIndex;
+	};
+
+	struct TransientBufferKey {
+		TransientBufferDescription poolkey;
+		size_t poolIndex;
+	};
+
 	class TransientResourceManager {
 	public:
+		void BeginFrame();
 
-		void StartFrame();
+		TransientImageKey AcquireImage(Math::Uint2 viewportResolution, Math::Uint2 swapchainResolution, const ImageDescription& desc);
+		TransientBufferKey AcquireBuffer(const BufferDescription& desc);
 
-		std::tuple<TransientImageData, size_t> AddTrackedImage(Math::Uint2 viewportResolution, Math::Uint2 swapchainResolution, ImageDescription desc);
-		std::tuple<TransientBufferData, size_t> AddTrackedBuffer(BufferDescription desc);
-
-		Grindstone::Renderer::TransientImageData& GetTrackedImage(Math::Uint2 viewportResolution, Math::Uint2 swapchainResolution, ImageDescription inDesc, size_t index);
-		Grindstone::Renderer::TransientBufferData& GetTrackedBuffer(BufferDescription desc, size_t index);
+		Grindstone::Renderer::TransientImageData& GetTrackedImage(TransientImageKey key);
+		Grindstone::Renderer::TransientBufferData& GetTrackedBuffer(TransientBufferKey key);
 
 	protected:
 
-		struct TransientImage {
-			bool isUsedThisFrame = false;
-			int8_t lifetime;
+		struct PooledImage {
 			TransientImageData data;
-		};
-
-		struct TransientBuffer {
-			bool isUsedThisFrame = false;
 			int8_t lifetime;
-			TransientBufferData data;
+			bool isUsedThisFrame = false;
 		};
 
-		std::unordered_map<TransientImageDescription, std::vector<TransientImage>> images;
-		std::unordered_map<TransientBufferDescription, std::vector<TransientBuffer>> buffers;
+		struct PooledBuffer {
+			TransientBufferData data;
+			int8_t lifetime;
+			bool isUsedThisFrame = false;
+		};
+
+		std::unordered_map<TransientImageDescription, std::vector<PooledImage>> images;
+		std::unordered_map<TransientBufferDescription, std::vector<PooledBuffer>> buffers;
 
 	};
 }

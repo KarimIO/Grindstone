@@ -34,7 +34,8 @@ namespace Grindstone::Renderer {
 		TonemapPassReturnData AddPass(
 			Grindstone::Renderer::RenderGraphBuilder& renderGraph,
 			PostProcessSettings settings,
-			Renderer::RenderGraphBuilderResourceRef lightingImageRef
+			Renderer::RenderGraphBuilderResourceRef lightingImageRef,
+			Renderer::RenderGraphBuilderResourceRef outputImageRef
 		);
 
 	private:

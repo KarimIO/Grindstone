@@ -111,6 +111,7 @@ static Grindstone::Renderer::RenderGraphBuilderResourceRef AddSpotShadowPass(
 		[](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) -> Grindstone::Renderer::RenderGraphBuilderResourceRef {
 			Grindstone::Renderer::RenderGraphBuilderResourceRef ref = renderPass.WriteDepthStencilAttachment(
 				attachmentShadowDepthStencil,
+				GraphicsAPI::LoadOp::Clear,
 				Grindstone::GraphicsAPI::ClearDepthStencil(1.0f, 0u)
 			);
 
@@ -119,7 +120,7 @@ static Grindstone::Renderer::RenderGraphBuilderResourceRef AddSpotShadowPass(
 		[entity, &spotLightComponent](
 			Grindstone::Math::IntRect2D viewportArea,
 			const Renderer::RenderGraphContext& cxt,
-			Renderer::GraphicsRenderGraphPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPassExecution,
+			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
 			Grindstone::Renderer::RenderGraphBuilderResourceRef& data
 		) {
 			RenderSpotLightComponent(
@@ -145,6 +146,7 @@ static Grindstone::Renderer::RenderGraphBuilderResourceRef AddDirectionalShadowP
 		[](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) -> Grindstone::Renderer::RenderGraphBuilderResourceRef {
 			Grindstone::Renderer::RenderGraphBuilderResourceRef ref = renderPass.WriteDepthStencilAttachment(
 				attachmentShadowDepthStencil,
+				GraphicsAPI::LoadOp::Clear,
 				Grindstone::GraphicsAPI::ClearDepthStencil(1.0f, 0u)
 			);
 
@@ -153,7 +155,7 @@ static Grindstone::Renderer::RenderGraphBuilderResourceRef AddDirectionalShadowP
 		[entity, &directionalLight](
 			Grindstone::Math::IntRect2D viewportArea,
 			const Renderer::RenderGraphContext& cxt,
-			Renderer::GraphicsRenderGraphPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPassExecution,
+			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
 			Grindstone::Renderer::RenderGraphBuilderResourceRef& data
 		) {
 			RenderDirectionalLightComponent(

@@ -91,13 +91,13 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 ) {
 	return renderGraph.CreateGraphicsPass<LightingPassReturnData>(
 		"Lighting Pass",
-		MetaRect::Viewport(),
+		MetaRect::Swapchain(),
 		[&gbufferData](Renderer::GraphicsRenderGraphBuilderPass<LightingPassReturnData>& renderPass) -> LightingPassReturnData {
-			renderPass.ReadImage(gbufferData.albedoRef);
-			renderPass.ReadImage(gbufferData.normalRef);
-			renderPass.ReadImage(gbufferData.specularRoughnessRef);
-			renderPass.ReadImage(gbufferData.depthRef);
-			RenderGraphBuilderResourceRef layoutImgRef = renderPass.WriteColorAttachment(attachmentlighting, GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+			renderPass.ReadSampledImage(gbufferData.albedoRef);
+			renderPass.ReadSampledImage(gbufferData.normalRef);
+			renderPass.ReadSampledImage(gbufferData.specularRoughnessRef);
+			renderPass.ReadDepthAttachmentSampled(gbufferData.depthRef);
+			RenderGraphBuilderResourceRef layoutImgRef = renderPass.WriteColorAttachment(attachmentlighting, GraphicsAPI::LoadOp::Clear, GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 
 			return LightingPassReturnData{
 				.lightingOutputRef = layoutImgRef
@@ -106,7 +106,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 		[vertexBuffer, indexBuffer, this](
 			Grindstone::Math::IntRect2D viewportArea,
 			const Renderer::RenderGraphContext& cxt,
-			Renderer::GraphicsRenderGraphPass<LightingPassReturnData>& renderPassExecution,
+			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
 			LightingPassReturnData& lightingImageRef
 		) {
 			GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;

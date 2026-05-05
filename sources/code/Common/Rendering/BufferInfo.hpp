@@ -29,7 +29,7 @@ namespace Grindstone::Renderer {
 
 namespace std {
 	template<>
-	struct std::hash<Grindstone::Renderer::BufferDescription> {
+	struct hash<Grindstone::Renderer::BufferDescription> {
 		std::size_t operator()(const Grindstone::Renderer::BufferDescription& desc) const noexcept {
 			size_t result = std::hash<size_t>{}(
 				static_cast<size_t>(desc.bufferUsage) |

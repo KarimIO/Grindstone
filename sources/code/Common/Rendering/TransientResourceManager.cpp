@@ -38,7 +38,7 @@ static Grindstone::Renderer::TransientBufferDescription ToTransient(
 	};
 }
 
-void Grindstone::Renderer::TransientResourceManager::StartFrame() {
+void Grindstone::Renderer::TransientResourceManager::BeginFrame() {
 	Grindstone::GraphicsAPI::Core* graphicsCore = Grindstone::EngineCore::GetInstance().GetGraphicsCore();
 
 	for (auto& imageSet : images) {
@@ -76,7 +76,11 @@ void Grindstone::Renderer::TransientResourceManager::StartFrame() {
 	std::erase_if(buffers, [](auto& kv) { return kv.second.empty(); });
 }
 
-std::tuple<Grindstone::Renderer::TransientImageData, size_t> Grindstone::Renderer::TransientResourceManager::AddTrackedImage(Math::Uint2 viewportResolution, Math::Uint2 swapchainResolution, ImageDescription inDesc) {
+Grindstone::Renderer::TransientImageKey Grindstone::Renderer::TransientResourceManager::AcquireImage(
+	Math::Uint2 viewportResolution,
+	Math::Uint2 swapchainResolution,
+	const Grindstone::Renderer::ImageDescription& inDesc
+) {
 	TransientImageDescription desc = ToTransient(inDesc, viewportResolution, swapchainResolution);
 
 	auto it = images.find(desc);
@@ -87,7 +91,7 @@ std::tuple<Grindstone::Renderer::TransientImageData, size_t> Grindstone::Rendere
 			if (!img.isUsedThisFrame) {
 				img.lifetime = USED_LIFETIME;
 				img.isUsedThisFrame = true;
-				return { img.data, index };
+				return { desc, index };
 			}
 		}
 	}
@@ -116,21 +120,23 @@ std::tuple<Grindstone::Renderer::TransientImageData, size_t> Grindstone::Rendere
 	auto& imageTypeEntry = images[desc];
 	size_t index = imageTypeEntry.size();
 	auto& newImage = imageTypeEntry.emplace_back(
-		TransientImage{
-			.isUsedThisFrame = true,
-			.lifetime = USED_LIFETIME,
+		PooledImage{
 			.data = TransientImageData {
 				.image = image,
 				.currentLayout = GraphicsAPI::ImageLayout::Undefined,
 				.currentAccessFlags = GraphicsAPI::AccessFlags::None
-			}
+			},
+			.lifetime = USED_LIFETIME,
+			.isUsedThisFrame = true,
 		}
 	);
 
-	return { newImage.data, index };
+	return { desc, index };
 }
 
-std::tuple<Grindstone::Renderer::TransientBufferData, size_t> Grindstone::Renderer::TransientResourceManager::AddTrackedBuffer(BufferDescription inDesc) {
+Grindstone::Renderer::TransientBufferKey Grindstone::Renderer::TransientResourceManager::AcquireBuffer(
+	const Grindstone::Renderer::BufferDescription& inDesc
+) {
 	TransientBufferDescription desc = ToTransient(inDesc);
 
 	auto it = buffers.find(desc);
@@ -141,7 +147,7 @@ std::tuple<Grindstone::Renderer::TransientBufferData, size_t> Grindstone::Render
 			if (!b.isUsedThisFrame) {
 				b.lifetime = USED_LIFETIME;
 				b.isUsedThisFrame = true;
-				return { b.data, index };
+				return { desc, index };
 			}
 		}
 	}
@@ -164,35 +170,31 @@ std::tuple<Grindstone::Renderer::TransientBufferData, size_t> Grindstone::Render
 	auto& bufferTypeEntry = buffers[desc];
 	size_t index = bufferTypeEntry.size();
 	auto& bufferData = bufferTypeEntry.emplace_back(
-		TransientBuffer{
-			.isUsedThisFrame = true,
-			.lifetime = USED_LIFETIME,
+		PooledBuffer{
 			.data = TransientBufferData {
 				.buffer = buffer,
 				.currentAccessFlags = GraphicsAPI::AccessFlags::None
-			}
+			},
+			.lifetime = USED_LIFETIME,
+			.isUsedThisFrame = true,
 		}
 	);
 
-	return { bufferData.data, index };
+	return { desc, index };
 }
 
-Grindstone::Renderer::TransientImageData& Grindstone::Renderer::TransientResourceManager::GetTrackedImage(Math::Uint2 viewportResolution, Math::Uint2 swapchainResolution, ImageDescription inDesc, size_t index) {
-	uint32_t width = inDesc.size.x.Resolve(viewportResolution.x, swapchainResolution.x);
-	uint32_t height = inDesc.size.y.Resolve(viewportResolution.y, swapchainResolution.y);
-
-	TransientImageDescription desc = ToTransient(inDesc, viewportResolution, swapchainResolution);
-
+Grindstone::Renderer::TransientImageData& Grindstone::Renderer::TransientResourceManager::GetTrackedImage(Grindstone::Renderer::TransientImageKey key) {
+	TransientImageDescription& desc = key.poolkey;
 	auto it = images.find(desc);
 	GS_ASSERT(it != images.end());
 
-	return it->second[index].data;
+	return it->second[key.poolIndex].data;
 }
 
-Grindstone::Renderer::TransientBufferData& Grindstone::Renderer::TransientResourceManager::GetTrackedBuffer(BufferDescription inDesc, size_t index) {
-	TransientBufferDescription desc = ToTransient(inDesc);
+Grindstone::Renderer::TransientBufferData& Grindstone::Renderer::TransientResourceManager::GetTrackedBuffer(Grindstone::Renderer::TransientBufferKey key) {
+	TransientBufferDescription& desc = key.poolkey;
 	auto it = buffers.find(desc);
 	GS_ASSERT(it != buffers.end());
 
-	return it->second[index].data;
+	return it->second[key.poolIndex].data;
 }

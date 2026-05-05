@@ -43,7 +43,9 @@ namespace Grindstone {
 			Grindstone::WorldContextSet& worldContextSet,
 			glm::mat4 projectionMatrix,
 			glm::mat4 viewMatrix,
-			glm::vec3 eyePos
+			glm::vec3 eyePos,
+			Grindstone::GraphicsAPI::Image* colorImage,
+			Grindstone::GraphicsAPI::Image* depthImage
 		) override;
 
 		virtual uint16_t GetRenderModeCount() const override;

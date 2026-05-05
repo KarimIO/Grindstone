@@ -1,59 +1,28 @@
 #pragma once
 
 #include <vector>
+#include <variant>
 #include <functional>
 
 #include <Common/HashedString.hpp>
 #include <Common/Graphics/CommandBuffer.hpp>
+
 #include "GpuPassType.hpp"
 #include "RenderGraphContext.hpp"
 #include "AttachmentInfo.hpp"
 #include "BufferInfo.hpp"
+#include "RenderGraphFrameResources.hpp"
 
 namespace Grindstone::Renderer {
-
-	struct RenderGraphResourceRef {
-		uint16_t isBuffer : 1;
-		uint16_t resourceIndex : 15;
-
-		static_assert(sizeof(uint16_t) == 2);
-
-		static RenderGraphResourceRef Buffer(uint16_t resourceIndex) {
-			return {
-				.isBuffer = 1,
-				.resourceIndex = resourceIndex
-			};
-		}
-
-		static RenderGraphResourceRef Image(uint16_t resourceIndex) {
-			return {
-				.isBuffer = 0,
-				.resourceIndex = resourceIndex
-			};
-		}
-
-		bool IsBuffer() const {
-			return isBuffer == 1;
-		}
-
-		bool IsImage() const {
-			return isBuffer == 0;
-		}
-
-		uint16_t GetResourceIndex() const {
-			return resourceIndex;
-		}
-
-		bool operator==(const RenderGraphResourceRef& o) const {
-			return
-				(isBuffer == o.isBuffer) &&
-				(resourceIndex == o.resourceIndex);
-		}
-	};
+	using UnionResourceDescription = std::variant<Grindstone::Renderer::ImageDescription, Grindstone::Renderer::BufferDescription>;
 
 	class RenderGraphPass {
 	public:
-		virtual void Execute(Grindstone::Renderer::RenderGraphContext& context) = 0;
+		virtual void RealizeResources(Grindstone::Renderer::RenderGraphContext& context) = 0;
+		virtual void Execute(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) = 0;
 
 		Grindstone::String name;
 		GpuPassType type;
@@ -70,6 +39,8 @@ namespace Grindstone::Renderer {
 	class PipelineRenderGraphPass : public RenderGraphPass {
 	public:
 
+		std::vector<PassImageDesc> imageDescs;
+		std::vector<PassBufferDesc> bufferDescs;
 		Grindstone::GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
 
 	};
@@ -77,30 +48,32 @@ namespace Grindstone::Renderer {
 	class GraphicsRenderGraphPassBase : public PipelineRenderGraphPass {
 	public:
 
-		Grindstone::Math::IntRect2D renderingArea;
-		std::vector<Grindstone::GraphicsAPI::RenderAttachment> colorAttachments;
-		Grindstone::GraphicsAPI::RenderAttachment depthAttachment;
-		bool hasDepthAttachment = false;
+		Grindstone::Renderer::MetaRect metaRenderingArea;
 
-	protected:
-
-		void PrepareGraphicsPass(Grindstone::Renderer::RenderGraphContext& context);
-		void EndGraphicsPass(Grindstone::Renderer::RenderGraphContext& context);
+		virtual void RealizeResources(Grindstone::Renderer::RenderGraphContext& context) override;
+		virtual Grindstone::Math::IntRect2D PrepareGraphicsPass(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		);
+		virtual void EndGraphicsPass(Grindstone::Renderer::RenderGraphContext& context);
 
 	};
 
 	template<typename ReturnType>
 	class GraphicsRenderGraphPass : public GraphicsRenderGraphPassBase {
 	public:
-		using ExecutionCallbackFn = std::function<void(Grindstone::Math::IntRect2D, Grindstone::Renderer::RenderGraphContext&, Grindstone::Renderer::GraphicsRenderGraphPass<ReturnType>&, ReturnType&)>;
+		using ExecutionCallbackFn = std::function<void(Grindstone::Math::IntRect2D, Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, ReturnType&)>;
 		ExecutionCallbackFn executionCallback;
-		ReturnType returnType;
+		ReturnType returnData;
 
-		virtual void Execute(Grindstone::Renderer::RenderGraphContext& context) override {
+		virtual void Execute(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) override {
 			GS_ASSERT_ENGINE_WITH_MESSAGE(executionCallback != nullptr, "Execution callback for rendergraph pass %s is not set.", name.c_str());
 
-			PrepareGraphicsPass(context);
-			executionCallback(renderingArea, context, *this, returnType);
+			Grindstone::Math::IntRect2D renderingArea = PrepareGraphicsPass(context, frameResources);
+			executionCallback(renderingArea, context, frameResources, returnData);
 			EndGraphicsPass(context);
 		}
 
@@ -108,6 +81,8 @@ namespace Grindstone::Renderer {
 
 	class ComputeRenderGraphPassBase : public PipelineRenderGraphPass {
 	public:
+
+		virtual void RealizeResources(Grindstone::Renderer::RenderGraphContext& context) override;
 
 	protected:
 
@@ -118,15 +93,18 @@ namespace Grindstone::Renderer {
 	template<typename ReturnType>
 	class ComputeRenderGraphPass : public ComputeRenderGraphPassBase {
 	public:
-		using ExecutionCallbackFn = std::function<void(Grindstone::Renderer::RenderGraphContext&, Grindstone::Renderer::ComputeRenderGraphPass<ReturnType>&, ReturnType&)>;
+		using ExecutionCallbackFn = std::function<void(Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, ReturnType&)>;
 		ExecutionCallbackFn executionCallback;
-		ReturnType returnType;
+		ReturnType returnData;
 
-		virtual void Execute(Grindstone::Renderer::RenderGraphContext& context) override {
+		virtual void Execute(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) override {
 			GS_ASSERT_ENGINE_WITH_MESSAGE(executionCallback != nullptr, "Execution callback for rendergraph pass %s is not set.", name.c_str());
 
 			PrepareComputePass(context);
-			executionCallback(context, *this, returnType);
+			executionCallback(context, frameResources, returnData);
 		}
 
 	};
@@ -149,7 +127,12 @@ namespace Grindstone::Renderer {
 
 	class TransferRenderGraphPass : public RenderGraphPass {
 	public:
-		virtual void Execute(Grindstone::Renderer::RenderGraphContext& context) override;
+
+		virtual void RealizeResources(Grindstone::Renderer::RenderGraphContext& context) override;
+		virtual void Execute(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) override;
 
 	protected:
 		std::vector<ImageTransfer> imageTransfers;
@@ -158,7 +141,11 @@ namespace Grindstone::Renderer {
 
 	class PresentRenderGraphPass : public RenderGraphPass {
 	public:
-		virtual void Execute(Grindstone::Renderer::RenderGraphContext& context) override;
+		virtual void RealizeResources(Grindstone::Renderer::RenderGraphContext& context) override;
+		virtual void Execute(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) override;
 
 	};
 }

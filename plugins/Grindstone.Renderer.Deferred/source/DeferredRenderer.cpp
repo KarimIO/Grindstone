@@ -188,7 +188,9 @@ void DeferredRenderer::Render(
 	Grindstone::WorldContextSet& worldContextSet,
 	glm::mat4 projectionMatrix,
 	glm::mat4 viewMatrix,
-	glm::vec3 eyePos
+	glm::vec3 eyePos,
+	Grindstone::GraphicsAPI::Image* colorImage,
+	Grindstone::GraphicsAPI::Image* depthImage
 ) {
 	entt::registry& registry = worldContextSet.GetEntityRegistry();
 	Grindstone::Rendering::RenderGraphWorldContext* renderingContext = static_cast<Grindstone::Rendering::RenderGraphWorldContext*>(
@@ -240,9 +242,13 @@ void DeferredRenderer::Render(
 	// auto dofOutput = dof.AddPass(renderGraph, ssrOutput);
 	// auto bloomOutput = bloom.AddBloomChain(renderGraph, dofOutput);
 
+	auto colorImageRef = renderGraphBuilder.AddImage(Grindstone::Renderer::ImageDescription{
+			.externalGetterCallback = [colorImage]() { return colorImage; }
+		}
+	);
+
 	if (renderMode == DeferredRenderMode::Default) {
-		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef);
-		renderGraphBuilder.CreatePresentPass(data.postProcessOutput);
+		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef, colorImageRef);
 	}
 	/*
 	else {
@@ -250,7 +256,14 @@ void DeferredRenderer::Render(
 	}
 	*/
 
+
+	static Grindstone::Renderer::TransientResourceManager* transientResourceManager = nullptr;
+	if (transientResourceManager == nullptr) {
+		transientResourceManager = Grindstone::Memory::AllocatorCore::Allocate<Grindstone::Renderer::TransientResourceManager>();
+	}
+
 	Grindstone::Renderer::RenderGraphContext context{
+		.transientResourceManager = transientResourceManager,
 		.globalDescriptorSet = globalDescriptorSet[imageIndex],
 		.swapchainSize = renderArea.extent,
 		.commandBuffer = commandBuffer,
