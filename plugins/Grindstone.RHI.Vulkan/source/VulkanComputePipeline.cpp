@@ -8,6 +8,7 @@
 #include <Grindstone.RHI.Vulkan/include/VulkanBuffer.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanDescriptorSetLayout.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanComputePipeline.hpp>
+#include <Grindstone.RHI.Vulkan/include/VulkanPipelineLayout.hpp>
 
 namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
@@ -27,36 +28,18 @@ Vulkan::ComputePipeline::ComputePipeline(const CreateInfo& createInfo) {
 	}
 
 	{
-		std::vector<VkDescriptorSetLayout> layouts;
-		layouts.reserve(createInfo.descriptorSetLayoutCount);
+		VkPipelineShaderStageCreateInfo computeShaderStageInfo{
+			.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+			.stage = VK_SHADER_STAGE_COMPUTE_BIT,
+			.module = computeShaderModule,
+			.pName = "main"
+		};
 
-		for (uint32_t i = 0; i < createInfo.descriptorSetLayoutCount; ++i) {
-			Vulkan::DescriptorSetLayout* uboBinding = static_cast<Vulkan::DescriptorSetLayout*>(createInfo.descriptorSetLayouts[i]);
-			VkDescriptorSetLayout ubb = uboBinding->GetInternalLayout();
-			layouts.push_back(ubb);
-		}
-
-		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(layouts.size());
-		pipelineLayoutInfo.pSetLayouts = layouts.data();
-
-		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create compute pipeline layout!");
-		}
-	}
-
-	{
-		VkPipelineShaderStageCreateInfo computeShaderStageInfo{};
-		computeShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		computeShaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-		computeShaderStageInfo.module = computeShaderModule;
-		computeShaderStageInfo.pName = "main";
-
-		VkComputePipelineCreateInfo pipelineInfo{};
-		pipelineInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-		pipelineInfo.layout = pipelineLayout;
-		pipelineInfo.stage = computeShaderStageInfo;
+		VkComputePipelineCreateInfo pipelineInfo{
+			.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+			.stage = computeShaderStageInfo,
+			.layout = static_cast<Vulkan::PipelineLayout*>(createInfo.pipelineLayout)->GetPipelineLayout()
+		};
 
 		if (vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &computePipeline) != VK_SUCCESS) {
 			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create compute pipeline!");
@@ -78,18 +61,10 @@ Vulkan::ComputePipeline::~ComputePipeline() {
 	if (computePipeline != nullptr) {
 		vkDestroyPipeline(device, computePipeline, nullptr);
 	}
-
-	if (pipelineLayout != nullptr) {
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-	}
 }
 
 VkPipeline Vulkan::ComputePipeline::GetComputePipeline() const {
 	return computePipeline;
-}
-
-VkPipelineLayout Vulkan::ComputePipeline::GetComputePipelineLayout() const {
-	return pipelineLayout;
 }
 
 void Vulkan::ComputePipeline::Recreate(const CreateInfo& createInfo) {

@@ -104,6 +104,7 @@ bool Grindstone::Editor::Importers::GenerateTextureThumbnail(Grindstone::Uuid uu
 		return false;
 	}
 
+	Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = pipelineAsset->GetFirstPassPipelineLayout();
 	Grindstone::GraphicsAPI::GraphicsPipeline* pipeline = pipelineAsset->GetFirstPassPipeline(&thumbnailGeneratorContext.vertexInputLayout);
 
 	Grindstone::GraphicsAPI::Image* renderTarget = thumbnailGeneratorContext.renderTargetImage;
@@ -164,7 +165,7 @@ bool Grindstone::Editor::Importers::GenerateTextureThumbnail(Grindstone::Uuid uu
 		&colorAttachment, 1u
 	);
 	thumbnailGeneratorContext.commandBuffer->BindGraphicsPipeline(pipeline);
-	thumbnailGeneratorContext.commandBuffer->BindGraphicsDescriptorSet(pipeline, &thumbnailGeneratorContext.descriptorSet, 0, 1);
+	thumbnailGeneratorContext.commandBuffer->BindGraphicsDescriptorSet(pipelineLayout, &thumbnailGeneratorContext.descriptorSet, 0, 1);
 	thumbnailGeneratorContext.commandBuffer->DrawVertices(6, 0, 1, 0);
 	thumbnailGeneratorContext.commandBuffer->EndRendering();
 	thumbnailGeneratorContext.commandBuffer->PipelineBarrier(
@@ -246,7 +247,7 @@ bool Grindstone::Editor::Importers::InitializeTextureThumbnailGenerator() {
 		.bindings = layoutBindings.data(),
 		.bindingCount = static_cast<uint32_t>(layoutBindings.size()),
 	};
-	thumbnailGeneratorContext.descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+	thumbnailGeneratorContext.descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 	Grindstone::GraphicsAPI::Sampler::CreateInfo samplerCreateInfo{
 		.debugName = "Thumbnail Generator Sampler",

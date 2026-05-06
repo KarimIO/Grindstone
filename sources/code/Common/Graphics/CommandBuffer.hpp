@@ -13,6 +13,7 @@ namespace Grindstone::GraphicsAPI {
 	class DescriptorSet;
 	class GraphicsPipeline;
 	class ComputePipeline;
+	class PipelineLayout;
 	class VertexArrayObject;
 	class DepthStencilTarget;
 
@@ -119,13 +120,13 @@ namespace Grindstone::GraphicsAPI {
 		virtual void BeginDebugLabelSection(const char* name, float color[4] = nullptr) = 0;
 		virtual void EndDebugLabelSection() = 0;
 		virtual void BindGraphicsDescriptorSet(
-			const GraphicsPipeline* graphicsPipeline,
+			const GraphicsAPI::PipelineLayout* pipelineLayout,
 			const DescriptorSet* const* descriptorSets,
 			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) = 0;
 		virtual void BindComputeDescriptorSet(
-			const ComputePipeline* graphicsPipeline,
+			const GraphicsAPI::PipelineLayout* pipelineLayout,
 			const DescriptorSet* const* descriptorSets,
 			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
@@ -176,10 +177,4 @@ namespace Grindstone::GraphicsAPI {
 	};
 }
 
-inline Grindstone::GraphicsAPI::AccessFlags operator|(Grindstone::GraphicsAPI::AccessFlags a, Grindstone::GraphicsAPI::AccessFlags b) {
-	return static_cast<Grindstone::GraphicsAPI::AccessFlags>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
-}
-
-inline Grindstone::GraphicsAPI::AccessFlags operator&(Grindstone::GraphicsAPI::AccessFlags a, Grindstone::GraphicsAPI::AccessFlags b) {
-	return static_cast<Grindstone::GraphicsAPI::AccessFlags>(static_cast<uint8_t>(a) & static_cast<uint8_t>(b));
-}
+GS_ENUM_FLAGS_FUNCS(Grindstone::GraphicsAPI::AccessFlags)

@@ -200,7 +200,7 @@ void Grindstone::Renderer::BloomPass::CreateBloomResources() {
 	bloomDescriptorSetLayoutCreateInfo.debugName = "Bloom Descriptor Set Layout";
 	bloomDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(bloomLayoutBindings.size());
 	bloomDescriptorSetLayoutCreateInfo.bindings = bloomLayoutBindings.data();
-	bloomDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(bloomDescriptorSetLayoutCreateInfo);
+	bloomDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(bloomDescriptorSetLayoutCreateInfo);
 }
 
 void Grindstone::Renderer::BloomPass::UpdateBloomDescriptorSet() {

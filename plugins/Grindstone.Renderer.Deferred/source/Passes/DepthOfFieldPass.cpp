@@ -170,7 +170,7 @@ void DeferredRenderer::CreateDepthOfFieldResources() {
 		dofSourceDescriptorSetLayoutCreateInfo.debugName = "Depth of Field Source Descriptor Layout";
 		dofSourceDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(sourceDofDescriptorBindings.size());
 		dofSourceDescriptorSetLayoutCreateInfo.bindings = sourceDofDescriptorBindings.data();
-		dofSourceDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(dofSourceDescriptorSetLayoutCreateInfo);
+		dofSourceDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(dofSourceDescriptorSetLayoutCreateInfo);
 	}
 
 	{
@@ -181,7 +181,7 @@ void DeferredRenderer::CreateDepthOfFieldResources() {
 		dofBlurFarDescriptorSetLayoutCreateInfo.debugName = "Depth of Field Blur Far Descriptor Layout";
 		dofBlurFarDescriptorSetLayoutCreateInfo.bindingCount = 1u;
 		dofBlurFarDescriptorSetLayoutCreateInfo.bindings = &farDofDescriptorBinding;
-		dofBlurDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(dofBlurFarDescriptorSetLayoutCreateInfo);
+		dofBlurDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(dofBlurFarDescriptorSetLayoutCreateInfo);
 	}
 
 	{
@@ -194,7 +194,7 @@ void DeferredRenderer::CreateDepthOfFieldResources() {
 		dofCombinationDescriptorSetLayoutCreateInfo.debugName = "Depth of Field Combination Descriptor Layout";
 		dofCombinationDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(nearAndFarDescriptorBindings.size());
 		dofCombinationDescriptorSetLayoutCreateInfo.bindings = nearAndFarDescriptorBindings.data();
-		dofCombinationDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(dofCombinationDescriptorSetLayoutCreateInfo);
+		dofCombinationDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(dofCombinationDescriptorSetLayoutCreateInfo);
 	}
 }
 

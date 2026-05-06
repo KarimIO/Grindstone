@@ -152,7 +152,7 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	descriptorSetLayoutCreateInfo.debugName = "Imgui Texture Layout";
 	descriptorSetLayoutCreateInfo.bindingCount = 1;
 	descriptorSetLayoutCreateInfo.bindings = &layoutBinding;
-	textureDescriptorLayout = Editor::Manager::GetEngineCore().GetGraphicsCore()->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+	textureDescriptorLayout = Editor::Manager::GetEngineCore().GetGraphicsCore()->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 }
 
@@ -271,7 +271,7 @@ void ImguiRendererVulkan::PostRender() {
 
 	Grindstone::GraphicsAPI::Image* image = static_cast<GraphicsAPI::Vulkan::WindowGraphicsBinding*>(window)->GetSwapchainImage(window->GetCurrentImageIndex());
 
-	GraphicsAPI::ImageBarrier preTonemapImageBarrier{
+	GraphicsAPI::ImageBarrier presentImageBarrier{
 		.image = image,
 		.srcStageMask = GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
 		.dstStageMask = GraphicsAPI::PipelineStageBit::BottomOfPipe,
@@ -288,7 +288,7 @@ void ImguiRendererVulkan::PostRender() {
 
 	currentCommandBuffer->PipelineBarrier(
 		nullptr, 0,
-		&preTonemapImageBarrier, 1u
+		&presentImageBarrier, 1u
 	);
 
 

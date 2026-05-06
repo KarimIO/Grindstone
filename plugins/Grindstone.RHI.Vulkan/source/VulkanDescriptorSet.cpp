@@ -126,7 +126,7 @@ static void AttachCombinedImageSampler(
 }
 
 Vulkan::DescriptorSet::DescriptorSet(const CreateInfo& createInfo) {
-	layout = static_cast<Vulkan::DescriptorSetLayout*>(createInfo.layout);
+	layout = static_cast<const Vulkan::DescriptorSetLayout*>(createInfo.layout);
 	VkDescriptorSetLayout internalLayout = layout->GetInternalLayout();
 
 	VkDescriptorSetAllocateInfo allocInfo = {};

@@ -6,6 +6,7 @@
 #include <Grindstone.RHI.Vulkan/include/VulkanRenderPass.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanGraphicsPipeline.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanComputePipeline.hpp>
+#include <Grindstone.RHI.Vulkan/include/VulkanPipelineLayout.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanFramebuffer.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanVertexArrayObject.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanCore.hpp>
@@ -64,15 +65,16 @@ Vulkan::CommandBuffer::CommandBuffer(const CreateInfo& createInfo) {
 
 	if (createInfo.secondaryInfo.isSecondary) {
 		beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
-		VkCommandBufferInheritanceInfo inheritenceInfo = {};
 		Vulkan::Framebuffer* framebuffer = static_cast<Vulkan::Framebuffer *>(createInfo.secondaryInfo.framebuffer);
 		Vulkan::RenderPass* renderPass = static_cast<Vulkan::RenderPass *>(createInfo.secondaryInfo.renderPass);
-		inheritenceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-		inheritenceInfo.framebuffer = framebuffer->GetFramebuffer();
-		inheritenceInfo.renderPass = renderPass->GetRenderPassHandle();
-		inheritenceInfo.occlusionQueryEnable = VK_FALSE;
-		inheritenceInfo.pipelineStatistics = 0;
-		inheritenceInfo.pNext = nullptr;
+		VkCommandBufferInheritanceInfo inheritenceInfo = {
+			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO,
+			.pNext = nullptr,
+			.renderPass = renderPass->GetRenderPassHandle(),
+			.framebuffer = framebuffer->GetFramebuffer(),
+			.occlusionQueryEnable = VK_FALSE,
+			.pipelineStatistics = 0,
+		};
 		inheritenceInfo.subpass = 0;
 		beginInfo.pInheritanceInfo = &inheritenceInfo;
 	}
@@ -256,23 +258,23 @@ void Vulkan::CommandBuffer::EndDebugLabelSection() {
 }
 
 void Vulkan::CommandBuffer::BindGraphicsDescriptorSet(
-	const Base::GraphicsPipeline* graphicsPipeline,
+	const Base::PipelineLayout* pipelineLayout,
 	const Base::DescriptorSet* const * descriptorSets,
 	uint32_t descriptorSetOffset,
 	uint32_t descriptorSetCount
 ) {
-	const Vulkan::GraphicsPipeline *vkPipeline = static_cast<const Vulkan::GraphicsPipeline *>(graphicsPipeline);
-	BindDescriptorSet(vkPipeline->GetGraphicsPipelineLayout(), VK_PIPELINE_BIND_POINT_GRAPHICS, descriptorSets, descriptorSetOffset, descriptorSetCount);
+	const Vulkan::PipelineLayout *vkPipelineLayout = static_cast<const Vulkan::PipelineLayout *>(pipelineLayout);
+	BindDescriptorSet(vkPipelineLayout->GetPipelineLayout(), VK_PIPELINE_BIND_POINT_GRAPHICS, descriptorSets, descriptorSetOffset, descriptorSetCount);
 }
 
 void Vulkan::CommandBuffer::BindComputeDescriptorSet(
-	const Base::ComputePipeline* computePipeline,
+	const Base::PipelineLayout* pipelineLayout,
 	const Base::DescriptorSet* const * descriptorSets,
 	uint32_t descriptorSetOffset,
 	uint32_t descriptorSetCount
 ) {
-	const Vulkan::ComputePipeline* vkPipeline = static_cast<const Vulkan::ComputePipeline*>(computePipeline);
-	BindDescriptorSet(vkPipeline->GetComputePipelineLayout(), VK_PIPELINE_BIND_POINT_COMPUTE, descriptorSets, descriptorSetOffset, descriptorSetCount);
+	const Vulkan::PipelineLayout* vkPipelineLayout = static_cast<const Vulkan::PipelineLayout*>(pipelineLayout);
+	BindDescriptorSet(vkPipelineLayout->GetPipelineLayout(), VK_PIPELINE_BIND_POINT_COMPUTE, descriptorSets, descriptorSetOffset, descriptorSetCount);
 }
 
 void Vulkan::CommandBuffer::BindDescriptorSet(

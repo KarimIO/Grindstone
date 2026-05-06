@@ -109,7 +109,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 		.bindingCount = 1u,
 	};
 
-	globalDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(globalDescriptorSetLayoutCreateInfo);
+	globalDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(globalDescriptorSetLayoutCreateInfo);
 
 	GraphicsAPI::DescriptorSet::CreateInfo globalDescriptorSetsCreateInfo{
 		.layout = globalDescriptorSetLayout,
@@ -242,7 +242,18 @@ void DeferredRenderer::Render(
 	// auto dofOutput = dof.AddPass(renderGraph, ssrOutput);
 	// auto bloomOutput = bloom.AddBloomChain(renderGraph, dofOutput);
 
-	auto colorImageRef = renderGraphBuilder.AddImage(Grindstone::Renderer::ImageDescription{
+	auto colorImageRef = renderGraphBuilder.AddImage(
+		Grindstone::Renderer::ImageDescription{
+			.name = "Camera Output Image (Tonemapped)",
+			.size = Grindstone::Renderer::MetaSize2D::Viewport(),
+			.samples = 1,
+			.mipLevels = 1,
+			.depth = 1,
+			.arrayLayers = 1,
+			.format = Grindstone::GraphicsAPI::Format::R8G8B8A8_SNORM,
+			.imageDimensions = GraphicsAPI::ImageDimension::Dimension2D,
+			.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly,
+			.imageUsage = GraphicsAPI::ImageUsageFlags::RenderTarget | GraphicsAPI::ImageUsageFlags::Sampled,
 			.externalGetterCallback = [colorImage]() { return colorImage; }
 		}
 	);
@@ -263,7 +274,9 @@ void DeferredRenderer::Render(
 	}
 
 	Grindstone::Renderer::RenderGraphContext context{
+		.graphicsCore = graphicsCore,
 		.transientResourceManager = transientResourceManager,
+		.globalDescriptorSetLayout = globalDescriptorSetLayout,
 		.globalDescriptorSet = globalDescriptorSet[imageIndex],
 		.swapchainSize = renderArea.extent,
 		.commandBuffer = commandBuffer,

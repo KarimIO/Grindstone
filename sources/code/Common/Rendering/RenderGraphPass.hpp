@@ -18,7 +18,10 @@ namespace Grindstone::Renderer {
 
 	class RenderGraphPass {
 	public:
-		virtual void RealizeResources(Grindstone::Renderer::RenderGraphContext& context) = 0;
+		virtual void RealizeResources(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) = 0;
 		virtual void Execute(
 			Grindstone::Renderer::RenderGraphContext& context,
 			Grindstone::Renderer::RenderGraphFrameResources& frameResources
@@ -41,7 +44,13 @@ namespace Grindstone::Renderer {
 
 		std::vector<PassImageDesc> imageDescs;
 		std::vector<PassBufferDesc> bufferDescs;
-		Grindstone::GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
+		Grindstone::GraphicsAPI::DescriptorSet* passDescriptorSet = nullptr;
+		Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = nullptr;
+
+		virtual void RealizeResources(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) override;
 
 	};
 
@@ -50,7 +59,6 @@ namespace Grindstone::Renderer {
 
 		Grindstone::Renderer::MetaRect metaRenderingArea;
 
-		virtual void RealizeResources(Grindstone::Renderer::RenderGraphContext& context) override;
 		virtual Grindstone::Math::IntRect2D PrepareGraphicsPass(
 			Grindstone::Renderer::RenderGraphContext& context,
 			Grindstone::Renderer::RenderGraphFrameResources& frameResources
@@ -81,8 +89,6 @@ namespace Grindstone::Renderer {
 
 	class ComputeRenderGraphPassBase : public PipelineRenderGraphPass {
 	public:
-
-		virtual void RealizeResources(Grindstone::Renderer::RenderGraphContext& context) override;
 
 	protected:
 
@@ -128,7 +134,10 @@ namespace Grindstone::Renderer {
 	class TransferRenderGraphPass : public RenderGraphPass {
 	public:
 
-		virtual void RealizeResources(Grindstone::Renderer::RenderGraphContext& context) override;
+		virtual void RealizeResources(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) override;
 		virtual void Execute(
 			Grindstone::Renderer::RenderGraphContext& context,
 			Grindstone::Renderer::RenderGraphFrameResources& frameResources
@@ -141,7 +150,10 @@ namespace Grindstone::Renderer {
 
 	class PresentRenderGraphPass : public RenderGraphPass {
 	public:
-		virtual void RealizeResources(Grindstone::Renderer::RenderGraphContext& context) override;
+		virtual void RealizeResources(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) override;
 		virtual void Execute(
 			Grindstone::Renderer::RenderGraphContext& context,
 			Grindstone::Renderer::RenderGraphFrameResources& frameResources

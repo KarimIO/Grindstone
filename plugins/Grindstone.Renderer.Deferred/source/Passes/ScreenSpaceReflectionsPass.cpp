@@ -29,7 +29,7 @@ bool Grindstone::Renderer::ScreenSpaceReflectionsPass::Initialize() {
 	ssrDescriptorSetLayoutCreateInfo.debugName = "SSR Descriptor Set Layout";
 	ssrDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ssrLayoutBindings.size());
 	ssrDescriptorSetLayoutCreateInfo.bindings = ssrLayoutBindings.data();
-	ssrDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ssrDescriptorSetLayoutCreateInfo);
+	ssrDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(ssrDescriptorSetLayoutCreateInfo);
 
 	return true;
 }

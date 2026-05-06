@@ -34,7 +34,7 @@ bool Grindstone::Renderer::TonemapPass::Initialize() {
 		.bindingCount = 1u,
 	};
 
-	descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(postProcessingDescriptorSetLayoutCreateInfo);
+	descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(postProcessingDescriptorSetLayoutCreateInfo);
 
 	GraphicsAPI::DescriptorSet::CreateInfo postProcessingDescriptorSetsCreateInfo{
 		.layout = descriptorSetLayout,
@@ -89,6 +89,7 @@ Grindstone::Renderer::TonemapPassReturnData Grindstone::Renderer::TonemapPass::A
 				return;
 			}
 
+			Grindstone::GraphicsAPI::PipelineLayout* tonemapPipelineLayout = tonemapPipelineAsset->GetFirstPassPipelineLayout();
 			Grindstone::GraphicsAPI::GraphicsPipeline* tonemapPipeline = tonemapPipelineAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
 			if (tonemapPipeline == nullptr) {
 				return;
@@ -98,7 +99,7 @@ Grindstone::Renderer::TonemapPassReturnData Grindstone::Renderer::TonemapPass::A
 
 			cmd->BindGraphicsPipeline(tonemapPipeline);
 			cmd->BindGraphicsDescriptorSet(
-				tonemapPipeline,
+				tonemapPipelineLayout,
 				&tonemapSettingsDescriptorSet[swapchainIndex],
 				2u, // Offset
 				1u // Count

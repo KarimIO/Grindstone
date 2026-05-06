@@ -49,22 +49,35 @@ namespace Grindstone::Renderer {
 		void SetLayout(
 			Grindstone::Renderer::ResourceId id,
 			Grindstone::GraphicsAPI::ImageLayout layout,
-			Grindstone::GraphicsAPI::AccessFlags access
+			Grindstone::GraphicsAPI::AccessFlags access,
+			Grindstone::GraphicsAPI::PipelineStageBit pipelineStage
 		) {
 			auto externalIt = externalImages.find(id);
 			if (externalIt != externalImages.end()) {
 				TransientImageData& externalResource = externalIt->second;
 				externalResource.currentLayout = layout;
 				externalResource.currentAccessFlags = access;
+				externalResource.currentPipelineStage = pipelineStage;
 				return;
 			}
 
-			images.at(id)->currentLayout = layout;
-			images.at(id)->currentAccessFlags = access;
+			auto& transientResource = *images.at(id);
+			transientResource.currentLayout = layout;
+			transientResource.currentAccessFlags = access;
+			transientResource.currentPipelineStage = pipelineStage;
 		}
 
-		Grindstone::GraphicsAPI::ImageLayout GetLayout(Grindstone::Renderer::ResourceId id) {
-			return images.at(id)->currentLayout;
+		std::tuple<Grindstone::GraphicsAPI::ImageLayout, Grindstone::GraphicsAPI::AccessFlags, Grindstone::GraphicsAPI::PipelineStageBit> GetLayout(
+			Grindstone::Renderer::ResourceId id
+		) {
+			auto externalIt = externalImages.find(id);
+			if (externalIt != externalImages.end()) {
+				TransientImageData& externalResource = externalIt->second;
+				return { externalResource.currentLayout, externalResource.currentAccessFlags, externalResource.currentPipelineStage };
+			}
+
+			TransientImageData& transientResource = *images.at(id);
+			return { transientResource.currentLayout, transientResource.currentAccessFlags, transientResource.currentPipelineStage };
 		}
 	};
 }

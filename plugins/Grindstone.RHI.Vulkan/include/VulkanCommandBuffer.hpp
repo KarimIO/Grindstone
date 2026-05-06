@@ -38,13 +38,13 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void BeginDebugLabelSection(const char* name, float color[4] = nullptr) override;
 		virtual void EndDebugLabelSection() override;
 		virtual void BindGraphicsDescriptorSet(
-			const GraphicsAPI::GraphicsPipeline* graphicsPipeline,
+			const GraphicsAPI::PipelineLayout* pipelineLayout,
 			const GraphicsAPI::DescriptorSet* const* descriptorSets,
 			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) override;
 		virtual void BindComputeDescriptorSet(
-			const GraphicsAPI::ComputePipeline* graphicsPipeline,
+			const GraphicsAPI::PipelineLayout* pipelineLayout,
 			const GraphicsAPI::DescriptorSet* const* descriptorSets,
 			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount

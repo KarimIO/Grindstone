@@ -23,6 +23,7 @@
 #include <Grindstone.RHI.Vulkan/include/VulkanFramebuffer.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanGraphicsPipeline.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanComputePipeline.hpp>
+#include <Grindstone.RHI.Vulkan/include/VulkanPipelineLayout.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanRenderPass.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanVertexArrayObject.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanBuffer.hpp>
@@ -170,9 +171,23 @@ void Vulkan::Core::CreateInstance() {
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.apiVersion = vkApiVersion;
 
-	VkInstanceCreateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-	createInfo.pApplicationInfo = &appInfo;
+	VkValidationFeatureEnableEXT enables[] = {
+		VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
+		VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT,
+		VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT,
+	};
+
+	VkValidationFeaturesEXT features{
+		.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT,
+		.enabledValidationFeatureCount = 3,
+		.pEnabledValidationFeatures = enables
+	};
+
+	VkInstanceCreateInfo createInfo = {
+		.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+		.pNext = &features,
+		.pApplicationInfo = &appInfo
+	};
 
 	auto extensions = GetRequiredExtensions();
 	extensions.push_back(VK_NV_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
@@ -655,6 +670,10 @@ Base::GraphicsPipeline* Vulkan::Core::CreateGraphicsPipeline(const Base::Graphic
 	return static_cast<Base::GraphicsPipeline*>(AllocatorCore::AllocateNamed<Vulkan::GraphicsPipeline>(ci.pipelineData.debugName ? ci.pipelineData.debugName : "Vulkan::GraphicsPipeline", ci));
 }
 
+Base::PipelineLayout* Vulkan::Core::CreatePipelineLayout(const Base::PipelineLayout::CreateInfo& ci) {
+	return static_cast<Base::PipelineLayout*>(AllocatorCore::AllocateNamed<Vulkan::PipelineLayout>(ci.debugName ? ci.debugName : "Vulkan::PipelineLayout", ci));
+}
+
 Base::CommandBuffer* Vulkan::Core::CreateCommandBuffer(const Base::CommandBuffer::CreateInfo& ci) {
 	return static_cast<Base::CommandBuffer*>(AllocatorCore::AllocateNamed<Vulkan::CommandBuffer>(ci.debugName ? ci.debugName : "Vulkan::CommandBuffer", ci));
 }
@@ -684,6 +703,7 @@ Base::DescriptorSetLayout* Vulkan::Core::CreateDescriptorSetLayout(const Base::D
 }
 
 Base::GraphicsPipeline* Vulkan::Core::GetOrCreateGraphicsPipelineFromCache(
+	Base::PipelineLayout* pipelineLayout,
 	const GraphicsPipeline::PipelineData& pipelineData,
 	const VertexInputLayout* vertexInputLayout
 ) {
@@ -697,6 +717,7 @@ Base::GraphicsPipeline* Vulkan::Core::GetOrCreateGraphicsPipelineFromCache(
 	}
 
 	Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo createInfo{};
+	createInfo.pipelineLayout = pipelineLayout;
 	createInfo.pipelineData = pipelineData;
 	if (vertexInputLayout != nullptr) {
 		createInfo.vertexInputLayout = *vertexInputLayout;
@@ -706,6 +727,34 @@ Base::GraphicsPipeline* Vulkan::Core::GetOrCreateGraphicsPipelineFromCache(
 
 	graphicsPipelineCache[hash] = newPipeline;
 	return newPipeline;
+}
+
+Base::PipelineLayout* Vulkan::Core::GetOrCreatePipelineLayoutFromCache(const Grindstone::GraphicsAPI::PipelineLayout::CreateInfo& createInfo) {
+	size_t hash = std::hash<Base::PipelineLayout::CreateInfo>{}(createInfo);
+
+	auto iterator = pipelineLayoutCache.find(hash);
+	if (iterator != pipelineLayoutCache.end()) {
+		return iterator->second;
+	}
+
+	Grindstone::GraphicsAPI::PipelineLayout* newPipelineLayout = CreatePipelineLayout(createInfo);
+
+	pipelineLayoutCache[hash] = newPipelineLayout;
+	return newPipelineLayout;
+}
+
+Base::DescriptorSetLayout* Vulkan::Core::GetOrCreateDescriptorSetLayoutFromCache(const Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo& createInfo) {
+	size_t hash = std::hash<Base::DescriptorSetLayout::CreateInfo>{}(createInfo);
+
+	auto iterator = descriptorSetLayoutCache.find(hash);
+	if (iterator != descriptorSetLayoutCache.end()) {
+		return iterator->second;
+	}
+
+	Grindstone::GraphicsAPI::DescriptorSetLayout* newDescriptorSetLayout = CreateDescriptorSetLayout(createInfo);
+
+	descriptorSetLayoutCache[hash] = newDescriptorSetLayout;
+	return newDescriptorSetLayout;
 }
 
 // Deleters
@@ -728,6 +777,10 @@ void Vulkan::Core::DeleteComputePipeline(Base::ComputePipeline* ptr) {
 
 void Vulkan::Core::DeleteGraphicsPipeline(Base::GraphicsPipeline *ptr) {
 	AllocatorCore::Free(static_cast<Vulkan::GraphicsPipeline*>(ptr));
+}
+
+void Vulkan::Core::DeletePipelineLayout(Base::PipelineLayout* ptr) {
+	AllocatorCore::Free(static_cast<Vulkan::PipelineLayout*>(ptr));
 }
 
 void Vulkan::Core::DeleteRenderPass(Base::RenderPass *ptr) {

@@ -6,6 +6,7 @@
 #include <xkeycheck.h>
 
 #include <Common/Hash.hpp>
+#include "PipelineLayout.hpp"
 #include "Formats.hpp"
 
 namespace Grindstone::GraphicsAPI {
@@ -42,8 +43,6 @@ namespace Grindstone::GraphicsAPI {
 			uint32_t scissorW, scissorH;
 			const ShaderStageData* shaderStageCreateInfos;
 			uint32_t shaderStageCreateInfoCount;
-			const DescriptorSetLayout* const * descriptorSetLayouts;
-			uint32_t descriptorSetLayoutCount;
 
 			const AttachmentData* colorAttachmentData = nullptr;
 			uint8_t colorAttachmentCount;
@@ -62,9 +61,12 @@ namespace Grindstone::GraphicsAPI {
 		};
 
 		struct CreateInfo {
+			Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = nullptr;
 			VertexInputLayout vertexInputLayout;
 			PipelineData pipelineData;
 		};
+
+		Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = nullptr;
 	};
 }
 
@@ -116,12 +118,12 @@ namespace std {
 			result ^= static_cast<size_t>(pipelineData.depthBiasConstantFactor) | (static_cast<size_t>(pipelineData.depthBiasSlopeFactor) << 32);
 			result ^= static_cast<size_t>(pipelineData.depthBiasClamp);
 
-			result ^= pipelineData.colorAttachmentCount;
+			result ^= std::hash<uint32_t>{}(pipelineData.colorAttachmentCount);
 			for (uint8_t i = 0; i < pipelineData.colorAttachmentCount; ++i) {
 				result ^= std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::AttachmentData>{}(pipelineData.colorAttachmentData[i]);
 			}
 
-			result ^= pipelineData.shaderStageCreateInfoCount;
+			result ^= std::hash<uint32_t>{}(pipelineData.shaderStageCreateInfoCount);
 			for (uint8_t i = 0; i < pipelineData.shaderStageCreateInfoCount; ++i) {
 				result ^= std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::ShaderStageData>{}(pipelineData.shaderStageCreateInfos[i]);
 			}

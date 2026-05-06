@@ -97,7 +97,7 @@ Grindstone::Renderer::TransientImageKey Grindstone::Renderer::TransientResourceM
 	}
 
 	Grindstone::GraphicsAPI::Image::CreateInfo createInfo{
-		.debugName = "TRACKED Image",
+		.debugName = inDesc.name.c_str(),
 		.width = desc.size.x,
 		.height = desc.size.y,
 		.depth = desc.depth,
@@ -124,7 +124,8 @@ Grindstone::Renderer::TransientImageKey Grindstone::Renderer::TransientResourceM
 			.data = TransientImageData {
 				.image = image,
 				.currentLayout = GraphicsAPI::ImageLayout::Undefined,
-				.currentAccessFlags = GraphicsAPI::AccessFlags::None
+				.currentAccessFlags = GraphicsAPI::AccessFlags::None,
+				.currentPipelineStage = GraphicsAPI::PipelineStageBit::None
 			},
 			.lifetime = USED_LIFETIME,
 			.isUsedThisFrame = true,

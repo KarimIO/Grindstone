@@ -50,6 +50,7 @@ void Grindstone::Renderer::RenderGraph::ExecuteGraph(Grindstone::Renderer::Rende
 					.image = desc.externalGetterCallback(),
 					.currentLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
 					.currentAccessFlags = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
+					.currentPipelineStage = Grindstone::GraphicsAPI::PipelineStageBit::AllGraphics,
 				};
 			}
 			else {
@@ -67,6 +68,7 @@ void Grindstone::Renderer::RenderGraph::ExecuteGraph(Grindstone::Renderer::Rende
 	frameResources.RealizeKeys(context.transientResourceManager);
 
 	for (auto& pass : passes) {
+		pass->RealizeResources(context, frameResources);
 		pass->Execute(context, frameResources);
 	}
 

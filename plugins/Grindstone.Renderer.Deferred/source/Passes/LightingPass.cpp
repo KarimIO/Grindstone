@@ -21,6 +21,7 @@ static void PerformImageBasedLighting(
 	Grindstone::GraphicsAPI::Image*& currentEnvironmentMapImage
 ) {
 	if (imageBasedLightingAsset != nullptr) {
+		GraphicsAPI::PipelineLayout* imageBasedLightingPipelineLayout = imageBasedLightingAsset->GetFirstPassPipelineLayout();
 		GraphicsAPI::GraphicsPipeline* imageBasedLightingPipeline = imageBasedLightingAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
 		if (imageBasedLightingPipeline != nullptr) {
 			cmd->BeginDebugLabelSection("Image Based Lighting", nullptr);
@@ -58,7 +59,7 @@ static void PerformImageBasedLighting(
 
 			if (hasEnvMap) {
 				cmd->BindGraphicsDescriptorSet(
-					imageBasedLightingPipeline,
+					imageBasedLightingPipelineLayout,
 					&ambientOcclusionDescriptorSet,
 					2u, // Offset
 					1u // Count
@@ -130,6 +131,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 
 			GraphicsPipelineAsset* pointLightAsset = pointLightPipelineSet.Get();
 			if (pointLightAsset != nullptr) {
+				GraphicsAPI::PipelineLayout* pointLightPipelineLayout = pointLightAsset->GetFirstPassPipelineLayout();
 				GraphicsAPI::GraphicsPipeline* pointLightPipeline = pointLightAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
 				if (pointLightPipeline != nullptr) {
 					cmd->BeginDebugLabelSection("Point Lighting", nullptr);
@@ -148,7 +150,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 
 							pointLightComponent.uniformBufferObject->UploadData(&lightmapStruct);
 							cmd->BindGraphicsDescriptorSet(
-								pointLightPipeline,
+								pointLightPipelineLayout,
 								&pointLightComponent.descriptorSet,
 								2u, // Offset
 								1u // Count
@@ -162,6 +164,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 
 			GraphicsPipelineAsset* spotLightAsset = spotLightPipelineSet.Get();
 			if (spotLightAsset != nullptr) {
+				GraphicsAPI::PipelineLayout* spotLightPipelineLayout = spotLightAsset->GetFirstPassPipelineLayout();
 				GraphicsAPI::GraphicsPipeline* spotLightPipeline = spotLightAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
 				if (spotLightPipeline != nullptr) {
 					cmd->BeginDebugLabelSection("Spot Lighting", nullptr);
@@ -187,7 +190,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 							spotLightComponent.uniformBufferObject->UploadData(&lightStruct);
 
 							cmd->BindGraphicsDescriptorSet(
-								spotLightPipeline,
+								spotLightPipelineLayout,
 								&spotLightComponent.descriptorSet,
 								2u, // Offset
 								1u // Count
@@ -201,6 +204,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 
 			GraphicsPipelineAsset* directionalLightAsset = directionalLightPipelineSet.Get();
 			if (directionalLightAsset != nullptr) {
+				GraphicsAPI::PipelineLayout* directionalLightPipelineLayout = directionalLightAsset->GetFirstPassPipelineLayout();
 				GraphicsAPI::GraphicsPipeline* directionalLightPipeline = directionalLightAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
 				if (directionalLightPipeline != nullptr) {
 					cmd->BeginDebugLabelSection("Directional Lighting", nullptr);
@@ -223,7 +227,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 							directionalLightComponent.uniformBufferObject->UploadData(&lightStruct);
 
 							cmd->BindGraphicsDescriptorSet(
-								directionalLightPipeline,
+								directionalLightPipelineLayout,
 								&directionalLightComponent.descriptorSet,
 								2u, // Offset
 								1u // Count

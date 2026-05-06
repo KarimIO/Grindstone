@@ -67,6 +67,7 @@ namespace Grindstone::Renderer {
 		GraphicsAPI::Image* image;
 		GraphicsAPI::ImageLayout currentLayout;
 		GraphicsAPI::AccessFlags currentAccessFlags;
+		Grindstone::GraphicsAPI::PipelineStageBit currentPipelineStage;
 	};
 
 	struct TransientBufferData {

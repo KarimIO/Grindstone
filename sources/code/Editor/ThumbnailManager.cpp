@@ -68,7 +68,7 @@ bool ThumbnailManager::Initialize() {
 		.bindings = &descriptorLayoutBinding,
 		.bindingCount = 1
 	};
-	GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorLayoutCreateInfo);
+	GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorLayoutCreateInfo);
 
 	Grindstone::GraphicsAPI::Sampler::CreateInfo thumbnailAtlasSamplerCreateInfo{
 		.debugName = "Thumbnail Atlas Sampler",

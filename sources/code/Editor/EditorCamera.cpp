@@ -152,7 +152,7 @@ EditorCamera::EditorCamera() {
 		mousePickDescriptorSetLayoutCreateInfo.debugName = "Mouse Pick Descriptor Set Layout";
 		mousePickDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(mousePickDescriptorBindingLayouts.size());
 		mousePickDescriptorSetLayoutCreateInfo.bindings = mousePickDescriptorBindingLayouts.data();
-		mousePickDescriptorSetLayout = core->CreateDescriptorSetLayout(mousePickDescriptorSetLayoutCreateInfo);
+		mousePickDescriptorSetLayout = core->GetOrCreateDescriptorSetLayoutFromCache(mousePickDescriptorSetLayoutCreateInfo);
 
 		GraphicsAPI::DescriptorSet::CreateInfo mousePickDescriptorSetCreateInfo{};
 		mousePickDescriptorSetCreateInfo.layout = mousePickDescriptorSetLayout;
@@ -209,7 +209,7 @@ EditorCamera::EditorCamera() {
 	descriptorSetLayoutCreateInfo.debugName = "Editor Viewport Descriptor Set Layout";
 	descriptorSetLayoutCreateInfo.bindingCount = 1;
 	descriptorSetLayoutCreateInfo.bindings = &descriptorSetLayoutBinding;
-	descriptorSetLayout = core->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+	descriptorSetLayout = core->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 	descriptorSetCreateInfo.bindingCount = 1;
