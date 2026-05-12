@@ -38,3 +38,24 @@ namespace Grindstone::GraphicsAPI {
 		virtual ~Sampler() {};
 	};
 }
+
+namespace std {
+	template<>
+	struct hash<Grindstone::GraphicsAPI::SamplerOptions> {
+		std::size_t operator()(const Grindstone::GraphicsAPI::SamplerOptions& options) const noexcept {
+
+			size_t filters = static_cast<size_t>(options.wrapModeU) |
+				static_cast<size_t>(options.wrapModeV) << 8 |
+				static_cast<size_t>(options.wrapModeW) << 16 |
+				static_cast<size_t>(options.mipFilter) << 24 |
+				static_cast<size_t>(options.minFilter) << 32 |
+				static_cast<size_t>(options.magFilter) << 40;
+
+			size_t result = std::hash<uint32_t>{}(static_cast<uint64_t>(options.mipMin) | (static_cast<uint64_t>(options.mipMax) << 32u));
+			result ^= std::hash<uint32_t>{}(static_cast<uint64_t>(options.anistropy) | (static_cast<uint64_t>(options.mipBias) << 32u));
+			result ^= std::hash<size_t>{}(filters);
+
+			return result;
+		}
+	};
+}

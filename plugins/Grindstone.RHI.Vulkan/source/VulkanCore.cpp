@@ -12,6 +12,10 @@
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 
+#include <GFSDK_Aftermath.h>
+#include "GFSDK_Aftermath_GpuCrashDump.h"
+#include "GFSDK_Aftermath_GpuCrashDumpDecoding.h"
+
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 
@@ -31,6 +35,7 @@
 #include <Grindstone.RHI.Vulkan/include/VulkanDescriptorSetLayout.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanFormat.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanUtils.hpp>
+#include <Grindstone.RHI.Vulkan/include/GpuCrashTracker/NsightAftermathGpuCrashTracker.h>
 
 #define VMA_IMPLEMENTATION
 #include "vk_mem_alloc.h"
@@ -54,7 +59,7 @@ const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
 };
 
-const std::vector<const char*> deviceExtensions = {
+std::vector<const char*> deviceExtensions = {
 	VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 	VK_GOOGLE_HLSL_FUNCTIONALITY_1_EXTENSION_NAME,
@@ -113,6 +118,29 @@ static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMesse
 		func(instance, debugMessenger, pAllocator);
 	}
 }
+
+static std::pair<const char*, Grindstone::GraphicsAPI::VendorType> GetVendorNameFromID(uint32_t vendorID) {
+	using VendorType = Grindstone::GraphicsAPI::VendorType;
+
+	switch (vendorID) {
+	case 0x1002:
+		return { "Advanced Micro Devices (AMD)", VendorType::AMD };
+	case 0x1010:
+		return { "Imagination Technologies", VendorType::Imagination };
+	case 0x10DE:
+		return { "NVIDIA Corporation", VendorType::Nvidia };
+	case 0x13B5:
+		return { "Arm Limited", VendorType::Arm };
+	case 0x5143:
+		return { "Qualcomm Technologies, Inc.", VendorType::Qualcomm };
+	case 0x163C:
+	case 0x8086:
+	case 0x8087:
+		return { "Intel Corporation", VendorType::Intel };
+	default:
+		return { "Unknown", VendorType::Unknown };
+	}
+};
 
 Vulkan::Core *Vulkan::Core::graphicsWrapper = nullptr;
 
@@ -215,6 +243,10 @@ void Vulkan::Core::CreateInstance() {
 	}
 }
 
+GpuCrashTracker& Vulkan::Core::GetGpuCrashTracker() {
+	return *gpuCrashTracker;
+}
+
 void Vulkan::Core::SetupDebugMessenger() {
 	if (!enableValidationLayers) return;
 
@@ -256,13 +288,14 @@ void Vulkan::Core::PickPhysicalDevice() {
 
 	GPRINT_INFO_V(LogSource::GraphicsAPI, "Using Device: {}", gpuProperties.deviceName);
 
-	const char *vendorName = GetVendorNameFromID(gpuProperties.vendorID);
-	if (vendorName == nullptr) {
+	auto [vendorName, vendorType] = GetVendorNameFromID(gpuProperties.vendorID);
+	if (vendorType == VendorType::Unknown || vendorType == VendorType::Unset) {
 		this->vendorName = std::string("Unknown Vendor(") + std::to_string(gpuProperties.vendorID) + ")";
 	}
 	else {
 		this->vendorName = vendorName;
 	}
+	this->vendorType = vendorType;
 	adapterName = gpuProperties.deviceName;
 
 	unsigned int versionMajor = (gpuProperties.apiVersion >> 22) & 0x3FF;
@@ -317,9 +350,46 @@ void Vulkan::Core::CreateLogicalDevice() {
 		},
 	};
 
+	VkPhysicalDeviceFaultFeaturesEXT faultFeatures{
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_EXT,
+		.pNext = &deviceFeatures2,
+		.deviceFault = VK_TRUE,
+	};
+
+	VkDeviceDiagnosticsConfigFlagsNV aftermathFlags =
+		VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_AUTOMATIC_CHECKPOINTS_BIT_NV |  // Enable automatic call stack checkpoints.
+		VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_RESOURCE_TRACKING_BIT_NV |      // Enable tracking of resources.
+		VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_DEBUG_INFO_BIT_NV |      // Generate debug information for shaders.
+		VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_ERROR_REPORTING_BIT_NV;  // Enable additional runtime shader error reporting.
+
+	VkDeviceDiagnosticsConfigCreateInfoNV aftermathInfo{
+		.sType = VK_STRUCTURE_TYPE_DEVICE_DIAGNOSTICS_CONFIG_CREATE_INFO_NV,
+		.pNext = &faultFeatures,
+		.flags = aftermathFlags
+	};
+
+	void* firstDeviceFeature = &deviceFeatures2;
+	if (debug) {
+		deviceExtensions.emplace_back(VK_EXT_DEVICE_FAULT_EXTENSION_NAME);
+
+		if (vendorType == VendorType::Nvidia) {
+			static GpuCrashTracker::MarkerMap markerMap;
+			static GpuCrashTracker* gpuCrashTracker = Grindstone::Memory::AllocatorCore::Allocate<GpuCrashTracker>(markerMap);
+			this->gpuCrashTracker = gpuCrashTracker;
+			gpuCrashTracker->Initialize(true);
+
+			deviceExtensions.emplace_back(VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME);
+			deviceExtensions.emplace_back(VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME);
+			firstDeviceFeature = &aftermathInfo;
+		}
+		else {
+			firstDeviceFeature = &faultFeatures;
+		}
+	}
+
 	VkDeviceCreateInfo createInfo {
 		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-		.pNext = &deviceFeatures2,
+		.pNext = firstDeviceFeature,
 		.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),
 		.pQueueCreateInfos = queueCreateInfos.data(),
 		.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size()),
@@ -755,6 +825,20 @@ Base::DescriptorSetLayout* Vulkan::Core::GetOrCreateDescriptorSetLayoutFromCache
 
 	descriptorSetLayoutCache[hash] = newDescriptorSetLayout;
 	return newDescriptorSetLayout;
+}
+
+Base::Sampler* Vulkan::Core::GetOrCreateSampler(const Grindstone::GraphicsAPI::Sampler::CreateInfo& createInfo) {
+	size_t hash = std::hash<Base::SamplerOptions>{}(createInfo.options);
+
+	auto iterator = samplerCache.find(hash);
+	if (iterator != samplerCache.end()) {
+		return iterator->second;
+	}
+
+	Grindstone::GraphicsAPI::Sampler* newSampler = CreateSampler(createInfo);
+
+	samplerCache[hash] = newSampler;
+	return newSampler;
 }
 
 // Deleters

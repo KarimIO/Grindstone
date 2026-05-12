@@ -3,11 +3,12 @@
 #else
 #define VK_USE_PLATFORM_XLIB_KHR
 #endif
-#include <vulkan/vulkan.h>
 
 #include <algorithm>
 
+#include <vulkan/vulkan.h>
 #include <glfw/glfw3.h>
+#include <GFSDK_Aftermath_GpuCrashDump.h>
 
 #include <Common/Window/GlfwWindow.hpp>
 #include <EngineCore/Logger.hpp>
@@ -76,12 +77,70 @@ static const char* VkResultToString(VkResult result) {
 	return "Unknown VK Error Result";
 }
 
+PFN_vkGetDeviceFaultInfoEXT GetDeviceFaultInfoEXT = VK_NULL_HANDLE;
+
+static void WaitForAftermathCrash() {
+	GetDeviceFaultInfoEXT = (PFN_vkGetDeviceFaultInfoEXT)vkGetInstanceProcAddr(Vulkan::Core::Get().GetInstance(), "vkGetDeviceFaultInfoEXT");
+
+	VkDevice device = Vulkan::Core::Get().GetDevice();
+	// Query number of available results
+	VkDeviceFaultCountsEXT faultCounts{
+		.sType = VK_STRUCTURE_TYPE_DEVICE_FAULT_COUNTS_EXT
+	};
+
+	GetDeviceFaultInfoEXT(device, &faultCounts, NULL);
+
+	std::vector<VkDeviceFaultAddressInfoEXT> addressInfos;
+	addressInfos.resize(faultCounts.addressInfoCount);
+	std::vector<VkDeviceFaultVendorInfoEXT> vendorInfos;
+	vendorInfos.resize(faultCounts.vendorInfoCount);
+	std::vector<char> vendorBinaryData;
+	vendorBinaryData.resize(faultCounts.vendorBinarySize);
+
+	// Allocate output arrays and query fault data
+	VkDeviceFaultInfoEXT faultInfo{
+		.sType = VK_STRUCTURE_TYPE_DEVICE_FAULT_INFO_EXT,
+		.pAddressInfos = addressInfos.data(),
+		.pVendorInfos = vendorInfos.data(),
+		.pVendorBinaryData = vendorBinaryData.data()
+	};
+
+	GetDeviceFaultInfoEXT(device, &faultCounts, &faultInfo);
+
+	GFSDK_Aftermath_CrashDump_Status status = GFSDK_Aftermath_CrashDump_Status_Unknown;
+	GFSDK_Aftermath_GetCrashDumpStatus(&status);
+
+	auto tdrTerminationTimeout = std::chrono::seconds(3);
+	auto tStart = std::chrono::steady_clock::now();
+	auto tElapsed = std::chrono::milliseconds::zero();
+
+	while (
+		status != GFSDK_Aftermath_CrashDump_Status_CollectingDataFailed &&
+		status != GFSDK_Aftermath_CrashDump_Status_Finished &&
+		tElapsed < tdrTerminationTimeout
+	) {
+		// Sleep 50ms and poll the status again until timeout or Aftermath finished processing the crash dump.
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		GFSDK_Aftermath_GetCrashDumpStatus(&status);
+
+		auto tEnd = std::chrono::steady_clock::now();
+		tElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(tEnd - tStart);
+	}
+
+	if (status != GFSDK_Aftermath_CrashDump_Status_Finished)
+	{
+		std::stringstream err_msg;
+		err_msg << "Unexpected crash dump status: " << status;
+	}
+}
+
 bool Vulkan::WindowGraphicsBinding::Initialize(Window *window) {
 	this->window = window;
 	maxFramesInFlight = 3;
 
 	VkResult result = glfwCreateWindowSurface(Vulkan::Core::Get().GetInstance(), static_cast<GlfwWindow*>(window)->GetHandle(), NULL, &surface);
 	if (result != VK_SUCCESS) {
+		WaitForAftermathCrash();
 		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to create window surface ({})!", VkResultToString(result));
 		return false;
 	}
@@ -249,6 +308,7 @@ void Vulkan::WindowGraphicsBinding::CreateSyncObjects() {
 			vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
 			vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
 
+			WaitForAftermathCrash();
 			GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan: Failed to create synchronization objects for a frame!");
 		}
 	}
@@ -287,6 +347,7 @@ void Vulkan::WindowGraphicsBinding::CreateImageSets() {
 		VkFramebuffer vkFramebuffer = nullptr;
 		VkResult result = vkCreateFramebuffer(device, &framebufferInfo, nullptr, &vkFramebuffer);
 		if (result != VK_SUCCESS) {
+			WaitForAftermathCrash();
 			GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to create framebuffer ({})", VkResultToString(result));
 		}
 
@@ -316,6 +377,7 @@ bool Vulkan::WindowGraphicsBinding::AcquireNextImage() {
 		return false;
 	}
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		WaitForAftermathCrash();
 		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to acquire swap chain image! ({})!", VkResultToString(result));
 	}
 
@@ -392,6 +454,7 @@ void Vulkan::WindowGraphicsBinding::SubmitCommandBufferNoSynchronization(Graphic
 
 	VkResult result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, fence);
 	if (result != VK_SUCCESS) {
+		WaitForAftermathCrash();
 		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to submit draw command buffer ({})!", VkResultToString(result));
 	}
 
@@ -423,6 +486,7 @@ void Vulkan::WindowGraphicsBinding::SubmitCommandBufferForCurrentFrame(GraphicsA
 
 	VkResult result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]);
 	if (result != VK_SUCCESS) {
+		WaitForAftermathCrash();
 		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to submit draw command buffer ({})!", VkResultToString(result));
 	}
 }
@@ -449,6 +513,7 @@ bool Vulkan::WindowGraphicsBinding::PresentSwapchain() {
 		return false;
 	}
 	else if (result != VK_SUCCESS) {
+		WaitForAftermathCrash();
 		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to present queue ({})!", VkResultToString(result));
 	}
 
@@ -505,6 +570,7 @@ void Vulkan::WindowGraphicsBinding::CreateSwapChain() {
 
 	VkResult result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain);
 	if (result != VK_SUCCESS) {
+		WaitForAftermathCrash();
 		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to create swap chain ({})!", VkResultToString(result));
 	}
 
@@ -558,6 +624,7 @@ void Vulkan::WindowGraphicsBinding::CreateRenderPass() {
 	VkRenderPass vkRenderPass = nullptr;
 	VkResult result = vkCreateRenderPass(device, &renderPassInfo, nullptr, &vkRenderPass);
 	if (result != VK_SUCCESS) {
+		WaitForAftermathCrash();
 		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to create render pass ({})", VkResultToString(result));
 	}
 

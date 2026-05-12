@@ -27,6 +27,17 @@ namespace Grindstone::GraphicsAPI {
 		DirectX12
 	};
 
+	enum class VendorType {
+		Unset,
+		Unknown,
+		AMD,
+		Imagination,
+		Nvidia,
+		Arm,
+		Qualcomm,
+		Intel
+	};
+
 	class Core {
 	public:
 		struct CreateInfo {
@@ -84,6 +95,7 @@ namespace Grindstone::GraphicsAPI {
 			const GraphicsAPI::VertexInputLayout* vertexInputLayout
 		) = 0;
 		virtual Grindstone::GraphicsAPI::PipelineLayout* GetOrCreatePipelineLayoutFromCache(const Grindstone::GraphicsAPI::PipelineLayout::CreateInfo& createInfo) = 0;
+		virtual GraphicsAPI::Sampler* GetOrCreateSampler(const Grindstone::GraphicsAPI::Sampler::CreateInfo& createInfo) = 0;
 
 		virtual void CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) = 0;
 
@@ -112,34 +124,9 @@ namespace Grindstone::GraphicsAPI {
 		virtual void SetColorMask(ColorMask mask) = 0;
 		virtual void ResizeViewport(uint32_t w, uint32_t h) = 0;
 
-		const char* GetVendorNameFromID(uint32_t vendorID) {
-			switch (vendorID) {
-			case 0x1002:
-				return "Advanced Micro Devices (AMD)";
-				break;
-			case 0x1010:
-				return "Imagination Technologies";
-				break;
-			case 0x10DE:
-				return "NVIDIA Corporation";
-				break;
-			case 0x13B5:
-				return "Arm Limited";
-				break;
-			case 0x5143:
-				return "Qualcomm Technologies, Inc.";
-				break;
-			case 0x163C:
-			case 0x8086:
-			case 0x8087:
-				return "Intel Corporation";
-				break;
-			default:
-				return 0;
-			}
-		};
 	protected:
 		bool debug;
 		API apiType;
+		VendorType vendorType;
 	};
 }
