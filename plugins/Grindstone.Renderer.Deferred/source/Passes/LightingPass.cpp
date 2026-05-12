@@ -200,10 +200,8 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 								spotLightComponent.intensity,
 								entity.GetWorldForward(),
 								glm::cos(glm::radians(spotLightComponent.innerAngle)),
-								glm::cos(glm::radians(spotLightComponent.outerAngle)),
-								spotLightComponent.shadowRenderArea
+								glm::cos(glm::radians(spotLightComponent.outerAngle))
 							};
-
 							spotLightComponent.uniformBufferObject->UploadData(&lightStruct);
 
 							cmd->BindGraphicsDescriptorSet(
@@ -237,8 +235,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 								directionalLightComponent.color,
 								directionalLightComponent.sourceRadius,
 								entity.GetWorldForward(),
-								directionalLightComponent.intensity,
-								directionalLightComponent.shadowRenderArea
+								directionalLightComponent.intensity
 							};
 
 							directionalLightComponent.uniformBufferObject->UploadData(&lightStruct);

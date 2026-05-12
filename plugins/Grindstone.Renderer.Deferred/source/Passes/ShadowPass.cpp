@@ -53,14 +53,7 @@ static void RenderSpotLightComponent(
 
 	engineCore.GetGraphicsCore()->AdjustPerspective(&projectionMatrix[0][0]);
 
-	const float shadowAtlasFloat = static_cast<float>(shadowAtlasResolution);
 	spotLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
-	spotLightComponent.shadowRenderArea = Math::Rect2D(
-		static_cast<float>(renderArea.offset.x) / shadowAtlasFloat,
-		static_cast<float>(renderArea.offset.y) / shadowAtlasFloat,
-		static_cast<float>(renderArea.extent.x) / shadowAtlasFloat,
-		static_cast<float>(renderArea.extent.y) / shadowAtlasFloat
-	);
 	spotLightComponent.shadowMapUniformBufferObject->UploadData(&spotLightComponent.shadowMatrix);
 	engineCore.assetRendererManager->SetEngineDescriptorSet(spotLightComponent.shadowMapDescriptorSet);
 
@@ -104,15 +97,7 @@ static void RenderDirectionalLightComponent(
 
 	graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
 
-	const float shadowAtlasFloat = static_cast<float>(shadowAtlasResolution);
-
 	directionalLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
-	directionalLightComponent.shadowRenderArea = Math::Rect2D(
-		static_cast<float>(renderArea.offset.x) / shadowAtlasFloat,
-		static_cast<float>(renderArea.offset.y) / shadowAtlasFloat,
-		static_cast<float>(renderArea.extent.x) / shadowAtlasFloat,
-		static_cast<float>(renderArea.extent.y) / shadowAtlasFloat
-	);
 	directionalLightComponent.shadowMapUniformBufferObject->UploadData(&directionalLightComponent.shadowMatrix);
 	engineCore.assetRendererManager->SetEngineDescriptorSet(directionalLightComponent.shadowMapDescriptorSet);
 
