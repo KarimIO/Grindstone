@@ -10,6 +10,10 @@
 #include "AttachmentInfo.hpp"
 #include "BufferInfo.hpp"
 
+namespace Grindstone::GraphicsAPI {
+	class Sampler;
+}
+
 namespace Grindstone::Renderer {
 	class RenderGraphBuilder;
 
@@ -21,6 +25,7 @@ namespace Grindstone::Renderer {
 
 		Grindstone::Renderer::RenderGraphBuilder* renderGraphBuilder = nullptr;
 
+		std::vector<GraphicsAPI::Sampler*> samplers;
 		std::vector<PassBufferDesc> bufferRefs;
 		std::vector<PassImageDesc> imageRefs;
 
@@ -36,7 +41,7 @@ namespace Grindstone::Renderer {
 
 	class GraphicsRenderGraphBuilderPassBase : public PipelineRenderGraphBuilderPass {
 	public:
-
+		void ReadExternalSampler(Grindstone::GraphicsAPI::Sampler* sampler);
 		void ReadSampledImage(RenderGraphBuilderResourceRef inputHandle);
 		RenderGraphBuilderResourceRef ReadWriteColorAttachment(RenderGraphBuilderResourceRef inputHandle);
 		RenderGraphBuilderResourceRef WriteColorAttachment(ImageDescription resource, Grindstone::GraphicsAPI::LoadOp loadOp, Grindstone::GraphicsAPI::ClearColor clearValue);
@@ -46,6 +51,7 @@ namespace Grindstone::Renderer {
 		void ReadDepthAttachmentSampled(RenderGraphBuilderResourceRef inputHandle);
 		RenderGraphBuilderResourceRef ReadWriteDepthStencilAttachment(RenderGraphBuilderResourceRef inputHandle);
 		RenderGraphBuilderResourceRef WriteDepthStencilAttachment(ImageDescription resource, Grindstone::GraphicsAPI::LoadOp loadOp, Grindstone::GraphicsAPI::ClearDepthStencil clearValue);
+		Grindstone::Renderer::RenderGraphBuilderResourceRef WriteDepthStencilAttachment(RenderGraphBuilderResourceRef resource, Grindstone::GraphicsAPI::LoadOp loadOp, Grindstone::GraphicsAPI::ClearDepthStencil clearValue);
 
 	protected:
 
@@ -74,6 +80,7 @@ namespace Grindstone::Renderer {
 			pass->type = type;
 			pass->executionCallback = executionCallback;
 			pass->metaRenderingArea = renderingArea;
+			pass->samplers = samplers;
 			pass->returnData = returnData;
 			pass->imageDescs = imageRefs;
 			pass->bufferDescs = bufferRefs;
@@ -108,6 +115,7 @@ namespace Grindstone::Renderer {
 			pass->name = name;
 			pass->type = type;
 			pass->executionCallback = executionCallback;
+			pass->samplers = samplers;
 			pass->returnData = returnData;
 			pass->imageDescs = imageRefs;
 			pass->bufferDescs = bufferRefs;

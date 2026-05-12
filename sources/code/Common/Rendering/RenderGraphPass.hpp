@@ -13,6 +13,10 @@
 #include "BufferInfo.hpp"
 #include "RenderGraphFrameResources.hpp"
 
+namespace Grindstone::GraphicsAPI {
+	class Sampler;
+}
+
 namespace Grindstone::Renderer {
 	using UnionResourceDescription = std::variant<Grindstone::Renderer::ImageDescription, Grindstone::Renderer::BufferDescription>;
 
@@ -42,6 +46,7 @@ namespace Grindstone::Renderer {
 	class PipelineRenderGraphPass : public RenderGraphPass {
 	public:
 
+		std::vector<GraphicsAPI::Sampler*> samplers;
 		std::vector<PassImageDesc> imageDescs;
 		std::vector<PassBufferDesc> bufferDescs;
 		Grindstone::GraphicsAPI::DescriptorSet* passDescriptorSet = nullptr;

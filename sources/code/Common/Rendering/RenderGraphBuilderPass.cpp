@@ -60,6 +60,10 @@ Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Renderer::Pipeli
 // Graphics Pass
 // ============================================
 
+void Grindstone::Renderer::GraphicsRenderGraphBuilderPassBase::ReadExternalSampler(Grindstone::GraphicsAPI::Sampler* sampler) {
+	samplers.emplace_back(sampler);
+}
+
 // Color Attachment
 
 void Grindstone::Renderer::GraphicsRenderGraphBuilderPassBase::ReadSampledImage(RenderGraphBuilderResourceRef inputHandle) {
@@ -161,6 +165,22 @@ Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Renderer::Graphi
 
 Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Renderer::GraphicsRenderGraphBuilderPassBase::WriteDepthStencilAttachment(ImageDescription resource, Grindstone::GraphicsAPI::LoadOp loadOp, Grindstone::GraphicsAPI::ClearDepthStencil clearValue) {
 	RenderGraphBuilderResourceRef ref = renderGraphBuilder->AddImage(resource, passIndex);
+	imageRefs.emplace_back(
+		PassImageDesc{
+			.ref = ref,
+			.usage = RenderGraphImageUsage::DepthAttachmentWrite,
+			.attachment = PassImageDesc::AttachmentMeta {
+				.loadOp = loadOp,
+				.clearValue = clearValue
+			}
+		}
+	);
+
+	return ref;
+}
+
+Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Renderer::GraphicsRenderGraphBuilderPassBase::WriteDepthStencilAttachment(RenderGraphBuilderResourceRef resource, Grindstone::GraphicsAPI::LoadOp loadOp, Grindstone::GraphicsAPI::ClearDepthStencil clearValue) {
+	RenderGraphBuilderResourceRef ref = resource.FromPass(passIndex);
 	imageRefs.emplace_back(
 		PassImageDesc{
 			.ref = ref,

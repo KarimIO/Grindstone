@@ -125,7 +125,7 @@ target_link_libraries(PluginScriptCSharp PUBLIC ${CORE_LIBS} ${DOTNET_ROOT}/neth
 target_precompile_headers(PluginScriptCSharp PUBLIC ${INC}/pch.hpp)
 
 add_custom_command(
-        TARGET PluginScriptCSharp POST_BUILD
+		TARGET PluginScriptCSharp POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
 			"${DOTNET_ROOT}/nethost.dll"
 			"${SCRIPT_CSHARP_LIB}/$<CONFIG>/nethost.dll"

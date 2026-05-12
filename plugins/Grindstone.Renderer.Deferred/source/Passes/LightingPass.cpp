@@ -32,7 +32,7 @@ static void PerformImageBasedLighting(
 			bool hasEnvMap = false;
 			view.each(
 				[&hasEnvMap, &currentEnvironmentMapImage, &ambientOcclusionDescriptorSet](const EnvironmentMapComponent& environmentMapComponent) {
-					// Valid env map found - ignore ther est.
+					// Valid env map found - ignore the rest.
 					if (hasEnvMap) {
 						return;
 					}
@@ -81,6 +81,20 @@ bool Renderer::LightingPass::Initialize() {
 	spotLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/spot");
 	directionalLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/directional");
 
+	Grindstone::GraphicsAPI::Sampler::CreateInfo screenSamplerCreateInfo{
+	screenSamplerCreateInfo.debugName = "Screen Sampler",
+	screenSamplerCreateInfo.options = {
+			.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat,
+			.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat,
+			.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat,
+			.minFilter = GraphicsAPI::TextureFilter::Linear,
+			.magFilter = GraphicsAPI::TextureFilter::Linear,
+			.anistropy = 0
+		}
+	};
+
+	screenSampler = engineCore.GetGraphicsCore()->GetOrCreateSampler(screenSamplerCreateInfo);
+
 	return true;
 }
 
@@ -88,16 +102,19 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 	GraphicsAPI::Buffer* vertexBuffer,
 	GraphicsAPI::Buffer* indexBuffer,
 	Renderer::RenderGraphBuilder& renderGraph,
-	Grindstone::Renderer::GbufferData& gbufferData
+	Grindstone::Renderer::GbufferData& gbufferData,
+	RenderGraphBuilderResourceRef shadowAtlasRef
 ) {
 	return renderGraph.CreateGraphicsPass<LightingPassReturnData>(
 		"Lighting Pass",
 		MetaRect::Swapchain(),
-		[&gbufferData](Renderer::GraphicsRenderGraphBuilderPass<LightingPassReturnData>& renderPass) -> LightingPassReturnData {
+		[this, shadowAtlasRef, &gbufferData](Renderer::GraphicsRenderGraphBuilderPass<LightingPassReturnData>& renderPass) -> LightingPassReturnData {
+			renderPass.ReadExternalSampler(screenSampler);
+			renderPass.ReadSampledImage(gbufferData.depthRef);
 			renderPass.ReadSampledImage(gbufferData.albedoRef);
 			renderPass.ReadSampledImage(gbufferData.normalRef);
 			renderPass.ReadSampledImage(gbufferData.specularRoughnessRef);
-			renderPass.ReadDepthAttachmentSampled(gbufferData.depthRef);
+			// renderPass.ReadSampledImage(shadowAtlasRef);
 			RenderGraphBuilderResourceRef layoutImgRef = renderPass.WriteColorAttachment(attachmentlighting, GraphicsAPI::LoadOp::Clear, GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 
 			return LightingPassReturnData{
@@ -184,7 +201,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 								entity.GetWorldForward(),
 								glm::cos(glm::radians(spotLightComponent.innerAngle)),
 								glm::cos(glm::radians(spotLightComponent.outerAngle)),
-								static_cast<float>(spotLightComponent.shadowResolution)
+								spotLightComponent.shadowRenderArea
 							};
 
 							spotLightComponent.uniformBufferObject->UploadData(&lightStruct);
@@ -221,7 +238,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 								directionalLightComponent.sourceRadius,
 								entity.GetWorldForward(),
 								directionalLightComponent.intensity,
-								static_cast<float>(directionalLightComponent.shadowResolution)
+								directionalLightComponent.shadowRenderArea
 							};
 
 							directionalLightComponent.uniformBufferObject->UploadData(&lightStruct);

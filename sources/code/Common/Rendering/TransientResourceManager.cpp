@@ -4,7 +4,7 @@
 
 #include "TransientResourceManager.hpp"
 
-const int8_t USED_LIFETIME = 18;
+const int8_t USED_LIFETIME = 3;
 
 static Grindstone::Renderer::TransientImageDescription ToTransient(
 	Grindstone::Renderer::ImageDescription desc,
@@ -52,6 +52,7 @@ void Grindstone::Renderer::TransientResourceManager::BeginFrame() {
 			}
 			else {
 				iter->isUsedThisFrame = false;
+				iter->lifetime--;
 				++iter;
 			}
 		}
@@ -67,6 +68,7 @@ void Grindstone::Renderer::TransientResourceManager::BeginFrame() {
 			}
 			else {
 				iter->isUsedThisFrame = false;
+				iter->lifetime--;
 				++iter;
 			}
 		}

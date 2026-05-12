@@ -49,6 +49,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) override;
+		virtual void ClearAttachments(ClearAttachment* attachments, uint32_t attachmentCount, ClearRect* rects, uint32_t rectCount) override;
 		virtual void CopyBufferRegions(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, BufferCopyRegion* regions, uint32_t regionCount) override;
 		virtual void CopyBufferRegion(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, uint64_t size, uint32_t srcOffset, uint32_t dstOffset) override;
 		virtual void BindCommandBuffers(Grindstone::GraphicsAPI::CommandBuffer** commandBuffers, uint32_t commandBuffersCount) override;

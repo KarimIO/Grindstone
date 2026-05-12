@@ -36,6 +36,7 @@ Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(glm
 			Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 			Grindstone::WorldContextSet* cxtSet = cxt.worldContextSet;
 			CommandBuffer* cmd = cxt.commandBuffer;
+			engineCore.assetRendererManager->SetEngineDescriptorSet(cxt.globalDescriptorSet);
 
 			Grindstone::Rendering::RenderViewData renderViewData{
 				.projectionMatrix = projectionMatrix,

@@ -264,7 +264,7 @@ bool Grindstone::Editor::Importers::InitializeTextureThumbnailGenerator() {
 			.mipBias = 0.0f
 		}
 	};
-	thumbnailGeneratorContext.sampler = graphicsCore->CreateSampler(samplerCreateInfo);
+	thumbnailGeneratorContext.sampler = graphicsCore->GetOrCreateSampler(samplerCreateInfo);
 
 	std::array<Grindstone::GraphicsAPI::DescriptorSet::Binding, 2> descriptorSetBindings = {
 		Grindstone::GraphicsAPI::DescriptorSet::Binding::Sampler(thumbnailGeneratorContext.sampler, 1),

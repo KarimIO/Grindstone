@@ -88,6 +88,19 @@ namespace Grindstone::GraphicsAPI {
 		Grindstone::GraphicsAPI::ClearUnion		clearValue;
 	};
 
+	struct ClearAttachment {
+		// What aspects of the image to clear.
+		Grindstone::GraphicsAPI::ImageAspectBits	aspectMask;
+		// Index into the bound color attachments, or unused if aspectMask isn't Color.
+		uint32_t									colorAttachmentIndex;
+		Grindstone::GraphicsAPI::ClearUnion			clearValue;
+	};
+
+	struct ClearRect {
+		Grindstone::Math::IntRect2D		rect;
+		uint32_t						baseArrayLayer;
+		uint32_t						layerCount;
+	};
 
 	/*! CommandBuffers are an object that hold a list of commands to be executed
 		by your graphics card. After recording any commands you wish to use for
@@ -131,7 +144,7 @@ namespace Grindstone::GraphicsAPI {
 			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) = 0;
-
+		virtual void ClearAttachments(ClearAttachment* attachments, uint32_t attachmentCount, ClearRect* rects, uint32_t rectCount) = 0;
 		virtual void CopyBufferRegions(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, BufferCopyRegion* regions, uint32_t regionCount) = 0;
 		virtual void CopyBufferRegion(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, uint64_t size = 0, uint32_t srcOffset = 0, uint32_t dstOffset = 0) = 0;
 

@@ -74,18 +74,6 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	uint32_t maxFramesInFlight = wgb->GetMaxFramesInFlight();
 
-	Grindstone::GraphicsAPI::Sampler::CreateInfo screenSamplerCreateInfo{};
-	screenSamplerCreateInfo.debugName = "Screen Sampler";
-	screenSamplerCreateInfo.options.anistropy = 0;
-	screenSamplerCreateInfo.options.magFilter = GraphicsAPI::TextureFilter::Linear;
-	screenSamplerCreateInfo.options.minFilter = GraphicsAPI::TextureFilter::Linear;
-	screenSamplerCreateInfo.options.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat;
-	screenSamplerCreateInfo.options.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat;
-	screenSamplerCreateInfo.options.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat;
-	// TODO: Use this Sampler
-	Grindstone::GraphicsAPI::Sampler* screenSampler = graphicsCore->CreateSampler(screenSamplerCreateInfo);
-
-
 	GraphicsAPI::Buffer::CreateInfo globalUboCreateInfo{
 		.content = nullptr,
 		.bufferSize = sizeof(EngineUboStruct),
@@ -233,15 +221,15 @@ void DeferredRenderer::Render(
 
 	assetManager->SetEngineDescriptorSet(globalDescriptorSet[imageIndex]);
 
-	// auto shadowOutput = shadows.AddPass(renderGraph);
+	Grindstone::Renderer::ShadowPassReturnData shadowOutput = shadows.AddShadowPasses(renderGraphBuilder, worldContextSet);
 	Grindstone::Renderer::GbufferData gbufferData = gbuffer.AddPass(projectionMatrix, viewMatrix, renderGraphBuilder);
 	// auto ssaoOutput = ssao.AddPass(renderGraph, gbufferOutput);
 	// auto ssaoBlurredOutput = blur.AddTwoPassBlur(renderGraph, ssaoOutput);
-	Grindstone::Renderer::LightingPassReturnData lightingData = lighting.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData);
+	Grindstone::Renderer::LightingPassReturnData lightingData = lighting.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData, shadowOutput.shadowOutputRef);
 	// auto ssrOutput = ssr.AddPass(renderGraph, lightingOutput);
 	// auto dofOutput = dof.AddPass(renderGraph, ssrOutput);
 	// auto bloomOutput = bloom.AddBloomChain(renderGraph, dofOutput);
-
+	/*
 	auto colorImageRef = renderGraphBuilder.AddImage(
 		Grindstone::Renderer::ImageDescription{
 			.name = "Camera Output Image (Tonemapped)",
@@ -257,9 +245,9 @@ void DeferredRenderer::Render(
 			.externalGetterCallback = [colorImage]() { return colorImage; }
 		}
 	);
-
+	*/
 	if (renderMode == DeferredRenderMode::Default) {
-		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef, colorImageRef);
+		// Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef, {});
 	}
 	/*
 	else {
@@ -268,7 +256,8 @@ void DeferredRenderer::Render(
 	*/
 
 
-	static Grindstone::Renderer::TransientResourceManager* transientResourceManager = nullptr;
+	static std::array<Grindstone::Renderer::TransientResourceManager*, 3> transientResourceManagers{};
+	Grindstone::Renderer::TransientResourceManager*& transientResourceManager = transientResourceManagers[imageIndex];
 	if (transientResourceManager == nullptr) {
 		transientResourceManager = Grindstone::Memory::AllocatorCore::Allocate<Grindstone::Renderer::TransientResourceManager>();
 	}

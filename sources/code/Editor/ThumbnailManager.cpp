@@ -85,7 +85,7 @@ bool ThumbnailManager::Initialize() {
 			.mipBias = 0.0f,
 		}
 	};
-	GraphicsAPI::Sampler* thumbnailAtlasSampler = graphicsCore->CreateSampler(thumbnailAtlasSamplerCreateInfo);
+	GraphicsAPI::Sampler* thumbnailAtlasSampler = graphicsCore->GetOrCreateSampler(thumbnailAtlasSamplerCreateInfo);
 
 	std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> descriptor = { thumbnailAtlasImage, thumbnailAtlasSampler };
 	GraphicsAPI::DescriptorSet::Binding descriptorBinding = Grindstone::GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler(&descriptor, 1);

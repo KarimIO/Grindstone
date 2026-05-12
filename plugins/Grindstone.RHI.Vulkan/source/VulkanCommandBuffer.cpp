@@ -88,6 +88,34 @@ void Vulkan::CommandBuffer::BeginCommandBuffer() {
 	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 }
 
+void Vulkan::CommandBuffer::ClearAttachments(ClearAttachment* attachments, uint32_t attachmentCount, ClearRect* rects, uint32_t rectCount) {
+	std::vector<VkClearAttachment> vkAttachments;
+	vkAttachments.resize(attachmentCount);
+	std::vector<VkClearRect> vkClearRect;
+	vkClearRect.resize(rectCount);
+
+	for (uint32_t i = 0; i < attachmentCount; ++i) {
+		auto& src = attachments[i];
+		auto& dst = vkAttachments[i];
+		dst.aspectMask = TranslateImageAspectBitsToVulkan(src.aspectMask);
+		std::memcpy(&dst.clearValue, &src.clearValue, sizeof(VkClearValue));
+		dst.colorAttachment = src.colorAttachmentIndex;
+	}
+
+	for (uint32_t i = 0; i < rectCount; ++i) {
+		auto& src = rects[i];
+		auto& dst = vkClearRect[i];
+		dst.baseArrayLayer = src.baseArrayLayer;
+		dst.layerCount = src.layerCount;
+		dst.rect = {
+			.offset = { src.rect.offset.x, src.rect.offset.y },
+			.extent = { src.rect.extent.x, src.rect.extent.y }
+		};
+	}
+
+	vkCmdClearAttachments(commandBuffer, attachmentCount, vkAttachments.data(), rectCount, vkClearRect.data());
+}
+
 void Vulkan::CommandBuffer::BindRenderPass(
 	GraphicsAPI::RenderPass* renderPass,
 	GraphicsAPI::Framebuffer* framebuffer,
@@ -174,11 +202,12 @@ void Vulkan::CommandBuffer::BeginRendering(
 	for (uint32_t i = 0; i < attachmentCount; ++i) {
 		RenderAttachment& attachment = colorAttachments[i];
 		Grindstone::GraphicsAPI::Vulkan::Image* image = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(attachment.image);
-
+		VkImageView imageView = image->GetImageView();
+		GS_ASSERT(imageView != nullptr);
 		colorAttachmentInfos.emplace_back(
 			VkRenderingAttachmentInfoKHR{
 				.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
-				.imageView = image->GetImageView(),
+				.imageView = imageView,
 				.imageLayout = TranslateImageLayoutToVulkan(attachment.imageLayout),
 				.loadOp = TranslateLoadOpToVulkan(attachment.loadOp),
 				.storeOp = TranslateStoreOpToVulkan(attachment.storeOp),
@@ -189,6 +218,8 @@ void Vulkan::CommandBuffer::BeginRendering(
 
 	if (depthAttachment != nullptr) {
 		Grindstone::GraphicsAPI::Vulkan::Image* depthImage = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(depthAttachment->image);
+		VkImageView depthImageView = depthImage->GetImageView();
+		GS_ASSERT(depthImageView != nullptr);
 		depthAttachmentInfo = VkRenderingAttachmentInfoKHR{
 			.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
 			.imageView = depthImage->GetImageView(),
@@ -201,9 +232,11 @@ void Vulkan::CommandBuffer::BeginRendering(
 
 	if (stencilAttachment != nullptr) {
 		Grindstone::GraphicsAPI::Vulkan::Image* stencilImage = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(stencilAttachment->image);
+		VkImageView stencilImageView = stencilImage->GetImageView();
+		GS_ASSERT(stencilImageView != nullptr);
 		stencilAttachmentInfo = VkRenderingAttachmentInfoKHR{
 			.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
-			.imageView = stencilImage->GetImageView(),
+			.imageView = stencilImageView,
 			.imageLayout = TranslateImageLayoutToVulkan(stencilAttachment->imageLayout),
 			.loadOp = TranslateLoadOpToVulkan(stencilAttachment->loadOp),
 			.storeOp = TranslateStoreOpToVulkan(stencilAttachment->storeOp),

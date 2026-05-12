@@ -14,7 +14,13 @@ namespace Grindstone::Renderer {
 	class LightingPass {
 	public:
 		bool Initialize();
-		LightingPassReturnData AddPass(GraphicsAPI::Buffer* vertexBuffer, GraphicsAPI::Buffer* indexBuffer, Grindstone::Renderer::RenderGraphBuilder& renderGraph, Grindstone::Renderer::GbufferData& gbufferData);
+		LightingPassReturnData AddPass(
+			GraphicsAPI::Buffer* vertexBuffer,
+			GraphicsAPI::Buffer* indexBuffer,
+			Grindstone::Renderer::RenderGraphBuilder& renderGraph,
+			Grindstone::Renderer::GbufferData& gbufferData,
+			RenderGraphBuilderResourceRef shadowAtlasRef
+		);
 
 	private:
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> imageBasedLightingPipelineSet;
@@ -23,5 +29,6 @@ namespace Grindstone::Renderer {
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> directionalLightPipelineSet;
 
 		Grindstone::GraphicsAPI::Image* currentEnvironmentMapImage = nullptr;
+		Grindstone::GraphicsAPI::Sampler* screenSampler = nullptr;
 	};
 }

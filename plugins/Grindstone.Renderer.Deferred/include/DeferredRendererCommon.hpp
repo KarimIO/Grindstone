@@ -33,15 +33,16 @@ static Grindstone::ConstHashedString attachmentNameLighting = "Grindstone.Lighti
 static Grindstone::ConstHashedString attachmentNameShadowDepthStencil = "Grindstone.ShadowAtlas";
 static Grindstone::ConstHashedString attachmentNameOutput = "Grindstone.Renderer.Output";
 
-static Grindstone::Renderer::ImageDescription attachmentAlbedo{ .format = Grindstone::GraphicsAPI::Format::R8G8B8A8_UNORM, .imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled };
-static Grindstone::Renderer::ImageDescription attachmentNormal{ .format = Grindstone::GraphicsAPI::Format::R16G16B16A16_SNORM, .imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled };
-static Grindstone::Renderer::ImageDescription attachmentSpecularRoughness{ .format = Grindstone::GraphicsAPI::Format::R8G8B8A8_UNORM, .imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled };
-static Grindstone::Renderer::ImageDescription attachmentDepthStencil{ .format = depthFormat, .imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::DepthStencil | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled };
-static Grindstone::Renderer::ImageDescription attachmentlighting{ .format = litHdrFormat, .imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled };
-static Grindstone::Renderer::ImageDescription attachmentOutput{ .format = Grindstone::GraphicsAPI::Format::R8G8B8A8_UNORM, .imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::TransferSrc | Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled };
+static Grindstone::Renderer::ImageDescription attachmentAlbedo{ .name = "Gbuffer Albedo", .format = Grindstone::GraphicsAPI::Format::R8G8B8A8_UNORM, .imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled};
+static Grindstone::Renderer::ImageDescription attachmentNormal{ .name = "Gbuffer Normal", .format = Grindstone::GraphicsAPI::Format::R16G16B16A16_SNORM, .imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled };
+static Grindstone::Renderer::ImageDescription attachmentSpecularRoughness{ .name = "Gbuffer Specular / Roughness", .format = Grindstone::GraphicsAPI::Format::R8G8B8A8_UNORM, .imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled };
+static Grindstone::Renderer::ImageDescription attachmentDepthStencil{ .name = "Gbuffer Depth Stencil", .format = depthFormat, .imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::DepthStencil | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled };
+static Grindstone::Renderer::ImageDescription attachmentlighting{ .name = "Lighting Buffer", .format = litHdrFormat, .imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled };
+static Grindstone::Renderer::ImageDescription attachmentOutput{ .name = "Output Attachment", .format = Grindstone::GraphicsAPI::Format::R8G8B8A8_UNORM, .imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::TransferSrc | Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled };
 
 static const uint32_t shadowAtlasResolution = 4096u;
 static Grindstone::Renderer::ImageDescription attachmentShadowDepthStencil{
+	.name = "Shadow Depth Stencil",
 	.size = Grindstone::Renderer::MetaSize2D{shadowAtlasResolution, shadowAtlasResolution},
 	.format = depthFormat,
 	.imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::DepthStencil | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled

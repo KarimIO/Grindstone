@@ -79,7 +79,7 @@ static ImageUsageSyncInfo DeriveImageSyncInfo(
 	Grindstone::GraphicsAPI::AccessFlags accessMask = Grindstone::GraphicsAPI::AccessFlags::None;
 	Grindstone::GraphicsAPI::ImageLayout layout = Grindstone::GraphicsAPI::ImageLayout::Undefined;
 
-	// ── Transfer ──────────────────────────────────────────────────────────
+	// Transfer
 	if (isTransfer) {
 		if (isRead) {
 			stageMask |= Grindstone::GraphicsAPI::PipelineStageBit::Transfer;
@@ -96,7 +96,7 @@ static ImageUsageSyncInfo DeriveImageSyncInfo(
 		return { stageMask, accessMask, layout };
 	}
 
-	// ── Color Attachment ───────────────────────────────────────────────────
+	// Color Attachment
 	if (isColor) {
 		stageMask |= Grindstone::GraphicsAPI::PipelineStageBit::ColorAttachmentOutput;
 
@@ -104,11 +104,11 @@ static ImageUsageSyncInfo DeriveImageSyncInfo(
 		if (isWrite) accessMask |= Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite;
 
 		layout = isRead
-			? Grindstone::GraphicsAPI::ImageLayout::Undefined  // ATTACHMENT_FEEDBACK_LOOP_OPTIMAL_EXT blend read + write
-			: Grindstone::GraphicsAPI::ImageLayout::ColorAttachment;             // write only
+			? Grindstone::GraphicsAPI::ImageLayout::Undefined // ATTACHMENT_FEEDBACK_LOOP_OPTIMAL_EXT blend read + write
+			: Grindstone::GraphicsAPI::ImageLayout::ColorAttachment; // write only
 	}
 
-	// ── Depth / Stencil Attachment ─────────────────────────────────────────
+	// Depth / Stencil Attachment
 	if (isDepth || isStencil) {
 		// Stage: early + late fragment tests cover all depth/stencil access
 		stageMask |= Grindstone::GraphicsAPI::PipelineStageBit::EarlyFragmentTests
@@ -121,7 +121,7 @@ static ImageUsageSyncInfo DeriveImageSyncInfo(
 		layout = DeriveDepthStencilLayout(isDepth, isStencil, isRead, isWrite);
 	}
 
-	// ── Sampled (shader read via sampler) ─────────────────────────────────
+	// Sampled (shader read via sampler)
 	if (isSampled && isRead) {
 		stageMask |= DeriveShaderStageMask(visibility);
 		accessMask |= Grindstone::GraphicsAPI::AccessFlags::ShaderRead; // SHADER_SAMPLED_READ_BIT;
@@ -135,7 +135,7 @@ static ImageUsageSyncInfo DeriveImageSyncInfo(
 		// (DEPTH_READ_ONLY_OPTIMAL also permits shader sampling)
 	}
 
-	// ── Storage Image (shader read/write without sampler) ─────────────────
+	// Storage Image (shader read/write without sampler)
 	if (isStorage) {
 		stageMask |= DeriveShaderStageMask(visibility);
 
@@ -145,7 +145,7 @@ static ImageUsageSyncInfo DeriveImageSyncInfo(
 		layout = Grindstone::GraphicsAPI::ImageLayout::General;
 	}
 
-	// ── Subpass Input Attachment ───────────────────────────────────────────
+	// Subpass Input Attachment
 	if (isSubpassInput && isRead) {
 		stageMask |= Grindstone::GraphicsAPI::PipelineStageBit::FragmentShader;
 		accessMask |= Grindstone::GraphicsAPI::AccessFlags::InputAttachmentRead;
@@ -168,6 +168,21 @@ void Grindstone::Renderer::PipelineRenderGraphPass::RealizeResources(
 
 	std::vector<Grindstone::GraphicsAPI::DescriptorSetLayout::Binding> layoutBindings;
 	std::vector<Grindstone::GraphicsAPI::DescriptorSet::Binding> bindings;
+	uint32_t currentBinding = 0;
+
+	for (uint32_t i = 0; i < static_cast<uint32_t>(samplers.size()); ++i) {
+		Grindstone::GraphicsAPI::Sampler* sampler = samplers[i];
+
+		layoutBindings.emplace_back(
+			GraphicsAPI::DescriptorSetLayout::Binding{
+				.bindingId = currentBinding++,
+				.count = 1,
+				.type = Grindstone::GraphicsAPI::BindingType::Sampler,
+				.stages = Grindstone::GraphicsAPI::ShaderStageBit::All
+			}
+		);
+		bindings.emplace_back(GraphicsAPI::DescriptorSet::Binding::Sampler(sampler));
+	}
 
 	for (uint32_t i = 0; i < static_cast<uint32_t>(imageDescs.size()); ++i) {
 		const Grindstone::Renderer::PassImageDesc& imageDesc = imageDescs[i];
@@ -177,7 +192,7 @@ void Grindstone::Renderer::PipelineRenderGraphPass::RealizeResources(
 		if (imageDesc.IsShaderInput()) {
 			layoutBindings.emplace_back(
 				GraphicsAPI::DescriptorSetLayout::Binding{
-					.bindingId = i,
+					.bindingId = currentBinding++,
 					.count = 1,
 					.type = Grindstone::GraphicsAPI::BindingType::SampledImage,
 					.stages = Grindstone::GraphicsAPI::ShaderStageBit::All
@@ -186,11 +201,10 @@ void Grindstone::Renderer::PipelineRenderGraphPass::RealizeResources(
 			bindings.emplace_back(GraphicsAPI::DescriptorSet::Binding::SampledImage(image));
 		}
 
-
 		auto [prevLayout, prevAccessFlags, prevPipelineStage] = frameResources.GetLayout(imageRef);
 		auto [newStageMask, newAccessMask, newImageLayout] = DeriveImageSyncInfo(imageDesc.usage);
 
-		Grindstone::GraphicsAPI::ImageAspectBits imageAspect = Any(imageDesc.usage & RenderGraphImageUsage::DepthAttachment)
+		Grindstone::GraphicsAPI::ImageAspectBits imageAspect = Any(GraphicsAPI::GetFormatDepthStencilType(image->GetFormat()) & GraphicsAPI::FormatDepthStencilType::Depth)
 			? Grindstone::GraphicsAPI::ImageAspectBits::Depth
 			: Grindstone::GraphicsAPI::ImageAspectBits::Color;
 

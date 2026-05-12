@@ -4,6 +4,7 @@
 #include <EngineCore/CoreComponents/Lights/DirectionalLightComponent.hpp>
 #include <EngineCore/CoreComponents/Lights/PointLightComponent.hpp>
 #include <EngineCore/CoreComponents/Lights/SpotLightComponent.hpp>
+#include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
 
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
 #include <Grindstone.Renderer.Deferred/include/Passes/ShadowPass.hpp>
@@ -14,8 +15,18 @@ static void RenderShadowMap(
 	Grindstone::EngineCore& engineCore,
 	Grindstone::GraphicsAPI::CommandBuffer* cmd
 ) {
-	cmd->SetViewport(0.0f, 0.0f, static_cast<float>(renderViewData.renderArea.GetWidth()), static_cast<float>(renderViewData.renderArea.GetHeight()));
-	cmd->SetScissor(0, 0, renderViewData.renderArea.GetWidth(), renderViewData.renderArea.GetHeight());
+	Grindstone::GraphicsAPI::ClearAttachment clearAttachment{
+		.aspectMask = GraphicsAPI::ImageAspectBits::Depth,
+		.clearValue = GraphicsAPI::ClearDepthStencil(1.0f, 0u)
+	};
+
+	Grindstone::GraphicsAPI::ClearRect clearRect{
+		.rect = renderViewData.renderArea,
+		.baseArrayLayer = 0u,
+		.layerCount = 1u
+	};
+
+	cmd->ClearAttachments(&clearAttachment, 1u, &clearRect, 1u);
 
 	// TODO: Get Rendering Stats
 	engineCore.assetRendererManager->RenderQueue(cmd, renderViewData, cxtSet->GetEntityRegistry(), shadowMapRenderPassKey);
@@ -42,7 +53,14 @@ static void RenderSpotLightComponent(
 
 	engineCore.GetGraphicsCore()->AdjustPerspective(&projectionMatrix[0][0]);
 
+	const float shadowAtlasFloat = static_cast<float>(shadowAtlasResolution);
 	spotLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
+	spotLightComponent.shadowRenderArea = Math::Rect2D(
+		static_cast<float>(renderArea.offset.x) / shadowAtlasFloat,
+		static_cast<float>(renderArea.offset.y) / shadowAtlasFloat,
+		static_cast<float>(renderArea.extent.x) / shadowAtlasFloat,
+		static_cast<float>(renderArea.extent.y) / shadowAtlasFloat
+	);
 	spotLightComponent.shadowMapUniformBufferObject->UploadData(&spotLightComponent.shadowMatrix);
 	engineCore.assetRendererManager->SetEngineDescriptorSet(spotLightComponent.shadowMapDescriptorSet);
 
@@ -63,15 +81,16 @@ static void RenderDirectionalLightComponent(
 	Grindstone::DirectionalLightComponent& directionalLightComponent
 ) {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	float aspectRatio = 1.0f;
 	float nearDist = 0.1f;
 
 	const glm::vec3 forwardVector = entity.GetWorldForward();
 	const glm::vec3 pos = entity.GetWorldPosition();
 
-	const float shadowHalfSize = 40.0f;
+	const float shadowHalfSize = 10.0f;
 	glm::mat4 projectionMatrix = glm::ortho<float>(-shadowHalfSize, shadowHalfSize, -shadowHalfSize, shadowHalfSize, 0, 160.0f);
-	engineCore.GetGraphicsCore()->AdjustPerspective(&projectionMatrix[0][0]);
+	graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
 
 	Math::Float3 forward = entity.GetWorldForward();
 
@@ -83,10 +102,17 @@ static void RenderDirectionalLightComponent(
 		entity.GetWorldUp()
 	);
 
-	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
 
+	const float shadowAtlasFloat = static_cast<float>(shadowAtlasResolution);
+
 	directionalLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
+	directionalLightComponent.shadowRenderArea = Math::Rect2D(
+		static_cast<float>(renderArea.offset.x) / shadowAtlasFloat,
+		static_cast<float>(renderArea.offset.y) / shadowAtlasFloat,
+		static_cast<float>(renderArea.extent.x) / shadowAtlasFloat,
+		static_cast<float>(renderArea.extent.y) / shadowAtlasFloat
+	);
 	directionalLightComponent.shadowMapUniformBufferObject->UploadData(&directionalLightComponent.shadowMatrix);
 	engineCore.assetRendererManager->SetEngineDescriptorSet(directionalLightComponent.shadowMapDescriptorSet);
 
@@ -101,17 +127,20 @@ static void RenderDirectionalLightComponent(
 
 static Grindstone::Renderer::RenderGraphBuilderResourceRef AddSpotShadowPass(
 	Grindstone::Renderer::RenderGraphBuilder& renderGraph,
+	const std::string& entityName,
+	Grindstone::Renderer::RenderGraphBuilderResourceRef shadowAtlasRef,
 	Grindstone::Renderer::MetaRect renderingArea,
 	ECS::Entity entity,
 	Grindstone::SpotLightComponent& spotLightComponent
 ) {
+	std::string passName = std::format("'{}' Shadow Pass Spot", entityName.c_str());
 	return renderGraph.CreateGraphicsPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>(
-		"Shadow",
+		passName.c_str(),
 		renderingArea,
-		[](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) -> Grindstone::Renderer::RenderGraphBuilderResourceRef {
+		[shadowAtlasRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) -> Grindstone::Renderer::RenderGraphBuilderResourceRef {
 			Grindstone::Renderer::RenderGraphBuilderResourceRef ref = renderPass.WriteDepthStencilAttachment(
-				attachmentShadowDepthStencil,
-				GraphicsAPI::LoadOp::Clear,
+				shadowAtlasRef,
+				GraphicsAPI::LoadOp::Load,
 				Grindstone::GraphicsAPI::ClearDepthStencil(1.0f, 0u)
 			);
 
@@ -136,17 +165,20 @@ static Grindstone::Renderer::RenderGraphBuilderResourceRef AddSpotShadowPass(
 
 static Grindstone::Renderer::RenderGraphBuilderResourceRef AddDirectionalShadowPass(
 	Grindstone::Renderer::RenderGraphBuilder& renderGraph,
+	const std::string& entityName,
+	Grindstone::Renderer::RenderGraphBuilderResourceRef shadowAtlasRef,
 	Grindstone::Renderer::MetaRect renderingArea,
 	ECS::Entity entity,
 	Grindstone::DirectionalLightComponent& directionalLight
 ) {
+	std::string passName = std::format("'{}' Shadow Pass Directional", entityName.c_str());
 	return renderGraph.CreateGraphicsPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>(
-		"Shadow",
+		passName.c_str(),
 		renderingArea,
-		[](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) -> Grindstone::Renderer::RenderGraphBuilderResourceRef {
+		[shadowAtlasRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) -> Grindstone::Renderer::RenderGraphBuilderResourceRef {
 			Grindstone::Renderer::RenderGraphBuilderResourceRef ref = renderPass.WriteDepthStencilAttachment(
-				attachmentShadowDepthStencil,
-				GraphicsAPI::LoadOp::Clear,
+				shadowAtlasRef,
+				GraphicsAPI::LoadOp::Load,
 				Grindstone::GraphicsAPI::ClearDepthStencil(1.0f, 0u)
 			);
 
@@ -186,18 +218,19 @@ Grindstone::Renderer::ShadowPassReturnData Grindstone::Renderer::ShadowPass::Add
 	uint32_t totalShadowMapCount = 0;
 
 	entt::registry& registry = worldContextSet.GetEntityRegistry();
-	Renderer::RenderGraphBuilderResourceRef shadowAtlasRef = Renderer::RenderGraphBuilderResourceRef::Invalid();
-	auto spotLightView = registry.view<const entt::entity, Grindstone::SpotLightComponent>();
-	auto directionalLightView = registry.view<const entt::entity, Grindstone::DirectionalLightComponent>();
+	Renderer::RenderGraphBuilderResourceRef shadowAtlasRef = renderGraph.AddImage(attachmentShadowDepthStencil, Renderer::invalidPassId);
+	auto spotLightView = registry.view<const entt::entity, Grindstone::TagComponent, Grindstone::SpotLightComponent>();
+	auto directionalLightView = registry.view<const entt::entity, Grindstone::TagComponent, Grindstone::DirectionalLightComponent>();
 
+	// I think reusing the view is faster than pulling a separate view without the tag component for this but I'm not sure.
 	spotLightView.each(
-		[&totalShadowMapCount](const entt::entity entityHandle, Grindstone::SpotLightComponent& spotLightComponent) {
+		[&totalShadowMapCount](const entt::entity entityHandle, Grindstone::TagComponent&, const Grindstone::SpotLightComponent& spotLightComponent) {
 			++totalShadowMapCount;
 		}
 	);
 
 	directionalLightView.each(
-		[&totalShadowMapCount](const entt::entity entityHandle, Grindstone::DirectionalLightComponent& directionalLightComponent) {
+		[&totalShadowMapCount](const entt::entity entityHandle, Grindstone::TagComponent&, const Grindstone::DirectionalLightComponent& directionalLightComponent) {
 			++totalShadowMapCount;
 		}
 	);
@@ -205,7 +238,7 @@ Grindstone::Renderer::ShadowPassReturnData Grindstone::Renderer::ShadowPass::Add
 	PrepareAtlas(totalShadowMapCount);
 
 	spotLightView.each(
-		[this, &renderGraph, &shadowAtlasRef, scene](const entt::entity entityHandle, Grindstone::SpotLightComponent& spotLightComponent) {
+		[this, &renderGraph, &shadowAtlasRef, scene](const entt::entity entityHandle, const Grindstone::TagComponent& tag, Grindstone::SpotLightComponent& spotLightComponent) {
 			const ECS::Entity entity = ECS::Entity(entityHandle, scene);
 			Grindstone::Math::IntRect2D renderArea;
 			if (GetAtlasRenderArea(renderArea)) {
@@ -215,13 +248,13 @@ Grindstone::Renderer::ShadowPassReturnData Grindstone::Renderer::ShadowPass::Add
 					renderArea.extent.x,
 					renderArea.extent.y
 				);
-				shadowAtlasRef = AddSpotShadowPass(renderGraph, metaRect, entity, spotLightComponent);
+				shadowAtlasRef = AddSpotShadowPass(renderGraph, tag.tag, shadowAtlasRef, metaRect, entity, spotLightComponent);
 			}
 		}
 	);
 
 	directionalLightView.each(
-		[this, &renderGraph, &shadowAtlasRef, scene](const entt::entity entityHandle, DirectionalLightComponent& directionalLightComponent) {
+		[this, &renderGraph, &shadowAtlasRef, scene](const entt::entity entityHandle, const Grindstone::TagComponent& tag, DirectionalLightComponent& directionalLightComponent) {
 			const ECS::Entity entity = ECS::Entity(entityHandle, scene);
 			Grindstone::Math::IntRect2D renderArea;
 			if (GetAtlasRenderArea(renderArea)) {
@@ -231,7 +264,7 @@ Grindstone::Renderer::ShadowPassReturnData Grindstone::Renderer::ShadowPass::Add
 					renderArea.extent.x,
 					renderArea.extent.y
 				);
-				shadowAtlasRef = AddDirectionalShadowPass(renderGraph, metaRect, entity, directionalLightComponent);
+				shadowAtlasRef = AddDirectionalShadowPass(renderGraph, tag.tag, shadowAtlasRef, metaRect, entity, directionalLightComponent);
 			}
 		}
 	);
@@ -256,8 +289,6 @@ void Grindstone::Renderer::ShadowPass::PrepareAtlas(uint32_t totalShadowMapCount
 }
 
 bool Grindstone::Renderer::ShadowPass::GetAtlasRenderArea(Grindstone::Math::IntRect2D& rect) {
-	++currentAtlasIndex;
-
 	if (currentAtlasIndex > maxAtlasCount) {
 		GS_ASSERT_ENGINE_WITH_MESSAGE(false, "Too many shadows! {} found, {} maximum expected.", currentAtlasIndex, maxAtlasCount);
 		return false;
@@ -267,5 +298,7 @@ bool Grindstone::Renderer::ShadowPass::GetAtlasRenderArea(Grindstone::Math::IntR
 	int32_t y = (currentAtlasIndex * shadowResolution) / shadowAtlasResolution;
 
 	rect = Grindstone::Math::IntRect2D(x, y, shadowResolution, shadowResolution);
+	++currentAtlasIndex;
+
 	return true;
 }

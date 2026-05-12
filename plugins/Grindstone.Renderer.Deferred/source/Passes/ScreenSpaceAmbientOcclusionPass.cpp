@@ -89,7 +89,7 @@ void Grindstone::Renderer::ScreenSpaceAmbientOcclusionPass::CreateSsaoKernelAndN
 		ssaoNoiseSamplerCreateInfo.options.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat;
 		ssaoNoiseSamplerCreateInfo.options.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat;
 		ssaoNoiseSamplerCreateInfo.options.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat;
-		ssaoNoiseSampler = graphicsCore->CreateSampler(ssaoNoiseSamplerCreateInfo);
+		ssaoNoiseSampler = graphicsCore->GetOrCreateSampler(ssaoNoiseSamplerCreateInfo);
 	}
 
 	{

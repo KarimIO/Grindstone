@@ -197,7 +197,7 @@ EditorCamera::EditorCamera() {
 	samplerCreateInfo.options.wrapModeU = GraphicsAPI::TextureWrapMode::ClampToEdge;
 	samplerCreateInfo.options.wrapModeV = GraphicsAPI::TextureWrapMode::ClampToEdge;
 	samplerCreateInfo.options.wrapModeW = GraphicsAPI::TextureWrapMode::ClampToEdge;
-	sampler = core->CreateSampler(samplerCreateInfo);
+	sampler = core->GetOrCreateSampler(samplerCreateInfo);
 
 	GraphicsAPI::DescriptorSetLayout::Binding descriptorSetLayoutBinding{};
 	descriptorSetLayoutBinding.bindingId = 0;

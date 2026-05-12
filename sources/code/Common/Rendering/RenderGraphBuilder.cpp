@@ -17,31 +17,37 @@ TransferRenderGraphBuilderPass* RenderGraphBuilder::CreateTransferPass(
 	Grindstone::StringRef name,
 	std::function<void(TransferRenderGraphBuilderPass&)> setupImmediateCallback
 ) {
+	uint32_t passIndex = static_cast<uint32_t>(passes.size());
 	auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<TransferRenderGraphBuilderPass>());
 	auto pass = static_cast<TransferRenderGraphBuilderPass*>(uniquePtr.Get());
 	pass->name = name;
 	pass->renderGraphBuilder = this;
+	pass->passIndex = passIndex;
 	setupImmediateCallback(*pass);
 	return pass;
 }
 
 const char* presentPassName = "Present to Screen";
 PresentRenderGraphBuilderPass* RenderGraphBuilder::CreatePresentPass(RenderGraphBuilderResourceRef imageRef) {
+	uint32_t passIndex = static_cast<uint32_t>(passes.size());
 	auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<PresentRenderGraphBuilderPass>());
 	auto pass = static_cast<PresentRenderGraphBuilderPass*>(uniquePtr.Get());
 	pass->name = presentPassName;
 	pass->renderGraphBuilder = this;
 	pass->SetPresentationImage(imageRef);
+	pass->passIndex = passIndex;
 	return pass;
 }
 
 void RenderGraphBuilder::CreatePresentPass(
 	std::function<void(PresentRenderGraphBuilderPass&)> setupImmediateCallback
 ) {
+	uint32_t passIndex = static_cast<uint32_t>(passes.size());
 	auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<PresentRenderGraphBuilderPass>());
 	auto pass = static_cast<PresentRenderGraphBuilderPass*>(uniquePtr.Get());
 	pass->name = presentPassName;
 	pass->renderGraphBuilder = this;
+	pass->passIndex = passIndex;
 	setupImmediateCallback(*pass);
 }
 
