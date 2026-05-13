@@ -8,6 +8,7 @@ namespace Grindstone::GraphicsAPI {
 	class DescriptorSetLayout;
 	class DescriptorSet;
 	class Buffer;
+	class Sampler;
 }
 
 namespace Grindstone::Renderer {
@@ -43,5 +44,6 @@ namespace Grindstone::Renderer {
 		std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> tonemapSettingsDescriptorSet {};
 		std::array<Grindstone::GraphicsAPI::Buffer*, 3> tonemapSettingsUniformBuffer {};
 		GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
+		GraphicsAPI::Sampler* screenSampler = nullptr;
 	};
 }

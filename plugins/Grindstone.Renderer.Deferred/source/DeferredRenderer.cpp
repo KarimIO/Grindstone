@@ -247,7 +247,7 @@ void DeferredRenderer::Render(
 	);
 	*/
 	if (renderMode == DeferredRenderMode::Default) {
-		// Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef, {});
+		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef, {});
 	}
 	/*
 	else {
