@@ -235,7 +235,7 @@ uint8_t Grindstone::GraphicsAPI::GetCompressedFormatBlockSize(Format format) {
 }
 
 uint8_t Grindstone::GraphicsAPI::GetFormatBytesPerPixel(Grindstone::GraphicsAPI::Format format) {
-	constexpr uint32_t formatSizeInBytes[] = {
+	constexpr uint8_t formatSizeInBytes[] = {
 		0, // Invalid
 		1, // R4G4_UNORM_PACK8
 		2, // R4G4B4A4_UNORM_PACK16

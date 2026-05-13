@@ -7,7 +7,7 @@ namespace Grindstone {
 	class DeletionQueue {
 	public:
 		~DeletionQueue();
-		void Initialize(uint8_t poolSize);
+		void Initialize(uint32_t poolSize);
 		void PushDeletion(std::function<void()> fn);
 		void DeleteAll();
 	protected:

@@ -4,6 +4,8 @@
 #include <tchar.h>
 #include <Windowsx.h>
 #include <ShlObj_core.h>
+#include <commdlg.h>
+#include <shellapi.h>
 
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -14,7 +16,6 @@
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <Common/Input/InputInterface.hpp>
-
 #include <Common/Window/GlfwWindow.hpp>
 
 using namespace Grindstone;

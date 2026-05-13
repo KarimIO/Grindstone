@@ -18,9 +18,7 @@ namespace Grindstone::Containers {
 
 		Span() = default;
 
-		Span(T* ptr, size_t size) :
-			contents(ptr),
-			size(size) {}
+		Span(T* ptr, size_t size) : size(size), contents(ptr) {}
 
 		Span(const Span& other) : size(other.size), contents(other.contents) {}
 
