@@ -4,6 +4,8 @@
 #include <EngineCore/Assets/AssetManager.hpp>
 
 #include <Grindstone.Renderer.Deferred/include/Passes/ScreenSpaceAmbientOcclusionPass.hpp>
+#include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
+
 const size_t ssaoKernelSize = 64;
 struct SsaoUboStruct {
 	Grindstone::Math::Float4 kernels[ssaoKernelSize];
@@ -82,6 +84,22 @@ void Grindstone::Renderer::ScreenSpaceAmbientOcclusionPass::CreateSsaoKernelAndN
 	}
 
 	{
+		Grindstone::GraphicsAPI::Sampler::CreateInfo screenSamplerCreateInfo{
+		screenSamplerCreateInfo.debugName = "Screen Sampler",
+		screenSamplerCreateInfo.options = {
+				.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat,
+				.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat,
+				.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat,
+				.minFilter = GraphicsAPI::TextureFilter::Linear,
+				.magFilter = GraphicsAPI::TextureFilter::Linear,
+				.anistropy = 0
+			}
+		};
+
+		screenSampler = graphicsCore->GetOrCreateSampler(screenSamplerCreateInfo);
+	}
+
+	{
 		GraphicsAPI::Sampler::CreateInfo ssaoNoiseSamplerCreateInfo{};
 		ssaoNoiseSamplerCreateInfo.debugName = "SSAO Noise Sampler";
 		ssaoNoiseSamplerCreateInfo.options.magFilter = GraphicsAPI::TextureFilter::Nearest;
@@ -132,27 +150,43 @@ void Grindstone::Renderer::ScreenSpaceAmbientOcclusionPass::CreateSsaoKernelAndN
 	}
 }
 
-void Grindstone::Renderer::ScreenSpaceAmbientOcclusionPass::AddPass(Grindstone::Renderer::RenderGraph& renderGraph) {
-}
+Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Renderer::ScreenSpaceAmbientOcclusionPass::AddPass(
+	GraphicsAPI::Buffer* vertexBuffer,
+	GraphicsAPI::Buffer* indexBuffer,
+	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
+	const GbufferData& gbufferData
+) {
+	return renderGraphBuilder.CreateGraphicsPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>(
+		"Screenspace Ambient Occlusion Pass",
+		Renderer::MetaRect(Renderer::MetaSize2D::Zero(), Renderer::MetaSize2D::DivideSwapchain(2)),
+		[this, &gbufferData](
+			Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass
+		) -> Grindstone::Renderer::RenderGraphBuilderResourceRef {
+			Grindstone::Renderer::ImageDescription attachmentAmbientOcclusion{
+				.name = "Ambient Occlusion",
+				.format = ambientOcclusionFormat,
+				.imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled
+			};
 
-/*
-void DrawGbufferPass() {
-	struct GbufferData {
-		Renderer::RenderGraphResource albedo;
-		Renderer::RenderGraphResource normal;
-		Renderer::RenderGraphResource specularRoughness;
-		Renderer::RenderGraphResource depth;
-	};
+			renderPass.ReadExternalSampler(screenSampler);
+			renderPass.ReadSampledImage(gbufferData.depthRef);
+			renderPass.ReadSampledImage(gbufferData.normalRef);
+			RenderGraphBuilderResourceRef ambientOcclusionRef = renderPass.WriteColorAttachment(
+				attachmentAmbientOcclusion,
+				GraphicsAPI::LoadOp::Clear,
+				GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f)
+			);
 
-	Grindstone::Renderer::RenderGraphPass& gbufferPass = renderGraph.AddCallbackPass<GbufferData>(
-		"Gbuffer Geometry Pass",
-		[&](Renderer::RenderGraph::Builder& builder, GbufferData& data) {
-			gbufferPass.AddOutputImage(attachmentNameAlbedo, attachmentAlbedo);
-			gbufferPass.AddOutputImage(attachmentNameNormal, attachmentNormal);
-			gbufferPass.AddOutputImage(attachmentNameSpecularRoughness, attachmentSpecularRoughness);
-			gbufferPass.AddOutputImage(attachmentNameDepthStencil, attachmentDepthStencil);
+			return ambientOcclusionRef;
 		},
-		[&, registry = &registry](const GbufferData& data, Renderer::RenderGraphResource& resources) {void DeferredRenderer::RenderSsao(DeferredRendererImageSet& imageSet, GraphicsAPI::CommandBuffer* commandBuffer) {
+		[this, vertexBuffer, indexBuffer](
+			Grindstone::Math::IntRect2D viewportArea,
+			const Renderer::RenderGraphContext& cxt,
+			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+			Grindstone::Renderer::RenderGraphBuilderResourceRef& data
+		) {
+			GraphicsAPI::CommandBuffer* commandBuffer = cxt.commandBuffer;
+
 			Grindstone::GraphicsPipelineAsset* ssaoPipelineSetAsset = ssaoPipelineSet.Get();
 			if (ssaoPipelineSetAsset == nullptr) {
 				return;
@@ -163,49 +197,19 @@ void DrawGbufferPass() {
 				return;
 			}
 
+			Grindstone::GraphicsAPI::PipelineLayout* ssaoPipelineLayout = ssaoPipeline->pipelineLayout;
+
 			EngineCore& engineCore = EngineCore::GetInstance();
 			Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
 			GraphicsAPI::ClearColor clearColorAttachment = { 16.0f, 16.0f, 16.0f, 16.0f };
-			GraphicsAPI::ClearDepthStencil clearDepthStencil{};
-			clearDepthStencil.depth = 1.0f;
-			clearDepthStencil.stencil = 0;
-
-			commandBuffer->BeginRendering(
-				"SSAO Pass (Screen-Space Ambient Occlusion)",
-				halfRenderArea,
-				&imageSet.ambientOcclusionAttachment,
-				1u
-			);
-
-			commandBuffer->SetViewport(
-				static_cast<float>(halfRenderArea.offset.x),
-				static_cast<float>(halfRenderArea.offset.y),
-				static_cast<float>(halfRenderArea.GetWidth()),
-				static_cast<float>(halfRenderArea.GetHeight()),
-				0.0f, 1.0f
-			);
-			commandBuffer->SetScissor(
-				halfRenderArea.offset.x, halfRenderArea.offset.y,
-				halfRenderArea.GetWidth(), halfRenderArea.GetHeight()
-			);
 
 			commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
 			commandBuffer->BindIndexBuffer(indexBuffer);
 
-			std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> descriptorSets = {
-				imageSet.engineDescriptorSet,
-				imageSet.ssaoGbufferDescriptorSet,
-				ssaoInputDescriptorSet
-			};
-
 			commandBuffer->BindGraphicsPipeline(ssaoPipeline);
-			commandBuffer->BindGraphicsDescriptorSet(ssaoPipeline, descriptorSets.data(), 0, static_cast<uint32_t>(descriptorSets.size()));
+			commandBuffer->BindGraphicsDescriptorSet(ssaoPipelineLayout, &ssaoInputDescriptorSet, 2u, 1u);
 			commandBuffer->DrawIndices(0, 6, 0, 1, 0);
-			commandBuffer->EndRendering();
-		}
 		}
 	);
 }
-
-*/

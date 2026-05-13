@@ -533,14 +533,14 @@ uint16_t Vulkan::Core::ScoreDevice(VkPhysicalDevice physicalDevice) {
 		SwapChainSupportDetails swapChainSupport = wgb->QuerySwapChainSupport(physicalDevice);
 		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 		GPRINT_INFO(LogSource::GraphicsAPI, "\t- Swapchain Support:");
-		GPRINT_INFO(LogSource::GraphicsAPI, "\t\tSupported Formats:");
+		GPRINT_INFO(LogSource::GraphicsAPI, "\t\t- Supported Formats:");
 		for (VkSurfaceFormatKHR format : swapChainSupport.formats) {
 			VkFormatProperties formatProperties{};
 			vkGetPhysicalDeviceFormatProperties(physicalDevice, format.format, &formatProperties);
-			GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t\t{} - {}", string_VkFormat(format.format), string_VkColorSpaceKHR(format.colorSpace));
+			GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t\t- {} - {}", string_VkFormat(format.format), string_VkColorSpaceKHR(format.colorSpace));
 		}
 
-		GPRINT_INFO(LogSource::GraphicsAPI, "\t\tSupported Present Modes:");
+		GPRINT_INFO(LogSource::GraphicsAPI, "\t\t- Supported Present Modes:");
 		for (VkPresentModeKHR presentMode : swapChainSupport.presentModes) {
 			const char* presentModeName = "Unknown";
 			switch (presentMode) {
@@ -551,7 +551,7 @@ uint16_t Vulkan::Core::ScoreDevice(VkPhysicalDevice physicalDevice) {
 				case VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR: presentModeName = "Shared Demand Refresh"; break;
 				case VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR: presentModeName = "Shared Continuous Refresh"; break;
 			}
-			GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t\t{}", presentModeName);
+			GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t\t- {}", presentModeName);
 		}
 	}
 

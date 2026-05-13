@@ -1,8 +1,10 @@
 #pragma once
 
-#include <Common/Rendering/RenderGraph.hpp>
+#include <Common/Rendering/RenderGraphBuilder.hpp>
 #include <EngineCore/Assets/AssetReference.hpp>
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
+
+#include "GbufferPass.hpp"
 
 namespace Grindstone::GraphicsAPI {
 	class Buffer;
@@ -15,7 +17,12 @@ namespace Grindstone::Renderer {
 	class ScreenSpaceAmbientOcclusionPass {
 	public:
 		bool Initialize();
-		void AddPass(Grindstone::Renderer::RenderGraph& renderGraph);
+		RenderGraphBuilderResourceRef AddPass(
+			GraphicsAPI::Buffer* vertexBuffer,
+			GraphicsAPI::Buffer* indexBuffer,
+			Grindstone::Renderer::RenderGraphBuilder& renderGraph,
+			const GbufferData& gbufferData
+		);
 
 	private:
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> ssaoPipelineSet;
@@ -23,6 +30,7 @@ namespace Grindstone::Renderer {
 
 		Grindstone::GraphicsAPI::Buffer* ssaoUniformBuffer;
 		Grindstone::GraphicsAPI::Image* ssaoNoiseTexture;
+		Grindstone::GraphicsAPI::Sampler* screenSampler;
 		Grindstone::GraphicsAPI::Sampler* ssaoNoiseSampler;
 		Grindstone::GraphicsAPI::DescriptorSetLayout* ssaoInputDescriptorSetLayout;
 		Grindstone::GraphicsAPI::DescriptorSet* ssaoInputDescriptorSet;

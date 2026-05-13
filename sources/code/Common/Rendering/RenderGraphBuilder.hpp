@@ -24,6 +24,7 @@ namespace Grindstone::Renderer {
 			auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<GraphicsRenderGraphBuilderPass<ReturnType>>());
 			auto pass = static_cast<GraphicsRenderGraphBuilderPass<ReturnType>*>(uniquePtr.Get());
 			pass->name = name;
+			pass->type = GpuPassType::Graphics;
 			pass->renderGraphBuilder = this;
 			pass->SetExecutionCallback(executionCallback);
 			pass->SetRenderingArea(metaRect);
@@ -42,6 +43,7 @@ namespace Grindstone::Renderer {
 			auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<ComputeRenderGraphBuilderPass<ReturnType>>());
 			auto pass = static_cast<ComputeRenderGraphBuilderPass<ReturnType>*>(uniquePtr.Get());
 			pass->name = name;
+			pass->type = GpuPassType::Compute;
 			pass->renderGraphBuilder = this;
 			pass->SetExecutionCallback(executionCallback);
 			pass->passIndex = passIndex;

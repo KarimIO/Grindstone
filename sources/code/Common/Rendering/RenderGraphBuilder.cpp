@@ -21,6 +21,7 @@ TransferRenderGraphBuilderPass* RenderGraphBuilder::CreateTransferPass(
 	auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<TransferRenderGraphBuilderPass>());
 	auto pass = static_cast<TransferRenderGraphBuilderPass*>(uniquePtr.Get());
 	pass->name = name;
+	pass->type = GpuPassType::Transfer;
 	pass->renderGraphBuilder = this;
 	pass->passIndex = passIndex;
 	setupImmediateCallback(*pass);
@@ -33,6 +34,7 @@ PresentRenderGraphBuilderPass* RenderGraphBuilder::CreatePresentPass(RenderGraph
 	auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<PresentRenderGraphBuilderPass>());
 	auto pass = static_cast<PresentRenderGraphBuilderPass*>(uniquePtr.Get());
 	pass->name = presentPassName;
+	pass->type = GpuPassType::Present;
 	pass->renderGraphBuilder = this;
 	pass->SetPresentationImage(imageRef);
 	pass->passIndex = passIndex;
@@ -46,6 +48,7 @@ void RenderGraphBuilder::CreatePresentPass(
 	auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<PresentRenderGraphBuilderPass>());
 	auto pass = static_cast<PresentRenderGraphBuilderPass*>(uniquePtr.Get());
 	pass->name = presentPassName;
+	pass->type = GpuPassType::Present;
 	pass->renderGraphBuilder = this;
 	pass->passIndex = passIndex;
 	setupImmediateCallback(*pass);

@@ -142,6 +142,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 	indexBuffer = graphicsCore->CreateBuffer(iboCi);
 
 	gbuffer.Initialize();
+	ssao.Initialize();
 	lighting.Initialize();
 	tonemap.Initialize();
 }
@@ -223,7 +224,7 @@ void DeferredRenderer::Render(
 
 	Grindstone::Renderer::ShadowPassReturnData shadowOutput = shadows.AddShadowPasses(renderGraphBuilder, worldContextSet);
 	Grindstone::Renderer::GbufferData gbufferData = gbuffer.AddPass(projectionMatrix, viewMatrix, renderGraphBuilder);
-	// auto ssaoOutput = ssao.AddPass(renderGraph, gbufferOutput);
+	Grindstone::Renderer::RenderGraphBuilderResourceRef ssaoOutput = ssao.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData);
 	// auto ssaoBlurredOutput = blur.AddTwoPassBlur(renderGraph, ssaoOutput);
 	Grindstone::Renderer::LightingPassReturnData lightingData = lighting.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData, shadowOutput.shadowOutputRef);
 	// auto ssrOutput = ssr.AddPass(renderGraph, lightingOutput);
