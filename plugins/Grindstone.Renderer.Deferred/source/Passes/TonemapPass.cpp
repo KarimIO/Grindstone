@@ -82,10 +82,10 @@ Grindstone::Renderer::TonemapPassReturnData Grindstone::Renderer::TonemapPass::A
 		[this, lightingImageRef, outputImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::TonemapPassReturnData>& renderPass) {
 			renderPass.ReadExternalSampler(screenSampler);
 			renderPass.ReadSampledImage(lightingImageRef);
-			Renderer::RenderGraphBuilderResourceRef o = renderPass.WriteColorAttachment(attachmentOutput, GraphicsAPI::LoadOp::DontCare, GraphicsAPI::ClearColor{});
+			Renderer::RenderGraphBuilderResourceRef output = renderPass.WriteColorAttachment(outputImageRef, GraphicsAPI::LoadOp::DontCare, GraphicsAPI::ClearColor{});
 
 			return Grindstone::Renderer::TonemapPassReturnData{
-				.postProcessOutput = o
+				.postProcessOutput = output
 			};
 		},
 		[this, settings](

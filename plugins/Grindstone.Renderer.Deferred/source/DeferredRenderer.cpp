@@ -229,7 +229,7 @@ void DeferredRenderer::Render(
 	// auto ssrOutput = ssr.AddPass(renderGraph, lightingOutput);
 	// auto dofOutput = dof.AddPass(renderGraph, ssrOutput);
 	// auto bloomOutput = bloom.AddBloomChain(renderGraph, dofOutput);
-	/*
+	
 	auto colorImageRef = renderGraphBuilder.AddImage(
 		Grindstone::Renderer::ImageDescription{
 			.name = "Camera Output Image (Tonemapped)",
@@ -245,9 +245,9 @@ void DeferredRenderer::Render(
 			.externalGetterCallback = [colorImage]() { return colorImage; }
 		}
 	);
-	*/
+
 	if (renderMode == DeferredRenderMode::Default) {
-		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef, {});
+		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef, colorImageRef);
 	}
 	/*
 	else {
