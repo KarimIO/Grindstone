@@ -114,7 +114,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 			renderPass.ReadSampledImage(gbufferData.albedoRef);
 			renderPass.ReadSampledImage(gbufferData.normalRef);
 			renderPass.ReadSampledImage(gbufferData.specularRoughnessRef);
-			// renderPass.ReadSampledImage(shadowAtlasRef);
+			renderPass.ReadSampledImage(shadowAtlasRef);
 			RenderGraphBuilderResourceRef layoutImgRef = renderPass.WriteColorAttachment(attachmentlighting, GraphicsAPI::LoadOp::Clear, GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 
 			return LightingPassReturnData{
@@ -200,7 +200,8 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 								spotLightComponent.intensity,
 								entity.GetWorldForward(),
 								glm::cos(glm::radians(spotLightComponent.innerAngle)),
-								glm::cos(glm::radians(spotLightComponent.outerAngle))
+								glm::cos(glm::radians(spotLightComponent.outerAngle)),
+								spotLightComponent.shadowRenderArea
 							};
 							spotLightComponent.uniformBufferObject->UploadData(&lightStruct);
 
@@ -235,7 +236,8 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 								directionalLightComponent.color,
 								directionalLightComponent.sourceRadius,
 								entity.GetWorldForward(),
-								directionalLightComponent.intensity
+								directionalLightComponent.intensity,
+								directionalLightComponent.shadowRenderArea
 							};
 
 							directionalLightComponent.uniformBufferObject->UploadData(&lightStruct);

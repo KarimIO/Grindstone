@@ -13,7 +13,6 @@ REFLECT_STRUCT_BEGIN(DirectionalLightComponent)
 	REFLECT_STRUCT_MEMBER(color)
 	REFLECT_STRUCT_MEMBER(sourceRadius)
 	REFLECT_STRUCT_MEMBER(intensity)
-	REFLECT_STRUCT_MEMBER(shadowResolution)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
@@ -23,34 +22,6 @@ void Grindstone::SetupDirectionalLightComponent(Grindstone::WorldContextSet& cxt
 	auto eventDispatcher = engineCore.GetEventDispatcher();
 
 	DirectionalLightComponent& directionalLightComponent = cxtSet.GetEntityRegistry().get<DirectionalLightComponent>(entity);
-
-	uint32_t shadowResolution = static_cast<uint32_t>(directionalLightComponent.shadowResolution);
-
-	GraphicsAPI::RenderPass::CreateInfo renderPassCreateInfo{};
-	renderPassCreateInfo.debugName = "Directional Shadow Render Pass";
-	renderPassCreateInfo.colorAttachments = nullptr;
-	renderPassCreateInfo.colorAttachmentCount = 0;
-	renderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
-	directionalLightComponent.renderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
-
-	GraphicsAPI::Image::CreateInfo shadowMapDepthImageCreateInfo;
-	shadowMapDepthImageCreateInfo.debugName = "Directional Shadow Map Depth Image";
-	shadowMapDepthImageCreateInfo.format = renderPassCreateInfo.depthFormat;
-	shadowMapDepthImageCreateInfo.width = shadowMapDepthImageCreateInfo.height = shadowResolution;
-	shadowMapDepthImageCreateInfo.imageUsage =
-		GraphicsAPI::ImageUsageFlags::DepthStencil |
-		GraphicsAPI::ImageUsageFlags::Sampled;
-	directionalLightComponent.depthTarget = graphicsCore->CreateImage(shadowMapDepthImageCreateInfo);
-
-	GraphicsAPI::Framebuffer::CreateInfo shadowMapCreateInfo{};
-	shadowMapCreateInfo.debugName = "Directional Shadow Framebuffer";
-	shadowMapCreateInfo.width = shadowResolution;
-	shadowMapCreateInfo.height = shadowResolution;
-	shadowMapCreateInfo.renderPass = directionalLightComponent.renderPass;
-	shadowMapCreateInfo.renderTargets = nullptr;
-	shadowMapCreateInfo.renderTargetCount = 0;
-	shadowMapCreateInfo.depthTarget = directionalLightComponent.depthTarget;
-	directionalLightComponent.framebuffer = graphicsCore->CreateFramebuffer(shadowMapCreateInfo);
 
 	{
 		DirectionalLightComponent::UniformStruct lightStruct{};
@@ -62,16 +33,11 @@ void Grindstone::SetupDirectionalLightComponent(Grindstone::WorldContextSet& cxt
 		lightUniformBufferObjectCi.bufferSize = sizeof(DirectionalLightComponent::UniformStruct);
 		directionalLightComponent.uniformBufferObject = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
 
-		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 2> lightLayoutBindings{};
+		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 1> lightLayoutBindings{};
 		lightLayoutBindings[0].bindingId = 0;
 		lightLayoutBindings[0].count = 1;
 		lightLayoutBindings[0].type = GraphicsAPI::BindingType::UniformBuffer;
 		lightLayoutBindings[0].stages = GraphicsAPI::ShaderStageBit::Fragment;
-
-		lightLayoutBindings[1].bindingId = 1;
-		lightLayoutBindings[1].count = 1;
-		lightLayoutBindings[1].type = GraphicsAPI::BindingType::SampledImage;
-		lightLayoutBindings[1].stages = GraphicsAPI::ShaderStageBit::Fragment;
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
 		descriptorSetLayoutCreateInfo.debugName = "Directional Light Descriptor Set Layout";
@@ -79,9 +45,8 @@ void Grindstone::SetupDirectionalLightComponent(Grindstone::WorldContextSet& cxt
 		descriptorSetLayoutCreateInfo.bindings = lightLayoutBindings.data();
 		directionalLightComponent.descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
-		std::array<GraphicsAPI::DescriptorSet::Binding, 2> lightBindings{
-			GraphicsAPI::DescriptorSet::Binding::UniformBuffer( directionalLightComponent.uniformBufferObject ),
-			GraphicsAPI::DescriptorSet::Binding::SampledImage( directionalLightComponent.depthTarget )
+		std::array<GraphicsAPI::DescriptorSet::Binding, 1> lightBindings{
+			GraphicsAPI::DescriptorSet::Binding::UniformBuffer( directionalLightComponent.uniformBufferObject )
 		};
 
 		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
@@ -135,7 +100,4 @@ void Grindstone::DestroyDirectionalLightComponent(Grindstone::WorldContextSet& c
 	graphicsCore->DeleteDescriptorSetLayout(directionalLightComponent.descriptorSetLayout);
 	graphicsCore->DeleteBuffer(directionalLightComponent.shadowMapUniformBufferObject);
 	graphicsCore->DeleteBuffer(directionalLightComponent.uniformBufferObject);
-	graphicsCore->DeleteFramebuffer(directionalLightComponent.framebuffer);
-	graphicsCore->DeleteRenderPass(directionalLightComponent.renderPass);
-	graphicsCore->DeleteImage(directionalLightComponent.depthTarget);
 }

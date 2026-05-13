@@ -55,6 +55,13 @@ static void RenderSpotLightComponent(
 
 	spotLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
 	spotLightComponent.shadowMapUniformBufferObject->UploadData(&spotLightComponent.shadowMatrix);
+	float shadowAtlasResolutionF = static_cast<float>(shadowAtlasResolution);
+	spotLightComponent.shadowRenderArea = Math::Rect2D(
+		static_cast<float>(renderArea.offset.x) / shadowAtlasResolutionF,
+		static_cast<float>(renderArea.offset.y) / shadowAtlasResolutionF,
+		static_cast<float>(renderArea.extent.x) / shadowAtlasResolutionF,
+		static_cast<float>(renderArea.extent.y) / shadowAtlasResolutionF
+	);
 	engineCore.assetRendererManager->SetEngineDescriptorSet(spotLightComponent.shadowMapDescriptorSet);
 
 	Grindstone::Rendering::RenderViewData renderViewData{
@@ -99,6 +106,13 @@ static void RenderDirectionalLightComponent(
 
 	directionalLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
 	directionalLightComponent.shadowMapUniformBufferObject->UploadData(&directionalLightComponent.shadowMatrix);
+	float shadowAtlasResolutionF = static_cast<float>(shadowAtlasResolution);
+	directionalLightComponent.shadowRenderArea = Math::Rect2D(
+		static_cast<float>(renderArea.offset.x) / shadowAtlasResolutionF,
+		static_cast<float>(renderArea.offset.y) / shadowAtlasResolutionF,
+		static_cast<float>(renderArea.extent.x) / shadowAtlasResolutionF,
+		static_cast<float>(renderArea.extent.y) / shadowAtlasResolutionF
+	);
 	engineCore.assetRendererManager->SetEngineDescriptorSet(directionalLightComponent.shadowMapDescriptorSet);
 
 	Grindstone::Rendering::RenderViewData renderViewData{

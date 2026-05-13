@@ -16,7 +16,6 @@ REFLECT_STRUCT_BEGIN(SpotLightComponent)
 	REFLECT_STRUCT_MEMBER(intensity)
 	REFLECT_STRUCT_MEMBER(innerAngle)
 	REFLECT_STRUCT_MEMBER(outerAngle)
-	REFLECT_STRUCT_MEMBER(shadowResolution)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
@@ -26,34 +25,6 @@ void Grindstone::SetupSpotLightComponent(Grindstone::WorldContextSet& cxtSet, en
 	auto eventDispatcher = engineCore.GetEventDispatcher();
 
 	SpotLightComponent& spotLightComponent = cxtSet.GetEntityRegistry().get<SpotLightComponent>(entity);
-
-	uint32_t shadowResolution = static_cast<uint32_t>(spotLightComponent.shadowResolution);
-
-	GraphicsAPI::RenderPass::CreateInfo renderPassCreateInfo{};
-	renderPassCreateInfo.debugName = "Spotlight Shadow Render Pass";
-	renderPassCreateInfo.colorAttachments = nullptr;
-	renderPassCreateInfo.colorAttachmentCount = 0;
-	renderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
-	spotLightComponent.renderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
-
-	GraphicsAPI::Image::CreateInfo shadowMapDepthImageCreateInfo{};
-	shadowMapDepthImageCreateInfo.debugName = "Spot Shadow Map Depth Image";
-	shadowMapDepthImageCreateInfo.format = renderPassCreateInfo.depthFormat;
-	shadowMapDepthImageCreateInfo.width = shadowMapDepthImageCreateInfo.height = shadowResolution;
-	shadowMapDepthImageCreateInfo.imageUsage =
-		GraphicsAPI::ImageUsageFlags::DepthStencil |
-		GraphicsAPI::ImageUsageFlags::Sampled;
-	spotLightComponent.depthTarget = graphicsCore->CreateImage(shadowMapDepthImageCreateInfo);
-
-	GraphicsAPI::Framebuffer::CreateInfo shadowMapCreateInfo{};
-	shadowMapCreateInfo.debugName = "Spotlight Shadow Framebuffer";
-	shadowMapCreateInfo.width = shadowResolution;
-	shadowMapCreateInfo.height = shadowResolution;
-	shadowMapCreateInfo.renderPass = spotLightComponent.renderPass;
-	shadowMapCreateInfo.renderTargets = nullptr;
-	shadowMapCreateInfo.renderTargetCount = 0;
-	shadowMapCreateInfo.depthTarget = spotLightComponent.depthTarget;
-	spotLightComponent.framebuffer = graphicsCore->CreateFramebuffer(shadowMapCreateInfo);
 
 	{
 		SpotLightComponent::UniformStruct lightStruct{};
@@ -65,16 +36,11 @@ void Grindstone::SetupSpotLightComponent(Grindstone::WorldContextSet& cxtSet, en
 		lightUniformBufferObjectCi.bufferSize = sizeof(SpotLightComponent::UniformStruct);
 		spotLightComponent.uniformBufferObject = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
 
-		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 2> lightLayoutBindings{};
+		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 1> lightLayoutBindings{};
 		lightLayoutBindings[0].bindingId = 0;
 		lightLayoutBindings[0].count = 1;
 		lightLayoutBindings[0].type = GraphicsAPI::BindingType::UniformBuffer;
 		lightLayoutBindings[0].stages = GraphicsAPI::ShaderStageBit::Fragment;
-
-		lightLayoutBindings[1].bindingId = 1;
-		lightLayoutBindings[1].count = 1;
-		lightLayoutBindings[1].type = GraphicsAPI::BindingType::SampledImage;
-		lightLayoutBindings[1].stages = GraphicsAPI::ShaderStageBit::Fragment;
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
 		descriptorSetLayoutCreateInfo.debugName = "Spotlight Descriptor Set Layout";
@@ -82,9 +48,8 @@ void Grindstone::SetupSpotLightComponent(Grindstone::WorldContextSet& cxtSet, en
 		descriptorSetLayoutCreateInfo.bindings = lightLayoutBindings.data();
 		spotLightComponent.descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
-		std::array<GraphicsAPI::DescriptorSet::Binding, 2> lightBindings{
-			GraphicsAPI::DescriptorSet::Binding::UniformBuffer( spotLightComponent.uniformBufferObject ),
-			GraphicsAPI::DescriptorSet::Binding::SampledImage( spotLightComponent.depthTarget )
+		std::array<GraphicsAPI::DescriptorSet::Binding, 1> lightBindings{
+			GraphicsAPI::DescriptorSet::Binding::UniformBuffer( spotLightComponent.uniformBufferObject )
 		};
 
 		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
@@ -137,7 +102,4 @@ void Grindstone::DestroySpotLightComponent(Grindstone::WorldContextSet& cxtSet, 
 	graphicsCore->DeleteDescriptorSetLayout(spotLightComponent.descriptorSetLayout);
 	graphicsCore->DeleteBuffer(spotLightComponent.shadowMapUniformBufferObject);
 	graphicsCore->DeleteBuffer(spotLightComponent.uniformBufferObject);
-	graphicsCore->DeleteFramebuffer(spotLightComponent.framebuffer);
-	graphicsCore->DeleteRenderPass(spotLightComponent.renderPass);
-	graphicsCore->DeleteImage(spotLightComponent.depthTarget);
 }
