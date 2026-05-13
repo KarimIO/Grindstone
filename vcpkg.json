@@ -32,7 +32,8 @@
 		"stb",
 		"vulkan",
 		"vulkan-headers",
-		"vulkan-memory-allocator"
+		"vulkan-memory-allocator",
+		"vulkan-utility-libraries"
 	],
 	"builtin-baseline": "f7423ee180c4b7f40d43402c2feb3859161ef625"
 }

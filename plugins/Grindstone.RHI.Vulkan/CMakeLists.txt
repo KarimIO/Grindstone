@@ -59,12 +59,12 @@ set(AFTERMATH_DLL_NAME GFSDK_Aftermath_Lib.${AFTERMATH_ARCH}.dll)
 set(AFTERMATH_DLL ${AFTERMATH_LIB_DIR}/${AFTERMATH_DLL_NAME})
 
 add_library(PluginRhiVulkan MODULE ${Vk_SOURCES} ${Vk_HEADERS} ${CORE_UTILS})
-set_property(TARGET PluginRhiVulkan PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_target_properties(PluginRhiVulkan PROPERTIES FOLDER "Plugins/Render Hardware Interface")
 
 find_path(VULKAN_HEADERS_INCLUDE_DIRS "vk_video/vulkan_video_codec_h264std.h")
 find_package(Vulkan REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+find_package(VulkanUtilityLibraries CONFIG REQUIRED)
 
 target_include_directories(PluginRhiVulkan PUBLIC ${CODE_DIR} ${DEPS_DIR} ${VULKAN_HEADERS_INCLUDE_DIRS} ${PLUGIN_DIR} ${AFTERMATH_INC})
 
@@ -72,7 +72,7 @@ target_compile_definitions(PluginRhiVulkan PRIVATE GRAPHICS_DLL GLM_ENABLE_EXPER
 
 find_package(glfw3 CONFIG REQUIRED)
 
-target_link_libraries(PluginRhiVulkan ${CORE_LIBS} Common Vulkan::Vulkan glfw fmt::fmt GPUOpen::VulkanMemoryAllocator ${AFTERMATH_LIB})
+target_link_libraries(PluginRhiVulkan ${CORE_LIBS} Common Vulkan::Vulkan glfw fmt::fmt GPUOpen::VulkanMemoryAllocator Vulkan::LayerSettings Vulkan::UtilityHeaders Vulkan::CompilerConfiguration ${AFTERMATH_LIB})
 
 target_compile_features(PluginRhiVulkan PRIVATE cxx_std_20)
 

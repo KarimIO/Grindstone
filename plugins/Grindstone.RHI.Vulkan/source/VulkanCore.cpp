@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <array>
 #include <vulkan/vulkan.h>
+#include <vulkan/vk_enum_string_helper.h>
 #include <GLFW/glfw3.h>
 
 #include <GFSDK_Aftermath.h>
@@ -75,8 +76,6 @@ const bool enableValidationLayers = true;
 constexpr auto vkApiVersion = VK_API_VERSION_1_3;
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-	Grindstone::GraphicsAPI::Vulkan::Core* vk = static_cast<Grindstone::GraphicsAPI::Vulkan::Core*>(pUserData);
-
 	if (pCallbackData->messageIdNumber == 1402107823 || -507995293 == pCallbackData->messageIdNumber || 941228658 == pCallbackData->messageIdNumber || pCallbackData->messageIdNumber == 941228658) {
 		return VK_FALSE;
 	}
@@ -218,7 +217,7 @@ void Vulkan::Core::CreateInstance() {
 	};
 
 	auto extensions = GetRequiredExtensions();
-	extensions.push_back(VK_NV_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
+	// extensions.push_back(VK_NV_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
 
 	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 	createInfo.ppEnabledExtensionNames = extensions.data();
@@ -369,7 +368,7 @@ void Vulkan::Core::CreateLogicalDevice() {
 	};
 
 	void* firstDeviceFeature = &deviceFeatures2;
-	if (debug) {
+	if (false && debug) {
 		deviceExtensions.emplace_back(VK_EXT_DEVICE_FAULT_EXTENSION_NAME);
 
 		if (vendorType == VendorType::Nvidia) {
@@ -519,35 +518,74 @@ void Vulkan::Core::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateI
 	createInfo.pUserData = this;
 }
 
-uint16_t Vulkan::Core::ScoreDevice(VkPhysicalDevice device) {
-	QueueFamilyIndices indices = FindQueueFamilies(device);
+uint16_t Vulkan::Core::ScoreDevice(VkPhysicalDevice physicalDevice) {
+	QueueFamilyIndices indices = FindQueueFamilies(physicalDevice);
 
-	bool extensionsSupported = CheckDeviceExtensionSupport(device);
+	VkPhysicalDeviceProperties gpuProps{};
+	vkGetPhysicalDeviceProperties(physicalDevice, &gpuProps);
+	GPRINT_INFO_V(LogSource::GraphicsAPI, "Evaluating device '{}':", gpuProps.deviceName);
+
+	bool extensionsSupported = CheckDeviceExtensionSupport(physicalDevice);
 
 	bool swapChainAdequate = false;
 	if (extensionsSupported) {
 		auto wgb = static_cast<Vulkan::WindowGraphicsBinding*>(primaryWindow->GetWindowGraphicsBinding());
-		SwapChainSupportDetails swapChainSupport = wgb->QuerySwapChainSupport(device);
+		SwapChainSupportDetails swapChainSupport = wgb->QuerySwapChainSupport(physicalDevice);
 		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+		GPRINT_INFO(LogSource::GraphicsAPI, "\t- Swapchain Support:");
+		GPRINT_INFO(LogSource::GraphicsAPI, "\t\tSupported Formats:");
+		for (VkSurfaceFormatKHR format : swapChainSupport.formats) {
+			VkFormatProperties formatProperties{};
+			vkGetPhysicalDeviceFormatProperties(physicalDevice, format.format, &formatProperties);
+			GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t\t{} - {}", string_VkFormat(format.format), string_VkColorSpaceKHR(format.colorSpace));
+		}
+
+		GPRINT_INFO(LogSource::GraphicsAPI, "\t\tSupported Present Modes:");
+		for (VkPresentModeKHR presentMode : swapChainSupport.presentModes) {
+			const char* presentModeName = "Unknown";
+			switch (presentMode) {
+				case VK_PRESENT_MODE_IMMEDIATE_KHR: presentModeName = "Immediate"; break;
+				case VK_PRESENT_MODE_MAILBOX_KHR: presentModeName = "Mailbox"; break;
+				case VK_PRESENT_MODE_FIFO_KHR: presentModeName = "FIFO"; break;
+				case VK_PRESENT_MODE_FIFO_RELAXED_KHR: presentModeName = "FIFO Relaxed"; break;
+				case VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR: presentModeName = "Shared Demand Refresh"; break;
+				case VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR: presentModeName = "Shared Continuous Refresh"; break;
+			}
+			GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t\t{}", presentModeName);
+		}
+	}
+
+	GPRINT_INFO(LogSource::GraphicsAPI, "\t\t- Queue Families:");
+	if (indices.hasGraphicsFamily) {
+		GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t\t- Graphics Queue Index: {}", indices.graphicsFamily);
+	}
+	else {
+		GPRINT_INFO(LogSource::GraphicsAPI, "\t\t\t- Graphics Queue Index: NONE");
+	}
+
+	if (indices.hasPresentFamily) {
+		GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t\t- Present Queue Index: {}", indices.presentFamily);
+	}
+	else {
+		GPRINT_INFO(LogSource::GraphicsAPI, "\t\t\t- Present Queue Index: NONE");
 	}
 
 	if (!indices.IsComplete() || !extensionsSupported || !swapChainAdequate) {
 		return 0;
 	}
 
-	VkPhysicalDeviceProperties gpuProps{};
-	vkGetPhysicalDeviceProperties(device, &gpuProps);
-
 	size_t gpuTypeScore = 0;
 	if (gpuProps.deviceType == VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+		GPRINT_INFO(LogSource::GraphicsAPI, " - GPU Type: Discrete");
 		gpuTypeScore += DISCRETE_GPU_BONUS;
 	}
 	else if (gpuProps.deviceType == VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
+		GPRINT_INFO(LogSource::GraphicsAPI, " - GPU Type: Integrated");
 		gpuTypeScore += INTEGRATED_GPU_BONUS;
 	}
 
 	VkPhysicalDeviceMemoryProperties memoryProps{};
-	vkGetPhysicalDeviceMemoryProperties(device, &memoryProps);
+	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProps);
 
 	auto heapsPointer = memoryProps.memoryHeaps;
 	auto heaps = std::vector<VkMemoryHeap>(heapsPointer, heapsPointer + memoryProps.memoryHeapCount);
@@ -555,7 +593,9 @@ uint16_t Vulkan::Core::ScoreDevice(VkPhysicalDevice device) {
 	float heapScore = 0;
 	for (const auto& heap : heaps) {
 		if (heap.flags & VkMemoryHeapFlagBits::VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) {
-			heapScore += heap.size * HEAP_SIZE_IN_GB_MULTIPLIER * HEAP_SCORE_MULTIPLIER;
+			float deviceSize = heap.size * HEAP_SIZE_IN_GB_MULTIPLIER;
+			GPRINT_INFO_V(LogSource::GraphicsAPI, " - Heap Size: {}GB", deviceSize);
+			heapScore += deviceSize * HEAP_SCORE_MULTIPLIER;
 			break;
 		}
 	}
@@ -572,8 +612,27 @@ bool Vulkan::Core::CheckDeviceExtensionSupport(VkPhysicalDevice device) {
 
 	std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
+	if (requiredExtensions.empty()) {
+		GPRINT_INFO(LogSource::GraphicsAPI, "\t- Supported Required Extensions: NONE");
+	}
+	else {
+		GPRINT_INFO(LogSource::GraphicsAPI, "\t- Supported Required Extensions:");
+	}
 	for (const auto& extension : availableExtensions) {
-		requiredExtensions.erase(extension.extensionName);
+		if (requiredExtensions.contains(extension.extensionName)) {
+			GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t- {}", extension.extensionName);
+			requiredExtensions.erase(extension.extensionName);
+		}
+	}
+
+	if (requiredExtensions.empty()) {
+		GPRINT_INFO(LogSource::GraphicsAPI, "\t- Unsupported Required Extensions: NONE");
+	}
+	else {
+		GPRINT_INFO(LogSource::GraphicsAPI, "\t- Unsupported Required Extensions:");
+	}
+	for (const auto& extension : requiredExtensions) {
+		GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t- {}", extension);
 	}
 
 	return requiredExtensions.empty();
