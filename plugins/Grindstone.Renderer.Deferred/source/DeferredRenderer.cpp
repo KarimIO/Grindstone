@@ -142,6 +142,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 	indexBuffer = graphicsCore->CreateBuffer(iboCi);
 
 	gbuffer.Initialize();
+	blur.Initialize();
 	ssao.Initialize();
 	lighting.Initialize();
 	tonemap.Initialize();
@@ -222,11 +223,21 @@ void DeferredRenderer::Render(
 
 	assetManager->SetEngineDescriptorSet(globalDescriptorSet[imageIndex]);
 
+	// TODO: Move these into the ssao pass, maybe?
+	Grindstone::Renderer::ImageDescription attachmentAmbientOcclusionBlur{
+		.name = "Ambient Occlusion Blurred",
+		.format = ambientOcclusionFormat,
+		.imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled
+	};
+
+	Grindstone::Renderer::MetaRect ssaoBlurMetaRect(Renderer::MetaSize2D::Zero(), Renderer::MetaSize2D::DivideSwapchain(2));
+
 	Grindstone::Renderer::ShadowPassReturnData shadowOutput = shadows.AddShadowPasses(renderGraphBuilder, worldContextSet);
 	Grindstone::Renderer::GbufferData gbufferData = gbuffer.AddPass(projectionMatrix, viewMatrix, renderGraphBuilder);
 	Grindstone::Renderer::RenderGraphBuilderResourceRef ssaoOutput = ssao.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData);
-	// auto ssaoBlurredOutput = blur.AddTwoPassBlur(renderGraph, ssaoOutput);
-	Grindstone::Renderer::LightingPassReturnData lightingData = lighting.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData, shadowOutput.shadowOutputRef);
+	// TODO: Move this into the ssao pass, maybe? Specify a Two-Pass Separable Blur
+	Grindstone::Renderer::RenderGraphBuilderResourceRef ssaoBlurredOutput = blur.AddPass(renderGraphBuilder, ssaoBlurMetaRect, attachmentAmbientOcclusionBlur, ssaoOutput);
+	Grindstone::Renderer::LightingPassReturnData lightingData = lighting.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData, shadowOutput.shadowOutputRef, ssaoBlurredOutput);
 	// auto ssrOutput = ssr.AddPass(renderGraph, lightingOutput);
 	// auto dofOutput = dof.AddPass(renderGraph, ssrOutput);
 	// auto bloomOutput = bloom.AddBloomChain(renderGraph, dofOutput);

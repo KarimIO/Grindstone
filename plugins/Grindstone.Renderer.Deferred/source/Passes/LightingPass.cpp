@@ -52,7 +52,7 @@ static void PerformImageBasedLighting(
 
 					// We found the correct env map and it is different from the current one - change it and then render.
 					GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::SampledImage(image);
-					ambientOcclusionDescriptorSet->ChangeBindings(&binding, 1, 2);
+					ambientOcclusionDescriptorSet->ChangeBindings(&binding, 1u /* count */, 1u /* offset */);
 					currentEnvironmentMapImage = image;
 				}
 			);
@@ -74,26 +74,71 @@ static void PerformImageBasedLighting(
 
 bool Renderer::LightingPass::Initialize() {
 	EngineCore& engineCore = EngineCore::GetInstance();
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Assets::AssetManager* assetManager = engineCore.assetManager;
 
-	imageBasedLightingPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/ibl");
-	pointLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/point");
-	spotLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/spot");
-	directionalLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/directional");
+	{
+		imageBasedLightingPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/ibl");
+		pointLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/point");
+		spotLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/spot");
+		directionalLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/directional");
+		brdfLut = assetManager->GetAssetReferenceByAddress<TextureAsset>("@CORESHADERS/textures/ibl_brdf_lut");
+	}
 
-	Grindstone::GraphicsAPI::Sampler::CreateInfo screenSamplerCreateInfo{
-	screenSamplerCreateInfo.debugName = "Screen Sampler",
-	screenSamplerCreateInfo.options = {
-			.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat,
-			.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat,
-			.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat,
-			.minFilter = GraphicsAPI::TextureFilter::Linear,
-			.magFilter = GraphicsAPI::TextureFilter::Linear,
-			.anistropy = 0
-		}
-	};
+	{
+		Grindstone::GraphicsAPI::Sampler::CreateInfo screenSamplerCreateInfo{
+		screenSamplerCreateInfo.debugName = "Screen Sampler",
+		screenSamplerCreateInfo.options = {
+				.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat,
+				.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat,
+				.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat,
+				.minFilter = GraphicsAPI::TextureFilter::Linear,
+				.magFilter = GraphicsAPI::TextureFilter::Linear,
+				.anistropy = 0
+			}
+		};
 
-	screenSampler = engineCore.GetGraphicsCore()->GetOrCreateSampler(screenSamplerCreateInfo);
+		screenSampler = graphicsCore->GetOrCreateSampler(screenSamplerCreateInfo);
+	}
+
+	{
+		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 2> ambientOcclusionInputLayoutBinding{
+			GraphicsAPI::DescriptorSetLayout::Binding{
+				.bindingId = 0,
+				.count = 1,
+				.type = GraphicsAPI::BindingType::SampledImage,
+				.stages = GraphicsAPI::ShaderStageBit::Fragment
+			},
+			GraphicsAPI::DescriptorSetLayout::Binding{
+
+				.bindingId = 1,
+				.count = 1,
+				.type = GraphicsAPI::BindingType::SampledImage,
+				.stages = GraphicsAPI::ShaderStageBit::Fragment
+			}
+		};
+
+		GraphicsAPI::DescriptorSetLayout::CreateInfo ambientOcclusionInputLayoutCreateInfo{};
+		ambientOcclusionInputLayoutCreateInfo.debugName = "Ambient Occlusion Descriptor Set Layout";
+		ambientOcclusionInputLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ambientOcclusionInputLayoutBinding.size());
+		ambientOcclusionInputLayoutCreateInfo.bindings = ambientOcclusionInputLayoutBinding.data();
+		ambientOcclusionDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ambientOcclusionInputLayoutCreateInfo);
+	}
+
+	{
+		Grindstone::TextureAsset* brdfLutTextureAsset = brdfLut.Get();
+		std::array<GraphicsAPI::DescriptorSet::Binding, 2> aoInputBinding = {
+			GraphicsAPI::DescriptorSet::Binding::SampledImage(brdfLutTextureAsset != nullptr ? brdfLutTextureAsset->image : nullptr),
+			GraphicsAPI::DescriptorSet::Binding::SampledImage(nullptr)
+		};
+
+		GraphicsAPI::DescriptorSet::CreateInfo aoInputCreateInfo{};
+		aoInputCreateInfo.debugName = "Ambient Occlusion Descriptor Set";
+		aoInputCreateInfo.layout = ambientOcclusionDescriptorSetLayout;
+		aoInputCreateInfo.bindingCount = static_cast<uint32_t>(aoInputBinding.size());
+		aoInputCreateInfo.bindings = aoInputBinding.data();
+		ambientOcclusionDescriptorSet = graphicsCore->CreateDescriptorSet(aoInputCreateInfo);
+	}
 
 	return true;
 }
@@ -103,18 +148,20 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 	GraphicsAPI::Buffer* indexBuffer,
 	Renderer::RenderGraphBuilder& renderGraph,
 	Grindstone::Renderer::GbufferData& gbufferData,
-	RenderGraphBuilderResourceRef shadowAtlasRef
+	RenderGraphBuilderResourceRef shadowAtlasRef,
+	RenderGraphBuilderResourceRef ambientOcclusionRef
 ) {
 	return renderGraph.CreateGraphicsPass<LightingPassReturnData>(
 		"Lighting Pass",
 		MetaRect::Swapchain(),
-		[this, shadowAtlasRef, &gbufferData](Renderer::GraphicsRenderGraphBuilderPass<LightingPassReturnData>& renderPass) -> LightingPassReturnData {
+		[this, shadowAtlasRef, ambientOcclusionRef, &gbufferData](Renderer::GraphicsRenderGraphBuilderPass<LightingPassReturnData>& renderPass) -> LightingPassReturnData {
 			renderPass.ReadExternalSampler(screenSampler);
 			renderPass.ReadSampledImage(gbufferData.depthRef);
 			renderPass.ReadSampledImage(gbufferData.albedoRef);
 			renderPass.ReadSampledImage(gbufferData.normalRef);
 			renderPass.ReadSampledImage(gbufferData.specularRoughnessRef);
 			renderPass.ReadSampledImage(shadowAtlasRef);
+			renderPass.ReadSampledImage(ambientOcclusionRef);
 			RenderGraphBuilderResourceRef layoutImgRef = renderPass.WriteColorAttachment(attachmentlighting, GraphicsAPI::LoadOp::Clear, GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 1.0f));
 
 			return LightingPassReturnData{
@@ -145,6 +192,17 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 				0.0f, 0.0f, 1.0f, 0.0f,
 				0.5f, 0.5f, 0.0f, 1.0f
 			);
+
+			GraphicsPipelineAsset* imageBasedLightingAsset = imageBasedLightingPipelineSet.Get();
+			if (imageBasedLightingAsset != nullptr) {
+				PerformImageBasedLighting(
+					registry,
+					cmd,
+					ambientOcclusionDescriptorSet,
+					imageBasedLightingPipelineSet.Get(),
+					currentEnvironmentMapImage
+				);
+			}
 
 			GraphicsPipelineAsset* pointLightAsset = pointLightPipelineSet.Get();
 			if (pointLightAsset != nullptr) {

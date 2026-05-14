@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Common/Rendering/RenderGraph.hpp>
+#include <Common/Rendering/RenderGraphBuilder.hpp>
 #include <EngineCore/Assets/AssetReference.hpp>
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 
@@ -8,9 +8,15 @@ namespace Grindstone::Renderer {
 	class BlurPass {
 	public:
 		bool Initialize();
-		void AddPass(Grindstone::Renderer::RenderGraph& renderGraph);
+		Renderer::RenderGraphBuilderResourceRef AddPass(
+			Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
+			MetaRect& metaRect,
+			Renderer::ImageDescription& imageDescription,
+			Renderer::RenderGraphBuilderResourceRef imageToBlurRef
+		);
 
 	private:
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> blurPipelineSet;
+		Grindstone::GraphicsAPI::Sampler* screenSampler = nullptr;
 	};
 }

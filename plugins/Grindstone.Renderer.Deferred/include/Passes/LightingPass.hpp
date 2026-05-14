@@ -19,7 +19,8 @@ namespace Grindstone::Renderer {
 			GraphicsAPI::Buffer* indexBuffer,
 			Grindstone::Renderer::RenderGraphBuilder& renderGraph,
 			Grindstone::Renderer::GbufferData& gbufferData,
-			RenderGraphBuilderResourceRef shadowAtlasRef
+			RenderGraphBuilderResourceRef shadowAtlasRef,
+			RenderGraphBuilderResourceRef ambientOcclusionRef
 		);
 
 	private:
@@ -27,8 +28,11 @@ namespace Grindstone::Renderer {
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> spotLightPipelineSet;
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> pointLightPipelineSet;
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> directionalLightPipelineSet;
+		Grindstone::AssetReference<Grindstone::TextureAsset> brdfLut;
 
 		Grindstone::GraphicsAPI::Image* currentEnvironmentMapImage = nullptr;
+		Grindstone::GraphicsAPI::DescriptorSetLayout* ambientOcclusionDescriptorSetLayout = nullptr;
+		Grindstone::GraphicsAPI::DescriptorSet* ambientOcclusionDescriptorSet = nullptr;
 		Grindstone::GraphicsAPI::Sampler* screenSampler = nullptr;
 	};
 }

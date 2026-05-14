@@ -1,100 +1,72 @@
+#include <Common/Graphics/Buffer.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
-#include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
 
 #include <Grindstone.Renderer.Deferred/include/Passes/BlurPass.hpp>
+#include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
 
 bool Grindstone::Renderer::BlurPass::Initialize() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
-	blurPipelineSet = engineCore.assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/postProcessing/blur");
+	blurPipelineSet = engineCore.assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/postProcessing/screenSpaceAmbientOcclusionBlur");
+
+	Grindstone::GraphicsAPI::Sampler::CreateInfo screenSamplerCreateInfo{
+	screenSamplerCreateInfo.debugName = "Screen Sampler",
+	screenSamplerCreateInfo.options = {
+			.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat,
+			.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat,
+			.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat,
+			.minFilter = GraphicsAPI::TextureFilter::Linear,
+			.magFilter = GraphicsAPI::TextureFilter::Linear,
+			.anistropy = 0
+		}
+	};
+
+	screenSampler = engineCore.GetGraphicsCore()->GetOrCreateSampler(screenSamplerCreateInfo);
+
 	return true;
 }
 
-void Grindstone::Renderer::BlurPass::AddPass(Grindstone::Renderer::RenderGraph& renderGraph) {
-}
+Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Renderer::BlurPass::AddPass(
+	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
+	MetaRect& metaRect,
+	Renderer::ImageDescription& imageDescription,
+	Renderer::RenderGraphBuilderResourceRef imageToBlurRef
+) {
+	return renderGraphBuilder.CreateGraphicsPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>(
+		"Blur Pass",
+		MetaRect::Swapchain(),
+		[this, &imageDescription, imageToBlurRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) {
+			renderPass.ReadExternalSampler(screenSampler);
+			renderPass.ReadSampledImage(imageToBlurRef);
+			// TODO: There should be a way to recover the image description from the reference.
+			Renderer::RenderGraphBuilderResourceRef output = renderPass.WriteColorAttachment(imageDescription, GraphicsAPI::LoadOp::DontCare, GraphicsAPI::ClearColor{});
 
-/*
-	struct GbufferData {
-		Renderer::RenderGraphResource albedo;
-		Renderer::RenderGraphResource normal;
-		Renderer::RenderGraphResource specularRoughness;
-		Renderer::RenderGraphResource depth;
-	};
-
-	Grindstone::Renderer::RenderGraphPass& gbufferPass = renderGraph.AddCallbackPass<GbufferData>(
-		"Gbuffer Geometry Pass",
-		[&](Renderer::RenderGraph::Builder& builder, GbufferData& data) {
-			gbufferPass.AddOutputImage(attachmentNameAlbedo, attachmentAlbedo);
-			gbufferPass.AddOutputImage(attachmentNameNormal, attachmentNormal);
-			gbufferPass.AddOutputImage(attachmentNameSpecularRoughness, attachmentSpecularRoughness);
-			gbufferPass.AddOutputImage(attachmentNameDepthStencil, attachmentDepthStencil);
+			return output;
 		},
-		[&, registry = &registry](const GbufferData& data, Renderer::RenderGraphResource& resources) {
-			std::array<GraphicsAPI::RenderAttachment, 3> renderAttachments = {
-				resources.Get<RenderGraphImage>(data.albedo).image,
-				resources.Get<RenderGraphImage>(data.normal).image,
-				resources.Get<RenderGraphImage>(data.specularRoughness).image
-			};
+		[this](
+			Grindstone::Math::IntRect2D renderingArea,
+			const Renderer::RenderGraphContext& cxt,
+			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+			Grindstone::Renderer::RenderGraphBuilderResourceRef& data
+		) {
+				Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+				Grindstone::WorldContextSet* cxtSet = cxt.worldContextSet;
+				Grindstone::GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
+				uint8_t swapchainIndex = cxt.swapchainIndex;
 
-			commandBuffer->BeginRendering(
-				"Gbuffer Geometry Pass",
-				renderArea,
-				renderAttachments.data(),
-				static_cast<uint32_t>(renderAttachments.size()),
-				&resources.Get<RenderGraphImage>(data.depth).image
-			);
+				Grindstone::GraphicsPipelineAsset* blurPipelineSetAsset = blurPipelineSet.Get();
+				if (blurPipelineSetAsset == nullptr) {
+					return;
+				}
 
-			commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(renderArea.GetWidth()), static_cast<float>(renderArea.GetHeight()));
-			commandBuffer->SetScissor(0, 0, renderArea.GetWidth(), renderArea.GetHeight());
+				Grindstone::GraphicsAPI::PipelineLayout* blurPipelineSetLayout = blurPipelineSetAsset->GetFirstPassPipelineLayout();
+				Grindstone::GraphicsAPI::GraphicsPipeline* blurPipelineSet = blurPipelineSetAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
+				if (blurPipelineSet == nullptr) {
+					return;
+				}
 
-			// TODO: Get Rendering Stats
-			assetManager->RenderQueue(commandBuffer, renderViewData, *registry, geometryOpaqueRenderPassKey);
-			commandBuffer->EndRendering();
+				cmd->BindGraphicsPipeline(blurPipelineSet);
+				cmd->DrawIndices(0, 6, 0, 1, 0);
 		}
 	);
 }
-
-	Grindstone::GraphicsPipelineAsset* blurPipelineSetAsset = ssaoBlurPipelineSet.Get();
-	if (blurPipelineSetAsset == nullptr) {
-		return;
-	}
-
-	Grindstone::GraphicsAPI::GraphicsPipeline* blurPipeline = blurPipelineSetAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
-	if (blurPipeline == nullptr) {
-		return;
-	}
-
-	commandBuffer->BeginRendering(
-		"SSAO Blur Pass (Screen-Space Ambient Occlusion)",
-		halfRenderArea,
-		&imageSet.blurredAmbientOcclusionAttachment,
-		1u,
-		nullptr,
-		nullptr
-	);
-
-	commandBuffer->SetViewport(
-		static_cast<float>(halfRenderArea.offset.x),
-		static_cast<float>(halfRenderArea.offset.y),
-		static_cast<float>(halfRenderArea.GetWidth()),
-		static_cast<float>(halfRenderArea.GetHeight()),
-		0.0f, 1.0f
-	);
-	commandBuffer->SetScissor(
-		halfRenderArea.offset.x, halfRenderArea.offset.y,
-		halfRenderArea.GetWidth(), halfRenderArea.GetHeight()
-	);
-
-	commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
-	commandBuffer->BindIndexBuffer(indexBuffer);
-
-	std::array<Grindstone::GraphicsAPI::DescriptorSet*, 2> blurDescriptorSets = {
-		imageSet.engineDescriptorSet,
-		imageSet.blurredSsaoInputDescriptorSet
-	};
-
-	commandBuffer->BindGraphicsPipeline(blurPipeline);
-	commandBuffer->BindGraphicsDescriptorSet(blurPipeline, blurDescriptorSets.data(), 0, static_cast<uint32_t>(blurDescriptorSets.size()));
-	commandBuffer->DrawIndices(0, 6, 0, 1, 0);
-	commandBuffer->EndRendering();
-
-	*/
