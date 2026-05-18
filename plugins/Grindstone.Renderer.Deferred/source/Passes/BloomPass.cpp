@@ -34,11 +34,11 @@ bool Grindstone::Renderer::BloomPass::Initialize() {
 	bloomPipelineSet = engineCore.assetManager->GetAssetReferenceByAddress<ComputePipelineAsset>("@CORESHADERS/postProcessing/bloom");
 
 	Grindstone::GraphicsAPI::Sampler::CreateInfo screenSamplerCreateInfo{
-	screenSamplerCreateInfo.debugName = "Screen Sampler",
+	screenSamplerCreateInfo.debugName = "Bloom Screen Sampler",
 	screenSamplerCreateInfo.options = {
-			.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat,
-			.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat,
-			.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat,
+			.wrapModeU = GraphicsAPI::TextureWrapMode::ClampToEdge,
+			.wrapModeV = GraphicsAPI::TextureWrapMode::ClampToEdge,
+			.wrapModeW = GraphicsAPI::TextureWrapMode::ClampToEdge,
 			.minFilter = GraphicsAPI::TextureFilter::Linear,
 			.magFilter = GraphicsAPI::TextureFilter::Linear,
 			.anistropy = 0
@@ -319,7 +319,7 @@ Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Renderer::BloomP
 
 	stageOutputs[BLOOM_MIPS] = outRef = FirstUpscale(mipSizes[BLOOM_MIPS - 1u], *(ds++), screenSampler, bloomPipeline, pipelineLayout, renderGraphBuilder, outRef, stageOutputs[BLOOM_MIPS - 2u]);
 
-	for (uint32_t i = 1; i < BLOOM_MIPS; ++i) {
+	for (uint32_t i = 1; i < BLOOM_MIPS - 1u; ++i) {
 		stageOutputs[BLOOM_MIPS + i] = outRef = Upscale(i, mipSizes[BLOOM_MIPS - i - 1u], *(ds++), screenSampler, bloomPipeline, pipelineLayout, renderGraphBuilder, outRef, stageOutputs[BLOOM_MIPS - 1u - i]);
 	}
 

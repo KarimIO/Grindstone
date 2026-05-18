@@ -261,12 +261,15 @@ void DeferredRenderer::Render(
 			.imageDimensions = GraphicsAPI::ImageDimension::Dimension2D,
 			.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly,
 			.imageUsage = GraphicsAPI::ImageUsageFlags::RenderTarget | GraphicsAPI::ImageUsageFlags::Sampled,
+			.externalFinalLayout = GraphicsAPI::ImageLayout::ShaderRead,
+			.externalFinalAccessFlags = GraphicsAPI::AccessFlags::ShaderRead,
+			.externalFinalPipelineStage = GraphicsAPI::PipelineStageBit::FragmentShader,
 			.externalGetterCallback = [colorImage]() { return colorImage; }
 		}
 	);
 
 	if (renderMode == DeferredRenderMode::Default) {
-		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef, lightingData.lightingOutputRef, colorImageRef);
+		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef, bloomOutput, colorImageRef);
 	}
 	/*
 	else {

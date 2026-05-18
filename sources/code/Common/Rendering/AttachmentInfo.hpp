@@ -235,6 +235,10 @@ namespace Grindstone::Renderer {
 		GraphicsAPI::ImageDimension imageDimensions = GraphicsAPI::ImageDimension::Dimension2D;
 		GraphicsAPI::MemoryUsage memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly;
 		Grindstone::Containers::BitsetFlags<GraphicsAPI::ImageUsageFlags> imageUsage;
+
+		Grindstone::GraphicsAPI::ImageLayout externalFinalLayout;
+		GraphicsAPI::AccessFlags externalFinalAccessFlags;
+		Grindstone::GraphicsAPI::PipelineStageBit externalFinalPipelineStage;
 		std::function<Grindstone::GraphicsAPI::Image*()> externalGetterCallback;
 
 		bool operator==(const ImageDescription& other) const {

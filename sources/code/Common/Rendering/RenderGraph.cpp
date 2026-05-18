@@ -92,4 +92,49 @@ void Grindstone::Renderer::RenderGraph::ExecuteGraph(Grindstone::Renderer::Rende
 		pass->Execute(context, frameResources);
 	}
 
+	std::vector<GraphicsAPI::ImageBarrier> finalImageBarriers;
+	std::vector<GraphicsAPI::BufferBarrier> finalBufferBarriers;
+
+	for (ResourceId id = 0; id < resourceDescriptions.size(); ++id) {
+		const Grindstone::Renderer::UnionResourceDescription& entry = resourceDescriptions[id];
+
+		if (std::holds_alternative<Grindstone::Renderer::ImageDescription>(entry)) {
+			const Grindstone::Renderer::ImageDescription& desc = std::get<Grindstone::Renderer::ImageDescription>(entry);
+			if (desc.externalGetterCallback != nullptr) {
+				auto& ext = frameResources.externalImages[id];
+
+				Grindstone::GraphicsAPI::ImageAspectBits imageAspect = Any(GraphicsAPI::GetFormatDepthStencilType(ext.image->GetFormat()) & GraphicsAPI::FormatDepthStencilType::Depth)
+					? Grindstone::GraphicsAPI::ImageAspectBits::Depth
+					: Grindstone::GraphicsAPI::ImageAspectBits::Color;
+
+				Grindstone::GraphicsAPI::ImageBarrier imageBarrier{
+					.image = ext.image,
+					.srcStageMask = ext.currentPipelineStage,
+					.dstStageMask = desc.externalFinalPipelineStage,
+					.oldLayout = ext.currentLayout,
+					.newLayout = desc.externalFinalLayout,
+					.srcAccess = ext.currentAccessFlags,
+					.dstAccess = desc.externalFinalAccessFlags,
+					.imageAspect = imageAspect,
+					.baseMipLevel = 0,
+					.levelCount = 1,
+					.baseArrayLayer = 0,
+					.layerCount = 1
+				};
+
+				ext.currentPipelineStage = desc.externalFinalPipelineStage;
+				ext.currentLayout = desc.externalFinalLayout;
+				ext.currentAccessFlags = desc.externalFinalAccessFlags;
+
+				finalImageBarriers.emplace_back(imageBarrier);
+			}
+		}
+	}
+
+	context.commandBuffer->PipelineBarrier(
+		finalBufferBarriers.data(),
+		static_cast<uint32_t>(finalBufferBarriers.size()),
+		finalImageBarriers.data(),
+		static_cast<uint32_t>(finalImageBarriers.size())
+	);
 }
