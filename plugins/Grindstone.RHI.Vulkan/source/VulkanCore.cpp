@@ -373,7 +373,7 @@ void Vulkan::Core::CreateLogicalDevice() {
 	};
 
 	void* firstDeviceFeature = &deviceFeatures2;
-	if (debug) {
+	if (false && debug) {
 		deviceExtensions.emplace_back(VK_EXT_DEVICE_FAULT_EXTENSION_NAME);
 
 		if (vendorType == VendorType::Nvidia) {

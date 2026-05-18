@@ -174,8 +174,9 @@ static RenderGraphBuilderResourceRef BloomOperation(
 		) {
 			Grindstone::GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
 
-			uint32_t groupCountX = static_cast<uint32_t>(size.x >> 2);
-			uint32_t groupCountY = static_cast<uint32_t>(size.y >> 2);
+			constexpr uint32_t WORKGROUP_SIZE = 4;
+			uint32_t groupCountX = (size.x + WORKGROUP_SIZE - 1) / WORKGROUP_SIZE;
+			uint32_t groupCountY = (size.y + WORKGROUP_SIZE - 1) / WORKGROUP_SIZE;
 
 			cmd->BindComputePipeline(bloomPipeline);
 			cmd->BindComputeDescriptorSet(pipelineLayout, &descriptorSet, 2u, 1u);
@@ -262,9 +263,9 @@ static void InitializeImageSetIfNecessary(
 
 	auto& buff = set.bloomStageBuffers;
 	// TODO: Fix mipSizes
-	ResizeUbo(BloomStage::Filter, mipSizes[1], mipSizes[1], buff[0]);
+	ResizeUbo(BloomStage::Filter, mipSizes[0], mipSizes[1], buff[0]);
 	for (size_t i = 1; i < n; ++i) {
-		ResizeUbo(BloomStage::Downsample, mipSizes[i + 1], mipSizes[0], buff[i]);
+		ResizeUbo(BloomStage::Downsample, mipSizes[i + 1], mipSizes[i + 1], buff[i]);
 	}
 	for (size_t i = 0; i < n; ++i) {
 		ResizeUbo(BloomStage::Upsample, mipSizes[n - i], mipSizes[n - i - 1], buff[4 + i]);
@@ -311,8 +312,6 @@ Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Renderer::BloomP
 	
 	Renderer::RenderGraphBuilderResourceRef outRef;
 	stageOutputs[0] = outRef = FirstDownscale(mipSizes[1], *(ds++), screenSampler, bloomPipeline, pipelineLayout, renderGraphBuilder, input);
-
-	return outRef;
 
 	for (uint32_t i = 1; i < BLOOM_MIPS; ++i) {
 		stageOutputs[i] = outRef = Downscale(i, mipSizes[i + 1u], *(ds++), screenSampler, bloomPipeline, pipelineLayout, renderGraphBuilder, outRef);

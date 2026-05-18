@@ -241,14 +241,13 @@ void DeferredRenderer::Render(
 	Grindstone::Renderer::LightingPassReturnData lightingData = lighting.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData, shadowOutput.shadowOutputRef, ssaoBlurredOutput);
 	// auto ssrOutput = ssr.AddPass(renderGraph, lightingOutput);
 	// auto dofOutput = dof.AddPass(renderGraph, ssrOutput);
-	/*
+
 	Grindstone::Renderer::RenderGraphBuilderResourceRef bloomOutput = bloom.AddBloomChain(
 		imageIndex,
 		Grindstone::Math::Uint2(renderArea.extent.x, renderArea.extent.y),
 		renderGraphBuilder,
 		lightingData.lightingOutputRef
 	);
-	*/
 	
 	auto colorImageRef = renderGraphBuilder.AddImage(
 		Grindstone::Renderer::ImageDescription{

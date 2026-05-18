@@ -127,6 +127,9 @@ computeSet "Bloom" {
 		[numthreads(4, 4, 1)]
 		void main(uint3 dispatchThreadID : SV_DispatchThreadID) {
 			float2 texCoords = float2(dispatchThreadID.x * stageUbo.reciprocalImgSizes.z, dispatchThreadID.y * stageUbo.reciprocalImgSizes.w);
+			if (coord.x >= 1 || coord.y >= 1) {
+				return;
+			}
 
 			float4 color = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
