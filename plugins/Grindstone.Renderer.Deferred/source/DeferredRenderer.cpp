@@ -88,7 +88,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 		.bindingId = 0,
 		.count = 1,
 		.type = Grindstone::GraphicsAPI::BindingType::UniformBuffer,
-		.stages = GraphicsAPI::ShaderStageBit::Fragment,
+		.stages = GraphicsAPI::ShaderStageBit::All,
 	};
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo globalDescriptorSetLayoutCreateInfo{
@@ -141,6 +141,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 	iboCi.bufferSize = sizeof(lightIndices);
 	indexBuffer = graphicsCore->CreateBuffer(iboCi);
 
+	bloom.Initialize();
 	gbuffer.Initialize();
 	blur.Initialize();
 	ssao.Initialize();
@@ -240,7 +241,14 @@ void DeferredRenderer::Render(
 	Grindstone::Renderer::LightingPassReturnData lightingData = lighting.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData, shadowOutput.shadowOutputRef, ssaoBlurredOutput);
 	// auto ssrOutput = ssr.AddPass(renderGraph, lightingOutput);
 	// auto dofOutput = dof.AddPass(renderGraph, ssrOutput);
-	// auto bloomOutput = bloom.AddBloomChain(renderGraph, dofOutput);
+	/*
+	Grindstone::Renderer::RenderGraphBuilderResourceRef bloomOutput = bloom.AddBloomChain(
+		imageIndex,
+		Grindstone::Math::Uint2(renderArea.extent.x, renderArea.extent.y),
+		renderGraphBuilder,
+		lightingData.lightingOutputRef
+	);
+	*/
 	
 	auto colorImageRef = renderGraphBuilder.AddImage(
 		Grindstone::Renderer::ImageDescription{
@@ -259,7 +267,7 @@ void DeferredRenderer::Render(
 	);
 
 	if (renderMode == DeferredRenderMode::Default) {
-		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef, colorImageRef);
+		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef, lightingData.lightingOutputRef, colorImageRef);
 	}
 	/*
 	else {

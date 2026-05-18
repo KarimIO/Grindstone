@@ -105,13 +105,20 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 	GS_ASSERT(srcPipelineHeader.configurationCount != 0);
 	const V1::ComputePipelineConfigurationHeader& srcConfigHeader = pipelineConfigurations[srcPipelineHeader.configurationStartIndex];
 	const V1::PassPipelineShaderStageHeader& srcStage = shaderStages[srcConfigHeader.shaderStageIndex];
+	const Span<V1::ShaderReflectDescriptorSet> srcDescriptorSetLayouts = descriptorSets.GetSubspan(srcConfigHeader.descriptorSetStartIndex, srcConfigHeader.descriptorSetCount);
+
+	uint32_t maxDescriptorSetIndex = 0;
+	for (auto& d : srcDescriptorSetLayouts) {
+		maxDescriptorSetIndex = std::max(maxDescriptorSetIndex, d.setIndex + 1u);
+	}
 
 	std::vector<GraphicsAPI::DescriptorSetLayout*> descriptorSetLayouts;
+	descriptorSetLayouts.resize(maxDescriptorSetIndex);
 
 	UnpackComputePipelineDescriptorSetHeaders(
 		graphicsCore,
 		computePipelineAsset.name,
-		descriptorSets.GetSubspan(srcConfigHeader.descriptorSetStartIndex, srcConfigHeader.descriptorSetCount),
+		srcDescriptorSetLayouts,
 		descriptorBindings,
 		descriptorSetLayouts
 	);
@@ -127,6 +134,7 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 			: indexAsCount;
 	}
 
+	// Add empty descriptor set layouts to prevent errors.
 	for (uint8_t descriptorSetIndex = 0; descriptorSetIndex < descriptorSetLayoutCount; ++descriptorSetIndex) {
 		GraphicsAPI::DescriptorSetLayout*& descriptorSetLayout = descriptorSetLayouts[descriptorSetIndex];
 		if (descriptorSetLayout == nullptr) {

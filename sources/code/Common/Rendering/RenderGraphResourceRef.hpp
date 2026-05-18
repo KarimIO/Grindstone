@@ -79,6 +79,10 @@ namespace Grindstone::Renderer {
 			};
 		}
 
+		bool IsInvalid() const {
+			return resourceIndex >= 32767;
+		}
+
 		bool IsBuffer() const {
 			return isBuffer == 1;
 		}

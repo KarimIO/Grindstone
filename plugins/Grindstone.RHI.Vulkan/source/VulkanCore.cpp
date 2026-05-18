@@ -75,7 +75,12 @@ const bool enableValidationLayers = true;
 
 constexpr auto vkApiVersion = VK_API_VERSION_1_3;
 
-static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
+	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+	[[maybe_unused]] VkDebugUtilsMessageTypeFlagsEXT messageType,
+	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+	[[maybe_unused]] void* pUserData
+) {
 	if (pCallbackData->messageIdNumber == 1402107823 || -507995293 == pCallbackData->messageIdNumber || 941228658 == pCallbackData->messageIdNumber || pCallbackData->messageIdNumber == 941228658) {
 		return VK_FALSE;
 	}
@@ -270,10 +275,10 @@ void Vulkan::Core::PickPhysicalDevice() {
 
 	uint16_t scoreMax = 0;
 
-	for (const auto& device : devices) {
-		uint16_t score = ScoreDevice(device);
+	for (const VkPhysicalDevice& testPhysicalDevice : devices) {
+		uint16_t score = ScoreDevice(testPhysicalDevice);
 		if (score > scoreMax) {
-			physicalDevice = device;
+			physicalDevice = testPhysicalDevice;
 			scoreMax = score;
 		}
 	}
@@ -368,7 +373,7 @@ void Vulkan::Core::CreateLogicalDevice() {
 	};
 
 	void* firstDeviceFeature = &deviceFeatures2;
-	if (false && debug) {
+	if (debug) {
 		deviceExtensions.emplace_back(VK_EXT_DEVICE_FAULT_EXTENSION_NAME);
 
 		if (vendorType == VendorType::Nvidia) {

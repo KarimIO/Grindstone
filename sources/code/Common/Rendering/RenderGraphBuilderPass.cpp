@@ -56,17 +56,11 @@ Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Renderer::Pipeli
 	return ref;
 }
 
-// ============================================
-// Graphics Pass
-// ============================================
-
-void Grindstone::Renderer::GraphicsRenderGraphBuilderPassBase::ReadExternalSampler(Grindstone::GraphicsAPI::Sampler* sampler) {
+void Grindstone::Renderer::PipelineRenderGraphBuilderPass::ReadExternalSampler(Grindstone::GraphicsAPI::Sampler* sampler) {
 	samplers.emplace_back(sampler);
 }
 
-// Color Attachment
-
-void Grindstone::Renderer::GraphicsRenderGraphBuilderPassBase::ReadSampledImage(RenderGraphBuilderResourceRef inputHandle) {
+void Grindstone::Renderer::PipelineRenderGraphBuilderPass::ReadSampledImage(RenderGraphBuilderResourceRef inputHandle) {
 	imageRefs.emplace_back(
 		PassImageDesc{
 			.ref = inputHandle,
@@ -74,6 +68,12 @@ void Grindstone::Renderer::GraphicsRenderGraphBuilderPassBase::ReadSampledImage(
 		}
 	);
 }
+
+// ============================================
+// Graphics Pass
+// ============================================
+
+// Color Attachment
 
 Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Renderer::GraphicsRenderGraphBuilderPassBase::ReadWriteColorAttachment(Grindstone::Renderer::RenderGraphBuilderResourceRef inputHandle) {
 	RenderGraphBuilderResourceRef ref = inputHandle.FromPass(passIndex);

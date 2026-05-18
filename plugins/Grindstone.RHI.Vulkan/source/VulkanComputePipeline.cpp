@@ -67,5 +67,5 @@ VkPipeline Vulkan::ComputePipeline::GetComputePipeline() const {
 	return computePipeline;
 }
 
-void Vulkan::ComputePipeline::Recreate(const CreateInfo& createInfo) {
+void Vulkan::ComputePipeline::Recreate([[maybe_unused]] const CreateInfo& createInfo) {
 }

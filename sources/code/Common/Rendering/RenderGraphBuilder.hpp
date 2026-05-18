@@ -33,12 +33,15 @@ namespace Grindstone::Renderer {
 			return pass->returnData;
 		}
 
-		template<typename ReturnType>
+		template<typename ReturnType, typename SetupCallback, typename ExecutionCallback>
 		ReturnType CreateComputePass(
 			Grindstone::StringRef name,
-			std::function<ReturnType(Grindstone::Renderer::ComputeRenderGraphBuilderPass<ReturnType>&)> setupImmediateCallback,
-			std::function<void(Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, ReturnType&)> executionCallback
+			SetupCallback setupImmediateCallback,
+			ExecutionCallback executionCallback
 		) {
+			static_assert(std::is_invocable_r_v<ReturnType, SetupCallback, Grindstone::Renderer::ComputeRenderGraphBuilderPass<ReturnType>&>, "Rendergraph setup callback must match expected signature.");
+			static_assert(std::is_invocable_r_v<void, ExecutionCallback, Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, ReturnType&>, "Rendergraph execution callback must match expected signature.");
+
 			uint32_t passIndex = static_cast<uint32_t>(passes.size());
 			auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<ComputeRenderGraphBuilderPass<ReturnType>>());
 			auto pass = static_cast<ComputeRenderGraphBuilderPass<ReturnType>*>(uniquePtr.Get());

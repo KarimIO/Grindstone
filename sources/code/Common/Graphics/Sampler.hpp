@@ -24,6 +24,24 @@ namespace Grindstone::GraphicsAPI {
 		float mipMin = -1000.f;
 		float mipMax = 1000.0f;
 		float mipBias = 0.0f;
+
+		bool operator==(const SamplerOptions& o) const {
+			return
+				wrapModeU == o.wrapModeU &&
+				wrapModeV == o.wrapModeV &&
+				wrapModeW == o.wrapModeW &&
+				mipFilter == o.mipFilter &&
+				minFilter == o.minFilter &&
+				magFilter == o.magFilter &&
+				anistropy == o.anistropy &&
+				mipMin == o.mipMin &&
+				mipMax == o.mipMax &&
+				mipBias == o.mipBias;
+		}
+
+		bool operator!=(const SamplerOptions& o) const {
+			return !(*this == o);
+		}
 	};
 
 	/*! Samplers are an object that controls how textures are accessed.

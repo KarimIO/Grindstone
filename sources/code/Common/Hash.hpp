@@ -43,6 +43,28 @@ namespace Grindstone {
 			}
 			return h;
 		}
+
+		// Similar to boost hash_combine library, to be used with std::hash. Taken from
+		// https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x
+		inline void Combine([[maybe_unused]] std::size_t& seed) {}
+
+		template <typename T, typename... Rest>
+		inline void Combine(std::size_t& seed, const T& v, Rest... rest) {
+			std::hash<T> hasher;
+			seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+			Combine(seed, rest...);
+		}
+
+		struct HashPair {
+			template <class T1, class T2>
+			size_t operator()(const std::pair<T1, T2>& p) const {
+				size_t hash1 = std::hash<T1>{}(p.first);
+				size_t hash2 = std::hash<T2>{}(p.second);
+
+				return hash1 ^ (hash2 + 0x9e3779b9 + (hash1 << 6) + (hash1 >> 2));
+			}
+		};
+
 	};
 
 }

@@ -626,6 +626,19 @@ namespace Grindstone::GraphicsAPI {
 		BlendFactor alphaFactorSrc = BlendFactor::One;
 		BlendFactor alphaFactorDst = BlendFactor::One;
 
+		bool operator==(const BlendData& o) const {
+			return colorOperation == o.colorOperation
+				&& colorFactorSrc == o.colorFactorSrc
+				&& colorFactorDst == o.colorFactorDst
+				&& alphaOperation == o.alphaOperation
+				&& alphaFactorSrc == o.alphaFactorSrc
+				&& alphaFactorDst == o.alphaFactorDst;
+		}
+
+		bool operator!=(const BlendData& o) const {
+			return !(*this == o);
+		}
+
 		static BlendData NoBlending() {
 			return BlendData{
 				BlendOperation::None,
@@ -847,6 +860,18 @@ namespace Grindstone::GraphicsAPI {
 		Format format = Format::R32_SFLOAT;
 		uint32_t byteOffset = 0;
 		AttributeUsage attributeUsage = AttributeUsage::Other;
+
+		bool operator==(const VertexAttributeDescription& o) const {
+			return bindingIndex == o.bindingIndex
+				&& locationIndex == o.locationIndex
+				&& format == o.format
+				&& byteOffset == o.byteOffset
+				&& attributeUsage == o.attributeUsage;
+		}
+
+		bool operator!=(const VertexAttributeDescription& o) const {
+			return !(*this == o);
+		}
 	};
 
 	// A structure that dictates how the Vertex Buffer data is formatted.
@@ -854,11 +879,37 @@ namespace Grindstone::GraphicsAPI {
 		uint32_t bindingIndex;
 		uint32_t stride = 0;
 		VertexInputRate inputRate = VertexInputRate::Vertex;
+
+		bool operator==(const VertexBindingDescription& o) const {
+			return bindingIndex == o.bindingIndex
+				&& stride == o.stride
+				&& inputRate == o.inputRate;
+		}
+
+		bool operator!=(const VertexBindingDescription& o) const {
+			return !(*this == o);
+		}
 	};
 
 	struct VertexInputLayout {
 		std::vector<VertexBindingDescription> bindings;
 		std::vector<VertexAttributeDescription> attributes;
+
+		bool operator==(const VertexInputLayout& o) const {
+			if (bindings != o.bindings) {
+				return false;
+			}
+
+			if (attributes != o.attributes) {
+				return false;
+			}
+
+			return true;
+		}
+
+		bool operator!=(const VertexInputLayout& o) const {
+			return !(*this == o);
+		}
 	};
 
 	struct VertexInputLayoutBuilder {

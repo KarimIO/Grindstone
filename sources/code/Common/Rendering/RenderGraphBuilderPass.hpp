@@ -34,6 +34,8 @@ namespace Grindstone::Renderer {
 
 	class PipelineRenderGraphBuilderPass : public RenderGraphBuilderPass {
 	public:
+		void ReadExternalSampler(Grindstone::GraphicsAPI::Sampler* sampler);
+		void ReadSampledImage(RenderGraphBuilderResourceRef inputHandle);
 		void ReadBuffer(RenderGraphBuilderResourceRef inputHandle);
 		RenderGraphBuilderResourceRef ReadWriteBuffer(RenderGraphBuilderResourceRef inputHandle);
 		RenderGraphBuilderResourceRef WriteBuffer(BufferDescription resource);
@@ -41,8 +43,6 @@ namespace Grindstone::Renderer {
 
 	class GraphicsRenderGraphBuilderPassBase : public PipelineRenderGraphBuilderPass {
 	public:
-		void ReadExternalSampler(Grindstone::GraphicsAPI::Sampler* sampler);
-		void ReadSampledImage(RenderGraphBuilderResourceRef inputHandle);
 		RenderGraphBuilderResourceRef ReadWriteColorAttachment(RenderGraphBuilderResourceRef inputHandle);
 		RenderGraphBuilderResourceRef WriteColorAttachment(ImageDescription resource, Grindstone::GraphicsAPI::LoadOp loadOp, Grindstone::GraphicsAPI::ClearColor clearValue);
 		RenderGraphBuilderResourceRef WriteColorAttachment(RenderGraphBuilderResourceRef ref, Grindstone::GraphicsAPI::LoadOp loadOp, Grindstone::GraphicsAPI::ClearColor clearValue);

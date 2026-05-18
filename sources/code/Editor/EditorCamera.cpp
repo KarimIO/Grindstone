@@ -224,7 +224,7 @@ EditorCamera::EditorCamera() {
 		depthTargetCreateInfo.debugName = dtName.c_str();
 		descriptorSetCreateInfo.debugName = descriptorSetName.c_str();
 		renderTarget[i] = core->CreateImage(renderTargetCreateInfo);
-		depthTarget[i] = core->CreateImage(depthTargetCreateInfo);
+		// depthTarget[i] = core->CreateImage(depthTargetCreateInfo);
 		std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> combinedSamplerPair = { renderTarget[i], sampler };
 		GraphicsAPI::DescriptorSet::Binding descriptorSetBinding = GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler(&combinedSamplerPair);
 		descriptorSetCreateInfo.bindings = &descriptorSetBinding;
@@ -623,7 +623,7 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 
 	for (size_t i = 0; i < 3; ++i) {
 		renderTarget[i]->Resize(width, height);
-		depthTarget[i]->Resize(width, height);
+		// depthTarget[i]->Resize(width, height);
 
 		std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> combinedSamplerPair = { renderTarget[i], sampler};
 		GraphicsAPI::DescriptorSet::Binding descriptorSetBinding = GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler(&combinedSamplerPair);

@@ -74,14 +74,16 @@ Grindstone::Renderer::TonemapPassReturnData Grindstone::Renderer::TonemapPass::A
 	Grindstone::Renderer::RenderGraphBuilder& renderGraph,
 	PostProcessSettings settings,
 	Renderer::RenderGraphBuilderResourceRef lightingImageRef,
+	Renderer::RenderGraphBuilderResourceRef bloomImageRef,
 	Renderer::RenderGraphBuilderResourceRef outputImageRef
 ) {
 	return renderGraph.CreateGraphicsPass<Grindstone::Renderer::TonemapPassReturnData>(
 		"Tonemapping",
 		MetaRect::Swapchain(),
-		[this, lightingImageRef, outputImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::TonemapPassReturnData>& renderPass) {
+		[this, lightingImageRef, bloomImageRef, outputImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::TonemapPassReturnData>& renderPass) {
 			renderPass.ReadExternalSampler(screenSampler);
 			renderPass.ReadSampledImage(lightingImageRef);
+			// renderPass.ReadSampledImage(bloomImageRef);
 			Renderer::RenderGraphBuilderResourceRef output = renderPass.WriteColorAttachment(outputImageRef, GraphicsAPI::LoadOp::DontCare, GraphicsAPI::ClearColor{});
 
 			return Grindstone::Renderer::TonemapPassReturnData{

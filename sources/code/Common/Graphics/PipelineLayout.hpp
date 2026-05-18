@@ -21,6 +21,26 @@ namespace Grindstone::GraphicsAPI {
 			const char* debugName;
 			const DescriptorSetLayout* const* descriptorSetLayouts;
 			uint32_t descriptorSetLayoutCount;
+
+			bool operator==(const PipelineLayout::CreateInfo& o) const {
+				if (descriptorSetLayoutCount != o.descriptorSetLayoutCount) {
+					return false;
+				}
+
+				for (uint32_t i = 0; i < descriptorSetLayoutCount; ++i) {
+					const DescriptorSetLayout* a = descriptorSetLayouts[i];
+					const DescriptorSetLayout* b = o.descriptorSetLayouts[i];
+					if (a != b) {
+						return false;
+					}
+				}
+
+				return true;
+			}
+
+			bool operator!=(const PipelineLayout::CreateInfo& o) const {
+				return !(*this == o);
+			}
 		};
 
 		std::vector<const DescriptorSetLayout*> descriptorSetLayouts;

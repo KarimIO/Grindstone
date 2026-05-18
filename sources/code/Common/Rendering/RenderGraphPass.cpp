@@ -190,15 +190,28 @@ void Grindstone::Renderer::PipelineRenderGraphPass::RealizeResources(
 		Grindstone::GraphicsAPI::Image* image = frameResources.GetImage(imageRef);
 
 		if (imageDesc.IsShaderInput()) {
+			Grindstone::GraphicsAPI::BindingType bindingType;
+
+			if (Any(imageDesc.usage & RenderGraphImageUsage::Sampled)) {
+				bindingType = Grindstone::GraphicsAPI::BindingType::SampledImage;
+				bindings.emplace_back(GraphicsAPI::DescriptorSet::Binding::SampledImage(image));
+			}
+			else if (Any(imageDesc.usage & RenderGraphImageUsage::Storage)) {
+				bindingType = Grindstone::GraphicsAPI::BindingType::StorageImage;
+				bindings.emplace_back(GraphicsAPI::DescriptorSet::Binding::StorageImage(image));
+			}
+			else {
+				GS_ASSERT("Invalid image description type.");
+			}
+
 			layoutBindings.emplace_back(
 				GraphicsAPI::DescriptorSetLayout::Binding{
 					.bindingId = currentBinding++,
 					.count = 1,
-					.type = Grindstone::GraphicsAPI::BindingType::SampledImage,
+					.type = bindingType,
 					.stages = Grindstone::GraphicsAPI::ShaderStageBit::All
 				}
 			);
-			bindings.emplace_back(GraphicsAPI::DescriptorSet::Binding::SampledImage(image));
 		}
 
 		auto [prevLayout, prevAccessFlags, prevPipelineStage] = frameResources.GetLayout(imageRef);
@@ -292,6 +305,7 @@ void Grindstone::Renderer::ComputeRenderGraphPassBase::PrepareComputePass(Grinds
 
 	context.commandBuffer->BindComputeDescriptorSet(pipelineLayout, descriptorSets.data(), 0, descriptorSets.size());
 }
+
 Grindstone::Math::IntRect2D Grindstone::Renderer::GraphicsRenderGraphPassBase::PrepareGraphicsPass(
 	Grindstone::Renderer::RenderGraphContext& context,
 	Grindstone::Renderer::RenderGraphFrameResources& frameResources

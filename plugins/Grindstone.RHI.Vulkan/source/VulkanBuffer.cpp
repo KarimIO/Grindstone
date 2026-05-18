@@ -110,7 +110,7 @@ void Vulkan::Buffer::UploadData(const void* data, size_t size, size_t offset) {
 	bool ownsMemoryMap = false;
 	if (!mappedMemoryPtr) {
 		ownsMemoryMap = true;
-		vkMapMemory(device, deviceMemory, 0, bufferSize, 0, &mappedMemoryPtr);
+		vkMapMemory(device, deviceMemory, offset, bufferSize, 0, &mappedMemoryPtr);
 	}
 
 	std::memcpy(mappedMemoryPtr, data, size);
