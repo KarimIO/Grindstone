@@ -267,7 +267,7 @@ static void InitializeImageSetIfNecessary(
 	for (size_t i = 1; i < n; ++i) {
 		ResizeUbo(BloomStage::Downsample, mipSizes[i + 1], mipSizes[i + 1], buff[i]);
 	}
-	for (size_t i = 0; i < n; ++i) {
+	for (size_t i = 0; i < n - 1u; ++i) {
 		ResizeUbo(BloomStage::Upsample, mipSizes[n - i], mipSizes[n - i - 1], buff[4 + i]);
 	}
 }
@@ -317,10 +317,10 @@ Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Renderer::BloomP
 		stageOutputs[i] = outRef = Downscale(i, mipSizes[i + 1u], *(ds++), screenSampler, bloomPipeline, pipelineLayout, renderGraphBuilder, outRef);
 	}
 
-	stageOutputs[BLOOM_MIPS] = outRef = FirstUpscale(mipSizes[BLOOM_MIPS], *(ds++), screenSampler, bloomPipeline, pipelineLayout, renderGraphBuilder, outRef, stageOutputs[BLOOM_MIPS]);
+	stageOutputs[BLOOM_MIPS] = outRef = FirstUpscale(mipSizes[BLOOM_MIPS - 1u], *(ds++), screenSampler, bloomPipeline, pipelineLayout, renderGraphBuilder, outRef, stageOutputs[BLOOM_MIPS - 2u]);
 
 	for (uint32_t i = 1; i < BLOOM_MIPS; ++i) {
-		stageOutputs[BLOOM_MIPS + i] = outRef = Upscale(i, mipSizes[BLOOM_MIPS - i], *(ds++), screenSampler, bloomPipeline, pipelineLayout, renderGraphBuilder, outRef, stageOutputs[BLOOM_MIPS - 1u - i]);
+		stageOutputs[BLOOM_MIPS + i] = outRef = Upscale(i, mipSizes[BLOOM_MIPS - i - 1u], *(ds++), screenSampler, bloomPipeline, pipelineLayout, renderGraphBuilder, outRef, stageOutputs[BLOOM_MIPS - 1u - i]);
 	}
 
 	return outRef;
