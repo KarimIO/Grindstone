@@ -680,11 +680,13 @@ void Vulkan::Core::CreateDescriptorPool() {
 	poolSizes[5].type = VK_DESCRIPTOR_TYPE_SAMPLER;
 	poolSizes[5].descriptorCount = 1000;
 
-	VkDescriptorPoolCreateInfo poolInfo = {};
-	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = static_cast<uint32_t>(poolSizes.size() * 1000);
+	VkDescriptorPoolCreateInfo poolInfo = {
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+		.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+		.maxSets = static_cast<uint32_t>(poolSizes.size() * 1000),
+		.poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
+		.pPoolSizes = poolSizes.data()
+	};
 
 	if (vkCreateDescriptorPool(device, &poolInfo, allocator->GetAllocationCallbacks(), &descriptorPool) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create descriptor pool!");
@@ -944,7 +946,12 @@ void Vulkan::Core::DeleteImage(Base::Image* ptr) {
 }
 
 void Vulkan::Core::DeleteDescriptorSet(Base::DescriptorSet* ptr) {
-	AllocatorCore::Free(static_cast<Vulkan::DescriptorSet*>(ptr));
+	Vulkan::DescriptorSet* vkDescriptorSetWrapper = static_cast<Vulkan::DescriptorSet*>(ptr);
+	VkDescriptorSet vkDescriptorSet = vkDescriptorSetWrapper->GetDescriptorSet();
+	if (vkDescriptorSet != nullptr) {
+		vkFreeDescriptorSets(device, descriptorPool, 1u, &vkDescriptorSet);
+	}
+	AllocatorCore::Free(vkDescriptorSetWrapper);
 }
 
 void Vulkan::Core::DeleteDescriptorSetLayout(Base::DescriptorSetLayout * ptr) {

@@ -276,8 +276,14 @@ void Grindstone::Renderer::PipelineRenderGraphPass::RealizeResources(
 			.bindingCount = static_cast<uint32_t>(bindings.size())
 		};
 
-		passDescriptorSet = context.graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+		auto descriptorSet = passDescriptorSet = context.graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 		descriptorSetLayouts.emplace_back(passDescriptorSetLayout);
+		EngineCore& engineCore = EngineCore::GetInstance();
+		engineCore.PushDeletion(
+			[descriptorSet]() {
+				Grindstone::EngineCore::GetInstance().GetGraphicsCore()->DeleteDescriptorSet(descriptorSet);
+			}
+		);
 	}
 	else {
 		passDescriptorSet = nullptr;

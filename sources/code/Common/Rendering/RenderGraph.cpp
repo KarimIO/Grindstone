@@ -9,21 +9,6 @@
 // - RenderPassExecution
 // ===============================================================
 
-struct ResourceRegistryEntry {
-	std::variant<Grindstone::Renderer::ImageDescription, Grindstone::Renderer::BufferDescription> description;
-
-	// Aliasing group — which resources can share memory
-	// -1 = no aliasing (dedicated allocation)
-	int32_t aliasGroup = -1;
-
-	// Execution order indices — first and last pass that touch this resource
-	// Used by TRM aliasing to know when memory can be reused
-	uint32_t firstPassIndex = 0;
-	uint32_t lastPassIndex = 0;
-
-	bool isExternal = false; // swapchain, persistent RTs — injected per frame
-};
-
 Grindstone::Renderer::RenderGraph::RenderGraph(
 	std::vector<Grindstone::UniquePtr<Grindstone::Renderer::RenderGraphPass>>&& passes,
 	const std::vector<UnionResourceDescription>& resourceDescriptions
