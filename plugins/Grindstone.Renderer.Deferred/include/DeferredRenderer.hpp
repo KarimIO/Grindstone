@@ -44,8 +44,9 @@ namespace Grindstone {
 			glm::mat4 projectionMatrix,
 			glm::mat4 viewMatrix,
 			glm::vec3 eyePos,
-			Grindstone::GraphicsAPI::Image* colorImage,
-			Grindstone::GraphicsAPI::Image* depthImage
+			Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
+			Grindstone::Renderer::RenderGraphBuilderResourceRef colorImageRef,
+			Grindstone::Renderer::RenderGraphBuilderResourceRef depthImageRef
 		) override;
 
 		virtual uint16_t GetRenderModeCount() const override;
@@ -71,7 +72,6 @@ namespace Grindstone {
 		};
 
 	private:
-		GraphicsAPI::Buffer* gpuGlobalUniformBufferObject = nullptr;
 
 		uint32_t framebufferWidth = 0u;
 		uint32_t framebufferHeight = 0u;
@@ -82,11 +82,6 @@ namespace Grindstone {
 		GraphicsAPI::Buffer* vertexBuffer;
 		GraphicsAPI::Buffer* indexBuffer;
 		GraphicsAPI::VertexArrayObject* planePostProcessVao = nullptr;
-
-		Grindstone::GraphicsAPI::DescriptorSetLayout* globalDescriptorSetLayout;
-		Grindstone::GraphicsAPI::Buffer* globalStagingUniformBufferObject;
-		std::array<Grindstone::GraphicsAPI::Buffer*, 3> globalUniformBufferObject;
-		std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> globalDescriptorSet;
 
 		DeferredRenderMode renderMode;
 

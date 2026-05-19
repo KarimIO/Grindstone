@@ -46,19 +46,6 @@ uint16_t lightIndices[] = {
 	3, 0, 2
 };
 
-struct EngineUboStruct {
-	glm::mat4 projectionMatrix;
-	glm::mat4 viewMatrix;
-	glm::mat4 inverseProjectionMatrix;
-	glm::mat4 inverseViewMatrix;
-	glm::vec3 eyePos;
-	float alignmentBufferForPreviousVec3;
-	glm::vec2 framebufferResolution;
-	glm::vec2 renderResolution;
-	glm::vec2 renderScale;
-	float time;
-};
-
 DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 	if (shouldFastResize) {
 		Display display = EngineCore::GetInstance().displayManager->GetMainDisplay();
@@ -73,51 +60,6 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	uint32_t maxFramesInFlight = wgb->GetMaxFramesInFlight();
-
-	GraphicsAPI::Buffer::CreateInfo globalUboCreateInfo{
-		.content = nullptr,
-		.bufferSize = sizeof(EngineUboStruct),
-		.bufferUsage =
-			GraphicsAPI::BufferUsage::TransferDst |
-			GraphicsAPI::BufferUsage::TransferSrc |
-			GraphicsAPI::BufferUsage::Uniform,
-		.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU,
-	};
-
-	GraphicsAPI::DescriptorSetLayout::Binding globalDescriptorSetLayoutBinding{
-		.bindingId = 0,
-		.count = 1,
-		.type = Grindstone::GraphicsAPI::BindingType::UniformBuffer,
-		.stages = GraphicsAPI::ShaderStageBit::All,
-	};
-
-	GraphicsAPI::DescriptorSetLayout::CreateInfo globalDescriptorSetLayoutCreateInfo{
-		.debugName = "Global UBO Descriptor Set Layout",
-		.bindings = &globalDescriptorSetLayoutBinding,
-		.bindingCount = 1u,
-	};
-
-	globalDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(globalDescriptorSetLayoutCreateInfo);
-
-	GraphicsAPI::DescriptorSet::CreateInfo globalDescriptorSetsCreateInfo{
-		.layout = globalDescriptorSetLayout,
-		.bindingCount = 1u
-	};
-
-	globalUboCreateInfo.debugName = "Global Staging UBO";
-	globalStagingUniformBufferObject = graphicsCore->CreateBuffer(globalUboCreateInfo);
-
-	for (size_t i = 0; i < 3; ++i) {
-		std::string uboDebugName = std::vformat("Global UBO [{}]", std::make_format_args(i));
-		globalUboCreateInfo.debugName = uboDebugName.c_str();
-		globalUniformBufferObject[i] = graphicsCore->CreateBuffer(globalUboCreateInfo);
-
-		std::string descriptorSetDebugName = std::vformat("Global UBO [{}]", std::make_format_args(i));
-		GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(globalUniformBufferObject[i]);
-		globalDescriptorSetsCreateInfo.bindings = &binding;
-		globalDescriptorSetsCreateInfo.debugName = descriptorSetDebugName.c_str();
-		globalDescriptorSet[i] = graphicsCore->CreateDescriptorSet(globalDescriptorSetsCreateInfo);
-	}
 
 	GraphicsAPI::Buffer::CreateInfo vboCi{};
 	vboCi.debugName = "Light Vertex Position Buffer";
@@ -152,8 +94,6 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 DeferredRenderer::~DeferredRenderer() {
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	graphicsCore->DeleteBuffer(gpuGlobalUniformBufferObject);
-
 	graphicsCore->DeleteBuffer(vertexBuffer);
 	graphicsCore->DeleteBuffer(indexBuffer);
 	graphicsCore->DeleteVertexArrayObject(planePostProcessVao);
@@ -180,8 +120,9 @@ void DeferredRenderer::Render(
 	glm::mat4 projectionMatrix,
 	glm::mat4 viewMatrix,
 	glm::vec3 eyePos,
-	Grindstone::GraphicsAPI::Image* colorImage,
-	Grindstone::GraphicsAPI::Image* depthImage
+	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
+	Grindstone::Renderer::RenderGraphBuilderResourceRef colorImageRef,
+	Grindstone::Renderer::RenderGraphBuilderResourceRef depthImageRef
 ) {
 	entt::registry& registry = worldContextSet.GetEntityRegistry();
 	Grindstone::Rendering::RenderGraphWorldContext* renderingContext = static_cast<Grindstone::Rendering::RenderGraphWorldContext*>(
@@ -190,39 +131,18 @@ void DeferredRenderer::Render(
 
 	GS_ASSERT(renderingContext != nullptr);
 
-	Grindstone::Renderer::RenderGraphBuilder renderGraphBuilder;
-
 	Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Grindstone::AssetRendererManager* assetManager = engineCore.assetRendererManager;
 	GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 
-	graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
-
 	uint32_t imageIndex = wgb->GetCurrentImageIndex();
-
-	EngineUboStruct engineUboStruct{
-		.projectionMatrix = projectionMatrix,
-		.viewMatrix = viewMatrix,
-		.inverseProjectionMatrix = glm::inverse(projectionMatrix),
-		.inverseViewMatrix = glm::inverse(viewMatrix),
-		.eyePos = eyePos,
-		.framebufferResolution = glm::vec2(framebufferWidth, framebufferHeight),
-		.renderResolution = glm::vec2(renderArea.GetWidth(), renderArea.GetHeight()),
-		.renderScale = glm::vec2(static_cast<float>(renderArea.GetWidth()) / framebufferWidth, static_cast<float>(renderArea.GetHeight()) / framebufferHeight),
-		.time = static_cast<float>(engineCore.GetTimeSinceLaunch())
-	};
-
-	globalStagingUniformBufferObject->UploadData(&engineUboStruct);
-	commandBuffer->CopyBufferRegion(globalStagingUniformBufferObject, globalUniformBufferObject[imageIndex]);
 
 	Grindstone::Rendering::RenderViewData renderViewData{
 		.projectionMatrix = projectionMatrix,
 		.viewMatrix = viewMatrix,
 		.renderArea = renderArea,
 	};
-
-	assetManager->SetEngineDescriptorSet(globalDescriptorSet[imageIndex]);
 
 	// TODO: Move these into the ssao pass, maybe?
 	Grindstone::Renderer::ImageDescription attachmentAmbientOcclusionBlur{
@@ -249,25 +169,6 @@ void DeferredRenderer::Render(
 		lightingData.lightingOutputRef
 	);
 	
-	auto colorImageRef = renderGraphBuilder.AddImage(
-		Grindstone::Renderer::ImageDescription{
-			.name = "Camera Output Image (Tonemapped)",
-			.size = Grindstone::Renderer::MetaSize2D::Viewport(),
-			.samples = 1,
-			.mipLevels = 1,
-			.depth = 1,
-			.arrayLayers = 1,
-			.format = Grindstone::GraphicsAPI::Format::R8G8B8A8_SNORM,
-			.imageDimensions = GraphicsAPI::ImageDimension::Dimension2D,
-			.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly,
-			.imageUsage = GraphicsAPI::ImageUsageFlags::RenderTarget | GraphicsAPI::ImageUsageFlags::Sampled,
-			.externalFinalLayout = GraphicsAPI::ImageLayout::ShaderRead,
-			.externalFinalAccessFlags = GraphicsAPI::AccessFlags::ShaderRead,
-			.externalFinalPipelineStage = GraphicsAPI::PipelineStageBit::FragmentShader,
-			.externalGetterCallback = [colorImage]() { return colorImage; }
-		}
-	);
-
 	if (renderMode == DeferredRenderMode::Default) {
 		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef, bloomOutput, colorImageRef);
 	}
@@ -276,27 +177,6 @@ void DeferredRenderer::Render(
 		debug.AddPass(renderGraph, gbufferOutput, lightingOutput);
 	}
 	*/
-
-
-	static std::array<Grindstone::Renderer::TransientResourceManager*, 3> transientResourceManagers{};
-	Grindstone::Renderer::TransientResourceManager*& transientResourceManager = transientResourceManagers[imageIndex];
-	if (transientResourceManager == nullptr) {
-		transientResourceManager = Grindstone::Memory::AllocatorCore::Allocate<Grindstone::Renderer::TransientResourceManager>();
-	}
-
-	Grindstone::Renderer::RenderGraphContext context{
-		.graphicsCore = graphicsCore,
-		.transientResourceManager = transientResourceManager,
-		.globalDescriptorSetLayout = globalDescriptorSetLayout,
-		.globalDescriptorSet = globalDescriptorSet[imageIndex],
-		.swapchainSize = renderArea.extent,
-		.commandBuffer = commandBuffer,
-		.worldContextSet = &worldContextSet,
-		.swapchainIndex = imageIndex
-	};
-
-	auto renderGraph = renderGraphBuilder.Compile();
-	renderGraph.ExecuteGraph(context);
 }
 
 uint16_t DeferredRenderer::GetRenderModeCount() const {

@@ -100,6 +100,7 @@ namespace Grindstone {
 					.clearValue = Grindstone::GraphicsAPI::ClearColor()
 				};
 
+				/*
 				cameraComponent.renderer->Render(
 					currentCommandBuffer,
 					worldContextSet,
@@ -109,6 +110,7 @@ namespace Grindstone {
 					image,
 					nullptr // TODO: Depth
 				);
+				*/
 
 				currentCommandBuffer->EndCommandBuffer();
 				wgb->SubmitCommandBufferForCurrentFrame(currentCommandBuffer);

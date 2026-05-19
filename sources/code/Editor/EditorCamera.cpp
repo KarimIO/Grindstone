@@ -123,7 +123,7 @@ EditorCamera::EditorCamera() {
 		mousePickFramebufferCreateInfo.depthTarget = nullptr;
 		mousePickFramebufferCreateInfo.renderPass = mousePickRenderPass;
 		mousePickFramebufferCreateInfo.width = 1;
-		mousePickFramebufferCreateInfo.height = 1;;
+		mousePickFramebufferCreateInfo.height = 1;
 
 		Grindstone::GraphicsAPI::Buffer::CreateInfo mousePickBufferMatrixCreateInfo{};
 		mousePickBufferMatrixCreateInfo.bufferSize = sizeof(MousePickMatrixBuffer);
@@ -237,6 +237,55 @@ EditorCamera::EditorCamera() {
 	Grindstone::BaseRendererFactory* rendererFactory = engineCore.GetRendererFactory();
 	if (rendererFactory) {
 		renderer = rendererFactory->CreateRenderer(editorRenderPass);
+	}
+
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	uint32_t maxFramesInFlight = wgb->GetMaxFramesInFlight();
+
+	GraphicsAPI::Buffer::CreateInfo globalUboCreateInfo{
+		.content = nullptr,
+		.bufferSize = sizeof(EngineUboStruct),
+		.bufferUsage =
+			GraphicsAPI::BufferUsage::TransferDst |
+			GraphicsAPI::BufferUsage::TransferSrc |
+			GraphicsAPI::BufferUsage::Uniform,
+		.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU,
+	};
+
+	GraphicsAPI::DescriptorSetLayout::Binding globalDescriptorSetLayoutBinding{
+		.bindingId = 0,
+		.count = 1,
+		.type = Grindstone::GraphicsAPI::BindingType::UniformBuffer,
+		.stages = GraphicsAPI::ShaderStageBit::All,
+	};
+
+	GraphicsAPI::DescriptorSetLayout::CreateInfo globalDescriptorSetLayoutCreateInfo{
+		.debugName = "Global UBO Descriptor Set Layout",
+		.bindings = &globalDescriptorSetLayoutBinding,
+		.bindingCount = 1u,
+	};
+
+	globalDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(globalDescriptorSetLayoutCreateInfo);
+
+	GraphicsAPI::DescriptorSet::CreateInfo globalDescriptorSetsCreateInfo{
+		.layout = globalDescriptorSetLayout,
+		.bindingCount = 1u
+	};
+
+	globalUboCreateInfo.debugName = "Global Staging UBO";
+	globalStagingUniformBufferObject = graphicsCore->CreateBuffer(globalUboCreateInfo);
+
+	for (size_t i = 0; i < 3; ++i) {
+		std::string uboDebugName = std::vformat("Global UBO [{}]", std::make_format_args(i));
+		globalUboCreateInfo.debugName = uboDebugName.c_str();
+		globalUniformBufferObject[i] = graphicsCore->CreateBuffer(globalUboCreateInfo);
+
+		std::string descriptorSetDebugName = std::vformat("Global UBO [{}]", std::make_format_args(i));
+		GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(globalUniformBufferObject[i]);
+		globalDescriptorSetsCreateInfo.bindings = &binding;
+		globalDescriptorSetsCreateInfo.debugName = descriptorSetDebugName.c_str();
+		globalDescriptorSet[i] = graphicsCore->CreateDescriptorSet(globalDescriptorSetsCreateInfo);
 	}
 
 	UpdateViewMatrix();
@@ -378,18 +427,76 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 
 	GS_ASSERT(renderingContext != nullptr);
 
+	glm::mat4 adjustedPerspectiveMatrix = projection;
+	graphicsCore->AdjustPerspective(&adjustedPerspectiveMatrix[0][0]);
+
+	EngineUboStruct engineUboStruct{
+		.projectionMatrix = adjustedPerspectiveMatrix,
+		.viewMatrix = view,
+		.inverseProjectionMatrix = glm::inverse(adjustedPerspectiveMatrix),
+		.inverseViewMatrix = glm::inverse(view),
+		.eyePos = position,
+		.framebufferResolution = glm::vec2(width, height),
+		.renderResolution = glm::vec2(width, height),
+		.renderScale = glm::vec2(1.0f, 1.0f),
+		.time = static_cast<float>(engineCore.GetTimeSinceLaunch())
+	};
+
+	globalStagingUniformBufferObject->UploadData(&engineUboStruct);
+	commandBuffer->CopyBufferRegion(globalStagingUniformBufferObject, globalUniformBufferObject[imageIndex]);
+
+	static std::array<Grindstone::Renderer::TransientResourceManager*, 3> transientResourceManagers{};
+	Grindstone::Renderer::TransientResourceManager*& transientResourceManager = transientResourceManagers[imageIndex];
+	if (transientResourceManager == nullptr) {
+		transientResourceManager = Grindstone::Memory::AllocatorCore::Allocate<Grindstone::Renderer::TransientResourceManager>();
+	}
+
+	Grindstone::Renderer::RenderGraphContext context{
+		.graphicsCore = graphicsCore,
+		.transientResourceManager = transientResourceManager,
+		.globalDescriptorSetLayout = globalDescriptorSetLayout,
+		.globalDescriptorSet = globalDescriptorSet[imageIndex],
+		.swapchainSize = Math::Extent2D(width, height),
+		.commandBuffer = commandBuffer,
+		.worldContextSet = cxtSet,
+		.swapchainIndex = imageIndex
+	};
+
+	Grindstone::Renderer::RenderGraphBuilder renderGraphBuilder;
+
+	Renderer::RenderGraphBuilderResourceRef colorImageRef = renderGraphBuilder.AddImage(
+		Grindstone::Renderer::ImageDescription{
+			.name = "Camera Output Image (Tonemapped)",
+			.size = Grindstone::Renderer::MetaSize2D::Viewport(),
+			.samples = 1,
+			.mipLevels = 1,
+			.depth = 1,
+			.arrayLayers = 1,
+			.format = Grindstone::GraphicsAPI::Format::R8G8B8A8_SNORM,
+			.imageDimensions = GraphicsAPI::ImageDimension::Dimension2D,
+			.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly,
+			.imageUsage = GraphicsAPI::ImageUsageFlags::RenderTarget | GraphicsAPI::ImageUsageFlags::Sampled,
+			.externalFinalLayout = GraphicsAPI::ImageLayout::ShaderRead,
+			.externalFinalAccessFlags = GraphicsAPI::AccessFlags::ShaderRead,
+			.externalFinalPipelineStage = GraphicsAPI::PipelineStageBit::FragmentShader,
+			.externalGetterCallback = [image]() { return image; }
+		}
+	);
+	auto depthImageRef = Renderer::RenderGraphBuilderResourceRef::Invalid();
+
 	renderer->Render(
 		commandBuffer,
 		*cxtSet,
-		projection,
+		adjustedPerspectiveMatrix,
 		view,
 		position,
-		image,
-		depthImage
+		renderGraphBuilder,
+		colorImageRef,
+		depthImageRef
 	);
 
-	// Grindstone::Renderer::RenderGraph renderGraph = renderGraphBuilder.Compile();
-	// renderGraph.ExecuteGraph(context);
+	auto renderGraph = renderGraphBuilder.Compile();
+	renderGraph.ExecuteGraph(context);
 
 	return;
 
@@ -540,6 +647,7 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 	Grindstone::GraphicsAPI::Image* image = renderTarget[imageIndex];
 
 	GS_ASSERT(cxtSet != nullptr);
+	/*
 	renderer->Render(
 		commandBuffer,
 		*cxtSet,
@@ -549,6 +657,7 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 		image,
 		nullptr
 	);
+	*/
 }
 
 const float maxAngle = 1.55f;

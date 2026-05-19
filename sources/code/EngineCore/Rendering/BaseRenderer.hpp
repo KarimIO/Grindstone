@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 
 #include <Common/Rendering/GeometryRenderingStats.hpp>
+#include <Common/Rendering/RenderGraphBuilder.hpp>
 #include <Common/Graphics/CommandBuffer.hpp>
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
 
@@ -33,8 +34,9 @@ namespace Grindstone {
 			glm::mat4 projectionMatrix,
 			glm::mat4 viewMatrix,
 			glm::vec3 eyePos,
-			Grindstone::GraphicsAPI::Image* colorImage,
-			Grindstone::GraphicsAPI::Image* depthImage
+			Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
+			Grindstone::Renderer::RenderGraphBuilderResourceRef colorImageRef,
+			Grindstone::Renderer::RenderGraphBuilderResourceRef depthImageRef
 		) = 0;
 		virtual uint16_t GetRenderModeCount() const = 0;
 		virtual const RenderMode* GetRenderModes() const = 0;

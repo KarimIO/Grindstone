@@ -6,6 +6,19 @@
 #include "GridRenderer.hpp"
 #include "GizmoRenderer.hpp"
 
+struct EngineUboStruct {
+	glm::mat4 projectionMatrix;
+	glm::mat4 viewMatrix;
+	glm::mat4 inverseProjectionMatrix;
+	glm::mat4 inverseViewMatrix;
+	glm::vec3 eyePos;
+	float alignmentBufferForPreviousVec3;
+	glm::vec2 framebufferResolution;
+	glm::vec2 renderResolution;
+	glm::vec2 renderScale;
+	float time;
+};
+
 namespace Grindstone {
 	class BaseRenderer;
 	struct TransformComponent;
@@ -52,6 +65,12 @@ namespace Grindstone {
 			bool isBoundingBoxGizmoEnabled = false;
 			bool isColliderGizmoEnabled = true;
 		private:
+			GraphicsAPI::Buffer* gpuGlobalUniformBufferObject = nullptr;
+
+			Grindstone::GraphicsAPI::DescriptorSetLayout* globalDescriptorSetLayout;
+			Grindstone::GraphicsAPI::Buffer* globalStagingUniformBufferObject;
+			std::array<Grindstone::GraphicsAPI::Buffer*, 3> globalUniformBufferObject;
+			std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> globalDescriptorSet;
 
 			GizmoRenderer gizmoRenderer;
 			GridRenderer gridRenderer;
