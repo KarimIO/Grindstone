@@ -98,3 +98,8 @@ cmake-*/*
 # Makefiles
 Makefile
 */Makefile
+
+# Dependencies
+!deps/NvidiaAftermath/lib/*
+!deps/NvidiaAftermath/lib/*/*.dll
+!deps/NvidiaAftermath/lib/*/*.lib
