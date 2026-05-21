@@ -224,7 +224,7 @@ EditorCamera::EditorCamera() {
 		depthTargetCreateInfo.debugName = dtName.c_str();
 		descriptorSetCreateInfo.debugName = descriptorSetName.c_str();
 		renderTarget[i] = core->CreateImage(renderTargetCreateInfo);
-		// depthTarget[i] = core->CreateImage(depthTargetCreateInfo);
+		depthTarget[i] = core->CreateImage(depthTargetCreateInfo);
 		std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> combinedSamplerPair = { renderTarget[i], sampler };
 		GraphicsAPI::DescriptorSet::Binding descriptorSetBinding = GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler(&combinedSamplerPair);
 		descriptorSetCreateInfo.bindings = &descriptorSetBinding;
@@ -482,7 +482,25 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 			.externalGetterCallback = [image]() { return image; }
 		}
 	);
-	auto depthImageRef = Renderer::RenderGraphBuilderResourceRef::Invalid();
+
+	Renderer::RenderGraphBuilderResourceRef depthImageRef = renderGraphBuilder.AddImage(
+		Grindstone::Renderer::ImageDescription{
+			.name = "Depth Image",
+			.size = Grindstone::Renderer::MetaSize2D::Viewport(),
+			.samples = 1,
+			.mipLevels = 1,
+			.depth = 1,
+			.arrayLayers = 1,
+			.format = Grindstone::GraphicsAPI::Format::D32_SFLOAT,
+			.imageDimensions = GraphicsAPI::ImageDimension::Dimension2D,
+			.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly,
+			.imageUsage = GraphicsAPI::ImageUsageFlags::DepthStencil | GraphicsAPI::ImageUsageFlags::Sampled,
+			.externalFinalLayout = GraphicsAPI::ImageLayout::ShaderRead,
+			.externalFinalAccessFlags = GraphicsAPI::AccessFlags::ShaderRead,
+			.externalFinalPipelineStage = GraphicsAPI::PipelineStageBit::FragmentShader,
+			.externalGetterCallback = [depthImage]() { return depthImage; }
+		}
+	);
 
 	renderer->Render(
 		commandBuffer,
@@ -495,100 +513,95 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		depthImageRef
 	);
 
-	auto renderGraph = renderGraphBuilder.Compile();
-	renderGraph.ExecuteGraph(context);
+	renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
+		"Gizmo Renderpass",
+		Renderer::MetaRect::Swapchain(),
+		[colorImageRef, depthImageRef](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
+			Renderer::RenderGraphBuilderResourceRef outputRef = pass.ReadWriteColorAttachment(colorImageRef);
+			pass.ReadDepthAttachment(depthImageRef);
+			return outputRef;
+		},
+		[this, adjustedPerspectiveMatrix](
+			Grindstone::Math::IntRect2D rect,
+			const Grindstone::Renderer::RenderGraphContext& cxt,
+			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+			Renderer::RenderGraphBuilderResourceRef& outputRef
+		) {
+				Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
+				Grindstone::Editor::Manager& editorManager = Editor::Manager::GetInstance();
+				Grindstone::GraphicsAPI::CommandBuffer* commandBuffer = cxt.commandBuffer;
+				Grindstone::GraphicsAPI::Core* graphicsCore = cxt.graphicsCore;
 
-	return;
+			glm::mat4 projView = adjustedPerspectiveMatrix * view;
+			glm::vec2 renderScale = glm::vec2(1.0f, 1.0f);
 
-	/*
-	Grindstone::GraphicsAPI::RenderAttachment gizmoAttachment{
-		.image = image,
-		.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
-		.loadOp = Grindstone::GraphicsAPI::LoadOp::Load,
-	};
-
-	Grindstone::GraphicsAPI::RenderAttachment gizmoDepthAttachment{
-		.image = depthImage,
-		.imageLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
-		.loadOp = Grindstone::GraphicsAPI::LoadOp::Load,
-		.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
-	};
-
-	glm::mat4 gizmoProjection = projection;
-	graphicsCore->AdjustPerspective(&gizmoProjection[0][0]);
-	glm::mat4 projView = gizmoProjection * view;
-	glm::vec2 renderScale = glm::vec2(
-		static_cast<float>(width) / image->GetWidth(),
-		static_cast<float>(height) / image->GetHeight()
-	);
-
-	Grindstone::GraphicsAPI::ClearColor clearColor{};
-	Grindstone::GraphicsAPI::ClearDepthStencil clearDepthStencil;
-	commandBuffer->BeginRendering("Editor Gizmo Pass", Grindstone::Math::IntRect2D(0, 0, width, height), &gizmoAttachment, 1u, &gizmoDepthAttachment);
-	if (isGridEnabled) {
-		gridRenderer.Render(commandBuffer, renderScale, gizmoProjection, view, nearPlaneDistance, farPlaneDistance, glm::quat(), 0.0f);
-	}
-
-	if (editorManager.GetSelection().GetSelectedEntityCount() > 0) {
-		static const glm::vec4 boundingBoxColor = glm::vec4(0.2f, 0.9f, 0.3f, 1.0f);
-		static const glm::vec4 boundingSphereColor = glm::vec4(0.2f, 0.9f, 0.3f, 0.4f);
-		static const glm::vec4 colliderColor = glm::vec4(1.0f, 0.8f, 0.0f, 1.0f);
-
-		Physics::BoxColliderComponent* box = nullptr;
-		Physics::CapsuleColliderComponent* capsule = nullptr;
-		Physics::PlaneColliderComponent* plane = nullptr;
-		Physics::SphereColliderComponent* sphere = nullptr;
-		Grindstone::MeshComponent* mesh = nullptr;
-
-		for (const ECS::Entity& selectedEntity : editorManager.GetSelection().selectedEntities) {
-			if (
-				(isBoundingSphereGizmoEnabled || isBoundingBoxGizmoEnabled) &&
-				selectedEntity.TryGetComponent<Grindstone::MeshComponent>(mesh)
-			) {
-				Grindstone::Mesh3dAsset* meshAsset = engineCore.assetManager->GetAssetByUuid<Grindstone::Mesh3dAsset>(mesh->mesh.uuid);
-				auto& boundingData = meshAsset->boundingData;
-				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-				glm::vec3 center = boundingData.sphereCenter;
-				glm::vec3 boxSize = boundingData.maxAABB - boundingData.minAABB;
-				matrix = matrix * glm::translate(center);
-				if (isBoundingSphereGizmoEnabled) {
-					gizmoRenderer.SubmitSphereGizmo(matrix, boundingData.sphereRadius, boundingSphereColor);
-				}
-
-				if (isBoundingBoxGizmoEnabled) {
-					gizmoRenderer.SubmitCubeGizmo(matrix, boxSize, boundingBoxColor);
-				}
+			if (isGridEnabled) {
+				gridRenderer.Render(commandBuffer, renderScale, adjustedPerspectiveMatrix, view, nearPlaneDistance, farPlaneDistance, glm::quat(), 0.0f);
 			}
 
-			if (isColliderGizmoEnabled) {
-				if (selectedEntity.TryGetComponent<Physics::BoxColliderComponent>(box)) {
-					TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-					Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-					gizmoRenderer.SubmitCubeGizmo(matrix, box->GetSize(), colliderColor);
+			if (editorManager.GetSelection().GetSelectedEntityCount() > 0) {
+				static const glm::vec4 boundingBoxColor = glm::vec4(0.2f, 0.9f, 0.3f, 1.0f);
+				static const glm::vec4 boundingSphereColor = glm::vec4(0.2f, 0.9f, 0.3f, 0.4f);
+				static const glm::vec4 colliderColor = glm::vec4(1.0f, 0.8f, 0.0f, 1.0f);
+
+				Physics::BoxColliderComponent* box = nullptr;
+				Physics::CapsuleColliderComponent* capsule = nullptr;
+				Physics::PlaneColliderComponent* plane = nullptr;
+				Physics::SphereColliderComponent* sphere = nullptr;
+				Grindstone::MeshComponent* mesh = nullptr;
+
+				for (const ECS::Entity& selectedEntity : editorManager.GetSelection().selectedEntities) {
+					if (
+						(isBoundingSphereGizmoEnabled || isBoundingBoxGizmoEnabled) &&
+						selectedEntity.TryGetComponent<Grindstone::MeshComponent>(mesh)
+					) {
+						Grindstone::Mesh3dAsset* meshAsset = engineCore.assetManager->GetAssetByUuid<Grindstone::Mesh3dAsset>(mesh->mesh.uuid);
+						auto& boundingData = meshAsset->boundingData;
+						TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+						Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+						glm::vec3 center = boundingData.sphereCenter;
+						glm::vec3 boxSize = boundingData.maxAABB - boundingData.minAABB;
+						matrix = matrix * glm::translate(center);
+						if (isBoundingSphereGizmoEnabled) {
+							gizmoRenderer.SubmitSphereGizmo(matrix, boundingData.sphereRadius, boundingSphereColor);
+						}
+
+						if (isBoundingBoxGizmoEnabled) {
+							gizmoRenderer.SubmitCubeGizmo(matrix, boxSize, boundingBoxColor);
+						}
+					}
+
+					if (isColliderGizmoEnabled) {
+						if (selectedEntity.TryGetComponent<Physics::BoxColliderComponent>(box)) {
+							TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+							Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+							gizmoRenderer.SubmitCubeGizmo(matrix, box->GetSize(), colliderColor);
+						}
+						else if (selectedEntity.TryGetComponent<Physics::CapsuleColliderComponent>(capsule)) {
+							TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+							Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+							gizmoRenderer.SubmitCapsuleGizmo(matrix, capsule->GetHeight(), capsule->GetRadius(), colliderColor);
+						}
+						else if (selectedEntity.TryGetComponent<Physics::PlaneColliderComponent>(plane)) {
+							TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+							Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+							gizmoRenderer.SubmitPlaneGizmo(matrix, plane->GetPlaneNormal(), plane->GetPositionAlongNormal(), colliderColor);
+						}
+						else if (selectedEntity.TryGetComponent<Physics::SphereColliderComponent>(sphere)) {
+							TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+							Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+							gizmoRenderer.SubmitSphereGizmo(matrix, sphere->GetRadius(), colliderColor);
+						}
+					}
 				}
-				else if (selectedEntity.TryGetComponent<Physics::CapsuleColliderComponent>(capsule)) {
-					TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-					Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-					gizmoRenderer.SubmitCapsuleGizmo(matrix, capsule->GetHeight(), capsule->GetRadius(), colliderColor);
-				}
-				else if (selectedEntity.TryGetComponent<Physics::PlaneColliderComponent>(plane)) {
-					TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-					Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-					gizmoRenderer.SubmitPlaneGizmo(matrix, plane->GetPlaneNormal(), plane->GetPositionAlongNormal(), colliderColor);
-				}
-				else if (selectedEntity.TryGetComponent<Physics::SphereColliderComponent>(sphere)) {
-					TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-					Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-					gizmoRenderer.SubmitSphereGizmo(matrix, sphere->GetRadius(), colliderColor);
-				}
+
+				gizmoRenderer.Render(commandBuffer, projView);
 			}
 		}
+	);
 
-		gizmoRenderer.Render(commandBuffer, projView);
-	}
-	commandBuffer->EndRendering();
-	*/
+	auto renderGraph = renderGraphBuilder.Compile();
+	renderGraph.ExecuteGraph(context);
 }
 
 void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
@@ -732,7 +745,7 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 
 	for (size_t i = 0; i < 3; ++i) {
 		renderTarget[i]->Resize(width, height);
-		// depthTarget[i]->Resize(width, height);
+		depthTarget[i]->Resize(width, height);
 
 		std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> combinedSamplerPair = { renderTarget[i], sampler};
 		GraphicsAPI::DescriptorSet::Binding descriptorSetBinding = GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler(&combinedSamplerPair);

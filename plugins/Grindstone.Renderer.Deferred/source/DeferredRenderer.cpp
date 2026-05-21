@@ -154,7 +154,7 @@ void DeferredRenderer::Render(
 	Grindstone::Renderer::MetaRect ssaoBlurMetaRect(Renderer::MetaSize2D::Zero(), Renderer::MetaSize2D::DivideSwapchain(2));
 
 	Grindstone::Renderer::ShadowPassReturnData shadowOutput = shadows.AddShadowPasses(renderGraphBuilder, worldContextSet);
-	Grindstone::Renderer::GbufferData gbufferData = gbuffer.AddPass(projectionMatrix, viewMatrix, renderGraphBuilder);
+	Grindstone::Renderer::GbufferData gbufferData = gbuffer.AddPass(depthImageRef, projectionMatrix, viewMatrix, renderGraphBuilder);
 	Grindstone::Renderer::RenderGraphBuilderResourceRef ssaoOutput = ssao.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData);
 	// TODO: Move this into the ssao pass, maybe? Specify a Two-Pass Separable Blur
 	Grindstone::Renderer::RenderGraphBuilderResourceRef ssaoBlurredOutput = blur.AddPass(renderGraphBuilder, ssaoBlurMetaRect, attachmentAmbientOcclusionBlur, ssaoOutput);

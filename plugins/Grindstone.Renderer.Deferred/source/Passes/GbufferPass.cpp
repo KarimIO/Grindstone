@@ -8,17 +8,17 @@ bool Grindstone::Renderer::GbufferPass::Initialize() {
 	return true;
 }
 
-Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(glm::mat4& projectionMatrix, glm::mat4 viewMatrix, Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder) {
+Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(RenderGraphBuilderResourceRef depthImageRef, glm::mat4& projectionMatrix, glm::mat4 viewMatrix, Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder) {
 	using namespace Grindstone::GraphicsAPI;
 
 	return renderGraphBuilder.CreateGraphicsPass<Grindstone::Renderer::GbufferData>(
 		"Gbuffer Geometry Opaque",
 		MetaRect::Swapchain(),
-		[](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::GbufferData>& renderPass) -> Grindstone::Renderer::GbufferData {
+		[depthImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::GbufferData>& renderPass) -> Grindstone::Renderer::GbufferData {
 			RenderGraphBuilderResourceRef albedoRef = renderPass.WriteColorAttachment(attachmentAlbedo, GraphicsAPI::LoadOp::Clear, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
 			RenderGraphBuilderResourceRef normalRef = renderPass.WriteColorAttachment(attachmentNormal, GraphicsAPI::LoadOp::Clear, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
 			RenderGraphBuilderResourceRef specularRoughnessRef = renderPass.WriteColorAttachment(attachmentSpecularRoughness, GraphicsAPI::LoadOp::Clear, ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
-			RenderGraphBuilderResourceRef depthRef = renderPass.WriteDepthStencilAttachment(attachmentDepthStencil, GraphicsAPI::LoadOp::Clear, ClearDepthStencil(1.0f, 0u));
+			RenderGraphBuilderResourceRef depthRef = renderPass.WriteDepthStencilAttachment(depthImageRef, GraphicsAPI::LoadOp::Clear, ClearDepthStencil(1.0f, 0u));
 
 			return Grindstone::Renderer::GbufferData{
 				.albedoRef = albedoRef,

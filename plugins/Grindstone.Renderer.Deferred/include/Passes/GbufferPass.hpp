@@ -15,7 +15,12 @@ namespace Grindstone::Renderer {
 	class GbufferPass {
 	public:
 		bool Initialize();
-		GbufferData AddPass(glm::mat4& projectionMatrix, glm::mat4 viewMatrix, Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder);
+		GbufferData AddPass(
+			RenderGraphBuilderResourceRef depthImageRef,
+			glm::mat4& projectionMatrix,
+			glm::mat4 viewMatrix,
+			Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder
+		);
 
 	private:
 	};
