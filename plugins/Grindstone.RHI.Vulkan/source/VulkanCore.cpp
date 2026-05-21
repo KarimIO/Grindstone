@@ -60,7 +60,7 @@ const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
 };
 
-std::vector<const char*> deviceExtensions = {
+std::vector<const char*> requiredDeviceExtensions = {
 	VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 	VK_GOOGLE_HLSL_FUNCTIONALITY_1_EXTENSION_NAME,
@@ -146,6 +146,14 @@ static std::pair<const char*, Grindstone::GraphicsAPI::VendorType> GetVendorName
 	}
 };
 
+static bool IsExtensionSupported(const std::vector<VkExtensionProperties>& supportedExtensions, const char* extensionName) {
+	return std::find_if(
+		supportedExtensions.begin(),
+		supportedExtensions.end(),
+		[extensionName](const VkExtensionProperties& o) { return strcmp(o.extensionName, extensionName) == 0; }
+	) != supportedExtensions.end();
+}
+
 Vulkan::Core *Vulkan::Core::graphicsWrapper = nullptr;
 
 bool Vulkan::Core::Initialize(const Base::Core::CreateInfo& ci) {
@@ -221,11 +229,43 @@ void Vulkan::Core::CreateInstance() {
 		.pApplicationInfo = &appInfo
 	};
 
-	auto extensions = GetRequiredExtensions();
-	// extensions.push_back(VK_NV_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
+	std::vector<const char*> usedExtensions = GetRequiredExtensions();
 
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-	createInfo.ppEnabledExtensionNames = extensions.data();
+	uint32_t extensionCount = 0;
+	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+	std::vector<VkExtensionProperties> supportedExtensions(extensionCount);
+	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, supportedExtensions.data());
+
+	// Check required extensions.
+	std::vector<const char*> missingExtensions;
+	for (const char* extensionName : usedExtensions) {
+		bool isFound = IsExtensionSupported(supportedExtensions, extensionName);
+		if (!isFound) {
+			missingExtensions.emplace_back(extensionName);
+		}
+	}
+
+	if (!missingExtensions.empty()) {
+		std::string missingExtensionsStr;
+
+		for (auto missingExtension : missingExtensions) {
+			missingExtensionsStr += std::string("\n - ") + missingExtension;
+		}
+
+		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Vulkan required extensions not supported:{}", missingExtensionsStr);
+	}
+
+	// Add optional extensions.
+	bool isDebugUtilsSupported = IsExtensionSupported(supportedExtensions, VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	if (isDebugUtilsSupported) {
+		usedExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	}
+	else {
+		GPRINT_WARN(LogSource::GraphicsAPI, "Vulkan Debug Utilities extension not supported.");
+	}
+
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(usedExtensions.size());
+	createInfo.ppEnabledExtensionNames = usedExtensions.data();
 
 	VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
 	if (enableValidationLayers && areValidationLayersFound) {
@@ -354,11 +394,26 @@ void Vulkan::Core::CreateLogicalDevice() {
 		},
 	};
 
+	// Handle optional features
+	uint32_t extensionCount = 0;
+	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, nullptr);
+	std::vector<VkExtensionProperties> supportedExtensions(extensionCount);
+	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, supportedExtensions.data());
+
+	std::vector<const char*> usedDeviceExtensions = requiredDeviceExtensions;
+
+	void* firstDeviceFeature = &deviceFeatures2;
+
 	VkPhysicalDeviceFaultFeaturesEXT faultFeatures{
 		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_EXT,
-		.pNext = &deviceFeatures2,
 		.deviceFault = VK_TRUE,
 	};
+
+	if (debug && IsExtensionSupported(supportedExtensions, VK_EXT_DEVICE_FAULT_EXTENSION_NAME)) {
+		usedDeviceExtensions.emplace_back(VK_EXT_DEVICE_FAULT_EXTENSION_NAME);
+		faultFeatures.pNext = firstDeviceFeature;
+		firstDeviceFeature = &faultFeatures;
+	}
 
 	VkDeviceDiagnosticsConfigFlagsNV aftermathFlags =
 		VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_AUTOMATIC_CHECKPOINTS_BIT_NV |  // Enable automatic call stack checkpoints.
@@ -368,27 +423,23 @@ void Vulkan::Core::CreateLogicalDevice() {
 
 	VkDeviceDiagnosticsConfigCreateInfoNV aftermathInfo{
 		.sType = VK_STRUCTURE_TYPE_DEVICE_DIAGNOSTICS_CONFIG_CREATE_INFO_NV,
-		.pNext = &faultFeatures,
 		.flags = aftermathFlags
 	};
 
-	void* firstDeviceFeature = &deviceFeatures2;
-	if (false && debug) {
-		deviceExtensions.emplace_back(VK_EXT_DEVICE_FAULT_EXTENSION_NAME);
+	if (debug &&
+		vendorType == VendorType::Nvidia &&
+		IsExtensionSupported(supportedExtensions, VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME) &&
+		IsExtensionSupported(supportedExtensions, VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME)
+	) {
+		static GpuCrashTracker::MarkerMap markerMap;
+		static GpuCrashTracker* gpuCrashTracker = Grindstone::Memory::AllocatorCore::Allocate<GpuCrashTracker>(markerMap);
+		this->gpuCrashTracker = gpuCrashTracker;
+		gpuCrashTracker->Initialize(true);
 
-		if (vendorType == VendorType::Nvidia) {
-			static GpuCrashTracker::MarkerMap markerMap;
-			static GpuCrashTracker* gpuCrashTracker = Grindstone::Memory::AllocatorCore::Allocate<GpuCrashTracker>(markerMap);
-			this->gpuCrashTracker = gpuCrashTracker;
-			gpuCrashTracker->Initialize(true);
-
-			deviceExtensions.emplace_back(VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME);
-			deviceExtensions.emplace_back(VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME);
-			firstDeviceFeature = &aftermathInfo;
-		}
-		else {
-			firstDeviceFeature = &faultFeatures;
-		}
+		usedDeviceExtensions.emplace_back(VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME);
+		usedDeviceExtensions.emplace_back(VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME);
+		aftermathInfo.pNext = firstDeviceFeature;
+		firstDeviceFeature = &aftermathInfo;
 	}
 
 	VkDeviceCreateInfo createInfo {
@@ -396,17 +447,11 @@ void Vulkan::Core::CreateLogicalDevice() {
 		.pNext = firstDeviceFeature,
 		.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),
 		.pQueueCreateInfos = queueCreateInfos.data(),
-		.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size()),
-		.ppEnabledExtensionNames = deviceExtensions.data(),
+		.enabledLayerCount = 0,				// DEPRECATED, use instance layers.
+		.ppEnabledLayerNames = nullptr,		// DEPRECATED, use instance layers.
+		.enabledExtensionCount = static_cast<uint32_t>(usedDeviceExtensions.size()),
+		.ppEnabledExtensionNames = usedDeviceExtensions.data(),
 	};
-
-	if (enableValidationLayers) {
-		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-		createInfo.ppEnabledLayerNames = validationLayers.data();
-	}
-	else {
-		createInfo.enabledLayerCount = 0;
-	}
 
 	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create logical device!");
@@ -508,8 +553,6 @@ std::vector<const char*> Vulkan::Core::GetRequiredExtensions() {
 	for (uint32_t i = 0; i < glfwExtensionCount; ++i) {
 		extensions.push_back(glfwExtensions[i]);
 	}
-
-	extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
 	return extensions;
 }
@@ -615,7 +658,7 @@ bool Vulkan::Core::CheckDeviceExtensionSupport(VkPhysicalDevice device) {
 	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
 	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
 
-	std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+	std::set<std::string> requiredExtensions(requiredDeviceExtensions.begin(), requiredDeviceExtensions.end());
 
 	if (requiredExtensions.empty()) {
 		GPRINT_INFO(LogSource::GraphicsAPI, "\t- Supported Required Extensions: NONE");
