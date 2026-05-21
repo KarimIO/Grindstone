@@ -7,7 +7,7 @@
 
 using namespace Grindstone;
 
-std::array<Grindstone::BaseRenderer::RenderMode, static_cast<uint16_t>(DeferredRenderer::DeferredRenderMode::Count)> DeferredRendererFactory::renderModes = {
+std::array<Grindstone::BaseRenderer::RenderMode, static_cast<uint16_t>(Grindstone::Renderer::DeferredRenderMode::Count)> DeferredRendererFactory::renderModes = {
 	Grindstone::BaseRenderer::RenderMode{ "Default" },
 	Grindstone::BaseRenderer::RenderMode{ "World Position" },
 	Grindstone::BaseRenderer::RenderMode{ "World Position (Modulus)" },

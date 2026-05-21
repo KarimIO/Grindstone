@@ -54,7 +54,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 		renderArea = Grindstone::Math::IntRect2D(display.width, display.height);
 	}
 
-	renderMode = DeferredRenderMode::Default;
+	renderMode = Grindstone::Renderer::DeferredRenderMode::Default;
 
 	EngineCore& engineCore = EngineCore::GetInstance();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
@@ -84,6 +84,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 	indexBuffer = graphicsCore->CreateBuffer(iboCi);
 
 	bloom.Initialize();
+	debug.Initialize();
 	gbuffer.Initialize();
 	blur.Initialize();
 	ssao.Initialize();
@@ -169,14 +170,12 @@ void DeferredRenderer::Render(
 		lightingData.lightingOutputRef
 	);
 	
-	if (renderMode == DeferredRenderMode::Default) {
+	if (renderMode == Grindstone::Renderer::DeferredRenderMode::Default) {
 		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef, bloomOutput, colorImageRef);
 	}
-	/*
 	else {
-		debug.AddPass(renderGraph, gbufferOutput, lightingOutput);
+		debug.AddPass(renderMode, projectionMatrix, vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData, ssaoBlurredOutput, colorImageRef);
 	}
-	*/
 }
 
 uint16_t DeferredRenderer::GetRenderModeCount() const {
@@ -190,7 +189,7 @@ const Grindstone::BaseRenderer::RenderMode* DeferredRenderer::GetRenderModes() c
 }
 
 void DeferredRenderer::SetRenderMode(uint16_t mode) {
-	renderMode = static_cast<DeferredRenderMode>(mode);
+	renderMode = static_cast<Grindstone::Renderer::DeferredRenderMode>(mode);
 }
 
 std::vector<Grindstone::Rendering::GeometryRenderStats> Grindstone::DeferredRenderer::GetRenderingStats() {

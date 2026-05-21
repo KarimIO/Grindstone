@@ -54,23 +54,6 @@ namespace Grindstone {
 		virtual void SetRenderMode(uint16_t mode) override;
 		virtual std::vector<Grindstone::Rendering::GeometryRenderStats> GetRenderingStats() override;
 
-		enum class DeferredRenderMode : uint16_t {
-			Default,
-			Position,
-			PositionMod,
-			ViewPosition,
-			ViewPositionMod,
-			Depth,
-			DepthMod,
-			Normal,
-			ViewNormal,
-			Albedo,
-			Specular,
-			Roughness,
-			AmbientOcclusion,
-			Count
-		};
-
 	private:
 
 		uint32_t framebufferWidth = 0u;
@@ -83,7 +66,7 @@ namespace Grindstone {
 		GraphicsAPI::Buffer* indexBuffer;
 		GraphicsAPI::VertexArrayObject* planePostProcessVao = nullptr;
 
-		DeferredRenderMode renderMode;
+		Grindstone::Renderer::DeferredRenderMode renderMode;
 
 		Grindstone::Renderer::ShadowPass shadows;
 		Grindstone::Renderer::GbufferPass gbuffer;
