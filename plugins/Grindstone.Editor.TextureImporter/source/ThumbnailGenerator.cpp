@@ -68,7 +68,7 @@ static void ExportThumbnail(Grindstone::Uuid uuid, void* data) {
 
 	uint32_t blockSize = 16u;
 	size_t dstOffset = 0u;
-	uint8_t* outData = new uint8_t[outHeader.dwPitchOrLinearSize];
+	std::vector<uint8_t> outData(outHeader.dwPitchOrLinearSize);
 
 	for (uint32_t mipRow = 0; mipRow < 128; mipRow += 4) {
 		for (uint32_t mipCol = 0; mipCol < 128; mipCol += 4) {
@@ -82,7 +82,7 @@ static void ExportThumbnail(Grindstone::Uuid uuid, void* data) {
 	const char filecode[4] = { 'D', 'D', 'S', ' ' };
 	out.write((const char*)&filecode, sizeof(char) * 4);
 	out.write((const char*)&outHeader, sizeof(outHeader));
-	out.write((const char*)outData, outHeader.dwPitchOrLinearSize);
+	out.write((const char*)outData.data(), outData.size());
 	out.close();
 }
 

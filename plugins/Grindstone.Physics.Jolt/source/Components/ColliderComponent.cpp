@@ -6,14 +6,12 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 
 #include <Common/Math.hpp>
-#include <EngineCore/Utils/MemoryAllocator.hpp>
 
 #include <Grindstone.Physics.Jolt/include/Components/RigidBodyComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/Components/ColliderComponent.hpp>
 
 using namespace JPH::literals;
 
-using namespace Grindstone::Memory;
 using namespace Grindstone::Physics;
 using namespace Grindstone::Math;
 

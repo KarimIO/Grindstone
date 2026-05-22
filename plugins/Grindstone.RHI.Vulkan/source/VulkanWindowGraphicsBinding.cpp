@@ -19,6 +19,7 @@
 #include <Grindstone.RHI.Vulkan/include/VulkanRenderPass.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanFramebuffer.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanCommandBuffer.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
 
 namespace Base = Grindstone::GraphicsAPI;
 namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
@@ -196,7 +197,7 @@ VkSwapchainKHR Vulkan::WindowGraphicsBinding::GetSwapchain() {
 void Vulkan::WindowGraphicsBinding::SubmitWindowObjects(WindowBindingDataNative& windowBindingData) {
 	swapChain = windowBindingData.swapChain;
 	if (renderPass == nullptr) {
-		renderPass = new Vulkan::RenderPass(windowBindingData.renderPass, "Swapchain Render Pass");
+		renderPass = Memory::AllocatorCore::Allocate<Vulkan::RenderPass>(windowBindingData.renderPass, "Swapchain Render Pass");
 	}
 	else {
 		static_cast<RenderPass*>(renderPass)->Update(windowBindingData.renderPass);
@@ -210,14 +211,14 @@ void Vulkan::WindowGraphicsBinding::SubmitWindowObjects(WindowBindingDataNative&
 		ImageSet& imageSet = imageSets[i];
 
 		if (imageSet.framebuffer == nullptr) {
-			imageSet.framebuffer = new Vulkan::Framebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height, "Swapchain Framebuffer");
+			imageSet.framebuffer = Memory::AllocatorCore::Allocate<Vulkan::Framebuffer>(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height, "Swapchain Framebuffer");
 		}
 		else {
 			static_cast<Framebuffer*>(imageSet.framebuffer)->UpdateNativeFramebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height);
 		}
 
 		if (imageSet.swapChainTarget == nullptr) {
-			imageSet.swapChainTarget = new Vulkan::Image(native.image, swapchainVulkanFormat, i);
+			imageSet.swapChainTarget = Memory::AllocatorCore::Allocate<Vulkan::Image>(native.image, swapchainVulkanFormat, i);
 		}
 		else {
 			static_cast<Vulkan::Image*>(imageSet.swapChainTarget)->UpdateNativeImage(native.image, native.imageView, swapchainVulkanFormat);
@@ -428,8 +429,8 @@ void Vulkan::WindowGraphicsBinding::RecreateSwapchain() {
 	}
 
 	for (size_t i = 0; i < imageSets.size(); i++) {
-		delete imageSets[i].framebuffer;
-		delete imageSets[i].swapChainTarget;
+		Memory::AllocatorCore::Free(imageSets[i].framebuffer);
+		Memory::AllocatorCore::Free(imageSets[i].swapChainTarget);
 	}
 	imageSets.clear();
 
@@ -637,7 +638,7 @@ void Vulkan::WindowGraphicsBinding::CreateRenderPass() {
 	}
 
 	if (renderPass == nullptr) {
-		renderPass = new Vulkan::RenderPass(vkRenderPass, "Swapchain Render Pass");
+		renderPass = Memory::AllocatorCore::Allocate<Vulkan::RenderPass>(vkRenderPass, "Swapchain Render Pass");
 	}
 	else {
 		static_cast<Vulkan::RenderPass*>(renderPass)->Update(vkRenderPass);

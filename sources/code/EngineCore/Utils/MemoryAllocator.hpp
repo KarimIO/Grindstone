@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <Common/Memory/Allocators/DynamicAllocator.hpp>
 #include <Common/String.hpp>
 
@@ -52,7 +54,7 @@ namespace Grindstone::Memory::AllocatorCore {
 		T* ptr = static_cast<T*>(GetAllocatorState()->dynamicAllocator.AllocateRaw(sizeof(T), alignof(T), typeid(T).name()));
 		if (ptr != nullptr) {
 			// Call the constructor on the newly allocated memory
-			new (ptr) T(std::forward<Args>(params)...);
+			std::construct_at(ptr, std::forward<Args>(params)...);
 		}
 
 		return ptr;

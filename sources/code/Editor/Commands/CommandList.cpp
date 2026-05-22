@@ -2,6 +2,8 @@
 #include "ComponentCommands.hpp"
 #include "CommandList.hpp"
 
+#include <EngineCore/Utils/MemoryAllocator.hpp>
+
 namespace Grindstone {
 	namespace Editor {
 		CommandList::CommandList() {
@@ -10,14 +12,14 @@ namespace Grindstone {
 		}
 
 		void CommandList::AddNewEntity(SceneManagement::Scene* scene) {
-			AddCommand(new AddEntityCommand(scene));
+			AddCommand(Memory::AllocatorCore::Allocate<AddEntityCommand>(scene));
 		}
 
 		void CommandList::AddComponent(
 			ECS::Entity entity,
 			Grindstone::HashedString componentName
 		) {
-			AddCommand(new AddComponentCommand(entity, componentName));
+			AddCommand(Memory::AllocatorCore::Allocate<AddComponentCommand>(entity, componentName));
 		}
 
 		void CommandList::SetUndoCount(size_t undoCount) {
@@ -30,12 +32,12 @@ namespace Grindstone {
 			size_t max = commands.size();
 
 			for (size_t i = commandIndex; i != stackEndIndex; i = GetNextNumber(i)) {
-				delete commands[i];
+				Memory::AllocatorCore::Free(commands[i]);
 				commands[i] = nullptr;
 			}
 
 			if (usedCommandCount == max) {
-				delete commands[commandIndex];
+				Memory::AllocatorCore::Free(commands[commandIndex]);
 			}
 			commands[commandIndex] = command;
 

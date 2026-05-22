@@ -444,7 +444,7 @@ ScriptClass* CSharpManager::SetupClass(const char* assemblyName, const char* nam
 
 void CSharpManager::LoadAssemblyClasses() {
 	for(auto& comp : smartComponents) {
-		delete comp.second;
+		Memory::AllocatorCore::Free(comp.second);
 	}
 
 	if (assemblies.empty()) {

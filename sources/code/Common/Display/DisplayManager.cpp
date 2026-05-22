@@ -4,6 +4,8 @@ using namespace Grindstone;
 #ifdef _WIN32
 #include <Windows.h>
 
+#include <EngineCore/Utils/MemoryAllocator.hpp>
+
 static BOOL CALLBACK EnumDispProc(HMONITOR hMon, HDC dcMon, RECT* pRcMon, LPARAM lParam) {
 	Display* pArg = reinterpret_cast<Display*>(lParam);
 
@@ -25,7 +27,7 @@ static BOOL CALLBACK CountDispProc(HMONITOR hMon, HDC dcMon, RECT* pRcMon, LPARA
 }
 
 Display DisplayManager::GetMainDisplay() const {
-	Display* displays = new Display[GetDisplayCount()];
+	Display* displays = Memory::AllocatorCore::AllocateArray<Display>(GetDisplayCount());
 	EnumerateDisplays(displays);
 
 	return displays[0];

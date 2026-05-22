@@ -3,6 +3,7 @@
 #include <string>
 
 #include <Jolt/Jolt.h>
+#include <Jolt/Core/Memory.h>
 #include <Jolt/RegisterTypes.h>
 
 #include <EngineCore/PluginSystem/Interface.hpp>
@@ -79,6 +80,15 @@ void SetupColliderComponent(Grindstone::WorldContextSet& cxt, entt::entity entit
 	}
 }
 
+using namespace Grindstone::Memory::AllocatorCore;
+static void* JoltPhysAllocate(size_t inSize) {
+	constexpr size_t defaultAlignment = 4;
+	return AllocatorCore::AllocateRaw(inSize, defaultAlignment, "Jolt Allocation");
+}
+static void JoltPhysFree(void* inBlock) { AllocatorCore::Free(inBlock); }
+static void* JoltPhysAlignedAllocate(size_t inSize, size_t inAlignment) { return AllocatorCore::AllocateRaw(inSize, inAlignment, "Jolt Allocation"); }
+static void JoltPhysAlignedFree(void* inBlock) { AllocatorCore::Free(inBlock); }
+
 extern "C" {
 	JOLT_PHYSICS_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
 		Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
@@ -86,9 +96,10 @@ extern "C" {
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
 		EngineCore::SetInstance(*pluginInterface->GetEngineCore());
 
-		// Register allocation hook. In this example we'll just let Jolt use malloc / free but you can override these if you want (see Memory.h).
-		// This needs to be done before any other Jolt function is called.
-		JPH::RegisterDefaultAllocator();
+		JPH::Allocate = JoltPhysAllocate;
+		JPH::Free = JoltPhysFree;
+		JPH::AlignedAllocate = JoltPhysAlignedAllocate;
+		JPH::AlignedFree = JoltPhysAlignedFree;
 
 		// Install trace and assert callbacks
 		JPH::Trace = TraceImpl;
