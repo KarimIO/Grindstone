@@ -186,29 +186,34 @@ EditorCamera::EditorCamera() {
 		}
 	}
 
-	Grindstone::GraphicsAPI::Sampler::CreateInfo samplerCreateInfo;
-	samplerCreateInfo.debugName = "Editor Sampler";
-	samplerCreateInfo.options.anistropy = 16.0f;
-	samplerCreateInfo.options.mipMin = -1000.0f;
-	samplerCreateInfo.options.mipMax = 1000.0f;
-	samplerCreateInfo.options.mipFilter = GraphicsAPI::TextureFilter::Linear;
-	samplerCreateInfo.options.minFilter = GraphicsAPI::TextureFilter::Linear;
-	samplerCreateInfo.options.magFilter = GraphicsAPI::TextureFilter::Linear;
-	samplerCreateInfo.options.wrapModeU = GraphicsAPI::TextureWrapMode::ClampToEdge;
-	samplerCreateInfo.options.wrapModeV = GraphicsAPI::TextureWrapMode::ClampToEdge;
-	samplerCreateInfo.options.wrapModeW = GraphicsAPI::TextureWrapMode::ClampToEdge;
+	Grindstone::GraphicsAPI::Sampler::CreateInfo samplerCreateInfo{
+		.debugName = "Editor Sampler",
+		.options{
+			.wrapModeU = GraphicsAPI::TextureWrapMode::ClampToEdge,
+			.wrapModeV = GraphicsAPI::TextureWrapMode::ClampToEdge,
+			.wrapModeW = GraphicsAPI::TextureWrapMode::ClampToEdge,
+			.mipFilter = GraphicsAPI::TextureFilter::Linear,
+			.minFilter = GraphicsAPI::TextureFilter::Linear,
+			.magFilter = GraphicsAPI::TextureFilter::Linear,
+			.anistropy = 16.0f,
+			.mipMin = -1000.0f,
+			.mipMax = 1000.0f,
+		}
+	};
 	sampler = core->GetOrCreateSampler(samplerCreateInfo);
 
-	GraphicsAPI::DescriptorSetLayout::Binding descriptorSetLayoutBinding{};
-	descriptorSetLayoutBinding.bindingId = 0;
-	descriptorSetLayoutBinding.type = GraphicsAPI::BindingType::CombinedImageSampler;
-	descriptorSetLayoutBinding.count = 1;
-	descriptorSetLayoutBinding.stages = GraphicsAPI::ShaderStageBit::Fragment;
+	GraphicsAPI::DescriptorSetLayout::Binding descriptorSetLayoutBinding{
+		.bindingId = 0,
+		.count = 1,
+		.type = GraphicsAPI::BindingType::CombinedImageSampler,
+		.stages = GraphicsAPI::ShaderStageBit::Fragment,
+	};
 
-	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
-	descriptorSetLayoutCreateInfo.debugName = "Editor Viewport Descriptor Set Layout";
-	descriptorSetLayoutCreateInfo.bindingCount = 1;
-	descriptorSetLayoutCreateInfo.bindings = &descriptorSetLayoutBinding;
+	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{
+		.debugName = "Editor Viewport Descriptor Set Layout",
+		.bindings = &descriptorSetLayoutBinding,
+		.bindingCount = 1,
+	};
 	descriptorSetLayout = core->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
@@ -476,6 +481,9 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 			.imageDimensions = GraphicsAPI::ImageDimension::Dimension2D,
 			.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly,
 			.imageUsage = GraphicsAPI::ImageUsageFlags::RenderTarget | GraphicsAPI::ImageUsageFlags::Sampled,
+			.externalInitialLayout = GraphicsAPI::ImageLayout::Undefined,
+			.externalInitialAccessFlags = GraphicsAPI::AccessFlags::None,
+			.externalInitialPipelineStage = GraphicsAPI::PipelineStageBit::TopOfPipe,
 			.externalFinalLayout = GraphicsAPI::ImageLayout::ShaderRead,
 			.externalFinalAccessFlags = GraphicsAPI::AccessFlags::ShaderRead,
 			.externalFinalPipelineStage = GraphicsAPI::PipelineStageBit::FragmentShader,
@@ -495,6 +503,9 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 			.imageDimensions = GraphicsAPI::ImageDimension::Dimension2D,
 			.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly,
 			.imageUsage = GraphicsAPI::ImageUsageFlags::DepthStencil | GraphicsAPI::ImageUsageFlags::Sampled,
+			.externalInitialLayout = GraphicsAPI::ImageLayout::Undefined,
+			.externalInitialAccessFlags = GraphicsAPI::AccessFlags::None,
+			.externalInitialPipelineStage = GraphicsAPI::PipelineStageBit::TopOfPipe,
 			.externalFinalLayout = GraphicsAPI::ImageLayout::ShaderRead,
 			.externalFinalAccessFlags = GraphicsAPI::AccessFlags::ShaderRead,
 			.externalFinalPipelineStage = GraphicsAPI::PipelineStageBit::FragmentShader,
@@ -527,10 +538,10 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
 			Renderer::RenderGraphBuilderResourceRef& outputRef
 		) {
-				Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
-				Grindstone::Editor::Manager& editorManager = Editor::Manager::GetInstance();
-				Grindstone::GraphicsAPI::CommandBuffer* commandBuffer = cxt.commandBuffer;
-				Grindstone::GraphicsAPI::Core* graphicsCore = cxt.graphicsCore;
+			Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
+			Grindstone::Editor::Manager& editorManager = Editor::Manager::GetInstance();
+			Grindstone::GraphicsAPI::CommandBuffer* commandBuffer = cxt.commandBuffer;
+			Grindstone::GraphicsAPI::Core* graphicsCore = cxt.graphicsCore;
 
 			glm::mat4 projView = adjustedPerspectiveMatrix * view;
 			glm::vec2 renderScale = glm::vec2(1.0f, 1.0f);

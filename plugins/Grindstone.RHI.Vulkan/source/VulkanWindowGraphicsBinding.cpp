@@ -335,7 +335,11 @@ void Vulkan::WindowGraphicsBinding::CreateImageSets() {
 
 	imageSets.resize(imageCount);
 	for (uint32_t i = 0; i < imageCount; ++i) {
-		Vulkan::Image* rt = new Vulkan::Image(
+
+		std::string imageDebugName = std::string("Swapchain Image ") + std::to_string(i);
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, swapChainImages[i], imageDebugName.c_str());
+
+		Vulkan::Image* rt = Memory::AllocatorCore::Allocate<Vulkan::Image>(
 			swapChainImages[i],
 			swapchainVulkanFormat,
 			i
@@ -353,7 +357,7 @@ void Vulkan::WindowGraphicsBinding::CreateImageSets() {
 
 		Vulkan::ImageSet& imageSet = imageSets[i];
 		imageSet.swapChainTarget = rt;
-		imageSet.framebuffer = new Vulkan::Framebuffer(
+		imageSet.framebuffer = Memory::AllocatorCore::Allocate<Vulkan::Framebuffer>(
 			renderPass,
 			vkFramebuffer,
 			swapExtent.width,
@@ -365,11 +369,15 @@ void Vulkan::WindowGraphicsBinding::CreateImageSets() {
 	}
 }
 
+void Vulkan::WindowGraphicsBinding::WaitForRenderingFence() {
+	Vulkan::Core& vkCore = Vulkan::Core::Get();
+	VkDevice device = vkCore.GetDevice();
+	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+}
+
 bool Vulkan::WindowGraphicsBinding::AcquireNextImage() {
 	Vulkan::Core& vkCore = Vulkan::Core::Get();
 	VkDevice device = vkCore.GetDevice();
-
-	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
 	VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &currentSwapchainImageIndex);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {

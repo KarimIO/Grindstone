@@ -22,7 +22,7 @@ namespace Grindstone::GraphicsAPI {
 		IndirectCommandRead = 0x00000001,
 		IndexRead = 0x00000002,
 		VertexAttributeRead = 0x00000004,
-		UNIFORMRead = 0x00000008,
+		UniformRead = 0x00000008,
 		InputAttachmentRead = 0x00000010,
 		ShaderRead = 0x00000020,
 		ShaderWrite = 0x00000040,

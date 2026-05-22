@@ -114,8 +114,10 @@ namespace Grindstone::Renderer {
 		) override {
 			GS_ASSERT_ENGINE_WITH_MESSAGE(executionCallback != nullptr, "Execution callback for rendergraph pass %s is not set.", name.c_str());
 
+			context.commandBuffer->BeginDebugLabelSection(name.c_str());
 			PrepareComputePass(context);
 			executionCallback(context, frameResources, returnData);
+			context.commandBuffer->EndDebugLabelSection();
 		}
 
 	};

@@ -345,7 +345,7 @@ static void SetupBarriers() {
 
 				GraphicsAPI::AccessFlags srcAccess = bufferData.currentAccessFlags;
 				GraphicsAPI::AccessFlags dstAccess = read.resource.resourceType == ResourceType::UniformBuffer
-					? GraphicsAPI::AccessFlags::UNIFORMRead
+					? GraphicsAPI::AccessFlags::UniformRead
 					: GraphicsAPI::AccessFlags::ShaderRead;
 
 				if (srcAccess != dstAccess) {

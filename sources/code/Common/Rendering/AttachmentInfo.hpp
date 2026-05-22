@@ -236,9 +236,12 @@ namespace Grindstone::Renderer {
 		GraphicsAPI::MemoryUsage memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly;
 		Grindstone::Containers::BitsetFlags<GraphicsAPI::ImageUsageFlags> imageUsage;
 
-		Grindstone::GraphicsAPI::ImageLayout externalFinalLayout;
-		GraphicsAPI::AccessFlags externalFinalAccessFlags;
-		Grindstone::GraphicsAPI::PipelineStageBit externalFinalPipelineStage;
+		Grindstone::GraphicsAPI::ImageLayout		externalInitialLayout;
+		Grindstone::GraphicsAPI::AccessFlags		externalInitialAccessFlags;
+		Grindstone::GraphicsAPI::PipelineStageBit	externalInitialPipelineStage;
+		Grindstone::GraphicsAPI::ImageLayout		externalFinalLayout;
+		Grindstone::GraphicsAPI::AccessFlags		externalFinalAccessFlags;
+		Grindstone::GraphicsAPI::PipelineStageBit	externalFinalPipelineStage;
 		std::function<Grindstone::GraphicsAPI::Image*()> externalGetterCallback;
 
 		bool operator==(const ImageDescription& other) const {

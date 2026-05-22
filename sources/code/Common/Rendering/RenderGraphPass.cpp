@@ -103,9 +103,7 @@ static ImageUsageSyncInfo DeriveImageSyncInfo(
 		if (isRead)  accessMask |= Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentRead;
 		if (isWrite) accessMask |= Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite;
 
-		layout = isRead
-			? Grindstone::GraphicsAPI::ImageLayout::Undefined // ATTACHMENT_FEEDBACK_LOOP_OPTIMAL_EXT blend read + write
-			: Grindstone::GraphicsAPI::ImageLayout::ColorAttachment; // write only
+		layout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment;
 	}
 
 	// Depth / Stencil Attachment
@@ -114,8 +112,8 @@ static ImageUsageSyncInfo DeriveImageSyncInfo(
 		stageMask |= Grindstone::GraphicsAPI::PipelineStageBit::EarlyFragmentTests
 			| Grindstone::GraphicsAPI::PipelineStageBit::LateFragmentTests;
 
-		if (isRead)  accessMask |= Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentRead; // DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-		if (isWrite) accessMask |= Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite; // DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		if (isRead)  accessMask |= Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentRead;
+		if (isWrite) accessMask |= Grindstone::GraphicsAPI::AccessFlags::DepthStencilAttachmentWrite;
 
 		// Layout is determined by the combination of depth+stencil × read+write
 		layout = DeriveDepthStencilLayout(isDepth, isStencil, isRead, isWrite);
@@ -124,7 +122,7 @@ static ImageUsageSyncInfo DeriveImageSyncInfo(
 	// Sampled (shader read via sampler)
 	if (isSampled && isRead) {
 		stageMask |= DeriveShaderStageMask(visibility);
-		accessMask |= Grindstone::GraphicsAPI::AccessFlags::ShaderRead; // SHADER_SAMPLED_READ_BIT;
+		accessMask |= Grindstone::GraphicsAPI::AccessFlags::ShaderRead;
 
 		// Only set layout here if no attachment flags are present
 		// Attachment flags take precedence and produce read-only variants
@@ -139,8 +137,8 @@ static ImageUsageSyncInfo DeriveImageSyncInfo(
 	if (isStorage) {
 		stageMask |= DeriveShaderStageMask(visibility);
 
-		if (isRead)  accessMask |= Grindstone::GraphicsAPI::AccessFlags::ShaderRead; // SHADER_STORAGE_READ_BIT;
-		if (isWrite) accessMask |= Grindstone::GraphicsAPI::AccessFlags::ShaderWrite; // SHADER_STORAGE_WRITE_BIT;
+		if (isRead)  accessMask |= Grindstone::GraphicsAPI::AccessFlags::ShaderRead;
+		if (isWrite) accessMask |= Grindstone::GraphicsAPI::AccessFlags::ShaderWrite;
 
 		layout = Grindstone::GraphicsAPI::ImageLayout::General;
 	}
@@ -178,7 +176,9 @@ void Grindstone::Renderer::PipelineRenderGraphPass::RealizeResources(
 				.bindingId = currentBinding++,
 				.count = 1,
 				.type = Grindstone::GraphicsAPI::BindingType::Sampler,
-				.stages = Grindstone::GraphicsAPI::ShaderStageBit::All
+				.stages = (type == GpuPassType::Compute
+						? Grindstone::GraphicsAPI::ShaderStageBit::Compute
+						: Grindstone::GraphicsAPI::ShaderStageBit::AllGraphics)
 			}
 		);
 		bindings.emplace_back(GraphicsAPI::DescriptorSet::Binding::Sampler(sampler));
@@ -209,7 +209,9 @@ void Grindstone::Renderer::PipelineRenderGraphPass::RealizeResources(
 					.bindingId = currentBinding++,
 					.count = 1,
 					.type = bindingType,
-					.stages = Grindstone::GraphicsAPI::ShaderStageBit::All
+					.stages = (type == GpuPassType::Compute
+						? Grindstone::GraphicsAPI::ShaderStageBit::Compute
+						: Grindstone::GraphicsAPI::ShaderStageBit::AllGraphics)
 				}
 			);
 		}
@@ -344,7 +346,9 @@ Grindstone::Math::IntRect2D Grindstone::Renderer::GraphicsRenderGraphPassBase::P
 		else {
 			depthAttachment = GraphicsAPI::RenderAttachment{
 				.image = image,
-				.imageLayout = Grindstone::GraphicsAPI::ImageLayout::DepthWrite,
+				.imageLayout = (Any(desc.usage & RenderGraphImageUsage::Read)
+					? Grindstone::GraphicsAPI::ImageLayout::DepthRead
+					: Grindstone::GraphicsAPI::ImageLayout::DepthWrite),
 				.loadOp = desc.attachment.loadOp,
 				.storeOp = Grindstone::GraphicsAPI::StoreOp::Store,
 				.clearValue = desc.attachment.clearValue

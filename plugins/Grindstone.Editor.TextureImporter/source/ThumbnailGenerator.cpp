@@ -90,9 +90,12 @@ bool Grindstone::Editor::Importers::GenerateTextureThumbnail(Grindstone::Uuid uu
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
-	Grindstone::AssetReference<Grindstone::TextureAsset> texture = engineCore.assetManager->GetAssetReferenceByUuid<Grindstone::TextureAsset>(uuid);
-
-	GraphicsAPI::Image* image = texture.Get()->image;
+	Grindstone::AssetReference<Grindstone::TextureAsset> textureAsset = engineCore.assetManager->GetAssetReferenceByUuid<Grindstone::TextureAsset>(uuid);
+	Grindstone::TextureAsset* texture = textureAsset.Get();
+	if (texture == nullptr) {
+		return false;
+	}
+	GraphicsAPI::Image* image = texture->image;
 	if (image->GetImageDimension() != GraphicsAPI::ImageDimension::Dimension2D) {
 		return false;
 	}

@@ -33,9 +33,9 @@ void Grindstone::Renderer::RenderGraph::ExecuteGraph(Grindstone::Renderer::Rende
 				};
 				frameResources.externalImages[id] = Grindstone::Renderer::TransientImageData{
 					.image = desc.externalGetterCallback(),
-					.currentLayout = desc.externalFinalLayout,
-					.currentAccessFlags = desc.externalFinalAccessFlags,
-					.currentPipelineStage = desc.externalFinalPipelineStage,
+					.currentLayout = desc.externalInitialLayout,
+					.currentAccessFlags = desc.externalInitialAccessFlags,
+					.currentPipelineStage = desc.externalInitialPipelineStage,
 				};
 			}
 			else {
