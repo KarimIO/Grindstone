@@ -16,7 +16,7 @@ set(EDITORPIPELINESETIMPORTER_CONVERTER_SOURCES
 	${SRC}/${PipelineSetConverter}/Token.cpp
 )
 
-source_group("Converter\\Source Files" FILES ${EDITORPIPELINESETIMPORTER_CONVERTER_SOURCES})
+source_group("Source Files\\Converter" FILES ${EDITORPIPELINESETIMPORTER_CONVERTER_SOURCES})
 
 set(EDITORPIPELINESETIMPORTER_CONVERTER_HEADERS
 	${INC}/${PipelineSetConverter}/CompilationArtifacts.hpp
@@ -35,7 +35,7 @@ set(EDITORPIPELINESETIMPORTER_CONVERTER_HEADERS
 	${INC}/PipelineSet/Log.hpp
 	${INC}/PipelineSet/WriteCallback.hpp
 )
-source_group("Converter\\Header Files" FILES ${EDITORPIPELINESETIMPORTER_CONVERTER_HEADERS})
+source_group("Header Files\\Converter" FILES ${EDITORPIPELINESETIMPORTER_CONVERTER_HEADERS})
 
 set(EDITORPIPELINESETIMPORTER_SOURCES
 	${SRC}/PipelineSetImporter.cpp

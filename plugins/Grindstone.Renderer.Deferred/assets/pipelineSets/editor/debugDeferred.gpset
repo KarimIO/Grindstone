@@ -48,12 +48,12 @@ pipelineSet "DebugDeferred" {
 					return outData;
 				}
 
-				SamplerState gbufferSampler : register(s0, space2);
-				Texture2D<float4> gbufferDepth : register(t1, space2);
-				Texture2D<float4> gbufferAlbedo : register(t2, space2);
-				Texture2D<float4> gbufferNormal : register(t3, space2);
-				Texture2D<float4> gbufferSpecularRoughness : register(t4, space2);
-				Texture2D<float4> ambientOcclusion : register(t5, space2);
+				SamplerState gbufferSampler : register(s0, space1);
+				Texture2D<float4> gbufferDepth : register(t1, space1);
+				Texture2D<float4> gbufferAlbedo : register(t2, space1);
+				Texture2D<float4> gbufferNormal : register(t3, space1);
+				Texture2D<float4> gbufferSpecularRoughness : register(t4, space1);
+				Texture2D<float4> ambientOcclusion : register(t5, space1);
 
 				struct DebugUbo {
 					uint mode;
@@ -61,7 +61,7 @@ pipelineSet "DebugDeferred" {
 					float farDistance;
 				};
 
-				ConstantBuffer<DebugUbo> debugUbo : register(b6, space2);
+				ConstantBuffer<DebugUbo> debugUbo : register(b0, space2);
 
 				#define RenderMode_Default 0
 				#define RenderMode_Position 1

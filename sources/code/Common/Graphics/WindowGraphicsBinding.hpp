@@ -19,6 +19,7 @@ namespace Grindstone::GraphicsAPI {
 	public:
 		~WindowGraphicsBinding() {};
 		virtual bool Initialize(Window *window) = 0;
+		virtual void WaitForRenderingFence() = 0;
 		virtual void ImmediateSetContext() = 0;
 		virtual void ImmediateSwapBuffers() = 0;
 		virtual bool AcquireNextImage() = 0;

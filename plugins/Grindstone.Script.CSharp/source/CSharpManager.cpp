@@ -165,7 +165,7 @@ static bool LoadHostFxr() {
 				"tfm": "net8.0",
 				"framework": {
 					"name": "Microsoft.NETCore.App",
-					"version": "8.0.0"
+					"version": "10.0.0"
 				}
 			}
 		})";

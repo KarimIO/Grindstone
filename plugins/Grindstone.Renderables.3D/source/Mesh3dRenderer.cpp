@@ -206,7 +206,7 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
 	descriptorSetLayoutCreateInfo.debugName = "Per Draw Descriptor Set Layout";
 	descriptorSetLayoutCreateInfo.bindingCount = 1;
 	descriptorSetLayoutCreateInfo.bindings = &descriptorSetUniformBinding;
-	perDrawDescriptorSetLayout = engineCore->GetGraphicsCore()->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+	perDrawDescriptorSetLayout = engineCore->GetGraphicsCore()->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 }
 
@@ -319,12 +319,14 @@ Grindstone::Rendering::GeometryRenderStats Mesh3dRenderer::RenderQueue(
 	std::vector<RenderTaskGroup> renderTaskGroups;
 	renderTasks.reserve(1000);
 
+	const GraphicsAPI::PipelineLayout* pipelineLayout = nullptr;
 	const GraphicsAPI::GraphicsPipeline* graphicsPipeline = nullptr;
 	const GraphicsAPI::DescriptorSet* materialDescriptorSet = nullptr;
 
 	for (RenderTask& renderTask : renderTasks) {
 		if (graphicsPipeline != renderTask.pipeline) {
 			graphicsPipeline = renderTask.pipeline;
+			pipelineLayout = graphicsPipeline->pipelineLayout;
 			commandBuffer->BindGraphicsPipeline(renderTask.pipeline);
 			renderingStats.pipelineBinds += 1;
 		}
@@ -338,7 +340,7 @@ Grindstone::Rendering::GeometryRenderStats Mesh3dRenderer::RenderQueue(
 				renderTask.perDrawDescriptorSet,
 			};
 			commandBuffer->BindGraphicsDescriptorSet(
-				graphicsPipeline,
+				pipelineLayout,
 				descriptors.data(),
 				0,
 				static_cast<uint32_t>(descriptors.size())

@@ -13,19 +13,23 @@ computeSet "Bloom" {
 	shaderHlsl {
 		static const float epsilon = 1.0e-4;
 
-		struct ControlUniformBuffer {
-			float4 reciprocalImgSizes; // Consists of  float2 in; float2 out;
+		struct DataUniformBuffer {
 			float4 thresholdFilter;
-			int stage;
 			float levelOfDetail;
 			float filterRadius;
 		};
 
-		ConstantBuffer<ControlUniformBuffer> postUbo : register(b0, space2);
-		SamplerState defaultSampler : register(s1, space2);
-		RWTexture2D<float4> outImage : register(u2, space2);
-		Texture2D<float4> inImage1 : register(t3, space2);
-		Texture2D<float4> inImage2 : register(t4, space2);
+		struct StageUniformBuffer {
+			float4 reciprocalImgSizes; // Consists of float2 in; float2 out;
+			int stage;
+		};
+
+		ConstantBuffer<DataUniformBuffer> dataUbo : register(b0, space2);
+		ConstantBuffer<StageUniformBuffer> stageUbo : register(b1, space2);
+		SamplerState defaultSampler : register(s0, space1);
+		RWTexture2D<float4> outImage : register(u1, space1);
+		Texture2D<float4> inImage1 : register(t2, space1);
+		Texture2D<float4> inImage2 : register(t3, space1);
 
 		static const int bloomStagePrefilter	= 0;
 		static const int bloomStageDownsample	= 1;
@@ -113,37 +117,46 @@ computeSet "Bloom" {
 
 		float4 Prefilter(float4 color) {
 			float brightness = max(color.r, max(color.g, color.b));
-			float soft = brightness - postUbo.thresholdFilter.y;
-			soft = clamp(soft, 0.0, postUbo.thresholdFilter.z);
-			soft = soft * soft * postUbo.thresholdFilter.w;
+			float soft = brightness - dataUbo.thresholdFilter.y;
+			soft = clamp(soft, 0.0, dataUbo.thresholdFilter.z);
+			soft = soft * soft * dataUbo.thresholdFilter.w;
 
-			return color * max(soft, brightness - postUbo.thresholdFilter.x) / max(brightness, epsilon);
+			return color * max(soft, brightness - dataUbo.thresholdFilter.x) / max(brightness, epsilon);
 		}
 
 		[numthreads(4, 4, 1)]
 		void main(uint3 dispatchThreadID : SV_DispatchThreadID) {
-			float2 texCoords = float2(dispatchThreadID.x * postUbo.reciprocalImgSizes.z, dispatchThreadID.y * postUbo.reciprocalImgSizes.w);
+			float2 texCoords = float2(dispatchThreadID.x * stageUbo.reciprocalImgSizes.z, dispatchThreadID.y * stageUbo.reciprocalImgSizes.w);
+			if (texCoords.x >= 1 || texCoords.y >= 1) {
+				return;
+			}
 
 			float4 color = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-			if (postUbo.stage == bloomStagePrefilter) {
-				color.rgb = Downsample(inImage1, texCoords, postUbo.reciprocalImgSizes.zw, true);
+			if (stageUbo.stage == bloomStagePrefilter) {
+				color.rgb = Downsample(inImage1, texCoords, stageUbo.reciprocalImgSizes.zw, true);
 				color = max(Prefilter(color), 0.0f);
 				color.a = 1.0f;
 			}
-			else if (postUbo.stage == bloomStageDownsample) {
-				color.rgb = Downsample(inImage1, texCoords, postUbo.reciprocalImgSizes.zw, false);
+			else if (stageUbo.stage == bloomStageDownsample) {
+				color.rgb = Downsample(inImage1, texCoords, stageUbo.reciprocalImgSizes.zw, false);
+				color.a = 1.0f;
 			}
-			else if (postUbo.stage == bloomStageUpsample) {
-				float3 upsampledTexture = Upsample(inImage1, texCoords, postUbo.reciprocalImgSizes.xy, postUbo.filterRadius);
+			else if (stageUbo.stage == bloomStageUpsample) {
+				float3 upsampledTexture = Upsample(inImage1, texCoords, stageUbo.reciprocalImgSizes.xy, dataUbo.filterRadius);
 
 				float3 existing = inImage2.SampleLevel(defaultSampler, texCoords, 0).rgb;
 				color.rgb = existing + upsampledTexture;
+				color.a = 1.0f;
 			}
-			else if (postUbo.stage == bloomStageApply) {
-				color.rgb = Upsample(inImage1, texCoords, postUbo.reciprocalImgSizes.xy, postUbo.filterRadius);
+			else if (stageUbo.stage == bloomStageApply) {
+				color.rgb = Upsample(inImage1, texCoords, stageUbo.reciprocalImgSizes.xy, dataUbo.filterRadius);
+				color.a = 1.0f;
 			}
 
+
+			// TODO: Get global set bound somehow for reflection.
+			color.r += rendererUbo.renderScale.r * 0.00001;
 			outImage[dispatchThreadID.xy] = color;
 		}
 	}

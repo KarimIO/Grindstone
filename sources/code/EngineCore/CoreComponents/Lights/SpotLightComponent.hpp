@@ -3,6 +3,7 @@
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 #include "EngineCore/ECS/Entity.hpp"
 #include "Common/Math.hpp"
+#include "Common/Rect.hpp"
 
 namespace Grindstone {
 	class WorldContextSet;
@@ -26,7 +27,7 @@ namespace Grindstone {
 			Math::Float3 direction;
 			float innerAngle;
 			float outerAngle;
-			float shadowResolution;
+			Math::Rect2D shadowRenderArea;
 		};
 
 		Math::Matrix4 shadowMatrix;
@@ -35,12 +36,7 @@ namespace Grindstone {
 		float intensity = 0.0f;
 		float innerAngle = 0.0f;
 		float outerAngle = 0.0f;
-		uint32_t shadowResolution = 0u;
-		uint32_t cachedShadowResolution = 0u;
-
-		GraphicsAPI::RenderPass* renderPass = nullptr;
-		GraphicsAPI::Framebuffer* framebuffer = nullptr;
-		GraphicsAPI::Image* depthTarget = nullptr;
+		Math::Rect2D shadowRenderArea;
 
 		GraphicsAPI::Buffer* uniformBufferObject = nullptr;
 		GraphicsAPI::DescriptorSet* descriptorSet = nullptr;

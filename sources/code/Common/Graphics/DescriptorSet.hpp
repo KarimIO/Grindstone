@@ -69,7 +69,7 @@ namespace Grindstone::GraphicsAPI {
 
 		struct CreateInfo {
 			const char* debugName = nullptr;
-			DescriptorSetLayout* layout = nullptr;
+			const DescriptorSetLayout* layout = nullptr;
 			const Binding* bindings = nullptr;
 			uint32_t bindingCount = 0;
 		};

@@ -6,6 +6,7 @@
 #include <Grindstone.RHI.Vulkan/include/VulkanRenderPass.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanGraphicsPipeline.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanComputePipeline.hpp>
+#include <Grindstone.RHI.Vulkan/include/VulkanPipelineLayout.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanFramebuffer.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanVertexArrayObject.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanCore.hpp>
@@ -64,15 +65,16 @@ Vulkan::CommandBuffer::CommandBuffer(const CreateInfo& createInfo) {
 
 	if (createInfo.secondaryInfo.isSecondary) {
 		beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
-		VkCommandBufferInheritanceInfo inheritenceInfo = {};
 		Vulkan::Framebuffer* framebuffer = static_cast<Vulkan::Framebuffer *>(createInfo.secondaryInfo.framebuffer);
 		Vulkan::RenderPass* renderPass = static_cast<Vulkan::RenderPass *>(createInfo.secondaryInfo.renderPass);
-		inheritenceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-		inheritenceInfo.framebuffer = framebuffer->GetFramebuffer();
-		inheritenceInfo.renderPass = renderPass->GetRenderPassHandle();
-		inheritenceInfo.occlusionQueryEnable = VK_FALSE;
-		inheritenceInfo.pipelineStatistics = 0;
-		inheritenceInfo.pNext = nullptr;
+		VkCommandBufferInheritanceInfo inheritenceInfo = {
+			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO,
+			.pNext = nullptr,
+			.renderPass = renderPass->GetRenderPassHandle(),
+			.framebuffer = framebuffer->GetFramebuffer(),
+			.occlusionQueryEnable = VK_FALSE,
+			.pipelineStatistics = 0,
+		};
 		inheritenceInfo.subpass = 0;
 		beginInfo.pInheritanceInfo = &inheritenceInfo;
 	}
@@ -84,6 +86,34 @@ Vulkan::CommandBuffer::~CommandBuffer() {
 void Vulkan::CommandBuffer::BeginCommandBuffer() {
 	vkResetCommandBuffer(commandBuffer, 0);
 	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+}
+
+void Vulkan::CommandBuffer::ClearAttachments(ClearAttachment* attachments, uint32_t attachmentCount, ClearRect* rects, uint32_t rectCount) {
+	std::vector<VkClearAttachment> vkAttachments;
+	vkAttachments.resize(attachmentCount);
+	std::vector<VkClearRect> vkClearRect;
+	vkClearRect.resize(rectCount);
+
+	for (uint32_t i = 0; i < attachmentCount; ++i) {
+		auto& src = attachments[i];
+		auto& dst = vkAttachments[i];
+		dst.aspectMask = TranslateImageAspectBitsToVulkan(src.aspectMask);
+		std::memcpy(&dst.clearValue, &src.clearValue, sizeof(VkClearValue));
+		dst.colorAttachment = src.colorAttachmentIndex;
+	}
+
+	for (uint32_t i = 0; i < rectCount; ++i) {
+		auto& src = rects[i];
+		auto& dst = vkClearRect[i];
+		dst.baseArrayLayer = src.baseArrayLayer;
+		dst.layerCount = src.layerCount;
+		dst.rect = {
+			.offset = { src.rect.offset.x, src.rect.offset.y },
+			.extent = { src.rect.extent.x, src.rect.extent.y }
+		};
+	}
+
+	vkCmdClearAttachments(commandBuffer, attachmentCount, vkAttachments.data(), rectCount, vkClearRect.data());
 }
 
 void Vulkan::CommandBuffer::BindRenderPass(
@@ -172,11 +202,12 @@ void Vulkan::CommandBuffer::BeginRendering(
 	for (uint32_t i = 0; i < attachmentCount; ++i) {
 		RenderAttachment& attachment = colorAttachments[i];
 		Grindstone::GraphicsAPI::Vulkan::Image* image = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(attachment.image);
-
+		VkImageView imageView = image->GetImageView();
+		GS_ASSERT(imageView != nullptr);
 		colorAttachmentInfos.emplace_back(
 			VkRenderingAttachmentInfoKHR{
 				.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
-				.imageView = image->GetImageView(),
+				.imageView = imageView,
 				.imageLayout = TranslateImageLayoutToVulkan(attachment.imageLayout),
 				.loadOp = TranslateLoadOpToVulkan(attachment.loadOp),
 				.storeOp = TranslateStoreOpToVulkan(attachment.storeOp),
@@ -187,6 +218,8 @@ void Vulkan::CommandBuffer::BeginRendering(
 
 	if (depthAttachment != nullptr) {
 		Grindstone::GraphicsAPI::Vulkan::Image* depthImage = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(depthAttachment->image);
+		VkImageView depthImageView = depthImage->GetImageView();
+		GS_ASSERT(depthImageView != nullptr);
 		depthAttachmentInfo = VkRenderingAttachmentInfoKHR{
 			.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
 			.imageView = depthImage->GetImageView(),
@@ -199,9 +232,11 @@ void Vulkan::CommandBuffer::BeginRendering(
 
 	if (stencilAttachment != nullptr) {
 		Grindstone::GraphicsAPI::Vulkan::Image* stencilImage = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(stencilAttachment->image);
+		VkImageView stencilImageView = stencilImage->GetImageView();
+		GS_ASSERT(stencilImageView != nullptr);
 		stencilAttachmentInfo = VkRenderingAttachmentInfoKHR{
 			.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
-			.imageView = stencilImage->GetImageView(),
+			.imageView = stencilImageView,
 			.imageLayout = TranslateImageLayoutToVulkan(stencilAttachment->imageLayout),
 			.loadOp = TranslateLoadOpToVulkan(stencilAttachment->loadOp),
 			.storeOp = TranslateStoreOpToVulkan(stencilAttachment->storeOp),
@@ -256,23 +291,23 @@ void Vulkan::CommandBuffer::EndDebugLabelSection() {
 }
 
 void Vulkan::CommandBuffer::BindGraphicsDescriptorSet(
-	const Base::GraphicsPipeline* graphicsPipeline,
+	const Base::PipelineLayout* pipelineLayout,
 	const Base::DescriptorSet* const * descriptorSets,
 	uint32_t descriptorSetOffset,
 	uint32_t descriptorSetCount
 ) {
-	const Vulkan::GraphicsPipeline *vkPipeline = static_cast<const Vulkan::GraphicsPipeline *>(graphicsPipeline);
-	BindDescriptorSet(vkPipeline->GetGraphicsPipelineLayout(), VK_PIPELINE_BIND_POINT_GRAPHICS, descriptorSets, descriptorSetOffset, descriptorSetCount);
+	const Vulkan::PipelineLayout *vkPipelineLayout = static_cast<const Vulkan::PipelineLayout *>(pipelineLayout);
+	BindDescriptorSet(vkPipelineLayout->GetPipelineLayout(), VK_PIPELINE_BIND_POINT_GRAPHICS, descriptorSets, descriptorSetOffset, descriptorSetCount);
 }
 
 void Vulkan::CommandBuffer::BindComputeDescriptorSet(
-	const Base::ComputePipeline* computePipeline,
+	const Base::PipelineLayout* pipelineLayout,
 	const Base::DescriptorSet* const * descriptorSets,
 	uint32_t descriptorSetOffset,
 	uint32_t descriptorSetCount
 ) {
-	const Vulkan::ComputePipeline* vkPipeline = static_cast<const Vulkan::ComputePipeline*>(computePipeline);
-	BindDescriptorSet(vkPipeline->GetComputePipelineLayout(), VK_PIPELINE_BIND_POINT_COMPUTE, descriptorSets, descriptorSetOffset, descriptorSetCount);
+	const Vulkan::PipelineLayout* vkPipelineLayout = static_cast<const Vulkan::PipelineLayout*>(pipelineLayout);
+	BindDescriptorSet(vkPipelineLayout->GetPipelineLayout(), VK_PIPELINE_BIND_POINT_COMPUTE, descriptorSets, descriptorSetOffset, descriptorSetCount);
 }
 
 void Vulkan::CommandBuffer::BindDescriptorSet(
@@ -322,11 +357,13 @@ void Vulkan::CommandBuffer::BindCommandBuffers(
 }
 
 void Vulkan::CommandBuffer::BlitImage(
-	GraphicsAPI::Image* src,
-	GraphicsAPI::Image* dst,
+	Grindstone::GraphicsAPI::Image* src,
+	Grindstone::GraphicsAPI::Image* dst,
 	Grindstone::GraphicsAPI::ImageLayout oldLayout,
 	Grindstone::GraphicsAPI::ImageLayout newLayout,
-	uint32_t width, uint32_t height, uint32_t depth
+	Grindstone::GraphicsAPI::TextureFilter filter,
+	Grindstone::Math::IntBox3D srcRegion,
+	Grindstone::Math::IntBox3D dstRegion
 ) {
 	Vulkan::Image* vkSrc = static_cast<Vulkan::Image*>(src);
 	Vulkan::Image* vkDst = static_cast<Vulkan::Image*>(dst);
@@ -334,31 +371,48 @@ void Vulkan::CommandBuffer::BlitImage(
 	VkImageLayout srcLayout = TranslateImageLayoutToVulkan(oldLayout);
 	VkImageLayout dstLayout = TranslateImageLayoutToVulkan(newLayout);
 
-	VkImageBlit blit{};
-	blit.srcOffsets[0] = { 0, 0, 0 };
-	blit.srcOffsets[1] = {
-		static_cast<int32_t>(width),
-		static_cast<int32_t>(height),
-		static_cast<int32_t>(depth)
+	VkImageBlit blit{
+		.srcSubresource = {
+			.aspectMask = vkSrc->GetAspect(),
+			.mipLevel = 0,
+			.baseArrayLayer = 0,
+			.layerCount = vkSrc->GetArrayLayers()
+		},
+		.srcOffsets = {
+			{
+				srcRegion.offset.x,
+				srcRegion.offset.y,
+				srcRegion.offset.z
+			},
+			{
+				srcRegion.offset.x + static_cast<int32_t>(srcRegion.extent.x),
+				srcRegion.offset.y + static_cast<int32_t>(srcRegion.extent.y),
+				srcRegion.offset.z + static_cast<int32_t>(srcRegion.extent.z)
+			}
+		},
+		.dstSubresource = {
+			.aspectMask = vkDst->GetAspect(),
+			.mipLevel = 0,
+			.baseArrayLayer = 0,
+			.layerCount = vkDst->GetArrayLayers()
+		},
+		.dstOffsets = {
+			{
+				dstRegion.offset.x,
+				dstRegion.offset.y,
+				dstRegion.offset.z
+			},
+			{
+				dstRegion.offset.x + static_cast<int32_t>(dstRegion.extent.x),
+				dstRegion.offset.y + static_cast<int32_t>(dstRegion.extent.y),
+				dstRegion.offset.z + static_cast<int32_t>(dstRegion.extent.z)
+			}
+		},
 	};
-	blit.srcSubresource.aspectMask = vkSrc->GetAspect();
-	blit.srcSubresource.mipLevel = 0;
-	blit.srcSubresource.baseArrayLayer = 0;
-	blit.srcSubresource.layerCount = vkSrc->GetArrayLayers();
-	blit.dstOffsets[0] = { 0, 0, 0 };
-	blit.dstOffsets[1] = {
-		static_cast<int32_t>(width),
-		static_cast<int32_t>(height),
-		static_cast<int32_t>(depth)
-	};
-	blit.dstSubresource.aspectMask = vkDst->GetAspect();
-	blit.dstSubresource.mipLevel = 0;
-	blit.dstSubresource.baseArrayLayer = 0;
-	blit.dstSubresource.layerCount = vkDst->GetArrayLayers();
 
-	VkFilter filter = VkFilter::VK_FILTER_NEAREST;
+	VkFilter vkFilter = TranslateFilterToVulkan(filter);
 
-	vkCmdBlitImage(commandBuffer, vkSrc->GetImage(), srcLayout, vkDst->GetImage(), dstLayout, 1, &blit, filter);
+	vkCmdBlitImage(commandBuffer, vkSrc->GetImage(), srcLayout, vkDst->GetImage(), dstLayout, 1, &blit, vkFilter);
 }
 
 void Vulkan::CommandBuffer::SetDepthBias(float biasConstantFactor, float biasSlopeFactor) {
@@ -509,13 +563,11 @@ void Vulkan::CommandBuffer::CopyBufferRegion(GraphicsAPI::Buffer* srcBuffer, Gra
 }
 
 void Vulkan::CommandBuffer::PipelineBarrier(
-	GraphicsAPI::PipelineStageBit srcPipelineStageMask,
-	GraphicsAPI::PipelineStageBit dstPipelineStageMask,
 	const GraphicsAPI::BufferBarrier* bufferBarriers, uint32_t bufferBarrierCount,
 	const GraphicsAPI::ImageBarrier* imageBarriers, uint32_t imageBarrierCount
 ) {
-	std::vector<VkBufferMemoryBarrier> vkBufferBarriers;
-	std::vector<VkImageMemoryBarrier> vkImageBarriers;
+	std::vector<VkBufferMemoryBarrier2> vkBufferBarriers;
+	std::vector<VkImageMemoryBarrier2> vkImageBarriers;
 
 	for (uint32_t index = 0; index < imageBarrierCount; ++index) {
 		const GraphicsAPI::ImageBarrier& barrier = imageBarriers[index];
@@ -523,12 +575,16 @@ void Vulkan::CommandBuffer::PipelineBarrier(
 		Vulkan::Image* vulkanImage = static_cast<Vulkan::Image*>(barrier.image);
 
 		vkImageBarriers.emplace_back(
-			VkImageMemoryBarrier {
-				.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-				.srcAccessMask = (VkAccessFlags)(barrier.srcAccess),
-				.dstAccessMask = (VkAccessFlags)(barrier.dstAccess),
+			VkImageMemoryBarrier2{
+				.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+				.srcStageMask = (VkPipelineStageFlags2)(barrier.srcStageMask),
+				.srcAccessMask = (VkAccessFlags2)(barrier.srcAccess),
+				.dstStageMask = (VkPipelineStageFlags2)(barrier.dstStageMask),
+				.dstAccessMask = (VkAccessFlags2)(barrier.dstAccess),
 				.oldLayout = TranslateImageLayoutToVulkan(barrier.oldLayout),
 				.newLayout = TranslateImageLayoutToVulkan(barrier.newLayout),
+				.srcQueueFamilyIndex = 0,
+				.dstQueueFamilyIndex = 0,
 				.image = vulkanImage->GetImage(),
 				.subresourceRange = {
 					.aspectMask = TranslateImageAspectBitsToVulkan(barrier.imageAspect),
@@ -547,10 +603,14 @@ void Vulkan::CommandBuffer::PipelineBarrier(
 		Vulkan::Buffer* vulkanBuffer = static_cast<Vulkan::Buffer*>(barrier.buffer);
 
 		vkBufferBarriers.emplace_back(
-			VkBufferMemoryBarrier {
-				.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-				.srcAccessMask = (VkAccessFlags)(barrier.srcAccess),
-				.dstAccessMask = (VkAccessFlags)(barrier.dstAccess),
+			VkBufferMemoryBarrier2 {
+				.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+				.srcStageMask = (VkPipelineStageFlags2)(barrier.srcStageMask),
+				.srcAccessMask = (VkAccessFlags2)(barrier.srcAccess),
+				.dstStageMask = (VkPipelineStageFlags2)(barrier.dstStageMask),
+				.dstAccessMask = (VkAccessFlags2)(barrier.dstAccess),
+				.srcQueueFamilyIndex = 0,
+				.dstQueueFamilyIndex = 0,
 				.buffer = vulkanBuffer->GetBuffer(),
 				.offset = static_cast<VkDeviceSize>(barrier.offset),
 				.size = static_cast<VkDeviceSize>(barrier.size)
@@ -558,19 +618,21 @@ void Vulkan::CommandBuffer::PipelineBarrier(
 		);
 	}
 
-	VkPipelineStageFlagBits vkSrcPipelineStage = TranslatePipelineStageToVulkan(srcPipelineStageMask);
-	VkPipelineStageFlagBits vkDstPipelineStage = TranslatePipelineStageToVulkan(dstPipelineStageMask);
+	VkDependencyInfo dependencyInfo{
+		.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+		.pNext = nullptr,
+		.dependencyFlags = VkDependencyFlags(),
+		.memoryBarrierCount = 0u,
+		.pMemoryBarriers = nullptr,
+		.bufferMemoryBarrierCount = static_cast<uint32_t>(vkBufferBarriers.size()),
+		.pBufferMemoryBarriers = vkBufferBarriers.data(),
+		.imageMemoryBarrierCount = static_cast<uint32_t>(vkImageBarriers.size()),
+		.pImageMemoryBarriers = vkImageBarriers.data()
+	};
 
-	vkCmdPipelineBarrier(
+	vkCmdPipelineBarrier2(
 		commandBuffer,
-		vkSrcPipelineStage,
-		vkDstPipelineStage,
-		0,
-		0, nullptr,
-		static_cast<uint32_t>(vkBufferBarriers.size()),
-		vkBufferBarriers.data(),
-		static_cast<uint32_t>(vkImageBarriers.size()),
-		vkImageBarriers.data()
+		&dependencyInfo
 	);
 }
 

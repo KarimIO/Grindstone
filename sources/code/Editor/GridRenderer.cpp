@@ -71,7 +71,7 @@ void GridRenderer::Initialize() {
 	gridDescriptorSetLayoutCreateInfo.debugName = "Grid Descriptor Layout";
 	gridDescriptorSetLayoutCreateInfo.bindingCount = 1u;
 	gridDescriptorSetLayoutCreateInfo.bindings = &gridDescriptorLayoutBinding;
-	gridDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(gridDescriptorSetLayoutCreateInfo);
+	gridDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(gridDescriptorSetLayoutCreateInfo);
 
 	GraphicsAPI::DescriptorSet::CreateInfo gridDescriptorSetCreateInfo{};
 	gridDescriptorSetCreateInfo.bindingCount = 1u;
@@ -103,6 +103,8 @@ void GridRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer,
 		return;
 	}
 
+	Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = pipelineAsset->GetFirstPassPipelineLayout();
+
 	GridUniformBuffer gridData{};
 	gridData.projectionMatrix = proj;
 	gridData.viewMatrix = view;
@@ -114,7 +116,7 @@ void GridRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer,
 
 	gridUniformBuffers[imageIndex]->UploadData(&gridData);
 	commandBuffer->BindGraphicsPipeline(pipeline);
-	commandBuffer->BindGraphicsDescriptorSet(pipeline, &gridDescriptorSets[imageIndex], 2, 1);
+	commandBuffer->BindGraphicsDescriptorSet(pipelineLayout, &gridDescriptorSets[imageIndex], 2, 1);
 
 	commandBuffer->DrawVertices(6, 0, 1, 0);
 }

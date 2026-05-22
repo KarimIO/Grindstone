@@ -15,8 +15,8 @@ Vulkan::Framebuffer::Framebuffer(
 	uint32_t width,
 	uint32_t height,
 	const char* debugName
-) : renderPass(renderPass),
-	framebuffer(framebuffer),
+) : framebuffer(framebuffer),
+	renderPass(renderPass),
 	width(width),
 	height(height) {
 	if (debugName != nullptr) {
@@ -29,8 +29,8 @@ Vulkan::Framebuffer::Framebuffer(
 }
 
 Vulkan::Framebuffer::Framebuffer(const CreateInfo& createInfo) :
-	isCubemap(createInfo.isCubemap),
 	renderPass(createInfo.renderPass),
+	isCubemap(createInfo.isCubemap),
 	width(createInfo.width),
 	height(createInfo.height)
 {

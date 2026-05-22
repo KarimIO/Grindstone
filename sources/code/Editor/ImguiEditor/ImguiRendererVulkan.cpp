@@ -152,7 +152,7 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	descriptorSetLayoutCreateInfo.debugName = "Imgui Texture Layout";
 	descriptorSetLayoutCreateInfo.bindingCount = 1;
 	descriptorSetLayoutCreateInfo.bindings = &layoutBinding;
-	textureDescriptorLayout = Editor::Manager::GetEngineCore().GetGraphicsCore()->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+	textureDescriptorLayout = Editor::Manager::GetEngineCore().GetGraphicsCore()->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 }
 
@@ -220,6 +220,8 @@ void ImguiRendererVulkan::PrepareImguiRendering() {
 
 	GraphicsAPI::ImageBarrier outputImageBarrier{
 		.image = image,
+		.srcStageMask = GraphicsAPI::PipelineStageBit::TopOfPipe,
+		.dstStageMask = GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
 		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::Undefined,
 		.newLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
 		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::None,
@@ -232,8 +234,6 @@ void ImguiRendererVulkan::PrepareImguiRendering() {
 	};
 
 	currentCommandBuffer->PipelineBarrier(
-		GraphicsAPI::PipelineStageBit::TopOfPipe,
-		GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
 		nullptr, 0,
 		&outputImageBarrier, 1u
 	);
@@ -271,8 +271,10 @@ void ImguiRendererVulkan::PostRender() {
 
 	Grindstone::GraphicsAPI::Image* image = static_cast<GraphicsAPI::Vulkan::WindowGraphicsBinding*>(window)->GetSwapchainImage(window->GetCurrentImageIndex());
 
-	GraphicsAPI::ImageBarrier preTonemapImageBarrier{
+	GraphicsAPI::ImageBarrier presentImageBarrier{
 		.image = image,
+		.srcStageMask = GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
+		.dstStageMask = GraphicsAPI::PipelineStageBit::BottomOfPipe,
 		.oldLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
 		.newLayout = Grindstone::GraphicsAPI::ImageLayout::Present,
 		.srcAccess = Grindstone::GraphicsAPI::AccessFlags::ColorAttachmentWrite,
@@ -285,10 +287,8 @@ void ImguiRendererVulkan::PostRender() {
 	};
 
 	currentCommandBuffer->PipelineBarrier(
-		GraphicsAPI::PipelineStageBit::ColorAttachmentOutput,
-		GraphicsAPI::PipelineStageBit::BottomOfPipe,
 		nullptr, 0,
-		&preTonemapImageBarrier, 1u
+		&presentImageBarrier, 1u
 	);
 
 

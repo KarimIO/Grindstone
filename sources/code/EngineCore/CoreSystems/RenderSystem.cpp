@@ -100,15 +100,17 @@ namespace Grindstone {
 					.clearValue = Grindstone::GraphicsAPI::ClearColor()
 				};
 
+				/*
 				cameraComponent.renderer->Render(
 					currentCommandBuffer,
-					registry,
+					worldContextSet,
 					projectionMatrix,
 					viewMatrix,
 					pos,
-					attachment,
-					nullptr
+					image,
+					nullptr // TODO: Depth
 				);
+				*/
 
 				currentCommandBuffer->EndCommandBuffer();
 				wgb->SubmitCommandBufferForCurrentFrame(currentCommandBuffer);

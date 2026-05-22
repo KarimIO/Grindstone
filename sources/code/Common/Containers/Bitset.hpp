@@ -463,19 +463,19 @@ namespace Grindstone::Containers {
 		}
 
 		BitsetFlags operator&(const BitsetFlags& other) const {
-			return static_cast<Enum>(value & other.value);
+			return static_cast<Enum>(static_cast<UnderlyingType>(value) & static_cast<UnderlyingType>(other.value));
 		}
 
 		BitsetFlags operator|(const BitsetFlags& other) const {
-			return static_cast<Enum>(value | other.value);
+			return static_cast<Enum>(static_cast<UnderlyingType>(value) | static_cast<UnderlyingType>(other.value));
 		}
 
 		BitsetFlags operator^(const BitsetFlags& other) const {
-			return static_cast<Enum>(value ^ other.value);
+			return static_cast<Enum>(static_cast<UnderlyingType>(value) ^ static_cast<UnderlyingType>(other.value));
 		}
 
 		BitsetFlags operator~() const {
-			return static_cast<Enum>(~value);
+			return static_cast<Enum>(~static_cast<UnderlyingType>(value));
 		}
 
 		bool operator[](uint32_t index) const {

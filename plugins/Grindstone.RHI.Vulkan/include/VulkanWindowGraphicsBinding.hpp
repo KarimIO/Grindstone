@@ -47,6 +47,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 
 		// Inherited via WindowGraphicsBinding
 		virtual bool Initialize(Window *window) override;
+		virtual void WaitForRenderingFence() override;
 		virtual bool AcquireNextImage() override;
 		virtual void SubmitCommandBufferNoSynchronization(GraphicsAPI::CommandBuffer* buffer) override;
 		virtual void SubmitCommandBufferForCurrentFrame(GraphicsAPI::CommandBuffer* buffer) override;

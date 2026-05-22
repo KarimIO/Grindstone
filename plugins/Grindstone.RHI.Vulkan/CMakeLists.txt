@@ -8,8 +8,8 @@ set(INC ${RHI_VULKAN_BASE}/include)
 
 set(Vk_CORE_SOURCES ${SRC}/VulkanCore.cpp ${SRC}/EntryPoint.cpp)
 set(Vk_CORE_HEADERS ${INC}/VulkanCore.hpp)
-set(Vk_OBJ_SOURCES ${SRC}/VulkanUtils.cpp ${SRC}/VulkanFormat.cpp ${SRC}/VulkanSampler.cpp ${SRC}/VulkanFramebuffer.cpp ${SRC}/VulkanComputePipeline.cpp ${SRC}/VulkanGraphicsPipeline.cpp ${SRC}/VulkanImage.cpp ${SRC}/VulkanRenderPass.cpp ${SRC}/VulkanBuffer.cpp ${SRC}/VulkanCommandBuffer.cpp ${SRC}/VulkanDescriptorSetLayout.cpp ${SRC}/VulkanDescriptorSet.cpp ${SRC}/VulkanVertexArrayObject.cpp)
-set(Vk_OBJ_HEADERS ${INC}/VulkanUtils.hpp ${INC}/VulkanFormat.hpp ${INC}/VulkanSampler.hpp ${INC}/VulkanFramebuffer.hpp ${INC}/VulkanComputePipeline.hpp ${INC}/VulkanGraphicsPipeline.hpp ${INC}/VulkanImage.hpp ${INC}/VulkanRenderPass.hpp ${INC}/VulkanBuffer.hpp ${INC}/VulkanCommandBuffer.hpp ${INC}/VulkanDescriptorSetLayout.hpp ${INC}/VulkanDescriptorSet.hpp ${INC}/VulkanVertexArrayObject.hpp)
+set(Vk_OBJ_SOURCES ${SRC}/VulkanUtils.cpp ${SRC}/VulkanFormat.cpp ${SRC}/VulkanSampler.cpp ${SRC}/VulkanFramebuffer.cpp ${SRC}/VulkanPipelineLayout.cpp ${SRC}/VulkanComputePipeline.cpp ${SRC}/VulkanGraphicsPipeline.cpp ${SRC}/VulkanImage.cpp ${SRC}/VulkanRenderPass.cpp ${SRC}/VulkanBuffer.cpp ${SRC}/VulkanCommandBuffer.cpp ${SRC}/VulkanDescriptorSetLayout.cpp ${SRC}/VulkanDescriptorSet.cpp ${SRC}/VulkanVertexArrayObject.cpp)
+set(Vk_OBJ_HEADERS ${INC}/VulkanUtils.hpp ${INC}/VulkanFormat.hpp ${INC}/VulkanSampler.hpp ${INC}/VulkanFramebuffer.hpp ${INC}/VulkanPipelineLayout.hpp ${INC}/VulkanComputePipeline.hpp ${INC}/VulkanGraphicsPipeline.hpp ${INC}/VulkanImage.hpp ${INC}/VulkanRenderPass.hpp ${INC}/VulkanBuffer.hpp ${INC}/VulkanCommandBuffer.hpp ${INC}/VulkanDescriptorSetLayout.hpp ${INC}/VulkanDescriptorSet.hpp ${INC}/VulkanVertexArrayObject.hpp)
 set(Vk_WINDOW_SOURCES ${COMMON_DIR}/Window/WindowManager.cpp)
 set(Vk_WINDOW_HEADERS ${COMMON_DIR}/Window/WindowManager.hpp ${COMMON_DIR}/Window/Window.hpp)
 set(Vk_DISPLAY_SOURCES ${COMMON_DIR}/Display/DisplayManager.cpp)
@@ -30,8 +30,11 @@ set(Vk_OBJ_HEADERS ${Vk_OBJ_HEADERS} ${INC}/VulkanWindowGraphicsBinding.hpp)
 set(Vk_WINDOW_SOURCES ${Vk_WINDOW_SOURCES} ${COMMON_DIR}/Window/GlfwWindow.cpp)
 set(Vk_WINDOW_HEADERS ${Vk_WINDOW_HEADERS} ${COMMON_DIR}/Window/GlfwWindow.hpp)
 
-set(Vk_SOURCES ${Vk_CORE_SOURCES} ${Vk_OBJ_SOURCES} ${Vk_WINDOW_SOURCES} ${Vk_DISPLAY_SOURCES})
-set(Vk_HEADERS ${Vk_CORE_HEADERS} ${Vk_OBJ_HEADERS} ${Vk_WINDOW_HEADERS} ${Vk_DISPLAY_HEADERS} ${Vk_COMMON_HEADERS})
+set(Vk_GPU_CRASH_SOURCES ${SRC}/GpuCrashTracker/NsightAftermathGpuCrashTracker.cpp ${SRC}/GpuCrashTracker/NsightAftermathShaderDatabase.cpp)
+set(Vk_GPU_CRASH_HEADERS ${INC}/GpuCrashTracker/NsightAftermathGpuCrashTracker.h ${INC}/GpuCrashTracker/NsightAftermathHelpers.h ${INC}/GpuCrashTracker/NsightAftermathShaderDatabase.h)
+
+set(Vk_SOURCES ${Vk_CORE_SOURCES} ${Vk_OBJ_SOURCES} ${Vk_WINDOW_SOURCES} ${Vk_DISPLAY_SOURCES} ${Vk_GPU_CRASH_SOURCES})
+set(Vk_HEADERS ${Vk_CORE_HEADERS} ${Vk_OBJ_HEADERS} ${Vk_WINDOW_HEADERS} ${Vk_DISPLAY_HEADERS} ${Vk_GPU_CRASH_HEADERS} ${Vk_COMMON_HEADERS})
 
 source_group("Header Files\\Common Objects" FILES ${Vk_COMMON_HEADERS})
 
@@ -44,31 +47,49 @@ source_group("Header Files\\Window" FILES ${Vk_WINDOW_HEADERS})
 source_group("Source Files\\Display" FILES ${Vk_DISPLAY_SOURCES})
 source_group("Header Files\\Display" FILES ${Vk_DISPLAY_HEADERS})
 
+source_group("Source Files\\GpuCrash" FILES ${Vk_GPU_CRASH_SOURCES})
+source_group("Header Files\\GpuCrash" FILES ${Vk_GPU_CRASH_HEADERS})
+
+set(AFTERMATH_ARCH x64)
+set(AFTERMATH_DIR ${DEPS_DIR}/NvidiaAftermath)
+set(AFTERMATH_INC ${AFTERMATH_DIR}/include/)
+set(AFTERMATH_LIB_DIR ${AFTERMATH_DIR}/lib/${AFTERMATH_ARCH}/)
+set(AFTERMATH_LIB ${AFTERMATH_LIB_DIR}/GFSDK_Aftermath_Lib.${AFTERMATH_ARCH}.lib)
+set(AFTERMATH_DLL_NAME GFSDK_Aftermath_Lib.${AFTERMATH_ARCH}.dll)
+set(AFTERMATH_DLL ${AFTERMATH_LIB_DIR}/${AFTERMATH_DLL_NAME})
+
 add_library(PluginRhiVulkan MODULE ${Vk_SOURCES} ${Vk_HEADERS} ${CORE_UTILS})
-set_property(TARGET PluginRhiVulkan PROPERTY COMPILE_WARNING_AS_ERROR ON)
 set_target_properties(PluginRhiVulkan PROPERTIES FOLDER "Plugins/Render Hardware Interface")
 
 find_path(VULKAN_HEADERS_INCLUDE_DIRS "vk_video/vulkan_video_codec_h264std.h")
 find_package(Vulkan REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+find_package(VulkanUtilityLibraries CONFIG REQUIRED)
 
-target_include_directories(PluginRhiVulkan PUBLIC ${CODE_DIR} ${DEPS_DIR} ${VULKAN_HEADERS_INCLUDE_DIRS} ${PLUGIN_DIR})
+target_include_directories(PluginRhiVulkan PUBLIC ${CODE_DIR} ${DEPS_DIR} ${VULKAN_HEADERS_INCLUDE_DIRS} ${PLUGIN_DIR} ${AFTERMATH_INC})
 
 target_compile_definitions(PluginRhiVulkan PRIVATE GRAPHICS_DLL GLM_ENABLE_EXPERIMENTAL)
 
 find_package(glfw3 CONFIG REQUIRED)
 
-target_link_libraries(PluginRhiVulkan ${CORE_LIBS} Common Vulkan::Vulkan glfw fmt::fmt GPUOpen::VulkanMemoryAllocator)
+target_link_libraries(PluginRhiVulkan ${CORE_LIBS} Common Vulkan::Vulkan glfw fmt::fmt GPUOpen::VulkanMemoryAllocator Vulkan::LayerSettings Vulkan::UtilityHeaders Vulkan::CompilerConfiguration ${AFTERMATH_LIB})
 
 target_compile_features(PluginRhiVulkan PRIVATE cxx_std_20)
 
-if (WIN32)
-    target_compile_definitions(PluginRhiVulkan PRIVATE Vk_USE_PLATFORM_WIN32_KHR)
-else()
-    SET(Vk_PLATFORM "Vk_USE_PLATFORM_WIN32_KHR" CACHE STRING "Vulkan platform to use")
-    SET_PROPERTY(CACHE Vk_PLATFORM PROPERTY STRINGS Vk_USE_PLATFORM_WIN32_KHR Vk_KHR_XCB_SURFACE_EXTENSION_NAME  Vk_USE_PLATFORM_XLIB_KHR Vk_USE_PLATFORM_ANDROID_KHR)
+add_custom_command(
+	TARGET PluginRhiVulkan POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+		"${AFTERMATH_DLL}"
+		"${RHI_VULKAN_LIB}/$<CONFIG>/${AFTERMATH_DLL_NAME}"
+)
 
-    target_compile_definitions(PluginRhiVulkan PRIVATE ${Vk_PLATFORM})
+if (WIN32)
+	target_compile_definitions(PluginRhiVulkan PRIVATE Vk_USE_PLATFORM_WIN32_KHR)
+else()
+	SET(Vk_PLATFORM "Vk_USE_PLATFORM_WIN32_KHR" CACHE STRING "Vulkan platform to use")
+	SET_PROPERTY(CACHE Vk_PLATFORM PROPERTY STRINGS Vk_USE_PLATFORM_WIN32_KHR Vk_KHR_XCB_SURFACE_EXTENSION_NAME  Vk_USE_PLATFORM_XLIB_KHR Vk_USE_PLATFORM_ANDROID_KHR)
+
+	target_compile_definitions(PluginRhiVulkan PRIVATE ${Vk_PLATFORM})
 endif()
 
 set_target_properties(PluginRhiVulkan PROPERTIES

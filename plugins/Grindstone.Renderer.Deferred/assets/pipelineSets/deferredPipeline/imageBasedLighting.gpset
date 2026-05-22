@@ -15,9 +15,8 @@ pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 			]
 
 			shaderHlsl {
-				Texture2D<float4> ssao : register(t0, space2);
-				Texture2D<float4> brdfLUT : register(t1, space2);
-				TextureCube<float4> specularMap : register(t2, space2);
+				Texture2D<float4> brdfLUT : register(t0, space2);
+				TextureCube<float4> specularMap : register(t1, space2);
 
 				float3 Light_F(in float3 f0, in float3 f90, in float VH) {
 					return f0 + (f90 - f0) * pow(clamp(1 - VH, 0.0f, 1.0f), 5.0f);
@@ -88,7 +87,8 @@ pipelineSet "Image Based Lighting" inherits "DeferredLighting" {
 					float depthFromTexture = gbufferDepth.Sample(gbufferSampler, input.scaledFragmentTexCoord).r;
 
 					float3 position = ComputeWorldSpacePosition(rendererUbo.inverseProjectionMatrix, rendererUbo.inverseViewMatrix, input.fragmentTexCoord, depthFromTexture);
-					float3 albedo = gbufferAlbedo.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb;
+					// TODO: ShadowMap sampled here to avoid misaligned descriptors. This is wrong and we need to patch the reflection tool to keep descriptor set indices in check.
+					float3 albedo = gbufferAlbedo.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb + shadowMap.Sample(gbufferSampler, input.scaledFragmentTexCoord).rrr * 0.00001;
 					float3 normal = gbufferNormals.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb;
 					float3 specularInput = gbufferSpecularRoughnessValue.rgb;
 					float roughness = gbufferSpecularRoughnessValue.a * gbufferSpecularRoughnessValue.a;

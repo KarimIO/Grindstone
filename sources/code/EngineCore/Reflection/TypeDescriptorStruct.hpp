@@ -37,8 +37,8 @@ namespace Grindstone::Reflection {
 		}
 
 		TypeDescriptor_Struct(
-			const char* name,
-			size_t size,
+			[[maybe_unused]] const char* name,
+			[[maybe_unused]] size_t size,
 			const Category &init
 		) : TypeDescriptor{ nullptr, 0, ReflectionTypeData::Struct }, category{ init } {}
 	};

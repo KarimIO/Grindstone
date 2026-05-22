@@ -13,6 +13,7 @@ namespace Grindstone::GraphicsAPI {
 	class DescriptorSet;
 	class GraphicsPipeline;
 	class ComputePipeline;
+	class PipelineLayout;
 	class VertexArrayObject;
 	class DepthStencilTarget;
 
@@ -21,7 +22,7 @@ namespace Grindstone::GraphicsAPI {
 		IndirectCommandRead = 0x00000001,
 		IndexRead = 0x00000002,
 		VertexAttributeRead = 0x00000004,
-		UNIFORMRead = 0x00000008,
+		UniformRead = 0x00000008,
 		InputAttachmentRead = 0x00000010,
 		ShaderRead = 0x00000020,
 		ShaderWrite = 0x00000040,
@@ -50,6 +51,8 @@ namespace Grindstone::GraphicsAPI {
 
 	struct ImageBarrier {
 		Grindstone::GraphicsAPI::Image*				image = nullptr;
+		Grindstone::GraphicsAPI::PipelineStageBit	srcStageMask;
+		Grindstone::GraphicsAPI::PipelineStageBit	dstStageMask;
 		Grindstone::GraphicsAPI::ImageLayout		oldLayout;
 		Grindstone::GraphicsAPI::ImageLayout		newLayout;
 		Grindstone::GraphicsAPI::AccessFlags		srcAccess;
@@ -62,11 +65,13 @@ namespace Grindstone::GraphicsAPI {
 	};
 
 	struct BufferBarrier {
-		Grindstone::GraphicsAPI::Buffer*		buffer = nullptr;
-		Grindstone::GraphicsAPI::AccessFlags	srcAccess;
-		Grindstone::GraphicsAPI::AccessFlags	dstAccess;
-		uint32_t								offset = 0;
-		uint32_t								size = 0;
+		Grindstone::GraphicsAPI::Buffer*			buffer = nullptr;
+		Grindstone::GraphicsAPI::PipelineStageBit	srcStageMask;
+		Grindstone::GraphicsAPI::PipelineStageBit	dstStageMask;
+		Grindstone::GraphicsAPI::AccessFlags		srcAccess;
+		Grindstone::GraphicsAPI::AccessFlags		dstAccess;
+		uint32_t									offset = 0;
+		uint32_t									size = 0;
 	};
 
 	struct BufferCopyRegion {
@@ -81,6 +86,20 @@ namespace Grindstone::GraphicsAPI {
 		Grindstone::GraphicsAPI::LoadOp			loadOp = Grindstone::GraphicsAPI::LoadOp::Clear;
 		Grindstone::GraphicsAPI::StoreOp		storeOp = Grindstone::GraphicsAPI::StoreOp::Store;
 		Grindstone::GraphicsAPI::ClearUnion		clearValue;
+	};
+
+	struct ClearAttachment {
+		// What aspects of the image to clear.
+		Grindstone::GraphicsAPI::ImageAspectBits	aspectMask;
+		// Index into the bound color attachments, or unused if aspectMask isn't Color.
+		uint32_t									colorAttachmentIndex;
+		Grindstone::GraphicsAPI::ClearUnion			clearValue;
+	};
+
+	struct ClearRect {
+		Grindstone::Math::IntRect2D		rect;
+		uint32_t						baseArrayLayer;
+		uint32_t						layerCount;
 	};
 
 	/*! CommandBuffers are an object that hold a list of commands to be executed
@@ -114,18 +133,18 @@ namespace Grindstone::GraphicsAPI {
 		virtual void BeginDebugLabelSection(const char* name, float color[4] = nullptr) = 0;
 		virtual void EndDebugLabelSection() = 0;
 		virtual void BindGraphicsDescriptorSet(
-			const GraphicsPipeline* graphicsPipeline,
+			const GraphicsAPI::PipelineLayout* pipelineLayout,
 			const DescriptorSet* const* descriptorSets,
 			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) = 0;
 		virtual void BindComputeDescriptorSet(
-			const ComputePipeline* graphicsPipeline,
+			const GraphicsAPI::PipelineLayout* pipelineLayout,
 			const DescriptorSet* const* descriptorSets,
 			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) = 0;
-
+		virtual void ClearAttachments(ClearAttachment* attachments, uint32_t attachmentCount, ClearRect* rects, uint32_t rectCount) = 0;
 		virtual void CopyBufferRegions(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, BufferCopyRegion* regions, uint32_t regionCount) = 0;
 		virtual void CopyBufferRegion(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, uint64_t size = 0, uint32_t srcOffset = 0, uint32_t dstOffset = 0) = 0;
 
@@ -142,14 +161,16 @@ namespace Grindstone::GraphicsAPI {
 		virtual void DrawIndices(uint32_t firstIndex, uint32_t indexCount, uint32_t firstInstance, uint32_t instanceCount, int32_t vertexOffset) = 0;
 		virtual void DispatchCompute(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) = 0;
 		virtual void BlitImage(
-			Image* src, Image* dst,
+			Grindstone::GraphicsAPI::Image* src,
+			Grindstone::GraphicsAPI::Image* dst,
 			Grindstone::GraphicsAPI::ImageLayout oldLayout,
 			Grindstone::GraphicsAPI::ImageLayout newLayout,
-			uint32_t width, uint32_t height, uint32_t depth
+			Grindstone::GraphicsAPI::TextureFilter filter,
+			Grindstone::Math::IntBox3D srcRegion,
+			Grindstone::Math::IntBox3D dstRegion
 		) = 0;
 
 		virtual void PipelineBarrier(
-			GraphicsAPI::PipelineStageBit srcPipelineStageMask, GraphicsAPI::PipelineStageBit dstPipelineStageMask,
 			const GraphicsAPI::BufferBarrier* bufferBarriers, uint32_t bufferBarrierCount,
 			const GraphicsAPI::ImageBarrier* imageBarriers, uint32_t imageBarrierCount
 		) = 0;
@@ -169,10 +190,4 @@ namespace Grindstone::GraphicsAPI {
 	};
 }
 
-inline Grindstone::GraphicsAPI::AccessFlags operator|(Grindstone::GraphicsAPI::AccessFlags a, Grindstone::GraphicsAPI::AccessFlags b) {
-	return static_cast<Grindstone::GraphicsAPI::AccessFlags>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
-}
-
-inline Grindstone::GraphicsAPI::AccessFlags operator&(Grindstone::GraphicsAPI::AccessFlags a, Grindstone::GraphicsAPI::AccessFlags b) {
-	return static_cast<Grindstone::GraphicsAPI::AccessFlags>(static_cast<uint8_t>(a) & static_cast<uint8_t>(b));
-}
+GS_ENUM_FLAGS_FUNCS(Grindstone::GraphicsAPI::AccessFlags)

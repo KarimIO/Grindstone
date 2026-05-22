@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 
+#include "PipelineLayout.hpp"
 #include "Formats.hpp"
 
 namespace Grindstone::GraphicsAPI {
@@ -22,8 +23,7 @@ namespace Grindstone::GraphicsAPI {
 			const char* shaderFileName;
 			const char* shaderContent;
 			uint32_t shaderSize;
-			DescriptorSetLayout** descriptorSetLayouts;
-			uint32_t descriptorSetLayoutCount;
+			Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = nullptr;
 		};
 
 		virtual void Recreate(const ComputePipeline::CreateInfo& createInfo) = 0;

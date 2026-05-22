@@ -7,6 +7,7 @@
 #include "Framebuffer.hpp"
 #include "GraphicsPipeline.hpp"
 #include "ComputePipeline.hpp"
+#include "PipelineLayout.hpp"
 #include "CommandBuffer.hpp"
 #include "VertexArrayObject.hpp"
 #include "Image.hpp"
@@ -24,6 +25,17 @@ namespace Grindstone::GraphicsAPI {
 		Vulkan,
 		DirectX11,
 		DirectX12
+	};
+
+	enum class VendorType {
+		Unset,
+		Unknown,
+		AMD,
+		Imagination,
+		Nvidia,
+		Arm,
+		Qualcomm,
+		Intel
 	};
 
 	class Core {
@@ -56,25 +68,34 @@ namespace Grindstone::GraphicsAPI {
 		virtual void DeleteBuffer(Buffer* ptr) = 0;
 		virtual void DeleteGraphicsPipeline(GraphicsPipeline* ptr) = 0;
 		virtual void DeleteComputePipeline(ComputePipeline* ptr) = 0;
+		virtual void DeletePipelineLayout(PipelineLayout* ptr) = 0;
 		virtual void DeleteRenderPass(RenderPass* ptr) = 0;
 		virtual void DeleteDescriptorSet(DescriptorSet* ptr) = 0;
 		virtual void DeleteDescriptorSetLayout(DescriptorSetLayout* ptr) = 0;
 		virtual void DeleteCommandBuffer(CommandBuffer* ptr) = 0;
 		virtual void DeleteVertexArrayObject(VertexArrayObject* ptr) = 0;
 
-		virtual Framebuffer* CreateFramebuffer(const Framebuffer::CreateInfo& ci) = 0;
-		virtual RenderPass* CreateRenderPass(const RenderPass::CreateInfo& ci) = 0;
-		virtual GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipeline::CreateInfo& ci) = 0;
-		virtual ComputePipeline* CreateComputePipeline(const ComputePipeline::CreateInfo& ci) = 0;
-		virtual CommandBuffer* CreateCommandBuffer(const CommandBuffer::CreateInfo& ci) = 0;
-		virtual VertexArrayObject* CreateVertexArrayObject(const VertexArrayObject::CreateInfo& ci) = 0;
-		virtual Buffer* CreateBuffer(const Buffer::CreateInfo& ci) = 0;
-		virtual Sampler* CreateSampler(const Sampler::CreateInfo& createInfo) = 0;
-		virtual Image* CreateImage(const Image::CreateInfo& createInfo) = 0;
-		virtual DescriptorSet* CreateDescriptorSet(const DescriptorSet::CreateInfo& ci) = 0;
-		virtual DescriptorSetLayout* CreateDescriptorSetLayout(const DescriptorSetLayout::CreateInfo& ci) = 0;
+		virtual GraphicsAPI::Framebuffer* CreateFramebuffer(const Framebuffer::CreateInfo& ci) = 0;
+		virtual GraphicsAPI::RenderPass* CreateRenderPass(const RenderPass::CreateInfo& ci) = 0;
+		virtual GraphicsAPI::GraphicsPipeline* CreateGraphicsPipeline(const GraphicsPipeline::CreateInfo& ci) = 0;
+		virtual GraphicsAPI::ComputePipeline* CreateComputePipeline(const ComputePipeline::CreateInfo& ci) = 0;
+		virtual GraphicsAPI::PipelineLayout* CreatePipelineLayout(const PipelineLayout::CreateInfo& ci) = 0;
+		virtual GraphicsAPI::CommandBuffer* CreateCommandBuffer(const CommandBuffer::CreateInfo& ci) = 0;
+		virtual GraphicsAPI::VertexArrayObject* CreateVertexArrayObject(const VertexArrayObject::CreateInfo& ci) = 0;
+		virtual GraphicsAPI::Buffer* CreateBuffer(const Buffer::CreateInfo& ci) = 0;
+		virtual GraphicsAPI::Sampler* CreateSampler(const Sampler::CreateInfo& createInfo) = 0;
+		virtual GraphicsAPI::Image* CreateImage(const Image::CreateInfo& createInfo) = 0;
+		virtual GraphicsAPI::DescriptorSet* CreateDescriptorSet(const DescriptorSet::CreateInfo& ci) = 0;
+		virtual GraphicsAPI::DescriptorSetLayout* CreateDescriptorSetLayout(const DescriptorSetLayout::CreateInfo& ci) = 0;
 
-		virtual GraphicsPipeline* GetOrCreateGraphicsPipelineFromCache(const GraphicsPipeline::PipelineData& pipelineData, const VertexInputLayout* vertexInputLayout) = 0;
+		virtual GraphicsAPI::DescriptorSetLayout* GetOrCreateDescriptorSetLayoutFromCache(const Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo& createInfo) = 0;
+		virtual GraphicsAPI::GraphicsPipeline* GetOrCreateGraphicsPipelineFromCache(
+			GraphicsAPI::PipelineLayout* pipelineLayout,
+			const GraphicsAPI::GraphicsPipeline::PipelineData& pipelineData,
+			const GraphicsAPI::VertexInputLayout* vertexInputLayout
+		) = 0;
+		virtual Grindstone::GraphicsAPI::PipelineLayout* GetOrCreatePipelineLayoutFromCache(const Grindstone::GraphicsAPI::PipelineLayout::CreateInfo& createInfo) = 0;
+		virtual GraphicsAPI::Sampler* GetOrCreateSampler(const Grindstone::GraphicsAPI::Sampler::CreateInfo& createInfo) = 0;
 
 		virtual void CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) = 0;
 
@@ -103,34 +124,9 @@ namespace Grindstone::GraphicsAPI {
 		virtual void SetColorMask(ColorMask mask) = 0;
 		virtual void ResizeViewport(uint32_t w, uint32_t h) = 0;
 
-		const char* GetVendorNameFromID(uint32_t vendorID) {
-			switch (vendorID) {
-			case 0x1002:
-				return "Advanced Micro Devices (AMD)";
-				break;
-			case 0x1010:
-				return "Imagination Technologies";
-				break;
-			case 0x10DE:
-				return "NVIDIA Corporation";
-				break;
-			case 0x13B5:
-				return "Arm Limited";
-				break;
-			case 0x5143:
-				return "Qualcomm Technologies, Inc.";
-				break;
-			case 0x163C:
-			case 0x8086:
-			case 0x8087:
-				return "Intel Corporation";
-				break;
-			default:
-				return 0;
-			}
-		};
 	protected:
 		bool debug;
 		API apiType;
+		VendorType vendorType;
 	};
 }

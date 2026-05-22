@@ -38,17 +38,18 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void BeginDebugLabelSection(const char* name, float color[4] = nullptr) override;
 		virtual void EndDebugLabelSection() override;
 		virtual void BindGraphicsDescriptorSet(
-			const GraphicsAPI::GraphicsPipeline* graphicsPipeline,
+			const GraphicsAPI::PipelineLayout* pipelineLayout,
 			const GraphicsAPI::DescriptorSet* const* descriptorSets,
 			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) override;
 		virtual void BindComputeDescriptorSet(
-			const GraphicsAPI::ComputePipeline* graphicsPipeline,
+			const GraphicsAPI::PipelineLayout* pipelineLayout,
 			const GraphicsAPI::DescriptorSet* const* descriptorSets,
 			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) override;
+		virtual void ClearAttachments(ClearAttachment* attachments, uint32_t attachmentCount, ClearRect* rects, uint32_t rectCount) override;
 		virtual void CopyBufferRegions(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, BufferCopyRegion* regions, uint32_t regionCount) override;
 		virtual void CopyBufferRegion(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, uint64_t size, uint32_t srcOffset, uint32_t dstOffset) override;
 		virtual void BindCommandBuffers(Grindstone::GraphicsAPI::CommandBuffer** commandBuffers, uint32_t commandBuffersCount) override;
@@ -68,10 +69,11 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 			Grindstone::GraphicsAPI::Image* dst,
 			Grindstone::GraphicsAPI::ImageLayout oldLayout,
 			Grindstone::GraphicsAPI::ImageLayout newLayout,
-			uint32_t width, uint32_t height, uint32_t depth
+			Grindstone::GraphicsAPI::TextureFilter filter,
+			Grindstone::Math::IntBox3D srcRegion,
+			Grindstone::Math::IntBox3D dstRegion
 		) override;
 		virtual void PipelineBarrier(
-			GraphicsAPI::PipelineStageBit srcPipelineStageMask, GraphicsAPI::PipelineStageBit dstPipelineStageMask,
 			const GraphicsAPI::BufferBarrier* bufferBarriers, uint32_t bufferBarrierCount,
 			const GraphicsAPI::ImageBarrier* imageBarriers, uint32_t imageBarrierCount
 		) override;

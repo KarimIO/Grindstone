@@ -13,8 +13,8 @@ namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 Vulkan::Image::Image(VkImage image, VkFormat format, uint32_t swapchainIndex) :
 	GraphicsAPI::Image(1, 1, 1, 1, 1, 1, ImageDimension::Dimension2D, Format::Invalid, ImageUsageFlags::Sampled, MemoryUsage::GPUOnly),
 	imageName(std::string("Image View ") + std::to_string(swapchainIndex)),
-	imageViewType(VkImageViewType::VK_IMAGE_VIEW_TYPE_2D),
-	aspect(VK_IMAGE_ASPECT_COLOR_BIT) {
+	aspect(VK_IMAGE_ASPECT_COLOR_BIT),
+	imageViewType(VkImageViewType::VK_IMAGE_VIEW_TYPE_2D) {
 	UpdateNativeImage(image, imageView, format);
 	imageView = CreateImageView(image, imageViewType, vkFormat, aspect, mipLevels, arrayLayers);
 
@@ -23,7 +23,6 @@ Vulkan::Image::Image(VkImage image, VkFormat format, uint32_t swapchainIndex) :
 }
 
 Vulkan::Image::Image(const CreateInfo& createInfo) :
-	imageName(createInfo.debugName),
 	GraphicsAPI::Image(
 		createInfo.width,
 		createInfo.height,
@@ -35,7 +34,8 @@ Vulkan::Image::Image(const CreateInfo& createInfo) :
 		createInfo.format,
 		createInfo.imageUsage,
 		createInfo.memoryUsage
-	) {
+	),
+	imageName(createInfo.debugName) {
 	Create();
 
 	bool hasInitialData = createInfo.initialData != nullptr && createInfo.initialDataSize > 0;
@@ -278,8 +278,6 @@ Vulkan::Image::~Image() {
 }
 
 void Vulkan::Image::CreateImage() {
-	VkDevice device = Vulkan::Core::Get().GetDevice();
-
 	vkFormat = TranslateFormatToVulkan(format);
 
 	VkImageCreateFlags createFlags = 0;

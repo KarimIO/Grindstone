@@ -28,8 +28,8 @@ namespace Grindstone {
 		struct Pass {
 			std::string passPipelineName;
 			Grindstone::HashedString renderQueue;
+			GraphicsAPI::PipelineLayout* pipelineLayout = nullptr;
 			GraphicsAPI::GraphicsPipeline::PipelineData pipelineData;
-			std::array<GraphicsAPI::DescriptorSetLayout*, 16> descriptorSetLayouts;
 			std::array<Grindstone::Buffer, GraphicsAPI::numShaderGraphicStage> stageBuffers;
 			std::array<GraphicsAPI::ShaderStage, GraphicsAPI::numShaderGraphicStage> stageTypes;
 			std::array<GraphicsAPI::GraphicsPipeline::AttachmentData, 8> colorAttachmentData;
@@ -63,12 +63,12 @@ namespace Grindstone {
 			return metaData.resources.size();
 		}
 
-		Grindstone::GraphicsAPI::DescriptorSetLayout* GetMaterialDescriptorLayout() {
+		const Grindstone::GraphicsAPI::DescriptorSetLayout* GetMaterialDescriptorLayout() const {
 			if (passes.size() == 0) {
 				return nullptr;
 			}
 
-			return passes[0].descriptorSetLayouts[1];
+			return passes[0].pipelineLayout->descriptorSetLayouts[1];
 		}
 
 		const Grindstone::GraphicsPipelineAsset::Pass* GetFirstPass() const {
@@ -92,22 +92,32 @@ namespace Grindstone {
 				return nullptr;
 			}
 
-			std::vector<Grindstone::GraphicsAPI::GraphicsPipeline::ShaderStageData> stages;
-			stages.resize(passes[0].pipelineData.shaderStageCreateInfoCount);
+			auto& pass = passes[0];
 
-			for (size_t stageIndex = 0; stageIndex < passes[0].pipelineData.shaderStageCreateInfoCount; ++stageIndex) {
-				stages[stageIndex].content = reinterpret_cast<const char*>(passes[0].stageBuffers[stageIndex].Get());
-				stages[stageIndex].size = static_cast<uint32_t>(passes[0].stageBuffers[stageIndex].GetCapacity());
-				stages[stageIndex].type = passes[0].stageTypes[stageIndex];
+			std::vector<Grindstone::GraphicsAPI::GraphicsPipeline::ShaderStageData> stages;
+			stages.resize(pass.pipelineData.shaderStageCreateInfoCount);
+
+			for (size_t stageIndex = 0; stageIndex < pass.pipelineData.shaderStageCreateInfoCount; ++stageIndex) {
+				stages[stageIndex].content = reinterpret_cast<const char*>(pass.stageBuffers[stageIndex].Get());
+				stages[stageIndex].size = static_cast<uint32_t>(pass.stageBuffers[stageIndex].GetCapacity());
+				stages[stageIndex].type = pass.stageTypes[stageIndex];
 			}
 
-			passes[0].pipelineData.debugName = passes[0].passPipelineName.c_str();
-			passes[0].pipelineData.colorAttachmentData = passes[0].colorAttachmentData.data();
-			passes[0].pipelineData.descriptorSetLayouts = passes[0].descriptorSetLayouts.data();
-			passes[0].pipelineData.shaderStageCreateInfos = stages.data();
+			pass.pipelineData.debugName = pass.passPipelineName.c_str();
+			pass.pipelineData.colorAttachmentData = pass.colorAttachmentData.data();
+			pass.pipelineData.shaderStageCreateInfos = stages.data();
 
 			Grindstone::GraphicsAPI::Core* graphicsCore = Grindstone::EngineCore::GetInstance().GetGraphicsCore();
-			return graphicsCore->GetOrCreateGraphicsPipelineFromCache(passes[0].pipelineData, vertexInputLayout);
+			return graphicsCore->GetOrCreateGraphicsPipelineFromCache(pass.pipelineLayout, pass.pipelineData, vertexInputLayout);
+		}
+
+		Grindstone::GraphicsAPI::PipelineLayout* GetFirstPassPipelineLayout() {
+			if (passes.size() == 0) {
+				return nullptr;
+			}
+
+			auto& pass = passes[0];
+			return pass.pipelineLayout;
 		}
 
 		const Grindstone::GraphicsAPI::GraphicsPipeline* GetPassPipeline(Grindstone::HashedString renderQueue, const Grindstone::GraphicsAPI::VertexInputLayout* vertexInputLayout) const {
@@ -132,14 +142,14 @@ namespace Grindstone {
 				stages[stageIndex].type = selectedPass->stageTypes[stageIndex];
 			}
 
+			GraphicsAPI::PipelineLayout* pipelineLayout = selectedPass->pipelineLayout;
 			GraphicsAPI::GraphicsPipeline::PipelineData pipelineData = selectedPass->pipelineData;
 			pipelineData.debugName = selectedPass->passPipelineName.c_str();
 			pipelineData.colorAttachmentData = selectedPass->colorAttachmentData.data();
-			pipelineData.descriptorSetLayouts = selectedPass->descriptorSetLayouts.data();
 			pipelineData.shaderStageCreateInfos = stages.data();
 
 			Grindstone::GraphicsAPI::Core* graphicsCore = Grindstone::EngineCore::GetInstance().GetGraphicsCore();
-			return graphicsCore->GetOrCreateGraphicsPipelineFromCache(pipelineData, vertexInputLayout);
+			return graphicsCore->GetOrCreateGraphicsPipelineFromCache(pipelineLayout, pipelineData, vertexInputLayout);
 		}
 
 		const Grindstone::GraphicsPipelineAsset::Pass* GetPass(Grindstone::HashedString renderQueue) const {

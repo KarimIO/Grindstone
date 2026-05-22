@@ -6,10 +6,21 @@
 #include <stdint.h>
 
 #include <Common/HashedString.hpp>
+#include <Common/Rect.hpp>
+#include "GpuPassType.hpp"
+
+#include <Common/Graphics/Formats.hpp>
+#include <Common/Graphics/Buffer.hpp>
+#include <Common/Graphics/Image.hpp>
+#include <Common/Graphics/CommandBuffer.hpp>
+
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
+
 #include "RenderGraphPass.hpp"
-#include "GpuQueue.hpp"
 
 namespace Grindstone::GraphicsAPI {
+	class CommandBuffer;
+	class DescriptorSet;
 	class Buffer;
 	class Image;
 }
@@ -17,15 +28,16 @@ namespace Grindstone::GraphicsAPI {
 namespace Grindstone::Renderer {
 	class RenderGraph {
 	public:
-		void Print();
+		using ResourceId = size_t;
 
-		// Using all current conditions, evaluate all the framegraph passes and output them to a compiled frame graph with all resources prepared for the render.
-		RenderGraphPass& AddPass(RenderGraphPass pass);
-		RenderGraphPass& AddPass(HashedString name, GpuQueue queue);
+		RenderGraph() = default;
+		RenderGraph(std::vector<Grindstone::UniquePtr<Grindstone::Renderer::RenderGraphPass>>&& passes, const std::vector<Grindstone::Renderer::UnionResourceDescription>& resourceDescriptions);
+		void ExecuteGraph(Grindstone::Renderer::RenderGraphContext context);
 
-	private:
-		std::map<HashedString, RenderGraphPass> passes;
-		std::map<HashedString, Grindstone::GraphicsAPI::Buffer*> buffers;
-		std::map<HashedString, Grindstone::GraphicsAPI::Image*> images;
+	protected:
+
+		std::vector<Grindstone::UniquePtr<Grindstone::Renderer::RenderGraphPass>> passes;
+		std::vector<Grindstone::Renderer::UnionResourceDescription> resourceDescriptions;
+
 	};
 }

@@ -360,7 +360,7 @@ static bool LoadMaterial(
 	samplerCreateInfo.options.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat;
 
 	std::vector<GraphicsAPI::DescriptorSet::Binding> bindings;
-	bindings.emplace_back(GraphicsAPI::DescriptorSet::Binding::Sampler(graphicsCore->CreateSampler(samplerCreateInfo)));
+	bindings.emplace_back(GraphicsAPI::DescriptorSet::Binding::Sampler(graphicsCore->GetOrCreateSampler(samplerCreateInfo)));
 	// SetupUniformBuffer(document, *pipelineSetAsset, bindings, displayName, material);
 	SetupSamplers(document, *pipelineSetAsset, missingTexture, bindings, material);
 

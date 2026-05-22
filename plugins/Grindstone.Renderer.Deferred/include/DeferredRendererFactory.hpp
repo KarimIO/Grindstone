@@ -32,7 +32,7 @@ namespace Grindstone {
 		GraphicsAPI::RenderPass* mainRenderpass = nullptr;
 		GraphicsAPI::RenderPass* gbufferRenderpass = nullptr;
 
-		static std::array<Grindstone::BaseRenderer::RenderMode, static_cast<uint16_t>(DeferredRenderer::DeferredRenderMode::Count)> renderModes;
+		static std::array<Grindstone::BaseRenderer::RenderMode, static_cast<uint16_t>(Grindstone::Renderer::DeferredRenderMode::Count)> renderModes;
 
 	};
 }

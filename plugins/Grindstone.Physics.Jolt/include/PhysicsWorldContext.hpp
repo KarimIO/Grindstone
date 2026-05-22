@@ -9,7 +9,7 @@
 #include <Common/Memory/SmartPointers/UniquePtr.hpp>
 #include <EngineCore/WorldContext/WorldContext.hpp>
 
-const Grindstone::ConstHashedString physicsWorldContextName("PhysicsWorldContext");
+const Grindstone::ConstHashedString physicsWorldContextName("Grindstone::Physics::WorldContext");
 
 namespace Grindstone::Physics {
 	// Layer that objects can be in, determines which other objects it can collide with

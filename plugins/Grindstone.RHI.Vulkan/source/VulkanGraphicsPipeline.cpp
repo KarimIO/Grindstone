@@ -8,6 +8,7 @@
 #include <Grindstone.RHI.Vulkan/include/VulkanBuffer.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanDescriptorSetLayout.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanGraphicsPipeline.hpp>
+#include <Grindstone.RHI.Vulkan/include/VulkanPipelineLayout.hpp>
 
 namespace GraphicsAPI = Grindstone::GraphicsAPI;
 namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
@@ -183,39 +184,6 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 	colorBlending.blendConstants[2] = 0.0f;
 	colorBlending.blendConstants[3] = 0.0f;
 
-	std::vector<VkDescriptorSetLayout> layouts;
-	layouts.reserve(pipelineData.descriptorSetLayoutCount);
-
-
-	const Vulkan::DescriptorSetLayout* const * descriptorSetLayouts = reinterpret_cast<const Vulkan::DescriptorSetLayout* const *>(pipelineData.descriptorSetLayouts);
-
-	for (uint32_t i = 0; i < pipelineData.descriptorSetLayoutCount; ++i) {
-		const Vulkan::DescriptorSetLayout* descriptorSetLayout = descriptorSetLayouts[i];
-		VkDescriptorSetLayout vkDescriptorSetLayout = descriptorSetLayout->GetInternalLayout();
-		layouts.push_back(vkDescriptorSetLayout);
-	}
-
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(layouts.size());
-	pipelineLayoutInfo.pSetLayouts = layouts.data();
-	pipelineLayoutInfo.pushConstantRangeCount = 0;
-	pipelineLayoutInfo.pPushConstantRanges = nullptr;
-
-	if (vkCreatePipelineLayout(Vulkan::Core::Get().GetDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create pipeline layout!");
-		return;
-	}
-
-	if (pipelineData.debugName != nullptr) {
-		std::string layoutDebugName = std::string(pipelineData.debugName) + " Layout";
-		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_PIPELINE_LAYOUT, pipelineLayout, layoutDebugName.c_str());
-	}
-	else {
-		GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Graphics Pipeline!");
-		return;
-	}
-
 	Vulkan::RenderPass* renderPass = static_cast<Vulkan::RenderPass*>(pipelineData.renderPass);
 
 	std::vector<VkDynamicState> dynamicStates;
@@ -245,26 +213,34 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 	pipelineRendering.depthAttachmentFormat = renderPass->GetVkDepthFormat();
 	pipelineRendering.stencilAttachmentFormat = renderPass->GetVkStencilFormat();
 
-	VkGraphicsPipelineCreateInfo pipelineInfo = {};
-	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
-	pipelineInfo.pStages = shaderStages.data();
-	pipelineInfo.pVertexInputState = &vertexInputInfo;
-	pipelineInfo.pInputAssemblyState = &inputAssembly;
-	pipelineInfo.pViewportState = &viewportState;
-	pipelineInfo.pRasterizationState = &rasterizer;
-	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pDepthStencilState = &depthStencil;
-	pipelineInfo.pColorBlendState = &colorBlending;
-	pipelineInfo.layout = pipelineLayout;
-	pipelineInfo.subpass = 0;
-	pipelineInfo.pDynamicState = &dynamicInfo;
-	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-	pipelineInfo.renderPass = nullptr;
-	pipelineInfo.pNext = &pipelineRendering;
+	VkGraphicsPipelineCreateInfo pipelineInfo = {
+		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+		.pNext = &pipelineRendering,
+		.stageCount = static_cast<uint32_t>(shaderStages.size()),
+		.pStages = shaderStages.data(),
+		.pVertexInputState = &vertexInputInfo,
+		.pInputAssemblyState = &inputAssembly,
+		.pViewportState = &viewportState,
+		.pRasterizationState = &rasterizer,
+		.pMultisampleState = &multisampling,
+		.pDepthStencilState = &depthStencil,
+		.pColorBlendState = &colorBlending,
+		.pDynamicState = &dynamicInfo,
+		.layout = static_cast<Vulkan::PipelineLayout*>(createInfo.pipelineLayout)->GetPipelineLayout(),
+		.renderPass = nullptr,
+		.subpass = 0,
+		.basePipelineHandle = VK_NULL_HANDLE,
+	};
+
+	pipelineLayout = createInfo.pipelineLayout;
 
 	if (vkCreateGraphicsPipelines(Vulkan::Core::Get().GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
-		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create graphics pipeline!");
+		if (pipelineData.debugName != nullptr) {
+			GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to create graphics pipeline '{}'!", pipelineData.debugName);
+		}
+		else {
+			GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to create unnamed graphics pipeline!");
+		}
 		return;
 	}
 
@@ -282,16 +258,8 @@ Vulkan::GraphicsPipeline::~GraphicsPipeline() {
 	if (graphicsPipeline != nullptr) {
 		vkDestroyPipeline(device, graphicsPipeline, nullptr);
 	}
-
-	if (pipelineLayout != nullptr) {
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-	}
 }
 
 VkPipeline Vulkan::GraphicsPipeline::GetGraphicsPipeline() const {
 	return graphicsPipeline;
-}
-
-VkPipelineLayout Vulkan::GraphicsPipeline::GetGraphicsPipelineLayout() const {
-	return pipelineLayout;
 }

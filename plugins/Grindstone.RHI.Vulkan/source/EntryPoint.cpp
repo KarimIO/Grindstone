@@ -10,7 +10,6 @@
 using namespace Grindstone::Memory;
 using namespace Grindstone;
 
-Plugins::Interface* pluginInterface = nullptr;
 WindowManager* windowManager = nullptr;
 DisplayManager* displayManager = nullptr;
 
@@ -20,7 +19,6 @@ extern "C" {
 		Grindstone::Logger::SetLoggerState(pInterface->GetLoggerState());
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pInterface->GetAllocatorState());
 
-		pluginInterface = pInterface;
 		pInterface->RegisterGraphicsCore(AllocatorCore::Allocate<GraphicsAPI::Vulkan::Core>());
 
 		windowManager = AllocatorCore::Allocate<WindowManager>();
@@ -29,10 +27,10 @@ extern "C" {
 		pInterface->RegisterDisplayManager(displayManager);
 	}
 
-	GRAPHICS_VULKAN_API void ReleaseModule(Plugins::Interface* pluginInterface) {
+	GRAPHICS_VULKAN_API void ReleaseModule(Plugins::Interface* pInterface) {
 		AllocatorCore::Free(displayManager);
 		AllocatorCore::Free(windowManager);
-		AllocatorCore::Free(pluginInterface->GetGraphicsCore());
+		AllocatorCore::Free(pInterface->GetGraphicsCore());
 
 	}
 }

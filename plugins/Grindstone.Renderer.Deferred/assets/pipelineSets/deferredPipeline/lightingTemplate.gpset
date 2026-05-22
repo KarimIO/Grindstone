@@ -5,7 +5,7 @@ pipelineSet abstract "DeferredLighting" {
 	configuration "main" {
 		pass "main" {
 			renderQueue: "Lighting"
-			
+
 			properties {
 				cull: back
 				depthBias: false
@@ -166,6 +166,8 @@ pipelineSet abstract "DeferredLighting" {
 					Texture2D<float4> gbufferAlbedo : register(t2, space1);
 					Texture2D<float4> gbufferNormals : register(t3, space1);
 					Texture2D<float4> gbufferSpecularRoughness : register(t4, space1);
+					Texture2D<float4> shadowMap : register(t5, space1);
+					Texture2D<float4> ssao : register(t6, space1);
 				}
 			}
 		}

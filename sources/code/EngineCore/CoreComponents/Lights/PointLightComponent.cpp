@@ -78,7 +78,7 @@ void Grindstone::SetupPointLightComponent(Grindstone::WorldContextSet& cxtSet, e
 		pointLightDescriptorSetLayoutCreateInfo.debugName = "Light UBO Descriptor Set Layout";
 		pointLightDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightBindings.size());
 		pointLightDescriptorSetLayoutCreateInfo.bindings = lightBindings.data();
-		pointLightComponent.descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(pointLightDescriptorSetLayoutCreateInfo);
+		pointLightComponent.descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(pointLightDescriptorSetLayoutCreateInfo);
 	}
 
 	{
@@ -118,7 +118,7 @@ void Grindstone::SetupPointLightComponent(Grindstone::WorldContextSet& cxtSet, e
 		descriptorSetLayoutCreateInfo.debugName = "Pointlight Shadow Descriptor Set Layout";
 		descriptorSetLayoutCreateInfo.bindingCount = 1;
 		descriptorSetLayoutCreateInfo.bindings = &lightUboBindingLayout;
-		pointLightComponent.shadowMapDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(descriptorSetLayoutCreateInfo);
+		pointLightComponent.shadowMapDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 		DescriptorSet::Binding lightUboBinding{};
 		lightUboBinding.bindingIndex = 0;

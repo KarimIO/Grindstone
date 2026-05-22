@@ -30,7 +30,7 @@ MaterialInspector::MaterialInspector(EngineCore* engineCore, ImguiEditor* imguiE
 	layoutCreateInfo.debugName = "Material Inspector Descriptor Layout";
 	layoutCreateInfo.bindings = &binding;
 	layoutCreateInfo.bindingCount = 1;
-	textureDisplayDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(layoutCreateInfo);
+	textureDisplayDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(layoutCreateInfo);
 
 	std::array<unsigned char, 16> colorData = {
 		0x00, 0x00, 0x00, 0xff,

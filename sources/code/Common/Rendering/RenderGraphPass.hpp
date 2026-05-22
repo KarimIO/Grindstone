@@ -1,81 +1,170 @@
 #pragma once
 
 #include <vector>
+#include <variant>
 #include <functional>
 
 #include <Common/HashedString.hpp>
-#include "GpuQueue.hpp"
+#include <Common/Graphics/CommandBuffer.hpp>
+
+#include "GpuPassType.hpp"
+#include "RenderGraphContext.hpp"
 #include "AttachmentInfo.hpp"
 #include "BufferInfo.hpp"
+#include "RenderGraphFrameResources.hpp"
+
+namespace Grindstone::GraphicsAPI {
+	class Sampler;
+}
 
 namespace Grindstone::Renderer {
+	using UnionResourceDescription = std::variant<Grindstone::Renderer::ImageDescription, Grindstone::Renderer::BufferDescription>;
+
 	class RenderGraphPass {
 	public:
-		RenderGraphPass() = default;
-		RenderGraphPass(HashedString name, GpuQueue queue) : name(name), queue(queue) {}
-		RenderGraphPass(const RenderGraphPass& other) = default;
-		RenderGraphPass(RenderGraphPass&& other) noexcept = default;
-		RenderGraphPass& operator=(const RenderGraphPass& other) = default;
-		RenderGraphPass& operator=(RenderGraphPass&& other) noexcept = default;
+		virtual void RealizeResources(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) = 0;
+		virtual void Execute(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) = 0;
 
-		void AddInputImage(HashedString name, AttachmentInfo attachmentInfo);
-		void AddInputOutputImage(HashedString inName, HashedString outName, AttachmentInfo attachmentInfo);
-		void AddOutputImage(HashedString name, AttachmentInfo);
+		Grindstone::String name;
+		GpuPassType type;
 
-		void AddInputBuffer(HashedString name, BufferInfo bufferInfo);
-		void AddInputOutputBuffer(HashedString inName, HashedString outName, BufferInfo bufferInfo);
-		void AddOutputBuffer(HashedString name, BufferInfo bufferInfo);
-
-		void RenderEnabled();
-		void RenderDisabled();
-
-		// Set up the pass for rendering in the future
-		RenderGraphPass& SetOnSetup(std::function<void* ()> fn);
-
-		// Set up the pass for rendering in the future
-		RenderGraphPass& SetOnDestroy(std::function<void(void*)> fn);
-
-		// The real rendering of a pass.
-		RenderGraphPass& SetOnRenderEnabled(std::function<void(void*)> fn);
-
-		// For when rendering a system is disabled but resources still need to be cleared, etc.
-		RenderGraphPass& SetOnRenderDisabledCallback(std::function<void(void*)> fn);
-		HashedString GetName() const;
-
-		struct ContextData {
-			// This data will be kept as long as this pass is in use. When the pass is removed from all framegraphs, this data will be deleted (uses dynamic allocator).
-			void* permanentData = nullptr;
-
-			// This pass will create an instance of this data for each camera (uses dynamic allocator).
-			void* perCameraContext = nullptr;
-
-			// This pass will create an allocate this data every frame and dispose of it at the end of the frame (uses frame/stack allocator).
-			void* perFrameContext = nullptr;
-		};
+		std::vector<Grindstone::GraphicsAPI::ImageBarrier> imageBarriers;
+		std::vector<Grindstone::GraphicsAPI::BufferBarrier> bufferBarriers;
 
 	protected:
-		// What type of oass is this? Used for scheduling.
-		GpuQueue queue;
 
-		// The name of this pass (mostly used for debugging).
-		HashedString name;
+		void SubmitBarriers(Grindstone::Renderer::RenderGraphContext& context);
 
-		// The names of all the resources required by this pass.
-		std::vector<HashedString> dependencyResourceNames;
+	};
 
-		// The names of all the resources emitted by this pass.
-		std::vector<HashedString> emittedResourceNames;
+	class PipelineRenderGraphPass : public RenderGraphPass {
+	public:
 
-		// Set up the pass for rendering in the future
-		std::function<void* ()> OnSetup;
+		std::vector<GraphicsAPI::Sampler*> samplers;
+		std::vector<PassImageDesc> imageDescs;
+		std::vector<PassBufferDesc> bufferDescs;
+		Grindstone::GraphicsAPI::DescriptorSet* passDescriptorSet = nullptr;
+		Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = nullptr;
 
-		// Set up the pass for rendering in the future
-		std::function<void(void*)> OnDestroy;
+		virtual void RealizeResources(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) override;
 
-		// The real rendering of a pass.
-		std::function<void(void*)> OnRenderEnabled;
+	};
 
-		// For when rendering a system is disabled but resources still need to be cleared, etc.
-		std::function<void(void*)> OnRenderDisabled;
+	class GraphicsRenderGraphPassBase : public PipelineRenderGraphPass {
+	public:
+
+		Grindstone::Renderer::MetaRect metaRenderingArea;
+
+		virtual Grindstone::Math::IntRect2D PrepareGraphicsPass(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		);
+		virtual void EndGraphicsPass(Grindstone::Renderer::RenderGraphContext& context);
+
+	};
+
+	template<typename ReturnType>
+	class GraphicsRenderGraphPass : public GraphicsRenderGraphPassBase {
+	public:
+		using ExecutionCallbackFn = std::function<void(Grindstone::Math::IntRect2D, Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, ReturnType&)>;
+		ExecutionCallbackFn executionCallback;
+		ReturnType returnData;
+
+		virtual void Execute(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) override {
+			GS_ASSERT_ENGINE_WITH_MESSAGE(executionCallback != nullptr, "Execution callback for rendergraph pass %s is not set.", name.c_str());
+
+			Grindstone::Math::IntRect2D renderingArea = PrepareGraphicsPass(context, frameResources);
+			executionCallback(renderingArea, context, frameResources, returnData);
+			EndGraphicsPass(context);
+		}
+
+	};
+
+	class ComputeRenderGraphPassBase : public PipelineRenderGraphPass {
+	public:
+
+	protected:
+
+		void PrepareComputePass(Grindstone::Renderer::RenderGraphContext& context);
+
+	};
+
+	template<typename ReturnType>
+	class ComputeRenderGraphPass : public ComputeRenderGraphPassBase {
+	public:
+		using ExecutionCallbackFn = std::function<void(Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, ReturnType&)>;
+		ExecutionCallbackFn executionCallback;
+		ReturnType returnData;
+
+		virtual void Execute(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) override {
+			GS_ASSERT_ENGINE_WITH_MESSAGE(executionCallback != nullptr, "Execution callback for rendergraph pass %s is not set.", name.c_str());
+
+			context.commandBuffer->BeginDebugLabelSection(name.c_str());
+			PrepareComputePass(context);
+			executionCallback(context, frameResources, returnData);
+			context.commandBuffer->EndDebugLabelSection();
+		}
+
+	};
+
+	struct ImageTransfer {
+		Grindstone::GraphicsAPI::Image* dst;
+		Grindstone::GraphicsAPI::Image* src;
+		GraphicsAPI::TextureFilter filter;
+		Grindstone::Math::IntBox3D srcRegion;
+		Grindstone::Math::IntBox3D dstRegion;
+	};
+
+	struct BufferTransfer {
+		Grindstone::GraphicsAPI::Buffer* dstBuff;
+		Grindstone::GraphicsAPI::Buffer* srcBuff;
+		uint64_t dstOffset;
+		uint64_t srcOffset;
+		uint64_t size;
+	};
+
+	class TransferRenderGraphPass : public RenderGraphPass {
+	public:
+
+		virtual void RealizeResources(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) override;
+		virtual void Execute(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) override;
+
+	protected:
+		std::vector<ImageTransfer> imageTransfers;
+		std::vector<BufferTransfer> bufferTransfers;
+	};
+
+	class PresentRenderGraphPass : public RenderGraphPass {
+	public:
+		virtual void RealizeResources(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) override;
+		virtual void Execute(
+			Grindstone::Renderer::RenderGraphContext& context,
+			Grindstone::Renderer::RenderGraphFrameResources& frameResources
+		) override;
+
 	};
 }

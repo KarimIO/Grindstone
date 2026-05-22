@@ -9,7 +9,7 @@
 namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
 Vulkan::RenderPass::RenderPass(VkRenderPass renderPass, const char* debugName)
-	: renderPass(renderPass), ownsRenderPass(false) {
+	: ownsRenderPass(false), renderPass(renderPass) {
 
 	if (debugName != nullptr) {
 		this->debugName = debugName;

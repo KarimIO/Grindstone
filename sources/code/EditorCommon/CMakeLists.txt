@@ -6,13 +6,13 @@ set(INC ${EDITOR_COMMON_DIR}/include)
 
 file(GLOB_RECURSE SOURCE_EDITOR "${EDITOR_COMMON_DIR}/Editor/*.cpp")
 file(GLOB_RECURSE HEADER_EDITOR "${EDITOR_COMMON_DIR}/Editor/*.hpp")
-source_group("Editor\\Source Files" FILES ${SOURCE_EDITOR})
-source_group("Editor\\Header Files" FILES ${HEADER_EDITOR})
+source_group("Source Files\\Editor" FILES ${SOURCE_EDITOR})
+source_group("Header Files\\Editor" FILES ${HEADER_EDITOR})
 
 file(GLOB_RECURSE SOURCE_RESOURCE_PIPELINE "${EDITOR_COMMON_DIR}/ResourcePipeline/*.cpp")
 file(GLOB_RECURSE HEADER_RESOURCE_PIPELINE "${EDITOR_COMMON_DIR}/ResourcePipeline/*.hpp")
-source_group("ResourcePipeline\\Source Files" FILES ${SOURCE_RESOURCE_PIPELINE})
-source_group("ResourcePipeline\\Header Files" FILES ${HEADER_RESOURCE_PIPELINE})
+source_group("Source Files\\ResourcePipeline" FILES ${SOURCE_RESOURCE_PIPELINE})
+source_group("Header Files\\ResourcePipeline" FILES ${HEADER_RESOURCE_PIPELINE})
 
 set(EDITOR_COMMON_SOURCES
     ${SOURCE_EDITOR}

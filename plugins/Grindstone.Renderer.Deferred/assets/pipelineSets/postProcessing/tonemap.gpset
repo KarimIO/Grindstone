@@ -21,9 +21,9 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 			}
 
 			shaderHlsl {
-				SamplerState gbufferSampler : register(s0, space2);
-				Texture2D<float4> litSceneTexture : register(t1, space2);
-				Texture2D<float4> bloomTexture : register(t2, space2);
+				SamplerState gbufferSampler : register(s0, space1);
+				Texture2D<float4> litSceneTexture : register(t1, space1);
+				Texture2D<float4> bloomTexture : register(t2, space1);
 
 				struct PostProcessUbo {
 					float4 vignetteColor;
@@ -38,7 +38,7 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 					bool isAnimated;
 				};
 
-				ConstantBuffer<PostProcessUbo> postProcessingUbo : register(b3, space2);
+				ConstantBuffer<PostProcessUbo> postProcessingUbo : register(b0, space2);
 
 				float3 hdrTransform(float3 color) {
 					float a = 2.51f;
@@ -128,15 +128,14 @@ pipelineSet "Tonemapping" inherits "PostProcessing" {
 					float2 resolution = rendererUbo.renderResolution;
 
 					float3 sceneColor = litSceneTexture.Sample(gbufferSampler, inData.scaledFragmentTexCoord).rgb;
-					float3 bloomColor = bloomTexture.Sample(gbufferSampler, inData.scaledFragmentTexCoord * 2).rgb;
+					float3 bloomColor = bloomTexture.Sample(gbufferSampler, inData.scaledFragmentTexCoord).rgb;
 
 					float3 combinedColor = sceneColor + bloomColor;
-					combinedColor = applyVignette(sceneColor, inData.fragmentTexCoord);
-					combinedColor = applyGrain(sceneColor, resolution, inData.fragmentTexCoord);
+					// combinedColor = applyVignette(combinedColor, inData.scaledFragmentTexCoord);
+					combinedColor = applyGrain(combinedColor, resolution, inData.scaledFragmentTexCoord);
 					combinedColor = hdrTransform(combinedColor);
 
-
-					return float4(sceneColor.rgb, 1);
+					return float4(combinedColor, 1);
 				}
 			}
 		}

@@ -14,6 +14,6 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual VkDescriptorSet GetDescriptorSet() const;
 	private:
 		VkDescriptorSet descriptorSet = nullptr;
-		Vulkan::DescriptorSetLayout* layout = nullptr;
+		const Vulkan::DescriptorSetLayout* layout = nullptr;
 	};
 }
