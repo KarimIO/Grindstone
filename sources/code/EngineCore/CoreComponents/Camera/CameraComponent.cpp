@@ -38,15 +38,13 @@ void Grindstone::SetupCameraComponent(Grindstone::WorldContextSet& cxtSet, entt:
 
 	CameraComponent& cameraComponent = cxtSet.GetEntityRegistry().get<CameraComponent>(entity);
 
-	GraphicsAPI::RenderPass* renderPass = wgb->GetRenderPass();
-	if (renderPass != nullptr) {
-		cameraComponent.renderer = engineCore.GetRendererFactory()->CreateRenderer(wgb->GetRenderPass());
+	GraphicsAPI::RenderPass* renderPass = nullptr;
+	cameraComponent.renderer = engineCore.GetRendererFactory()->CreateRenderer(wgb->GetRenderPass());
 
-		eventDispatcher->AddEventListener(
-			Events::EventType::WindowResize,
-			std::bind(&BaseRenderer::OnWindowResize, cameraComponent.renderer, std::placeholders::_1)
-		);
-	}
+	eventDispatcher->AddEventListener(
+		Events::EventType::WindowResize,
+		std::bind(&BaseRenderer::OnWindowResize, cameraComponent.renderer, std::placeholders::_1)
+	);
 
 	eventDispatcher->AddEventListener(
 		Events::EventType::WindowResize,

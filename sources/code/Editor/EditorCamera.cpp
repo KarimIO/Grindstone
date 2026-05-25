@@ -401,6 +401,8 @@ uint64_t EditorCamera::GetRenderOutput() {
 	return (uint64_t)(static_cast<GraphicsAPI::Vulkan::DescriptorSet*>(descriptorSet[imageIndex])->GetDescriptorSet());
 }
 
+static std::array<Grindstone::Renderer::TransientResourceManager*, 3> transientResourceManagers{};
+
 void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
 	EngineCore& engineCore = editorManager.GetEngineCore();
@@ -450,7 +452,6 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 	globalStagingUniformBufferObject->UploadData(&engineUboStruct);
 	commandBuffer->CopyBufferRegion(globalStagingUniformBufferObject, globalUniformBufferObject[imageIndex]);
 
-	static std::array<Grindstone::Renderer::TransientResourceManager*, 3> transientResourceManagers{};
 	Grindstone::Renderer::TransientResourceManager*& transientResourceManager = transientResourceManagers[imageIndex];
 	if (transientResourceManager == nullptr) {
 		transientResourceManager = Grindstone::Memory::AllocatorCore::Allocate<Grindstone::Renderer::TransientResourceManager>();
@@ -669,19 +670,102 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 	auto wgb = window->GetWindowGraphicsBinding();
 	uint32_t imageIndex = wgb->GetCurrentImageIndex();
 	Grindstone::GraphicsAPI::Image* image = renderTarget[imageIndex];
+	Grindstone::GraphicsAPI::Image* depthImage = depthTarget[imageIndex];
 
 	GS_ASSERT(cxtSet != nullptr);
-	/*
+	Grindstone::Renderer::TransientResourceManager*& transientResourceManager = transientResourceManagers[imageIndex];
+	if (transientResourceManager == nullptr) {
+		transientResourceManager = Grindstone::Memory::AllocatorCore::Allocate<Grindstone::Renderer::TransientResourceManager>();
+	}
+
+	glm::mat4 adjustedPerspectiveMatrix = projectionMatrix;
+	graphicsCore->AdjustPerspective(&adjustedPerspectiveMatrix[0][0]);
+
+	EngineUboStruct engineUboStruct{
+		.projectionMatrix = adjustedPerspectiveMatrix,
+		.viewMatrix = viewMatrix,
+		.inverseProjectionMatrix = glm::inverse(adjustedPerspectiveMatrix),
+		.inverseViewMatrix = glm::inverse(viewMatrix),
+		.eyePos = pos,
+		.framebufferResolution = glm::vec2(width, height),
+		.renderResolution = glm::vec2(width, height),
+		.renderScale = glm::vec2(1.0f, 1.0f),
+		.time = static_cast<float>(engineCore.GetTimeSinceLaunch())
+	};
+
+	globalStagingUniformBufferObject->UploadData(&engineUboStruct);
+	commandBuffer->CopyBufferRegion(globalStagingUniformBufferObject, globalUniformBufferObject[imageIndex]);
+
+	Grindstone::Renderer::RenderGraphContext context{
+		.graphicsCore = graphicsCore,
+		.transientResourceManager = transientResourceManager,
+		.globalDescriptorSetLayout = globalDescriptorSetLayout,
+		.globalDescriptorSet = globalDescriptorSet[imageIndex],
+		.swapchainSize = Math::Extent2D(width, height),
+		.commandBuffer = commandBuffer,
+		.worldContextSet = cxtSet,
+		.swapchainIndex = imageIndex
+	};
+
+	Grindstone::Renderer::RenderGraphBuilder renderGraphBuilder;
+
+	Renderer::RenderGraphBuilderResourceRef colorImageRef = renderGraphBuilder.AddImage(
+		Grindstone::Renderer::ImageDescription{
+			.name = "Camera Output Image (Tonemapped)",
+			.size = Grindstone::Renderer::MetaSize2D::Viewport(),
+			.samples = 1,
+			.mipLevels = 1,
+			.depth = 1,
+			.arrayLayers = 1,
+			.format = Grindstone::GraphicsAPI::Format::R8G8B8A8_SNORM,
+			.imageDimensions = GraphicsAPI::ImageDimension::Dimension2D,
+			.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly,
+			.imageUsage = GraphicsAPI::ImageUsageFlags::RenderTarget | GraphicsAPI::ImageUsageFlags::Sampled,
+			.externalInitialLayout = GraphicsAPI::ImageLayout::Undefined,
+			.externalInitialAccessFlags = GraphicsAPI::AccessFlags::None,
+			.externalInitialPipelineStage = GraphicsAPI::PipelineStageBit::TopOfPipe,
+			.externalFinalLayout = GraphicsAPI::ImageLayout::ShaderRead,
+			.externalFinalAccessFlags = GraphicsAPI::AccessFlags::ShaderRead,
+			.externalFinalPipelineStage = GraphicsAPI::PipelineStageBit::FragmentShader,
+			.externalGetterCallback = [image]() { return image; }
+		}
+	);
+
+	Renderer::RenderGraphBuilderResourceRef depthImageRef = renderGraphBuilder.AddImage(
+		Grindstone::Renderer::ImageDescription{
+			.name = "Depth Image",
+			.size = Grindstone::Renderer::MetaSize2D::Viewport(),
+			.samples = 1,
+			.mipLevels = 1,
+			.depth = 1,
+			.arrayLayers = 1,
+			.format = Grindstone::GraphicsAPI::Format::D32_SFLOAT,
+			.imageDimensions = GraphicsAPI::ImageDimension::Dimension2D,
+			.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly,
+			.imageUsage = GraphicsAPI::ImageUsageFlags::DepthStencil | GraphicsAPI::ImageUsageFlags::Sampled,
+			.externalInitialLayout = GraphicsAPI::ImageLayout::Undefined,
+			.externalInitialAccessFlags = GraphicsAPI::AccessFlags::None,
+			.externalInitialPipelineStage = GraphicsAPI::PipelineStageBit::TopOfPipe,
+			.externalFinalLayout = GraphicsAPI::ImageLayout::ShaderRead,
+			.externalFinalAccessFlags = GraphicsAPI::AccessFlags::ShaderRead,
+			.externalFinalPipelineStage = GraphicsAPI::PipelineStageBit::FragmentShader,
+			.externalGetterCallback = [depthImage]() { return depthImage; }
+		}
+	);
+
 	renderer->Render(
 		commandBuffer,
 		*cxtSet,
-		projectionMatrix,
+		adjustedPerspectiveMatrix,
 		viewMatrix,
 		pos,
-		image,
-		nullptr
+		renderGraphBuilder,
+		colorImageRef,
+		depthImageRef
 	);
-	*/
+
+	auto renderGraph = renderGraphBuilder.Compile();
+	renderGraph.ExecuteGraph(context);
 }
 
 const float maxAngle = 1.55f;
