@@ -15,14 +15,17 @@ static entt::registry& GetEntityRegistry() {
 
 void ComponentRegistrar::CopyRegistry(WorldContextSet& dst, WorldContextSet& src) {
 	const entt::registry& srcRegistry = src.GetEntityRegistry();
-	entt::registry& dstRegistry = src.GetEntityRegistry();
+	entt::registry& dstRegistry = dst.GetEntityRegistry();
 
 	auto srcEntityView = srcRegistry.view<entt::entity>();
 	srcEntityView.each(
-		[&dstRegistry](entt::entity srcEntity) {
-			entt::entity dstEntity = dstRegistry.create(srcEntity);
+		[&dstRegistry](entt::entity entityID) {
+			entt::entity dstEntity = dstRegistry.create(entityID);
 			if (dstEntity == entt::null) {
 				GPRINT_ERROR_V(LogSource::EngineCore, "Failure to create entity {}", static_cast<uint32_t>(dstEntity));
+			}
+			else if (dstEntity != entityID) {
+				GPRINT_ERROR_V(LogSource::EngineCore, "New entity {} != old entity {}", static_cast<uint32_t>(dstEntity), static_cast<uint32_t>(entityID));
 			}
 		}
 	);

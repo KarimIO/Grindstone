@@ -38,8 +38,8 @@ void Grindstone::WorldContextManager::SetActiveWorldContextSet(Grindstone::World
 	GS_ASSERT_LOG("Invalid WorldContextSet set to active!");
 }
 
-Grindstone::WorldContextSet* Grindstone::WorldContextManager::Create() {
-	Grindstone::UniquePtr<Grindstone::WorldContextSet>& newCxt = worldContextSets.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<Grindstone::WorldContextSet>());
+Grindstone::WorldContextSet* Grindstone::WorldContextManager::Create(const std::string& name) {
+	Grindstone::UniquePtr<Grindstone::WorldContextSet>& newCxt = worldContextSets.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<Grindstone::WorldContextSet>(name));
 	newCxt->GetEntityRegistry().clear();
 
 	for (const auto& it : factoryFunctions) {

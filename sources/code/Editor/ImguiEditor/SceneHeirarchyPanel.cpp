@@ -79,7 +79,8 @@ void SceneHeirarchyPanel::RenderScene(SceneManagement::Scene* scene) {
 		ImGui::EndPopup();
 	}
 
-	entt::registry& registry = scene->GetEntityRegistry();
+	WorldContextSet* cxtSet = EngineCore::GetInstance().GetWorldContextManager()->GetActiveWorldContextSet();
+	entt::registry& registry = cxtSet->GetEntityRegistry();
 	bool hasEntities = false;
 
 	EntityParentTagView view = registry.view<entt::entity, TagComponent, ParentComponent>();

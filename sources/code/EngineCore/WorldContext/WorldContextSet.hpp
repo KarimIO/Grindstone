@@ -10,7 +10,7 @@
 namespace Grindstone {
 	class WorldContextSet {
 	public:
-		WorldContextSet() : registry(), contexts() {}
+		WorldContextSet(const std::string& name) : name(name), registry(), contexts() {}
 
 		WorldContextSet(const WorldContextSet&) = delete;
 		WorldContextSet& operator=(const WorldContextSet&) = delete;
@@ -55,6 +55,7 @@ namespace Grindstone {
 		}
 
 	protected:
+		std::string name;
 		entt::registry registry;
 		std::map<Grindstone::HashedString, Grindstone::UniquePtr<Grindstone::WorldContext>> contexts;
 	};
