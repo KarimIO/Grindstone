@@ -1,5 +1,6 @@
 #pragma once
 
+#include <entt/entt.hpp>
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/Collision/Shape/Shape.h>
 
@@ -18,6 +19,8 @@ namespace Grindstone::Physics {
 
 		JPH::Ref<JPH::Shape> collisionShape = nullptr;
 	};
+
+	ColliderComponent* GetCollider(entt::registry& registry, entt::entity entityHandle);
 
 	struct SphereColliderComponent : public ColliderComponent {
 		SphereColliderComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;

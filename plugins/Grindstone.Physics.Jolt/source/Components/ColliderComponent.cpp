@@ -15,6 +15,30 @@ using namespace JPH::literals;
 using namespace Grindstone::Physics;
 using namespace Grindstone::Math;
 
+ColliderComponent* Grindstone::Physics::GetCollider(entt::registry& registry, entt::entity entityHandle) {
+	SphereColliderComponent* sphere = registry.try_get<SphereColliderComponent>(entityHandle);
+	if (sphere != nullptr) {
+		return sphere;
+	}
+
+	BoxColliderComponent* box = registry.try_get<BoxColliderComponent>(entityHandle);
+	if (box != nullptr) {
+		return box;
+	}
+
+	PlaneColliderComponent* plane = registry.try_get<PlaneColliderComponent>(entityHandle);
+	if (plane != nullptr) {
+		return plane;
+	}
+
+	CapsuleColliderComponent* capsule = registry.try_get<CapsuleColliderComponent>(entityHandle);
+	if (capsule != nullptr) {
+		return capsule;
+	}
+
+	return nullptr;
+}
+
 REFLECT_STRUCT_BEGIN(SphereColliderComponent)
 	REFLECT_STRUCT_MEMBER(radius)
 	REFLECT_NO_SUBCAT()

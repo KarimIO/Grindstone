@@ -15,6 +15,7 @@
 
 #include <Editor/PluginSystem/EditorPluginInterface.hpp>
 
+#include <Grindstone.Physics.Jolt/include/Components/CharacterControllerComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/Components/ColliderComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/Components/RigidBodyComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/PhysicsSystem.hpp>
@@ -126,11 +127,13 @@ extern "C" {
 
 		pluginInterface->RegisterWorldContextFactory<Grindstone::Physics::WorldContext>(physicsWorldContextName);
 		pluginInterface->RegisterComponent<RigidBodyComponent>(SetupRigidBodyComponent);
+		pluginInterface->RegisterComponent<CharacterControllerComponent>(SetupCharacterControllerComponent);
 		pluginInterface->RegisterSystem("PhysicsSystem", PhysicsJoltSystem);
 	}
 
 	JOLT_PHYSICS_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
 		pluginInterface->UnregisterSystem("PhysicsSystem");
+		pluginInterface->UnregisterComponent<CharacterControllerComponent>();
 		pluginInterface->UnregisterComponent<RigidBodyComponent>();
 		pluginInterface->UnregisterWorldContextFactory(physicsWorldContextName);
 
