@@ -5,8 +5,8 @@ using namespace Grindstone;
 
 extern "C" {
 	ENGINE_CORE_API void* EntityGetTagComponent(Grindstone::SceneManagement::Scene* scene, uint32_t entity) {
-		entt::registry& reg = scene->GetEntityRegistry();
-		return &reg.get<TagComponent>((entt::entity)entity);
+		entt::registry& reg = Grindstone::EngineCore::GetInstance().GetWorldContextManager()->GetActiveWorldContextSet()->GetEntityRegistry();
+		return reg.try_get<TagComponent>((entt::entity)entity);
 	}
 
 	ENGINE_CORE_API const char* TagComponentGetTag(TagComponent& component) {

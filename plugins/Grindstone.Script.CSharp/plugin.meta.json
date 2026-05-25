@@ -14,9 +14,9 @@
 			"cmakeTarget": "PluginScriptCSharp"
 		},
 		{
-			"path": "lib/{Configuration}/CSharpCore",
+			"path": "CSharpCore/bin/{Configuration}/net10.0/Grindstone.Script.CSharpCore",
 			"loadStage": "",
-			"dotnetTarget": "CSharpCore.csproj"
+			"dotnetTarget": "CSharpCore/CSharpCore.json"
 		}
 	],
 	"cmake": "CMakeLists.txt"

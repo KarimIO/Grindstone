@@ -26,7 +26,7 @@ namespace Grindstone {
 			void Cleanup();
 			virtual void Initialize();
 			virtual bool LoadAssembly(const char* path, AssemblyData& outAssemblyData);
-			virtual bool LoadAssemblyIntoMap(const char* path);
+			virtual bool LoadAssemblyIntoMap(const std::string& assemblyIdentifier);
 			virtual void SetupComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity, ScriptComponent& component);
 			virtual void DestroyComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity, ScriptComponent& component);
 			void RegisterComponents();

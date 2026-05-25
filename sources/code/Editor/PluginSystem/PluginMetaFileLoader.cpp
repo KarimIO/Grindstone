@@ -198,7 +198,7 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 					metaData.dependencies.emplace_back(dependency);
 				}
 				else {
-					errorMsg += std::vformat("Meta file {} has 'dependencies' has an element which should be of type object.\n", std::make_format_args(pathCstr));
+					errorMsg += std::vformat("Meta file {} has 'dependencies' has an element which should be of type object {{ \"dependencyName\": string, \"version\": string }}.\n", std::make_format_args(pathCstr));
 				}
 			}
 		}
@@ -244,7 +244,7 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 						rapidjson::Value& buildTargetJson = binaryJson["dotnetTarget"];
 						if (buildTargetJson.IsString()) {
 							binary.buildType = MetaData::BinaryBuildType::Dotnet;
-							std::filesystem::path dotnetPath = metaDataFilePath.parent_path().filename() / buildTargetJson.GetString();
+							std::filesystem::path dotnetPath = buildTargetJson.GetString();
 							binary.buildTarget = dotnetPath.string();
 						}
 						else {

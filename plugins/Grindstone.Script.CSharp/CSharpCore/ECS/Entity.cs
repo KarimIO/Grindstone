@@ -22,7 +22,7 @@ namespace Grindstone {
 			return default;
 		}
 
-		public T GetComponent<T>() {
+		public T? GetComponent<T>() {
 			uint componentType = 4;
 			System.IntPtr ptr = EntityGetComponentByType(scene.sceneIntPtr, entityHandle, componentType);
 			return Marshal.PtrToStructure<T>(ptr);

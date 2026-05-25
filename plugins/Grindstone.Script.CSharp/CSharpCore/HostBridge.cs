@@ -12,9 +12,9 @@ namespace Grindstone {
 		private readonly static Dictionary<int, Assembly?> loadedAssemblies = new();
 
 		private static Assembly? Resolving(AssemblyLoadContext context, AssemblyName name) {
-			if (name.Name == "GrindstoneCSharpCore") {
+			if (name.Name == "Grindstone.Script.CSharpCore") {
 				foreach (var asm in AppDomain.CurrentDomain.GetAssemblies()) {
-					if (asm.GetName().Name == "GrindstoneCSharpCore") {
+					if (asm.GetName().Name == "Grindstone.Script.CSharpCore") {
 						return asm;
 					}
 				}

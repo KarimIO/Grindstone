@@ -10,10 +10,6 @@ namespace Grindstone {
 		public virtual void OnDestroy() { }
 		#endregion
 
-		public void Print(Logger.LogSeverity severity, string message) {
-			Logger.Print(severity, message);
-		}
-
 		public Entity GetEntity() {
 			return entity;
 		}
@@ -22,7 +18,7 @@ namespace Grindstone {
 			return entity.CreateComponent<T>();
 		}
 
-		public T GetComponent<T>() {
+		public T? GetComponent<T>() {
 			return entity.GetComponent<T>();
 		}
 
@@ -30,7 +26,7 @@ namespace Grindstone {
 			entity.DeleteComponent<T>();
 		}
 
-		public TransformComponent GetTransform() {
+		public TransformComponent? GetTransform() {
 			return GetComponent<TransformComponent>();
 		}
 		#endregion

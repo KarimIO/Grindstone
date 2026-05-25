@@ -10,7 +10,7 @@ namespace Grindstone {
 		}
 
 		#region Properties
-		public string Tag {
+		public string? Tag {
 			get => Marshal.PtrToStringAnsi(TagComponentGetTag(componentPtr));
 			set => TagComponentSetTag(componentPtr, value);
 		}
@@ -21,7 +21,7 @@ namespace Grindstone {
 		static extern System.IntPtr TagComponentGetTag(System.IntPtr comp);
 
 		[DllImport("EngineCore")]
-		static extern void TagComponentSetTag(System.IntPtr comp, string tag);
+		static extern void TagComponentSetTag(System.IntPtr comp, string? tag);
 		#endregion
 	}
 }

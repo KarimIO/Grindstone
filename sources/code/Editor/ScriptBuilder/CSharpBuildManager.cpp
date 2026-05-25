@@ -256,17 +256,7 @@ void CSharpBuildManager::CreateProjectsAndSolution() const {
 }
 
 void CSharpBuildManager::CreateProject(const CSharpProjectMetaData& metaData) const {
-	CSharpProjectBuilder projectBuilder(metaData);
-
-	for (auto& path : files) {
-		projectBuilder.AddCodeFile(path);
-	}
-
-	projectBuilder.CreateProject();
 }
 
 void CSharpBuildManager::CreateSolution(const CSharpProjectMetaData& metaData) {
-	SolutionBuilder solutionBuilder;
-	solutionBuilder.AddProject(metaData);
-	solutionBuilder.CreateSolution();
 }

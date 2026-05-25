@@ -162,7 +162,7 @@ static bool LoadHostFxr() {
 	{
 		const char* embeddedConfigString = R"({
 			"runtimeOptions": {
-				"tfm": "net8.0",
+				"tfm": "net10.0",
 				"framework": {
 					"name": "Microsoft.NETCore.App",
 					"version": "10.0.0"
@@ -203,7 +203,7 @@ static bool LoadGrindstoneCoreFunction(std::wstring_view dllPath, std::string_vi
 
 	int rc = csharpGlobals.LoadAssemblyAndGetFunctionPointer(
 		dllPath.data(),
-		L"Grindstone.HostBridge, CSharpCore",
+		L"Grindstone.HostBridge, Grindstone.Script.CSharpCore",
 		wfuncName.c_str(),
 		UNMANAGEDCALLERSONLY_METHOD,
 		nullptr,
@@ -219,7 +219,7 @@ static bool LoadGrindstoneCoreFunction(std::wstring_view dllPath, std::string_vi
 }
 
 static bool LoadGrindstoneCoreFunctions() {
-	auto coreDllPath = EngineCore::GetInstance().GetPluginManager()->GetLibraryPath("Grindstone.Script.CSharp", "CSharpCore").string();
+	auto coreDllPath = EngineCore::GetInstance().GetPluginManager()->GetLibraryPath("Grindstone.Script.CSharp", "Grindstone.Script.CSharpCore").string();
 	std::wstring coreDllWide = std::wstring(coreDllPath.begin(), coreDllPath.end());
 
 	if (!std::filesystem::exists(coreDllPath)) {
@@ -322,13 +322,11 @@ void CSharpManager::Cleanup() {
 	csharpGlobals = {};
 }
 
-bool CSharpManager::LoadAssembly(const char* filename, AssemblyData& outAssemblyData) {
+bool CSharpManager::LoadAssembly(const char* basePath, AssemblyData& outAssemblyData) {
 	if (csharpGlobals.LoadAssembly == nullptr) {
 		return false;
 	}
 
-	std::string fullFilename = std::string(filename) + ".dll";
-	auto basePath = (EngineCore::GetInstance().GetBinaryPath() / fullFilename).string();
 	if (!std::filesystem::exists(basePath)) {
 		GPRINT_ERROR_V(LogSource::Scripting, "Attempting to load invalid assembly: {}", basePath);
 		return false;
@@ -360,16 +358,29 @@ bool CSharpManager::LoadAssembly(const char* filename, AssemblyData& outAssembly
 		outAssemblyData.assemblyHash = csharpGlobals.LoadAssembly((void*)tmpString.c_str());
 	}
 	else {
-		outAssemblyData.assemblyHash = csharpGlobals.LoadAssembly((void*)basePath.c_str());
+ 		outAssemblyData.assemblyHash = csharpGlobals.LoadAssembly((void*)basePath);
 	}
 
 	return true;
 }
 
-bool CSharpManager::LoadAssemblyIntoMap(const char* path) {
+bool CSharpManager::LoadAssemblyIntoMap(const std::string& assemblyIdentifier) {
+	std::string pluginName;
+	std::string assemblyName;
+	size_t separatorIndex = assemblyIdentifier.find(':');
+	if (separatorIndex != std::string::npos) {
+		pluginName = assemblyIdentifier.substr(0, separatorIndex);
+		assemblyName = assemblyIdentifier.substr(separatorIndex + 1);
+	}
+	else {
+		assemblyName = assemblyIdentifier;
+	}
+
+	auto dllPath = EngineCore::GetInstance().GetPluginManager()->GetLibraryPath(pluginName, assemblyName).string();
+
 	AssemblyData assemblyData;
-	if (LoadAssembly(path, assemblyData)) {
-		assemblies[path] = assemblyData;
+	if (LoadAssembly(dllPath.c_str(), assemblyData)) {
+		assemblies[assemblyIdentifier] = assemblyData;
 		return true;
 	}
 
