@@ -16,6 +16,11 @@
 			"path": "lib/{Configuration}/PluginJoltPhysicsEditor",
 			"loadStage": "EditorAfterUiSetup",
 			"cmakeTarget": "PluginJoltPhysicsEditor"
+		},
+		{
+			"path": "scripts/bin/{Configuration}/net10.0/Grindstone.Physics.Jolt.CSharpIntegration",
+			"loadStage": "EndOfEngineSetup",
+			"dotnetTarget": "scripts/CSharpIntegration.json"
 		}
 	],
 	"cmake": "CMakeLists.txt"

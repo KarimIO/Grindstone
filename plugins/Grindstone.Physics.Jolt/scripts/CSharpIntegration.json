@@ -1,0 +1,6 @@
+{
+	"name": "Grindstone.Physics.Jolt.CSharpIntegration",
+	"references": [
+		"Grindstone.Script.CSharpCore"
+	]
+}

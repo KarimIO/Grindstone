@@ -3,6 +3,7 @@
 *.slnx
 *.tlog
 *.vcxproj*
+*.csproj
 x64/*
 **/.idea/**.iws
 **/.idea/workspace.xml

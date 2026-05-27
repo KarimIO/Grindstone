@@ -5,6 +5,7 @@
 #include <Editor/EditorManager.hpp>
 #include <Editor/ScriptBuilder/CSharpProjectBuilder.hpp>
 #include <Editor/ScriptBuilder/SolutionBuilder.hpp>
+#include <Grindstone.Script.CSharp/include/CSharpManager.hpp>
 
 #include "EditorPluginManager.hpp"
 #include "PluginMetaFileLoader.hpp"
@@ -352,11 +353,21 @@ void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
 	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
 		for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
 			if (binary.loadStage == stageName) {
-				std::filesystem::path binaryPath = metaData.pluginResolvedPath / binary.libraryRelativePath;
-				std::filesystem::path parentPath = binaryPath.parent_path();
-				DLL_DIRECTORY_COOKIE dllCookie = AddDllDirectory(parentPath.wstring().c_str());
-				LoadModule(binaryPath);
-				RemoveDllDirectory(dllCookie);
+				switch (binary.buildType) {
+				case Grindstone::Plugins::MetaData::BinaryBuildType::Cmake: {
+					std::filesystem::path binaryPath = metaData.pluginResolvedPath / binary.libraryRelativePath;
+					std::filesystem::path parentPath = binaryPath.parent_path();
+					DLL_DIRECTORY_COOKIE dllCookie = AddDllDirectory(parentPath.wstring().c_str());
+					LoadModule(binaryPath);
+					RemoveDllDirectory(dllCookie);
+					break;
+				}
+				case Grindstone::Plugins::MetaData::BinaryBuildType::Dotnet: {
+					auto scriptManager = static_cast<Grindstone::Scripting::CSharp::CSharpManager*>(Grindstone::EngineCore::GetInstance().scriptManager);
+					scriptManager->LoadAssemblyIntoMap(metaData.name + ":Grindstone.Physics.Jolt.CSharpIntegration"); // TODO: Get Library
+					break;
+				}
+				}
 			}
 		}
 

@@ -26,23 +26,28 @@ namespace Grindstone {
 			RigidBodyComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
 			~RigidBodyComponent();
 
+			void SetIsStatic(bool isStatic);
+			void SetLayer(Grindstone::Physics::Layer layer);
 			void SetFriction(float friction);
 			void SetRestitution(float restitution);
-			void SetDamping(float linear, float rotational);
+			void SetPosition(Math::Float3 pos);
+			void SetRotation(Math::Quaternion rot);
 
 			void ApplyForce(Math::Float3 pos, Math::Float3 force);
 			void ApplyCentralForce(Math::Float3 force);
 			void ApplyImpulse(Math::Float3 pos, Math::Float3 force);
 			void ApplyCentralImpulse(Math::Float3 force);
 
+			bool GetIsStatic() const;
+			Grindstone::Physics::Layer GetLayer() const;
 			float GetMass() const;
 			float GetFriction() const;
 			float GetRestitution() const;
-			float GetDampingLinear() const;
-			float GetDampingRotational() const;
+			Math::Float3 GetPosition() const;
+			Math::Quaternion GetRotation() const;
 
 			void SetBodyID(JPH::BodyID bodyId);
-			JPH::BodyID GetBodyID();
+			JPH::BodyID GetBodyID() const;
 
 			bool isStatic = false;
 			Grindstone::Physics::Layer layer = 0;
@@ -50,8 +55,6 @@ namespace Grindstone {
 			float mass = 0.0f;
 			float friction = 0.0f;
 			float restitution = 0.0f;
-			float dampingLinear = 0.0f;
-			float dampingRotational = 0.0f;
 			JPH::BodyID rigidBody;
 
 		public:

@@ -39,7 +39,6 @@ namespace Grindstone {
 						JPH::Quat rotation = cxt->GetBodyInterface().GetRotation(bodyId);
 
 						transformComponent.position = Grindstone::Math::Float3(position.GetX(), position.GetY(), position.GetZ());
-						GPRINT_INFO_V(LogSource::Physics, "Sphere Pos: {}, {}, {}", transformComponent.position.x, transformComponent.position.y, transformComponent.position.z);
 						transformComponent.rotation = Grindstone::Math::Quaternion(rotation.GetW(), rotation.GetX(), rotation.GetY(), rotation.GetZ());
 					}
 				);

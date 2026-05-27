@@ -122,6 +122,7 @@ namespace Grindstone {
 		AssetRendererManager* assetRendererManager = nullptr;
 		WorldContextManager* worldContextManager = nullptr;
 		Profiler::Manager* profiler = nullptr;
+		void* scriptManager = nullptr;
 		std::function<void()> callbackReloadCsharp;
 		bool isEditor = false;
 	private:

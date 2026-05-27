@@ -53,6 +53,8 @@ extern "C" {
 		CSharpManager& manager = CSharpManager::GetInstance();
 		manager.Initialize();
 
+		Grindstone::EngineCore::GetInstance().scriptManager = &manager;
+
 		globalPluginInterface = pluginInterface;
 		pluginInterface->RegisterComponent<ScriptComponent>(SetupCSharpScriptComponent, DestroyCSharpScriptComponent);
 		pluginInterface->RegisterSystem("Scripting::CSharp::Update", UpdateSystem);
@@ -65,6 +67,8 @@ extern "C" {
 		pluginInterface->systemRegistrar->UnregisterEditorSystem("Scripting::CSharp::UpdateEditor");
 		pluginInterface->UnregisterSystem("Scripting::CSharp::Update");
 		pluginInterface->UnregisterComponent<ScriptComponent>();
+
+		Grindstone::EngineCore::GetInstance().scriptManager = nullptr;
 
 		CSharpManager& manager = CSharpManager::GetInstance();
 		manager.Cleanup();
