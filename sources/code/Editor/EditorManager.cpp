@@ -211,9 +211,9 @@ void Manager::TransferPlayMode(PlayMode newPlayMode) {
 	}
 	else if (newPlayMode == PlayMode::Play && playMode == PlayMode::Editor) {
 		runtimeWorldContext = worldContextManager->Create("Play Mode");
-		componentRegistry->CopyRegistry(*runtimeWorldContext, *editorWorldContext);
-		componentRegistry->CallCreateOnRegistry(*editorWorldContext);
 		worldContextManager->SetActiveWorldContextSet(runtimeWorldContext);
+		componentRegistry->CopyRegistry(*runtimeWorldContext, *editorWorldContext);
+		componentRegistry->CallCreateOnRegistry(*runtimeWorldContext);
 	}
 
 	selection.Clear();
