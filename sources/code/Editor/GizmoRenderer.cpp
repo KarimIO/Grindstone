@@ -32,7 +32,7 @@ inline void GizmoRenderer::AppendData(
 
 	shapeMetaData[static_cast<size_t>(shapeType)] = { currentIndexOffset, indexCount, currentVertexOffset };
 
-	currentVertexOffset += vertexCount * 3;
+	currentVertexOffset += vertexCount;
 	currentIndexOffset += indexCount;
 }
 
