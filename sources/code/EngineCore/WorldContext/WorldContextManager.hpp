@@ -17,7 +17,7 @@ namespace Grindstone {
 		virtual void Unregister(HashedString name);
 		virtual void SetActiveWorldContextSet(Grindstone::WorldContextSet*);
 		[[nodiscard]] virtual Grindstone::WorldContextSet* GetActiveWorldContextSet();
-		[[nodiscard]] virtual Grindstone::WorldContextSet* Create();
+		[[nodiscard]] virtual Grindstone::WorldContextSet* Create(const std::string& name);
 		virtual void Remove(Grindstone::WorldContextSet* cxtSet);
 		virtual void ClearContextSets();
 

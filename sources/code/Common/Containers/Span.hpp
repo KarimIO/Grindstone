@@ -18,9 +18,7 @@ namespace Grindstone::Containers {
 
 		Span() = default;
 
-		Span(T* ptr, size_t size) :
-			contents(ptr),
-			size(size) {}
+		Span(T* ptr, size_t size) : size(size), contents(ptr) {}
 
 		Span(const Span& other) : size(other.size), contents(other.contents) {}
 
@@ -106,23 +104,23 @@ namespace Grindstone::Containers {
 		}
 
 		[[nodiscard]] constexpr ConstIterator end() const noexcept {
-			return ConstIterator(&contents[size - 1]);
+			return ConstIterator(&contents[size]);
 		}
 
 		[[nodiscard]] constexpr ReverseIterator rbegin() noexcept {
-			return ReverseIterator(&contents[size - 1]);
+			return ReverseIterator(end());
 		}
 
 		[[nodiscard]] constexpr ConstReverseIterator rbegin() const noexcept {
-			return ConstReverseIterator(&contents[size - 1]);
+			return ConstReverseIterator(end());
 		}
 
 		[[nodiscard]] constexpr ReverseIterator rend() noexcept {
-			return ReverseIterator(contents - 1);
+			return ReverseIterator(begin());
 		}
 
 		[[nodiscard]] constexpr ConstReverseIterator rend() const noexcept {
-			return ConstReverseIterator(contents - 1);
+			return ConstReverseIterator(begin());
 		}
 
 		[[nodiscard]] constexpr ConstIterator cbegin() const noexcept {
@@ -134,11 +132,11 @@ namespace Grindstone::Containers {
 		}
 
 		[[nodiscard]] constexpr ConstReverseIterator crbegin() const noexcept {
-			return ConstReverseIterator(&contents[size - 1]);
+			return ConstReverseIterator(end());
 		}
 
 		[[nodiscard]] constexpr ConstReverseIterator crend() const noexcept {
-			return ConstReverseIterator(contents - 1);
+			return ConstReverseIterator(begin());
 		}
 	protected:
 		size_t size = 0;

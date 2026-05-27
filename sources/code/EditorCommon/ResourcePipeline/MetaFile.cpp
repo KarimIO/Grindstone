@@ -128,6 +128,89 @@ void MetaFile::Load(AssetRegistry& assetRegistry, const std::filesystem::path& b
 }
 
 void MetaFile::Save(uint32_t currentImporterVersion) {
+	if (importerVersion != currentImporterVersion || isDirty || importerSettings.isDirty) {
+		importerVersion = currentImporterVersion;
+
+		rapidjson::StringBuffer documentStringBuffer;
+		rapidjson::PrettyWriter<rapidjson::StringBuffer> documentWriter = rapidjson::PrettyWriter<rapidjson::StringBuffer>(documentStringBuffer);
+		GS_ASSERT(assetRegistry != nullptr);
+
+		{
+			documentWriter.StartObject();
+
+			documentWriter.Key("assetImporterVersion");
+			documentWriter.Uint(currentImporterVersion);
+
+			documentWriter.Key("metaFileVersion");
+			documentWriter.Uint(currentMetaFileVersion);
+
+			documentWriter.Key("defaultUuid");
+			documentWriter.String(defaultSubasset.uuid.ToString().c_str());
+
+			{
+				documentWriter.Key("subassets");
+				documentWriter.StartArray();
+
+				if (defaultSubasset.subassetIdentifier != "") {
+					documentWriter.StartObject();
+					documentWriter.Key("displayName");
+					documentWriter.String(defaultSubasset.displayName.c_str());
+					documentWriter.Key("address");
+					documentWriter.String(defaultSubasset.address.c_str());
+					documentWriter.Key("subassetIdentifier");
+					documentWriter.String(defaultSubasset.subassetIdentifier.c_str());
+					documentWriter.Key("uuid");
+					documentWriter.String(defaultSubasset.uuid.ToString().c_str());
+					documentWriter.Key("type");
+					documentWriter.String(GetAssetTypeToString(defaultSubasset.assetType));
+					documentWriter.EndObject();
+				}
+
+				for (auto& subasset : subassets) {
+					documentWriter.StartObject();
+					documentWriter.Key("displayName");
+					documentWriter.String(subasset.displayName.c_str());
+					documentWriter.Key("address");
+					documentWriter.String(subasset.address.c_str());
+					documentWriter.Key("subassetIdentifier");
+					documentWriter.String(subasset.subassetIdentifier.c_str());
+					documentWriter.Key("uuid");
+					documentWriter.String(subasset.uuid.ToString().c_str());
+					documentWriter.Key("type");
+					documentWriter.String(GetAssetTypeToString(subasset.assetType));
+					documentWriter.EndObject();
+				}
+				documentWriter.EndArray();
+			}
+
+			{
+				documentWriter.Key("importerSettings");
+				documentWriter.StartObject();
+				for (const auto& it : importerSettings) {
+					const std::string& key = it.first;
+					const std::string& value = it.second.value;
+
+					documentWriter.Key(key.c_str());
+					documentWriter.String(value.c_str());
+				}
+				documentWriter.EndObject();
+			}
+
+			documentWriter.EndObject();
+		}
+
+		const char* content = documentStringBuffer.GetString();
+		std::ofstream file(metaFilePath);
+		file.write(content, strlen(content));
+		file.flush();
+		file.close();
+	}
+
+	std::filesystem::file_time_type assetWriteTime = std::filesystem::last_write_time(baseAssetPath);
+	std::filesystem::file_time_type metaWriteTime = std::filesystem::last_write_time(metaFilePath);
+	size_t assetFileSize = std::filesystem::file_size(baseAssetPath);
+	size_t metaFileSize = std::filesystem::file_size(metaFilePath);
+
 	// We need to ensure AssetRegistry is updated, because otherwise, if the meta file doesn't need an update, the
 	// AssetRegistry can get out of sync.
 	if (defaultSubasset.subassetIdentifier != "") {
@@ -137,7 +220,13 @@ void MetaFile::Save(uint32_t currentImporterVersion) {
 			defaultSubasset.displayName,
 			defaultSubasset.address,
 			defaultSubasset.uuid,
-			defaultSubasset.assetType
+			defaultSubasset.assetType,
+			assetWriteTime,
+			metaWriteTime,
+			importerVersion,
+			currentMetaFileVersion,
+			assetFileSize,
+			metaFileSize
 		);
 	}
 
@@ -148,89 +237,15 @@ void MetaFile::Save(uint32_t currentImporterVersion) {
 			subasset.displayName,
 			subasset.address,
 			subasset.uuid,
-			subasset.assetType
+			subasset.assetType,
+			assetWriteTime,
+			metaWriteTime,
+			importerVersion,
+			currentMetaFileVersion,
+			assetFileSize,
+			metaFileSize
 		);
 	}
-
-	if (importerVersion == currentImporterVersion && !isDirty && !importerSettings.isDirty) {
-		return;
-	}
-
-	importerVersion = currentImporterVersion;
-
-	rapidjson::StringBuffer documentStringBuffer;
-	rapidjson::PrettyWriter<rapidjson::StringBuffer> documentWriter = rapidjson::PrettyWriter<rapidjson::StringBuffer>(documentStringBuffer);
-	GS_ASSERT(assetRegistry != nullptr);
-
-	{
-		documentWriter.StartObject();
-
-		documentWriter.Key("assetImporterVersion");
-		documentWriter.Uint(currentImporterVersion);
-
-		documentWriter.Key("metaFileVersion");
-		documentWriter.Uint(currentMetaFileVersion);
-
-		documentWriter.Key("defaultUuid");
-		documentWriter.String(defaultSubasset.uuid.ToString().c_str());
-
-		{
-			documentWriter.Key("subassets");
-			documentWriter.StartArray();
-
-			if (defaultSubasset.subassetIdentifier != "") {
-				documentWriter.StartObject();
-				documentWriter.Key("displayName");
-				documentWriter.String(defaultSubasset.displayName.c_str());
-				documentWriter.Key("address");
-				documentWriter.String(defaultSubasset.address.c_str());
-				documentWriter.Key("subassetIdentifier");
-				documentWriter.String(defaultSubasset.subassetIdentifier.c_str());
-				documentWriter.Key("uuid");
-				documentWriter.String(defaultSubasset.uuid.ToString().c_str());
-				documentWriter.Key("type");
-				documentWriter.String(GetAssetTypeToString(defaultSubasset.assetType));
-				documentWriter.EndObject();
-			}
-
-			for (auto& subasset : subassets) {
-				documentWriter.StartObject();
-				documentWriter.Key("displayName");
-				documentWriter.String(subasset.displayName.c_str());
-				documentWriter.Key("address");
-				documentWriter.String(subasset.address.c_str());
-				documentWriter.Key("subassetIdentifier");
-				documentWriter.String(subasset.subassetIdentifier.c_str());
-				documentWriter.Key("uuid");
-				documentWriter.String(subasset.uuid.ToString().c_str());
-				documentWriter.Key("type");
-				documentWriter.String(GetAssetTypeToString(subasset.assetType));
-				documentWriter.EndObject();
-			}
-			documentWriter.EndArray();
-		}
-
-		{
-			documentWriter.Key("importerSettings");
-			documentWriter.StartObject();
-			for (const auto& it : importerSettings) {
-				const std::string& key = it.first;
-				const std::string& value = it.second.value;
-
-				documentWriter.Key(key.c_str());
-				documentWriter.String(value.c_str());
-			}
-			documentWriter.EndObject();
-		}
-
-		documentWriter.EndObject();
-	}
-
-	const char* content = documentStringBuffer.GetString();
-	std::ofstream file(metaFilePath);
-	file.write((const char*)content, strlen(content));
-	file.flush();
-	file.close();
 }
 
 void MetaFile::SaveWithoutImporterVersionChange() {

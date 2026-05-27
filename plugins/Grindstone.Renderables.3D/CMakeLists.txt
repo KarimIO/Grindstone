@@ -10,13 +10,13 @@ set(RENDERABLES_3D_HEADERS ${INC}/Mesh3dRenderer.hpp)
 
 file(GLOB_RECURSE RENDERABLES_3D_ASSETS_SOURCES "${SRC}/Assets/*.cpp")
 file(GLOB_RECURSE RENDERABLES_3D_ASSETS_HEADER "${INC}/Assets/*.hpp")
-source_group("Assets\\Source Files" FILES ${RENDERABLES_3D_ASSETS_SOURCES})
-source_group("Assets\\Header Files" FILES ${RENDERABLES_3D_ASSETS_HEADER})
+source_group("Source Files\\Assets" FILES ${RENDERABLES_3D_ASSETS_SOURCES})
+source_group("Header Files\\Assets" FILES ${RENDERABLES_3D_ASSETS_HEADER})
 
 file(GLOB_RECURSE RENDERABLES_3D_COMPONENTS_SOURCES "${SRC}/Components/*.cpp")
 file(GLOB_RECURSE RENDERABLES_3D_COMPONENTS_HEADER "${INC}/Components/*.hpp")
-source_group("Components\\Source Files" FILES ${RENDERABLES_3D_COMPONENTS_SOURCES})
-source_group("Components\\Header Files" FILES ${RENDERABLES_3D_COMPONENTS_HEADER})
+source_group("Source Files\\Components" FILES ${RENDERABLES_3D_COMPONENTS_SOURCES})
+source_group("Header Files\\Components" FILES ${RENDERABLES_3D_COMPONENTS_HEADER})
 
 add_library(
 	PluginRenderables3D

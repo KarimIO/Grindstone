@@ -6,6 +6,19 @@
 #include "GridRenderer.hpp"
 #include "GizmoRenderer.hpp"
 
+struct EngineUboStruct {
+	glm::mat4 projectionMatrix;
+	glm::mat4 viewMatrix;
+	glm::mat4 inverseProjectionMatrix;
+	glm::mat4 inverseViewMatrix;
+	glm::vec3 eyePos;
+	float alignmentBufferForPreviousVec3;
+	glm::vec2 framebufferResolution;
+	glm::vec2 renderResolution;
+	glm::vec2 renderScale;
+	float time;
+};
+
 namespace Grindstone {
 	class BaseRenderer;
 	struct TransformComponent;
@@ -33,7 +46,8 @@ namespace Grindstone {
 			void Render(GraphicsAPI::CommandBuffer* commandBuffer);
 			void RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffer);
 			void OffsetRotation(float pitch, float yaw);
-			void OffsetPosition(float x, float y, float z);
+			void OffsetPosition(glm::vec3 offset);
+			void SetPosition(glm::vec3 newPosition);
 			void ResizeViewport(uint32_t width, uint32_t height);
 			void UpdateProjectionMatrix();
 			void UpdateViewMatrix();
@@ -41,23 +55,30 @@ namespace Grindstone {
 			glm::mat4& GetViewMatrix();
 			BaseRenderer* GetRenderer() const;
 
+			glm::vec3 GetPosition() const;
+			glm::vec3 GetForward() const;
+			glm::vec3 GetRight() const;
+			glm::vec3 GetUp() const;
+
 			bool isGridEnabled = true;
 			bool isBoundingSphereGizmoEnabled = false;
 			bool isBoundingBoxGizmoEnabled = false;
 			bool isColliderGizmoEnabled = true;
 		private:
-			glm::vec3 GetForward() const;
-			glm::vec3 GetRight() const;
-			glm::vec3 GetUp() const;
+			GraphicsAPI::Buffer* gpuGlobalUniformBufferObject = nullptr;
+
+			Grindstone::GraphicsAPI::DescriptorSetLayout* globalDescriptorSetLayout;
+			Grindstone::GraphicsAPI::Buffer* globalStagingUniformBufferObject;
+			std::array<Grindstone::GraphicsAPI::Buffer*, 3> globalUniformBufferObject;
+			std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> globalDescriptorSet;
 
 			GizmoRenderer gizmoRenderer;
 			GridRenderer gridRenderer;
-			GraphicsAPI::Image* renderTarget = nullptr;
-			GraphicsAPI::Image* depthTarget = nullptr;
+			std::array<GraphicsAPI::Image*, 3> renderTarget;
+			std::array<GraphicsAPI::Image*, 3> depthTarget;
 			GraphicsAPI::Sampler* sampler = nullptr;
 			GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
-			GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
-			GraphicsAPI::Framebuffer* framebuffer = nullptr;
+			std::array<GraphicsAPI::DescriptorSet*, 3> descriptorSet;
 
 			GraphicsAPI::DescriptorSetLayout* mousePickDescriptorSetLayout = nullptr;
 			std::array<GraphicsAPI::Image*, 3> mousePickRenderTarget{};

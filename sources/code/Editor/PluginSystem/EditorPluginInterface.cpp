@@ -6,6 +6,9 @@
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
 #include <Editor/ImguiEditor/Menubar.hpp>
 
+#include <Editor/ImguiEditor/ImguiEditor.hpp>
+#include <Editor/ImguiEditor/ProjectSettings/ProjectSettingsWindow.hpp>
+
 #include "EditorPluginInterface.hpp"
 
 using namespace Grindstone::Plugins;
@@ -82,4 +85,16 @@ void EditorPluginInterface::DeregisterMenuItem(const char* menuItem) {
 	Grindstone::Editor::ImguiEditor::ImguiEditor& imguiEditor = manager.GetImguiEditor();
 	Grindstone::Editor::ImguiEditor::Menubar& menubar = imguiEditor.GetMenuBar();
 	menubar.DeregisterMenuItem(menuItem);
+}
+
+void EditorPluginInterface::RegisterProjectSettingsPage(std::string displayName, Grindstone::UniquePtr<Grindstone::Editor::ImguiEditor::Settings::BasePage> page) {
+	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
+	Grindstone::Editor::ImguiEditor::ImguiEditor& imguiEditor = manager.GetImguiEditor();
+	imguiEditor.projectSettingsWindow->RegisterSettingsPage(displayName, std::move(page));
+}
+
+void EditorPluginInterface::DeregisterProjectSettingsPage(std::string displayName) {
+	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
+	Grindstone::Editor::ImguiEditor::ImguiEditor& imguiEditor = manager.GetImguiEditor();
+	imguiEditor.projectSettingsWindow->UnregisterSettingsPage(displayName);
 }

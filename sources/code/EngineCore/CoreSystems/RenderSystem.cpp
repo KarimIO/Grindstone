@@ -17,7 +17,7 @@
 std::vector<Grindstone::GraphicsAPI::CommandBuffer*> commandBuffers;
 
 namespace Grindstone {
-	void RenderSystem(entt::registry& registry) {
+	void RenderSystem(Grindstone::WorldContextSet& worldContextSet) {
 		GRIND_PROFILE_SCOPE("RenderSystem()");
 
 		EngineCore& engineCore = EngineCore::GetInstance();
@@ -46,6 +46,7 @@ namespace Grindstone {
 			}
 		}
 
+		entt::registry& registry = worldContextSet.GetEntityRegistry();
 		auto view = registry.view<entt::entity, const TransformComponent, const CameraComponent>();
 
 		view.each(
@@ -92,14 +93,24 @@ namespace Grindstone {
 					cameraComponent.renderer->Resize(width, height);
 				}
 
+				Grindstone::GraphicsAPI::Image* image = wgb->GetCurrentFramebuffer()->GetRenderTarget(0);
+				Grindstone::GraphicsAPI::RenderAttachment attachment{
+					.image = image,
+					.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
+					.clearValue = Grindstone::GraphicsAPI::ClearColor()
+				};
+
+				/*
 				cameraComponent.renderer->Render(
 					currentCommandBuffer,
-					registry,
+					worldContextSet,
 					projectionMatrix,
 					viewMatrix,
 					pos,
-					wgb->GetCurrentFramebuffer()
+					image,
+					nullptr // TODO: Depth
 				);
+				*/
 
 				currentCommandBuffer->EndCommandBuffer();
 				wgb->SubmitCommandBufferForCurrentFrame(currentCommandBuffer);

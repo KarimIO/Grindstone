@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <Common/Memory/Allocators/DynamicAllocator.hpp>
 #include <Common/String.hpp>
 
@@ -52,7 +54,7 @@ namespace Grindstone::Memory::AllocatorCore {
 		T* ptr = static_cast<T*>(GetAllocatorState()->dynamicAllocator.AllocateRaw(sizeof(T), alignof(T), typeid(T).name()));
 		if (ptr != nullptr) {
 			// Call the constructor on the newly allocated memory
-			new (ptr) T(std::forward<Args>(params)...);
+			std::construct_at(ptr, std::forward<Args>(params)...);
 		}
 
 		return ptr;
@@ -67,6 +69,36 @@ namespace Grindstone::Memory::AllocatorCore {
 	template<typename T, typename... Args>
 	T* AllocateArray(size_t arraySize, Args&&... params) {
 		T* ptr = static_cast<T*>(GetAllocatorState()->dynamicAllocator.AllocateRaw(sizeof(T) * arraySize, alignof(T), typeid(T).name()));
+		if (ptr != nullptr) {
+			// Call the constructor on the newly allocated memory
+			for (size_t i = 0; i < arraySize; ++i) {
+				new (ptr + i) T(std::forward<Args>(params)...);
+			}
+		}
+
+		return ptr;
+	}
+
+	template<typename T, typename... Args>
+	T* AllocateNamed(const char* debugName, Args&&... params) {
+		T* ptr = static_cast<T*>(GetAllocatorState()->dynamicAllocator.AllocateRaw(sizeof(T), alignof(T), debugName));
+		if (ptr != nullptr) {
+			// Call the constructor on the newly allocated memory
+			new (ptr) T(std::forward<Args>(params)...);
+		}
+
+		return ptr;
+	}
+
+	template<typename T>
+	T* AllocateArrayNamed(const char* debugName, size_t arraySize) {
+		T* ptr = static_cast<T*>(GetAllocatorState()->dynamicAllocator.AllocateRaw(sizeof(T) * arraySize, alignof(T), debugName));
+		return ptr;
+	}
+
+	template<typename T, typename... Args>
+	T* AllocateArrayNamed(const char* debugName, size_t arraySize, Args&&... params) {
+		T* ptr = static_cast<T*>(GetAllocatorState()->dynamicAllocator.AllocateRaw(sizeof(T) * arraySize, alignof(T), debugName));
 		if (ptr != nullptr) {
 			// Call the constructor on the newly allocated memory
 			for (size_t i = 0; i < arraySize; ++i) {

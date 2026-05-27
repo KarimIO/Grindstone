@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Common/Graphics/Formats.hpp>
+
 namespace Grindstone {
 	class Window;
 }
@@ -17,6 +19,7 @@ namespace Grindstone::GraphicsAPI {
 	public:
 		~WindowGraphicsBinding() {};
 		virtual bool Initialize(Window *window) = 0;
+		virtual void WaitForRenderingFence() = 0;
 		virtual void ImmediateSetContext() = 0;
 		virtual void ImmediateSwapBuffers() = 0;
 		virtual bool AcquireNextImage() = 0;
@@ -28,5 +31,6 @@ namespace Grindstone::GraphicsAPI {
 		virtual uint32_t GetCurrentImageIndex() = 0;
 		virtual uint32_t GetMaxFramesInFlight() = 0;
 		virtual void Resize(uint32_t width, uint32_t height) = 0;
+		virtual GraphicsAPI::Format GetSwapchainFormat() const = 0;
 	};
 };

@@ -6,6 +6,7 @@
 #include <xkeycheck.h>
 
 #include <Common/Hash.hpp>
+#include "PipelineLayout.hpp"
 #include "Formats.hpp"
 
 namespace Grindstone::GraphicsAPI {
@@ -23,11 +24,30 @@ namespace Grindstone::GraphicsAPI {
 			const char* content;
 			uint32_t size;
 			ShaderStage type;
+
+			bool operator==(const ShaderStageData& o) const {
+				return (strcmp(fileName, o.fileName) == 0)
+					&& (strcmp(content, o.content) == 0)
+					&& size == o.size
+					&& type == o.type;
+			}
+
+			bool operator!=(const ShaderStageData& o) const {
+				return !(*this == o);
+			}
 		};
 
 		struct AttachmentData {
 			BlendData blendData = BlendData::NoBlending();
 			ColorMask colorMask = ColorMask::RGBA;
+
+			bool operator==(const AttachmentData& o) const {
+				return blendData == o.blendData && colorMask == o.colorMask;
+			}
+
+			bool operator!=(const AttachmentData& o) const {
+				return !(*this == o);
+			}
 		};
 
 		struct PipelineData {
@@ -42,8 +62,6 @@ namespace Grindstone::GraphicsAPI {
 			uint32_t scissorW, scissorH;
 			const ShaderStageData* shaderStageCreateInfos;
 			uint32_t shaderStageCreateInfoCount;
-			const DescriptorSetLayout* const * descriptorSetLayouts;
-			uint32_t descriptorSetLayoutCount;
 
 			const AttachmentData* colorAttachmentData = nullptr;
 			uint8_t colorAttachmentCount;
@@ -59,12 +77,75 @@ namespace Grindstone::GraphicsAPI {
 			float depthBiasConstantFactor = 1.25f;
 			float depthBiasSlopeFactor = 1.75f;
 			float depthBiasClamp = 0.0f;
+
+			bool operator==(const PipelineData& o) const {
+				if (shaderStageCreateInfoCount != o.shaderStageCreateInfoCount && colorAttachmentCount != o.colorAttachmentCount) {
+					return false;
+				}
+
+				for (uint32_t i = 0; i < shaderStageCreateInfoCount; ++i) {
+					if (shaderStageCreateInfos[i] != o.shaderStageCreateInfos[i]) {
+						return false;
+					}
+				}
+
+				for (uint32_t i = 0; i < colorAttachmentCount; ++i) {
+					if (colorAttachmentData[i] != o.colorAttachmentData[i]) {
+						return false;
+					}
+				}
+
+				return primitiveType == o.primitiveType
+					&& polygonFillMode == o.polygonFillMode
+					&& cullMode == o.cullMode
+					&& renderPass == o.renderPass
+					&& width == o.width
+					&& height == o.height
+					&& scissorX == o.scissorX
+					&& scissorY == o.scissorY
+					&& scissorW == o.scissorW
+					&& scissorH == o.scissorH
+
+					&& depthCompareOp == o.depthCompareOp
+					&& isDepthTestEnabled == o.isDepthTestEnabled
+					&& isDepthWriteEnabled == o.isDepthWriteEnabled
+					&& isStencilEnabled == o.isStencilEnabled
+					&& hasDynamicViewport == o.hasDynamicViewport
+					&& hasDynamicScissor == o.hasDynamicScissor
+					&& isDepthBiasEnabled == o.isDepthBiasEnabled
+					&& isDepthClampEnabled == o.isDepthClampEnabled
+
+					&& depthBiasConstantFactor == o.depthBiasConstantFactor
+					&& depthBiasSlopeFactor == o.depthBiasSlopeFactor
+					&& depthBiasClamp == o.depthBiasClamp
+
+					&& depthBiasConstantFactor == o.depthBiasConstantFactor
+					&& depthBiasSlopeFactor == o.depthBiasSlopeFactor
+					&& depthBiasClamp == o.depthBiasClamp;
+			}
+
+			bool operator!=(const PipelineData& o) {
+				return !(*this == o);
+			}
 		};
 
 		struct CreateInfo {
+			Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = nullptr;
 			VertexInputLayout vertexInputLayout;
 			PipelineData pipelineData;
+
+			bool operator==(const CreateInfo& o) {
+				return pipelineLayout == o.pipelineLayout
+					&& vertexInputLayout == o.vertexInputLayout
+					&& pipelineData == o.pipelineData;
+			}
+
+			bool operator!=(const CreateInfo& o) {
+				return !(*this == o);
+			}
 		};
+
+		Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = nullptr;
 	};
 }
 
@@ -116,12 +197,12 @@ namespace std {
 			result ^= static_cast<size_t>(pipelineData.depthBiasConstantFactor) | (static_cast<size_t>(pipelineData.depthBiasSlopeFactor) << 32);
 			result ^= static_cast<size_t>(pipelineData.depthBiasClamp);
 
-			result ^= pipelineData.colorAttachmentCount;
+			result ^= std::hash<uint32_t>{}(pipelineData.colorAttachmentCount);
 			for (uint8_t i = 0; i < pipelineData.colorAttachmentCount; ++i) {
 				result ^= std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::AttachmentData>{}(pipelineData.colorAttachmentData[i]);
 			}
 
-			result ^= pipelineData.shaderStageCreateInfoCount;
+			result ^= std::hash<uint32_t>{}(pipelineData.shaderStageCreateInfoCount);
 			for (uint8_t i = 0; i < pipelineData.shaderStageCreateInfoCount; ++i) {
 				result ^= std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::ShaderStageData>{}(pipelineData.shaderStageCreateInfos[i]);
 			}

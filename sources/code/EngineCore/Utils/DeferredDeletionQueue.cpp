@@ -9,7 +9,7 @@ Grindstone::DeletionQueue::~DeletionQueue() {
 	queue.clear();
 }
 
-void Grindstone::DeletionQueue::Initialize(uint8_t poolSize) {
+void Grindstone::DeletionQueue::Initialize(uint32_t poolSize) {
 	queue.reserve(poolSize);
 }
 

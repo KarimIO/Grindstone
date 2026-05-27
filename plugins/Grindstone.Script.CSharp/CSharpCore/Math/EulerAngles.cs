@@ -27,11 +27,35 @@ namespace Grindstone {
 				roll = eulerAngles.z % TWO_PI;
 			}
 
+			public EulerAngles(Quaternion q)
+			{
+				// roll (x-axis rotation)
+				double sinr_cosp = 2 * (q.w * q.x + q.y * q.z);
+				double cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y);
+				roll = (float)System.Math.Atan2(sinr_cosp, cosr_cosp);
 
-			public static EulerAngles Zero => new EulerAngles(0.0f, 0.0f, 0.0f);
+				// pitch (y-axis rotation)
+				double sinp = 2 * (q.w * q.y - q.z * q.x);
+				if (System.Math.Abs(sinp) >= 1)
+				{
+					pitch = (float)System.Math.CopySign(System.Math.PI / 2, sinp);
+				}
+				else
+				{
+					pitch = (float)System.Math.Asin(sinp);
+				}
+
+				// yaw (z-axis rotation)
+				double siny_cosp = 2 * (q.w * q.z + q.x * q.y);
+				double cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
+				yaw = (float)System.Math.Atan2(siny_cosp, cosy_cosp);
+			}
+
+			public static EulerAngles Zero => new(0.0f, 0.0f, 0.0f);
 			#endregion
 
 			#region Public Methods
+			public Quaternion ToQuaternion() => new(this);
 			public override string ToString() => $"EulerAngles({pitch}rad, {yaw}rad, {roll}rad)";
 			#endregion
 		}

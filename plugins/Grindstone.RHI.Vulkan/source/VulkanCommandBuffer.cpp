@@ -6,6 +6,7 @@
 #include <Grindstone.RHI.Vulkan/include/VulkanRenderPass.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanGraphicsPipeline.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanComputePipeline.hpp>
+#include <Grindstone.RHI.Vulkan/include/VulkanPipelineLayout.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanFramebuffer.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanVertexArrayObject.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanCore.hpp>
@@ -15,15 +16,19 @@
 #include <Grindstone.RHI.Vulkan/include/VulkanDescriptorSetLayout.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanCommandBuffer.hpp>
 
-PFN_vkCmdBeginDebugUtilsLabelEXT cmdBeginDebugUtilsLabelEXT;
-PFN_vkCmdEndDebugUtilsLabelEXT cmdEndDebugUtilsLabelEXT;
+PFN_vkCmdBeginDebugUtilsLabelEXT pfnVkCmdBeginDebugUtilsLabelEXT;
+PFN_vkCmdEndDebugUtilsLabelEXT pfnVkCmdEndDebugUtilsLabelEXT;
+PFN_vkCmdBeginRenderingKHR pfnVkCmdBeginRenderingKHR;
+PFN_vkCmdEndRenderingKHR pfnVkCmdEndRenderingKHR;
 
 namespace Base = Grindstone::GraphicsAPI;
 namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
 void Vulkan::CommandBuffer::SetupDebugLabelUtils(VkInstance instance) {
-	cmdBeginDebugUtilsLabelEXT = (PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetInstanceProcAddr(instance, "vkCmdBeginDebugUtilsLabelEXT");
-	cmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(instance, "vkCmdEndDebugUtilsLabelEXT");
+	pfnVkCmdBeginDebugUtilsLabelEXT = (PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetInstanceProcAddr(instance, "vkCmdBeginDebugUtilsLabelEXT");
+	pfnVkCmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(instance, "vkCmdEndDebugUtilsLabelEXT");
+	pfnVkCmdBeginRenderingKHR = (PFN_vkCmdBeginRenderingKHR)vkGetInstanceProcAddr(instance, "vkCmdBeginRenderingKHR");
+	pfnVkCmdEndRenderingKHR = (PFN_vkCmdEndRenderingKHR)vkGetInstanceProcAddr(instance, "vkCmdEndRenderingKHR");
 }
 
 VkCommandBuffer Vulkan::CommandBuffer::GetCommandBuffer()	{
@@ -60,15 +65,16 @@ Vulkan::CommandBuffer::CommandBuffer(const CreateInfo& createInfo) {
 
 	if (createInfo.secondaryInfo.isSecondary) {
 		beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
-		VkCommandBufferInheritanceInfo inheritenceInfo = {};
 		Vulkan::Framebuffer* framebuffer = static_cast<Vulkan::Framebuffer *>(createInfo.secondaryInfo.framebuffer);
 		Vulkan::RenderPass* renderPass = static_cast<Vulkan::RenderPass *>(createInfo.secondaryInfo.renderPass);
-		inheritenceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-		inheritenceInfo.framebuffer = framebuffer->GetFramebuffer();
-		inheritenceInfo.renderPass = renderPass->GetRenderPassHandle();
-		inheritenceInfo.occlusionQueryEnable = VK_FALSE;
-		inheritenceInfo.pipelineStatistics = 0;
-		inheritenceInfo.pNext = nullptr;
+		VkCommandBufferInheritanceInfo inheritenceInfo = {
+			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO,
+			.pNext = nullptr,
+			.renderPass = renderPass->GetRenderPassHandle(),
+			.framebuffer = framebuffer->GetFramebuffer(),
+			.occlusionQueryEnable = VK_FALSE,
+			.pipelineStatistics = 0,
+		};
 		inheritenceInfo.subpass = 0;
 		beginInfo.pInheritanceInfo = &inheritenceInfo;
 	}
@@ -82,12 +88,39 @@ void Vulkan::CommandBuffer::BeginCommandBuffer() {
 	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 }
 
+void Vulkan::CommandBuffer::ClearAttachments(ClearAttachment* attachments, uint32_t attachmentCount, ClearRect* rects, uint32_t rectCount) {
+	std::vector<VkClearAttachment> vkAttachments;
+	vkAttachments.resize(attachmentCount);
+	std::vector<VkClearRect> vkClearRect;
+	vkClearRect.resize(rectCount);
+
+	for (uint32_t i = 0; i < attachmentCount; ++i) {
+		auto& src = attachments[i];
+		auto& dst = vkAttachments[i];
+		dst.aspectMask = TranslateImageAspectBitsToVulkan(src.aspectMask);
+		std::memcpy(&dst.clearValue, &src.clearValue, sizeof(VkClearValue));
+		dst.colorAttachment = src.colorAttachmentIndex;
+	}
+
+	for (uint32_t i = 0; i < rectCount; ++i) {
+		auto& src = rects[i];
+		auto& dst = vkClearRect[i];
+		dst.baseArrayLayer = src.baseArrayLayer;
+		dst.layerCount = src.layerCount;
+		dst.rect = {
+			.offset = { src.rect.offset.x, src.rect.offset.y },
+			.extent = { src.rect.extent.x, src.rect.extent.y }
+		};
+	}
+
+	vkCmdClearAttachments(commandBuffer, attachmentCount, vkAttachments.data(), rectCount, vkClearRect.data());
+}
+
 void Vulkan::CommandBuffer::BindRenderPass(
 	GraphicsAPI::RenderPass* renderPass,
 	GraphicsAPI::Framebuffer* framebuffer,
-	uint32_t width,
-	uint32_t height,
-	ClearColorValue* colorClearValues,
+	Grindstone::Math::IntRect2D rect,
+	ClearColor* colorClearValues,
 	uint32_t colorClearCount,
 	ClearDepthStencil depthStencilClearValue
 ) {
@@ -97,19 +130,19 @@ void Vulkan::CommandBuffer::BindRenderPass(
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = vulkanRenderPass->GetRenderPassHandle();
 	renderPassInfo.framebuffer = vulkanFramebuffer->GetFramebuffer();
-	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = { width, height };
+	renderPassInfo.renderArea.offset = { rect.offset.x, rect.offset.y };
+	renderPassInfo.renderArea.extent = { rect.extent.x, rect.extent.y };
 
 	size_t clearColorCount = colorClearCount;
-	clearColorCount += depthStencilClearValue.hasDepthStencilAttachment ? 1 : 0;
+	clearColorCount += vulkanRenderPass->shouldClearDepthOnLoad ? 1 : 0;
 
 	std::vector<VkClearValue> clearColor;
 	clearColor.resize(clearColorCount);
 	for (size_t i = 0; i < colorClearCount; i++) {
-		std::memcpy(&clearColor[i].color, &colorClearValues[i], sizeof(VkClearColorValue));
+		std::memcpy(&clearColor[i].color, &colorClearValues[i], sizeof(VkClearValue));
 	}
 
-	if (depthStencilClearValue.hasDepthStencilAttachment) {
+	if (vulkanRenderPass->shouldClearDepthOnLoad) {
 		clearColor[colorClearCount].depthStencil = {
 			depthStencilClearValue.depth,
 			depthStencilClearValue.stencil
@@ -132,13 +165,109 @@ void Vulkan::CommandBuffer::BindRenderPass(
 		labelInfo.color[3] = debugColor[3];
 	}
 
-	cmdBeginDebugUtilsLabelEXT(commandBuffer, &labelInfo);
+	pfnVkCmdBeginDebugUtilsLabelEXT(commandBuffer, &labelInfo);
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 void Vulkan::CommandBuffer::UnbindRenderPass() {
 	vkCmdEndRenderPass(commandBuffer);
-	cmdEndDebugUtilsLabelEXT(commandBuffer);
+	pfnVkCmdEndDebugUtilsLabelEXT(commandBuffer);
+}
+
+void Vulkan::CommandBuffer::BeginRendering(
+	const char* name,
+	Grindstone::Math::IntRect2D rect,
+	RenderAttachment* colorAttachments,
+	uint32_t attachmentCount,
+	RenderAttachment* depthAttachment,
+	RenderAttachment* stencilAttachment,
+	float* debugColor
+) {
+	VkDebugUtilsLabelEXT labelInfo{};
+	labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+	labelInfo.pLabelName = name;
+	labelInfo.pNext = nullptr;
+
+	if (debugColor != nullptr) {
+		labelInfo.color[0] = debugColor[0];
+		labelInfo.color[1] = debugColor[1];
+		labelInfo.color[2] = debugColor[2];
+		labelInfo.color[3] = debugColor[3];
+	}
+
+	std::vector<VkRenderingAttachmentInfoKHR> colorAttachmentInfos;
+	VkRenderingAttachmentInfoKHR depthAttachmentInfo;
+	VkRenderingAttachmentInfoKHR stencilAttachmentInfo;
+
+	for (uint32_t i = 0; i < attachmentCount; ++i) {
+		RenderAttachment& attachment = colorAttachments[i];
+		Grindstone::GraphicsAPI::Vulkan::Image* image = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(attachment.image);
+		VkImageView imageView = image->GetImageView();
+		GS_ASSERT(imageView != nullptr);
+		colorAttachmentInfos.emplace_back(
+			VkRenderingAttachmentInfoKHR{
+				.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
+				.imageView = imageView,
+				.imageLayout = TranslateImageLayoutToVulkan(attachment.imageLayout),
+				.loadOp = TranslateLoadOpToVulkan(attachment.loadOp),
+				.storeOp = TranslateStoreOpToVulkan(attachment.storeOp),
+				.clearValue = TranslateClearUnionToVulkan(attachment.clearValue)
+			}
+		);
+	}
+
+	if (depthAttachment != nullptr) {
+		Grindstone::GraphicsAPI::Vulkan::Image* depthImage = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(depthAttachment->image);
+		VkImageView depthImageView = depthImage->GetImageView();
+		GS_ASSERT(depthImageView != nullptr);
+		depthAttachmentInfo = VkRenderingAttachmentInfoKHR{
+			.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
+			.imageView = depthImage->GetImageView(),
+			.imageLayout = TranslateImageLayoutToVulkan(depthAttachment->imageLayout),
+			.loadOp = TranslateLoadOpToVulkan(depthAttachment->loadOp),
+			.storeOp = TranslateStoreOpToVulkan(depthAttachment->storeOp),
+			.clearValue = TranslateClearUnionToVulkan(depthAttachment->clearValue)
+		};
+	}
+
+	if (stencilAttachment != nullptr) {
+		Grindstone::GraphicsAPI::Vulkan::Image* stencilImage = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(stencilAttachment->image);
+		VkImageView stencilImageView = stencilImage->GetImageView();
+		GS_ASSERT(stencilImageView != nullptr);
+		stencilAttachmentInfo = VkRenderingAttachmentInfoKHR{
+			.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
+			.imageView = stencilImageView,
+			.imageLayout = TranslateImageLayoutToVulkan(stencilAttachment->imageLayout),
+			.loadOp = TranslateLoadOpToVulkan(stencilAttachment->loadOp),
+			.storeOp = TranslateStoreOpToVulkan(stencilAttachment->storeOp),
+			.clearValue = TranslateClearUnionToVulkan(stencilAttachment->clearValue)
+		};
+	}
+
+	const VkRect2D renderArea = {
+		rect.offset.x,
+		rect.offset.y,
+		rect.extent.x,
+		rect.extent.y
+	};
+
+	const VkRenderingInfoKHR renderInfo{
+		.sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR,
+		.renderArea = renderArea,
+		.layerCount = 1,
+		.colorAttachmentCount = static_cast<uint32_t>(colorAttachmentInfos.size()),
+		.pColorAttachments = colorAttachmentInfos.data(),
+		.pDepthAttachment = depthAttachment != nullptr ? &depthAttachmentInfo : nullptr,
+		.pStencilAttachment = stencilAttachment != nullptr ? &stencilAttachmentInfo : nullptr
+	};
+
+	pfnVkCmdBeginDebugUtilsLabelEXT(commandBuffer, &labelInfo);
+	pfnVkCmdBeginRenderingKHR(commandBuffer, &renderInfo);
+}
+
+void Vulkan::CommandBuffer::EndRendering() {
+	pfnVkCmdEndRenderingKHR(commandBuffer);
+	pfnVkCmdEndDebugUtilsLabelEXT(commandBuffer);
 }
 
 void Vulkan::CommandBuffer::BeginDebugLabelSection(const char* name, float color[4]) {
@@ -154,31 +283,31 @@ void Vulkan::CommandBuffer::BeginDebugLabelSection(const char* name, float color
 		labelInfo.color[3] = color[3];
 	}
 
-	cmdBeginDebugUtilsLabelEXT(commandBuffer, &labelInfo);
+	pfnVkCmdBeginDebugUtilsLabelEXT(commandBuffer, &labelInfo);
 }
 
 void Vulkan::CommandBuffer::EndDebugLabelSection() {
-	cmdEndDebugUtilsLabelEXT(commandBuffer);
+	pfnVkCmdEndDebugUtilsLabelEXT(commandBuffer);
 }
 
 void Vulkan::CommandBuffer::BindGraphicsDescriptorSet(
-	const Base::GraphicsPipeline* graphicsPipeline,
+	const Base::PipelineLayout* pipelineLayout,
 	const Base::DescriptorSet* const * descriptorSets,
 	uint32_t descriptorSetOffset,
 	uint32_t descriptorSetCount
 ) {
-	const Vulkan::GraphicsPipeline *vkPipeline = static_cast<const Vulkan::GraphicsPipeline *>(graphicsPipeline);
-	BindDescriptorSet(vkPipeline->GetGraphicsPipelineLayout(), VK_PIPELINE_BIND_POINT_GRAPHICS, descriptorSets, descriptorSetOffset, descriptorSetCount);
+	const Vulkan::PipelineLayout *vkPipelineLayout = static_cast<const Vulkan::PipelineLayout *>(pipelineLayout);
+	BindDescriptorSet(vkPipelineLayout->GetPipelineLayout(), VK_PIPELINE_BIND_POINT_GRAPHICS, descriptorSets, descriptorSetOffset, descriptorSetCount);
 }
 
 void Vulkan::CommandBuffer::BindComputeDescriptorSet(
-	const Base::ComputePipeline* computePipeline,
+	const Base::PipelineLayout* pipelineLayout,
 	const Base::DescriptorSet* const * descriptorSets,
 	uint32_t descriptorSetOffset,
 	uint32_t descriptorSetCount
 ) {
-	const Vulkan::ComputePipeline* vkPipeline = static_cast<const Vulkan::ComputePipeline*>(computePipeline);
-	BindDescriptorSet(vkPipeline->GetComputePipelineLayout(), VK_PIPELINE_BIND_POINT_COMPUTE, descriptorSets, descriptorSetOffset, descriptorSetCount);
+	const Vulkan::PipelineLayout* vkPipelineLayout = static_cast<const Vulkan::PipelineLayout*>(pipelineLayout);
+	BindDescriptorSet(vkPipelineLayout->GetPipelineLayout(), VK_PIPELINE_BIND_POINT_COMPUTE, descriptorSets, descriptorSetOffset, descriptorSetCount);
 }
 
 void Vulkan::CommandBuffer::BindDescriptorSet(
@@ -228,11 +357,13 @@ void Vulkan::CommandBuffer::BindCommandBuffers(
 }
 
 void Vulkan::CommandBuffer::BlitImage(
-	GraphicsAPI::Image* src,
-	GraphicsAPI::Image* dst,
+	Grindstone::GraphicsAPI::Image* src,
+	Grindstone::GraphicsAPI::Image* dst,
 	Grindstone::GraphicsAPI::ImageLayout oldLayout,
 	Grindstone::GraphicsAPI::ImageLayout newLayout,
-	uint32_t width, uint32_t height, uint32_t depth
+	Grindstone::GraphicsAPI::TextureFilter filter,
+	Grindstone::Math::IntBox3D srcRegion,
+	Grindstone::Math::IntBox3D dstRegion
 ) {
 	Vulkan::Image* vkSrc = static_cast<Vulkan::Image*>(src);
 	Vulkan::Image* vkDst = static_cast<Vulkan::Image*>(dst);
@@ -240,31 +371,48 @@ void Vulkan::CommandBuffer::BlitImage(
 	VkImageLayout srcLayout = TranslateImageLayoutToVulkan(oldLayout);
 	VkImageLayout dstLayout = TranslateImageLayoutToVulkan(newLayout);
 
-	VkImageBlit blit{};
-	blit.srcOffsets[0] = { 0, 0, 0 };
-	blit.srcOffsets[1] = {
-		static_cast<int32_t>(width),
-		static_cast<int32_t>(height),
-		static_cast<int32_t>(depth)
+	VkImageBlit blit{
+		.srcSubresource = {
+			.aspectMask = vkSrc->GetAspect(),
+			.mipLevel = 0,
+			.baseArrayLayer = 0,
+			.layerCount = vkSrc->GetArrayLayers()
+		},
+		.srcOffsets = {
+			{
+				srcRegion.offset.x,
+				srcRegion.offset.y,
+				srcRegion.offset.z
+			},
+			{
+				srcRegion.offset.x + static_cast<int32_t>(srcRegion.extent.x),
+				srcRegion.offset.y + static_cast<int32_t>(srcRegion.extent.y),
+				srcRegion.offset.z + static_cast<int32_t>(srcRegion.extent.z)
+			}
+		},
+		.dstSubresource = {
+			.aspectMask = vkDst->GetAspect(),
+			.mipLevel = 0,
+			.baseArrayLayer = 0,
+			.layerCount = vkDst->GetArrayLayers()
+		},
+		.dstOffsets = {
+			{
+				dstRegion.offset.x,
+				dstRegion.offset.y,
+				dstRegion.offset.z
+			},
+			{
+				dstRegion.offset.x + static_cast<int32_t>(dstRegion.extent.x),
+				dstRegion.offset.y + static_cast<int32_t>(dstRegion.extent.y),
+				dstRegion.offset.z + static_cast<int32_t>(dstRegion.extent.z)
+			}
+		},
 	};
-	blit.srcSubresource.aspectMask = vkSrc->GetAspect();
-	blit.srcSubresource.mipLevel = 0;
-	blit.srcSubresource.baseArrayLayer = 0;
-	blit.srcSubresource.layerCount = vkSrc->GetArrayLayers();
-	blit.dstOffsets[0] = { 0, 0, 0 };
-	blit.dstOffsets[1] = {
-		static_cast<int32_t>(width),
-		static_cast<int32_t>(height),
-		static_cast<int32_t>(depth)
-	};
-	blit.dstSubresource.aspectMask = vkDst->GetAspect();
-	blit.dstSubresource.mipLevel = 0;
-	blit.dstSubresource.baseArrayLayer = 0;
-	blit.dstSubresource.layerCount = vkDst->GetArrayLayers();
 
-	VkFilter filter = VkFilter::VK_FILTER_NEAREST;
+	VkFilter vkFilter = TranslateFilterToVulkan(filter);
 
-	vkCmdBlitImage(commandBuffer, vkSrc->GetImage(), srcLayout, vkDst->GetImage(), dstLayout, 1, &blit, filter);
+	vkCmdBlitImage(commandBuffer, vkSrc->GetImage(), srcLayout, vkDst->GetImage(), dstLayout, 1, &blit, vkFilter);
 }
 
 void Vulkan::CommandBuffer::SetDepthBias(float biasConstantFactor, float biasSlopeFactor) {
@@ -354,14 +502,72 @@ void Vulkan::CommandBuffer::DispatchCompute(uint32_t groupCountX, uint32_t group
 	vkCmdDispatch(commandBuffer, groupCountX, groupCountY, groupCountZ);
 }
 
+void Vulkan::CommandBuffer::CopyBufferRegions(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, BufferCopyRegion* regions, uint32_t regionCount) {
+	std::vector<VkBufferCopy2> vkRegions;
+
+	for (uint32_t i = 0; i < regionCount; ++i) {
+		BufferCopyRegion& region = regions[i];
+		GS_ASSERT_ENGINE(region.srcOffset + region.size <= srcBuffer->GetSize());
+		GS_ASSERT_ENGINE(region.dstOffset + region.size <= dstBuffer->GetSize());
+
+		vkRegions.emplace_back(
+			VkBufferCopy2{
+				.sType = VK_STRUCTURE_TYPE_BUFFER_COPY_2,
+				.pNext = nullptr,
+				.srcOffset = region.srcOffset,
+				.dstOffset = region.dstOffset,
+				.size = region.size
+			}
+		);
+	}
+
+	const VkCopyBufferInfo2 copyBufferInfo{
+		.sType = VK_STRUCTURE_TYPE_COPY_BUFFER_INFO_2,
+		.pNext = nullptr,
+		.srcBuffer = static_cast<Vulkan::Buffer*>(srcBuffer)->GetBuffer(),
+		.dstBuffer = static_cast<Vulkan::Buffer*>(dstBuffer)->GetBuffer(),
+		.regionCount = static_cast<uint32_t>(vkRegions.size()),
+		.pRegions =  vkRegions.data(),
+	};
+
+	vkCmdCopyBuffer2(commandBuffer, &copyBufferInfo);
+}
+
+void Vulkan::CommandBuffer::CopyBufferRegion(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, uint64_t size, uint32_t srcOffset, uint32_t dstOffset) {
+	if (size == 0) {
+		size = srcBuffer->GetSize();
+		GS_ASSERT_ENGINE_WITH_MESSAGE(srcBuffer->GetSize() == dstBuffer->GetSize(), "CopyBufferRegion: If size == 0, the buffer sizes must match - this is to ensure predictable functionality.");
+	}
+
+	GS_ASSERT_ENGINE(srcOffset + size <= srcBuffer->GetSize());
+	GS_ASSERT_ENGINE(dstOffset + size <= dstBuffer->GetSize());
+	
+	const VkBufferCopy2 region{
+		.sType = VK_STRUCTURE_TYPE_BUFFER_COPY_2,
+		.pNext = nullptr,
+		.srcOffset = srcOffset,
+		.dstOffset = dstOffset,
+		.size = size
+	};
+
+	const VkCopyBufferInfo2 copyBufferInfo{
+		.sType = VK_STRUCTURE_TYPE_COPY_BUFFER_INFO_2,
+		.pNext = nullptr,
+		.srcBuffer = static_cast<Vulkan::Buffer*>(srcBuffer)->GetBuffer(),
+		.dstBuffer = static_cast<Vulkan::Buffer*>(dstBuffer)->GetBuffer(),
+		.regionCount = 1u,
+		.pRegions = &region,
+	};
+
+	vkCmdCopyBuffer2(commandBuffer, &copyBufferInfo);
+}
+
 void Vulkan::CommandBuffer::PipelineBarrier(
-	GraphicsAPI::PipelineStageBit srcPipelineStageMask,
-	GraphicsAPI::PipelineStageBit dstPipelineStageMask,
 	const GraphicsAPI::BufferBarrier* bufferBarriers, uint32_t bufferBarrierCount,
 	const GraphicsAPI::ImageBarrier* imageBarriers, uint32_t imageBarrierCount
 ) {
-	std::vector<VkBufferMemoryBarrier> vkBufferBarriers;
-	std::vector<VkImageMemoryBarrier> vkImageBarriers;
+	std::vector<VkBufferMemoryBarrier2> vkBufferBarriers;
+	std::vector<VkImageMemoryBarrier2> vkImageBarriers;
 
 	for (uint32_t index = 0; index < imageBarrierCount; ++index) {
 		const GraphicsAPI::ImageBarrier& barrier = imageBarriers[index];
@@ -369,12 +575,16 @@ void Vulkan::CommandBuffer::PipelineBarrier(
 		Vulkan::Image* vulkanImage = static_cast<Vulkan::Image*>(barrier.image);
 
 		vkImageBarriers.emplace_back(
-			VkImageMemoryBarrier {
-				.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-				.srcAccessMask = (VkAccessFlags)(barrier.srcAccess),
-				.dstAccessMask = (VkAccessFlags)(barrier.dstAccess),
+			VkImageMemoryBarrier2{
+				.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+				.srcStageMask = (VkPipelineStageFlags2)(barrier.srcStageMask),
+				.srcAccessMask = (VkAccessFlags2)(barrier.srcAccess),
+				.dstStageMask = (VkPipelineStageFlags2)(barrier.dstStageMask),
+				.dstAccessMask = (VkAccessFlags2)(barrier.dstAccess),
 				.oldLayout = TranslateImageLayoutToVulkan(barrier.oldLayout),
 				.newLayout = TranslateImageLayoutToVulkan(barrier.newLayout),
+				.srcQueueFamilyIndex = 0,
+				.dstQueueFamilyIndex = 0,
 				.image = vulkanImage->GetImage(),
 				.subresourceRange = {
 					.aspectMask = TranslateImageAspectBitsToVulkan(barrier.imageAspect),
@@ -393,10 +603,14 @@ void Vulkan::CommandBuffer::PipelineBarrier(
 		Vulkan::Buffer* vulkanBuffer = static_cast<Vulkan::Buffer*>(barrier.buffer);
 
 		vkBufferBarriers.emplace_back(
-			VkBufferMemoryBarrier {
-				.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-				.srcAccessMask = (VkAccessFlags)(barrier.srcAccess),
-				.dstAccessMask = (VkAccessFlags)(barrier.dstAccess),
+			VkBufferMemoryBarrier2 {
+				.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+				.srcStageMask = (VkPipelineStageFlags2)(barrier.srcStageMask),
+				.srcAccessMask = (VkAccessFlags2)(barrier.srcAccess),
+				.dstStageMask = (VkPipelineStageFlags2)(barrier.dstStageMask),
+				.dstAccessMask = (VkAccessFlags2)(barrier.dstAccess),
+				.srcQueueFamilyIndex = 0,
+				.dstQueueFamilyIndex = 0,
 				.buffer = vulkanBuffer->GetBuffer(),
 				.offset = static_cast<VkDeviceSize>(barrier.offset),
 				.size = static_cast<VkDeviceSize>(barrier.size)
@@ -404,19 +618,21 @@ void Vulkan::CommandBuffer::PipelineBarrier(
 		);
 	}
 
-	VkPipelineStageFlagBits vkSrcPipelineStage = TranslatePipelineStageToVulkan(srcPipelineStageMask);
-	VkPipelineStageFlagBits vkDstPipelineStage = TranslatePipelineStageToVulkan(dstPipelineStageMask);
+	VkDependencyInfo dependencyInfo{
+		.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+		.pNext = nullptr,
+		.dependencyFlags = VkDependencyFlags(),
+		.memoryBarrierCount = 0u,
+		.pMemoryBarriers = nullptr,
+		.bufferMemoryBarrierCount = static_cast<uint32_t>(vkBufferBarriers.size()),
+		.pBufferMemoryBarriers = vkBufferBarriers.data(),
+		.imageMemoryBarrierCount = static_cast<uint32_t>(vkImageBarriers.size()),
+		.pImageMemoryBarriers = vkImageBarriers.data()
+	};
 
-	vkCmdPipelineBarrier(
+	vkCmdPipelineBarrier2(
 		commandBuffer,
-		vkSrcPipelineStage,
-		vkDstPipelineStage,
-		0,
-		0, nullptr,
-		static_cast<uint32_t>(vkBufferBarriers.size()),
-		vkBufferBarriers.data(),
-		static_cast<uint32_t>(vkImageBarriers.size()),
-		vkImageBarriers.data()
+		&dependencyInfo
 	);
 }
 

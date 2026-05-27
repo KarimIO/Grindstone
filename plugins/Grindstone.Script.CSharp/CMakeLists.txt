@@ -62,11 +62,11 @@ set(CSHARP_HEADERS ${INC}/CSharpManager.hpp ${INC}/CSharpSystem.hpp ${INC}/Scrip
 
 file(GLOB_RECURSE CSHARP_COMPONENTS_SOURCES "${SRC}/Components/*.cpp")
 file(GLOB_RECURSE CSHARP_COMPONENTS_HEADER "${INC}/Components/*.hpp")
-source_group("Components\\Source Files" FILES ${CSHARP_COMPONENTS_SOURCES})
-source_group("Components\\Header Files" FILES ${CSHARP_COMPONENTS_HEADER})
+source_group("Source Files\\Components" FILES ${CSHARP_COMPONENTS_SOURCES})
+source_group("Header Files\\Components" FILES ${CSHARP_COMPONENTS_HEADER})
 
-source_group("Reflection\\Source Files" FILES ${SOURCE_REFLECTION})
-source_group("Reflection\\Header Files" FILES ${HEADER_REFLECTION})
+source_group("Source Files\\Reflection" FILES ${SOURCE_REFLECTION})
+source_group("Header Files\\Reflection" FILES ${HEADER_REFLECTION})
 
 add_library(
 	PluginScriptCSharp MODULE
@@ -125,7 +125,7 @@ target_link_libraries(PluginScriptCSharp PUBLIC ${CORE_LIBS} ${DOTNET_ROOT}/neth
 target_precompile_headers(PluginScriptCSharp PUBLIC ${INC}/pch.hpp)
 
 add_custom_command(
-        TARGET PluginScriptCSharp POST_BUILD
+		TARGET PluginScriptCSharp POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
 			"${DOTNET_ROOT}/nethost.dll"
 			"${SCRIPT_CSHARP_LIB}/$<CONFIG>/nethost.dll"

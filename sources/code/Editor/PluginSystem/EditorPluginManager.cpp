@@ -3,18 +3,25 @@
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Logger.hpp>
 #include <Editor/EditorManager.hpp>
+#include <Editor/ScriptBuilder/CSharpProjectBuilder.hpp>
+#include <Editor/ScriptBuilder/SolutionBuilder.hpp>
+#include <Grindstone.Script.CSharp/include/CSharpManager.hpp>
 
 #include "EditorPluginManager.hpp"
 #include "PluginMetaFileLoader.hpp"
 #include "PluginManifestFileLoader.hpp"
 #include "PluginManifestLockFileLoader.hpp"
 
+#include <rapidjson/document.h>
+#include <windows.h>
+#include <unordered_map>
+#include <vector>
+#include <thread>
+
 using namespace Grindstone::Plugins;
 using namespace Grindstone::Utilities;
 
-#include <windows.h>
-#include <vector>
-#include <thread>
+constexpr const char* configuration = CMAKE_INTDIR;
 
 static void ReadPipeLoop(HANDLE pipe, Grindstone::LogSeverity severity) {
 	DWORD bytesRead;
@@ -35,21 +42,27 @@ static void ReadPipeLoop(HANDLE pipe, Grindstone::LogSeverity severity) {
 }
 
 static bool RunCommand(char* commandLine, const char* workingDirectory) {
-	SECURITY_ATTRIBUTES sa = { sizeof(sa), NULL, TRUE };
+	SECURITY_ATTRIBUTES securityAttribs{
+		.nLength = sizeof(securityAttribs),
+		.lpSecurityDescriptor = NULL,
+		.bInheritHandle = TRUE
+	};
+
 	HANDLE stdoutRead, stdoutWrite, stderrRead, stderrWrite;
-	CreatePipe(&stdoutRead, &stdoutWrite, &sa, 0);
+	CreatePipe(&stdoutRead, &stdoutWrite, &securityAttribs, 0);
 	SetHandleInformation(stdoutRead, HANDLE_FLAG_INHERIT, 0);
-	CreatePipe(&stderrRead, &stderrWrite, &sa, 0);
+	CreatePipe(&stderrRead, &stderrWrite, &securityAttribs, 0);
 	SetHandleInformation(stderrRead, HANDLE_FLAG_INHERIT, 0);
 
-	STARTUPINFOA si = {};
-	si.cb = sizeof(si);
-	si.dwFlags = STARTF_USESTDHANDLES;
-	si.hStdOutput = stdoutWrite;
-	si.hStdError = stderrWrite;
-	si.hStdInput = NULL;
+	STARTUPINFOA si{
+		.cb = sizeof(si),
+		.dwFlags = STARTF_USESTDHANDLES,
+		.hStdInput = NULL,
+		.hStdOutput = stdoutWrite,
+		.hStdError = stderrWrite,
+	};
 
-	PROCESS_INFORMATION pi = {};
+	PROCESS_INFORMATION pi{};
 	BOOL success = CreateProcessA(
 		NULL,
 		static_cast<LPSTR>(commandLine),
@@ -87,11 +100,11 @@ static bool RunCommand(char* commandLine, const char* workingDirectory) {
 
 static bool RunCMakeCommand(const std::vector<std::string>& cmakeTargets) {
 	std::string workingDirectory = EngineCore::GetInstance().GetEngineBinaryPath().parent_path().string();
-	
+
 	std::ostringstream cmdStream;
 	cmdStream << "cmake";
 	cmdStream << " --build .";
-	cmdStream << " --config Release";
+	cmdStream << " --config " << configuration;
 	cmdStream << " --parallel";
 	cmdStream << " --target";
 	for (const std::string& target : cmakeTargets) {
@@ -101,16 +114,180 @@ static bool RunCMakeCommand(const std::vector<std::string>& cmakeTargets) {
 	return RunCommand(commandLine.data(), workingDirectory.empty() ? nullptr : workingDirectory.c_str());
 }
 
-static bool RunDotnetCommand(const std::vector<std::string>& dotnetTargets) {
+static bool RunDotnetCommand(const std::filesystem::path& path) {
 	std::string workingDirectory = (EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins").string();
 
 	std::ostringstream cmdStream;
 	cmdStream << "dotnet build ";
-	for (const std::string& target : dotnetTargets) {
-		cmdStream << " \"" << target.c_str() << "\"";
-	}
+	cmdStream << "--configuration " << configuration << " ";
+	cmdStream << '\"' << path.string() << '\"';
 	std::string commandLine = cmdStream.str();
 	return RunCommand(commandLine.data(), workingDirectory.empty() ? nullptr : workingDirectory.c_str());
+}
+
+static void CompileBinaries(const std::filesystem::path& solutionPath, const std::vector<Grindstone::Plugins::MetaData>& resolvedPluginManifest) {
+	std::vector<std::string> cmakeTargetsToCompile;
+
+	for (const Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
+		for (const Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
+			if (!binary.buildTarget.empty()) {
+				switch (binary.buildType) {
+				case MetaData::BinaryBuildType::NoBuild: {
+					std::string path = binary.libraryRelativePath.string();
+					GPRINT_ERROR_V(LogSource::Editor, "Binary {} has a target {} but no build type.", path.c_str(), binary.buildTarget.c_str());
+					break;
+				}
+				case MetaData::BinaryBuildType::Cmake:
+					cmakeTargetsToCompile.emplace_back(binary.buildTarget);
+					break;
+				case MetaData::BinaryBuildType::Dotnet:
+					break;
+				}
+			}
+			else if (binary.buildType != MetaData::BinaryBuildType::NoBuild) {
+				std::string path = binary.libraryRelativePath.string();
+				GPRINT_ERROR_V(LogSource::Editor, "Binary {} has a build type other than 'NoBuild' but not a target.", path.c_str());
+			}
+		}
+	}
+
+	if (!cmakeTargetsToCompile.empty()) {
+		RunCMakeCommand(cmakeTargetsToCompile);
+	}
+
+	RunDotnetCommand(solutionPath);
+}
+
+struct AssemblyReference {
+	std::string referenceName;
+};
+
+struct AssemblyDefinition {
+	std::string name;
+	std::filesystem::path projectPath;
+	std::vector<AssemblyReference> references;
+};
+
+static std::optional<AssemblyDefinition> ParseAssemblyDefinition(std::filesystem::path path) {
+	std::string pathStr = path.string();
+	const char* pathCstr = pathStr.c_str();
+	if (!std::filesystem::exists(path)) {
+		GPRINT_ERROR_V(LogSource::Editor, "Assembly definition file doesn't exist {}", pathCstr);
+		return std::nullopt;
+	}
+
+	std::string metaFileContents = Grindstone::Utils::LoadFileText(pathCstr);
+
+	rapidjson::Document document;
+	rapidjson::ParseResult parseResult = document.Parse(metaFileContents.c_str());
+
+	if (parseResult.IsError()) {
+		rapidjson::GetParseErrorFunc GetParseError = rapidjson::GetParseErrorFunc();
+		const RAPIDJSON_ERROR_CHARTYPE* errorCode = "Unknown Error";
+		if (GetParseError != nullptr) {
+			errorCode = GetParseError(parseResult.Code());
+		}
+		GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Failed to parse Assembly Definition file '{}'.", pathCstr);
+		return std::nullopt;
+	}
+
+	AssemblyDefinition assemblyDefinition;
+
+	if (document.HasMember("name")) {
+		rapidjson::Value& nameJson = document["name"];
+		if (nameJson.GetType() == rapidjson::Type::kStringType) {
+			assemblyDefinition.name = nameJson.GetString();
+		}
+		else {
+			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Assembly definition file {} has 'name' which should be of type string.\n", pathCstr);
+			return std::nullopt;
+		}
+	}
+	else {
+		GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Assembly definition file {} has no required parameter 'name'.\n", pathCstr);
+		return std::nullopt;
+	}
+
+	std::string warningMsg = "";
+	const char* nameCString = assemblyDefinition.name.c_str();
+
+	if (document.HasMember("references")) {
+		rapidjson::Value& referencesJson = document["references"];
+		if (referencesJson.GetType() == rapidjson::Type::kArrayType) {
+			const auto& referencesArray = referencesJson.GetArray();
+			for (const rapidjson::Value& referenceJson : referencesArray) {
+				if (referenceJson.GetType() == rapidjson::Type::kStringType) {
+					const char* reference = referenceJson.GetString();
+					assemblyDefinition.references.emplace_back(
+						AssemblyReference{
+							.referenceName = reference
+						}
+					);
+				}
+				else {
+					warningMsg += std::vformat("Assembly definition file {} has element in 'references' which should be of type string.\n", std::make_format_args(nameCString));
+				}
+			}
+		}
+		else {
+			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Assembly definition file {} has 'references' which should be of type array of strings.\n", nameCString);
+			return std::nullopt;
+		}
+	}
+
+	if (!warningMsg.empty()) {
+		GPRINT_WARN_V(Grindstone::LogSource::EngineCore, "Assembly definition file {} was parsed successfully, but has warnings:\n{}", nameCString, warningMsg.c_str());
+	}
+
+	return assemblyDefinition;
+}
+
+static void MakeProjectsAndSolutions(const std::filesystem::path& solutionPath, const std::vector<Grindstone::Plugins::MetaData>& resolvedPluginManifest) {
+	std::unordered_map<std::string, AssemblyDefinition> assembliesMap;
+
+	for (const Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
+		for (const Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
+			if (!binary.buildTarget.empty() && binary.buildType == MetaData::BinaryBuildType::Dotnet) {
+				std::filesystem::path filepath = metaData.pluginResolvedPath / binary.buildTarget;
+				std::optional<AssemblyDefinition> assemblyDefinitionOpt = ParseAssemblyDefinition(filepath);
+
+				if (assemblyDefinitionOpt.has_value()) {
+					AssemblyDefinition& assemblyDefinition = assemblyDefinitionOpt.value();
+					auto assemblyIt = assembliesMap.find(assemblyDefinition.name);
+					if (assemblyIt != assembliesMap.end()) {
+						GPRINT_WARN_V(LogSource::Editor, "Duplicate project called '{}' found!", assemblyDefinition.name.c_str());
+					}
+					else {
+						assemblyDefinition.projectPath = filepath.parent_path() / (assemblyDefinition.name + ".csproj");
+						assembliesMap[assemblyDefinition.name] = assemblyDefinition;
+					}
+				}
+			}
+		}
+	}
+
+	std::vector<std::filesystem::path> projectPaths;
+	for (auto& assemblyIt : assembliesMap) {
+		AssemblyDefinition& assemblyDefinition = assemblyIt.second;
+		const std::filesystem::path& projectPath = assemblyDefinition.projectPath;
+		projectPaths.emplace_back(projectPath);
+
+		std::vector<std::filesystem::path> references;
+		for (const AssemblyReference& ref : assemblyDefinition.references) {
+			auto referenceAssembly = assembliesMap.find(ref.referenceName);
+			if (referenceAssembly != assembliesMap.end()) {
+				std::filesystem::path referencePath = referenceAssembly->second.projectPath;
+				references.emplace_back(referencePath);
+			}
+			else {
+				GPRINT_WARN_V(LogSource::Editor, "Unknown reference '{}' found in assembly '{}'!", ref.referenceName, assemblyDefinition.name.c_str());
+			}
+		}
+
+		Grindstone::Editor::ScriptBuilder::CreateProjectFile(projectPath, references);
+	}
+
+	Grindstone::Editor::ScriptBuilder::CreateSolutionFile(solutionPath, projectPaths);
 }
 
 const std::vector<std::filesystem::path>& EditorPluginManager::GetPluginsFolders() {
@@ -124,45 +301,13 @@ void EditorPluginManager::AddPluginsFolder(const std::filesystem::path& path) {
 void EditorPluginManager::ResolvePlugins(std::vector<Grindstone::Plugins::ManifestData>& manifestResults) {
 	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path();
 
-	std::vector<std::string> cmakeTargetsToCompile;
-	std::vector<std::string> dotnetTargetsToCompile;
-
+	// TODO: Get dependencies that weren't in the lock file by passing to a queue in a while loop and checking each plugin's deps.
 	for (Grindstone::Plugins::ManifestData& manifestData : manifestResults) {
 		Grindstone::Plugins::MetaData metaData{};
 		std::filesystem::path metaFilePath = basePath / manifestData.path / "plugin.meta.json";
 		if (Grindstone::Plugins::ReadMetaFile(metaFilePath, metaData)) {
 			resolvedPluginManifest.emplace_back(metaData);
-
-			for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
-				if (!binary.buildTarget.empty()) {
-					switch (binary.buildType) {
-					case MetaData::BinaryBuildType::NoBuild: {
-						std::string path = binary.libraryRelativePath.string();
-						GPRINT_ERROR_V(LogSource::Editor, "Binary {} has a target {} but no build type.", path.c_str(), binary.buildTarget.c_str());
-						break;
-					}
-					case MetaData::BinaryBuildType::Cmake:
-						cmakeTargetsToCompile.emplace_back(binary.buildTarget);
-						break;
-					case MetaData::BinaryBuildType::Dotnet:
-						dotnetTargetsToCompile.emplace_back(binary.buildTarget);
-						break;
-					}
-				}
-				else if (binary.buildType != MetaData::BinaryBuildType::NoBuild) {
-					std::string path = binary.libraryRelativePath.string();
-					GPRINT_ERROR_V(LogSource::Editor, "Binary {} has a build type other than 'NoBuild' but not a target.", path.c_str());
-				}
-			}
 		}
-	}
-
-	if (!cmakeTargetsToCompile.empty()) {
-		RunCMakeCommand(cmakeTargetsToCompile);
-	}
-
-	if (!dotnetTargetsToCompile.empty()) {
-		RunDotnetCommand(dotnetTargetsToCompile);
 	}
 }
 
@@ -193,7 +338,12 @@ bool EditorPluginManager::PreprocessPlugins() {
 		return false;
 	}
 
+	std::filesystem::path solutionPath = Editor::Manager::GetInstance().GetProjectPath();
+	solutionPath = solutionPath / (solutionPath.filename().string() + ".slnx");
+
 	ResolvePlugins(manifestResults);
+	MakeProjectsAndSolutions(solutionPath, resolvedPluginManifest);
+	CompileBinaries(solutionPath, resolvedPluginManifest);
 
 	return true;
 }
@@ -203,11 +353,21 @@ void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
 	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
 		for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
 			if (binary.loadStage == stageName) {
-				std::filesystem::path binaryPath = metaData.pluginResolvedPath / binary.libraryRelativePath;
-				std::filesystem::path parentPath = binaryPath.parent_path();
-				DLL_DIRECTORY_COOKIE dllCookie = AddDllDirectory(parentPath.wstring().c_str());
-				LoadModule(binaryPath);
-				RemoveDllDirectory(dllCookie);
+				switch (binary.buildType) {
+				case Grindstone::Plugins::MetaData::BinaryBuildType::Cmake: {
+					std::filesystem::path binaryPath = metaData.pluginResolvedPath / binary.libraryRelativePath;
+					std::filesystem::path parentPath = binaryPath.parent_path();
+					DLL_DIRECTORY_COOKIE dllCookie = AddDllDirectory(parentPath.wstring().c_str());
+					LoadModule(binaryPath);
+					RemoveDllDirectory(dllCookie);
+					break;
+				}
+				case Grindstone::Plugins::MetaData::BinaryBuildType::Dotnet: {
+					auto scriptManager = static_cast<Grindstone::Scripting::CSharp::CSharpManager*>(Grindstone::EngineCore::GetInstance().scriptManager);
+					scriptManager->LoadAssemblyIntoMap(metaData.name + ":Grindstone.Physics.Jolt.CSharpIntegration"); // TODO: Get Library
+					break;
+				}
+				}
 			}
 		}
 
@@ -247,10 +407,8 @@ std::filesystem::path Grindstone::Plugins::EditorPluginManager::GetLibraryPath(s
 		if (metaData.name == pluginName) {
 			for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
 				std::filesystem::path filename = binary.libraryRelativePath.filename();
-				filename.replace_extension();
 				if (filename.string() == libraryName) {
-					filename = metaData.pluginResolvedPath / binary.libraryRelativePath;
-					filename.replace_extension("dll");
+					filename = metaData.pluginResolvedPath / binary.libraryRelativePath.parent_path() / (filename.string() + ".dll");
 					return filename;
 				}
 			}

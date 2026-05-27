@@ -66,6 +66,9 @@ namespace Grindstone {
 				const ImGui::MarkdownConfig& GetMarkdownConfig() const;
 				ImguiRenderer& GetImguiRenderer();
 				Menubar& GetMenuBar();
+
+				Settings::UserSettingsWindow* userSettingsWindow = nullptr;
+				Settings::ProjectSettingsWindow* projectSettingsWindow = nullptr;
 			private:
 				void RenderDockspace();
 				void SetupFonts();
@@ -84,8 +87,6 @@ namespace Grindstone {
 				AssetBrowserPanel* assetBrowserPanel = nullptr;
 				AssetPicker* assetPicker = nullptr;
 				CvarBrowser* cvarBrowser = nullptr;
-				Settings::UserSettingsWindow* userSettingsWindow = nullptr;
-				Settings::ProjectSettingsWindow* projectSettingsWindow = nullptr;
 				InspectorPanel* inspectorPanel = nullptr;
 				ViewportPanel* viewportPanel = nullptr;
 				ConsolePanel* consolePanel = nullptr;

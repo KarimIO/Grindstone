@@ -89,3 +89,7 @@ const char* Grindstone::HashedString::c_str() const noexcept {
 
 	return value->second.c_str();
 }
+
+Grindstone::HashedString Grindstone::operator""_hash(const char* input, size_t len) {
+	return Grindstone::HashedString(StringRef(input, len));
+}

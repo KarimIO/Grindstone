@@ -3,9 +3,12 @@
 #else
 #define VK_USE_PLATFORM_XLIB_KHR
 #endif
-#include <vulkan/vulkan.h>
 
+#include <algorithm>
+
+#include <vulkan/vulkan.h>
 #include <glfw/glfw3.h>
+#include <GFSDK_Aftermath_GpuCrashDump.h>
 
 #include <Common/Window/GlfwWindow.hpp>
 #include <EngineCore/Logger.hpp>
@@ -16,16 +19,130 @@
 #include <Grindstone.RHI.Vulkan/include/VulkanRenderPass.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanFramebuffer.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanCommandBuffer.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
 
 namespace Base = Grindstone::GraphicsAPI;
 namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
+
+static const char* VkResultToString(VkResult result) {
+	switch (result) {
+	case VK_SUCCESS: return "VK_SUCCESS";
+	case VK_NOT_READY: return "VK_NOT_READY";
+	case VK_TIMEOUT: return "VK_TIMEOUT";
+	case VK_EVENT_SET: return "VK_EVENT_SET";
+	case VK_EVENT_RESET: return "VK_EVENT_RESET";
+	case VK_INCOMPLETE: return "VK_INCOMPLETE";
+	case VK_ERROR_OUT_OF_HOST_MEMORY: return "VK_ERROR_OUT_OF_HOST_MEMORY";
+	case VK_ERROR_OUT_OF_DEVICE_MEMORY: return "VK_ERROR_OUT_OF_DEVICE_MEMORY";
+	case VK_ERROR_INITIALIZATION_FAILED: return "VK_ERROR_INITIALIZATION_FAILED";
+	case VK_ERROR_DEVICE_LOST: return "VK_ERROR_DEVICE_LOST";
+	case VK_ERROR_MEMORY_MAP_FAILED: return "VK_ERROR_MEMORY_MAP_FAILED";
+	case VK_ERROR_LAYER_NOT_PRESENT: return "VK_ERROR_LAYER_NOT_PRESENT";
+	case VK_ERROR_EXTENSION_NOT_PRESENT: return "VK_ERROR_EXTENSION_NOT_PRESENT";
+	case VK_ERROR_FEATURE_NOT_PRESENT: return "VK_ERROR_FEATURE_NOT_PRESENT";
+	case VK_ERROR_INCOMPATIBLE_DRIVER: return "VK_ERROR_INCOMPATIBLE_DRIVER";
+	case VK_ERROR_TOO_MANY_OBJECTS: return "VK_ERROR_TOO_MANY_OBJECTS";
+	case VK_ERROR_FORMAT_NOT_SUPPORTED: return "VK_ERROR_FORMAT_NOT_SUPPORTED";
+	case VK_ERROR_FRAGMENTED_POOL: return "VK_ERROR_FRAGMENTED_POOL";
+	case VK_ERROR_UNKNOWN: return "VK_ERROR_UNKNOWN";
+	case VK_ERROR_OUT_OF_POOL_MEMORY: return "VK_ERROR_OUT_OF_POOL_MEMORY";
+	case VK_ERROR_INVALID_EXTERNAL_HANDLE: return "VK_ERROR_INVALID_EXTERNAL_HANDLE";
+	case VK_ERROR_FRAGMENTATION: return "VK_ERROR_FRAGMENTATION";
+	case VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS: return "VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS";
+	case VK_PIPELINE_COMPILE_REQUIRED: return "VK_PIPELINE_COMPILE_REQUIRED";
+	case VK_ERROR_SURFACE_LOST_KHR: return "VK_ERROR_SURFACE_LOST_KHR";
+	case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR: return "VK_ERROR_NATIVE_WINDOW_IN_USE_KHR";
+	case VK_SUBOPTIMAL_KHR: return "VK_SUBOPTIMAL_KHR";
+	case VK_ERROR_OUT_OF_DATE_KHR: return "VK_ERROR_OUT_OF_DATE_KHR";
+	case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR: return "VK_ERROR_INCOMPATIBLE_DISPLAY_KHR";
+	case VK_ERROR_VALIDATION_FAILED_EXT: return "VK_ERROR_VALIDATION_FAILED_EXT";
+	case VK_ERROR_INVALID_SHADER_NV: return "VK_ERROR_INVALID_SHADER_NV";
+	case VK_ERROR_IMAGE_USAGE_NOT_SUPPORTED_KHR: return "VK_ERROR_IMAGE_USAGE_NOT_SUPPORTED_KHR";
+	case VK_ERROR_VIDEO_PICTURE_LAYOUT_NOT_SUPPORTED_KHR: return "VK_ERROR_VIDEO_PICTURE_LAYOUT_NOT_SUPPORTED_KHR";
+	case VK_ERROR_VIDEO_PROFILE_OPERATION_NOT_SUPPORTED_KHR: return "VK_ERROR_VIDEO_PROFILE_OPERATION_NOT_SUPPORTED_KHR";
+	case VK_ERROR_VIDEO_PROFILE_FORMAT_NOT_SUPPORTED_KHR: return "VK_ERROR_VIDEO_PROFILE_FORMAT_NOT_SUPPORTED_KHR";
+	case VK_ERROR_VIDEO_PROFILE_CODEC_NOT_SUPPORTED_KHR: return "VK_ERROR_VIDEO_PROFILE_CODEC_NOT_SUPPORTED_KHR";
+	case VK_ERROR_VIDEO_STD_VERSION_NOT_SUPPORTED_KHR: return "VK_ERROR_VIDEO_STD_VERSION_NOT_SUPPORTED_KHR";
+	case VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT: return "VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT";
+	case VK_ERROR_NOT_PERMITTED_KHR: return "VK_ERROR_NOT_PERMITTED_KHR";
+	case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT: return "VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT";
+	case VK_THREAD_IDLE_KHR: return "VK_THREAD_IDLE_KHR";
+	case VK_THREAD_DONE_KHR: return "VK_THREAD_DONE_KHR";
+	case VK_OPERATION_DEFERRED_KHR: return "VK_OPERATION_DEFERRED_KHR";
+	case VK_OPERATION_NOT_DEFERRED_KHR: return "VK_OPERATION_NOT_DEFERRED_KHR";
+	case VK_ERROR_INVALID_VIDEO_STD_PARAMETERS_KHR: return "VK_ERROR_INVALID_VIDEO_STD_PARAMETERS_KHR";
+	case VK_ERROR_COMPRESSION_EXHAUSTED_EXT: return "VK_ERROR_COMPRESSION_EXHAUSTED_EXT";
+	case VK_INCOMPATIBLE_SHADER_BINARY_EXT: return "VK_INCOMPATIBLE_SHADER_BINARY_EXT";
+	}
+
+	return "Unknown VK Error Result";
+}
+
+PFN_vkGetDeviceFaultInfoEXT GetDeviceFaultInfoEXT = VK_NULL_HANDLE;
+
+static void WaitForAftermathCrash() {
+	GetDeviceFaultInfoEXT = (PFN_vkGetDeviceFaultInfoEXT)vkGetInstanceProcAddr(Vulkan::Core::Get().GetInstance(), "vkGetDeviceFaultInfoEXT");
+
+	VkDevice device = Vulkan::Core::Get().GetDevice();
+	// Query number of available results
+	VkDeviceFaultCountsEXT faultCounts{
+		.sType = VK_STRUCTURE_TYPE_DEVICE_FAULT_COUNTS_EXT
+	};
+
+	GetDeviceFaultInfoEXT(device, &faultCounts, NULL);
+
+	std::vector<VkDeviceFaultAddressInfoEXT> addressInfos;
+	addressInfos.resize(faultCounts.addressInfoCount);
+	std::vector<VkDeviceFaultVendorInfoEXT> vendorInfos;
+	vendorInfos.resize(faultCounts.vendorInfoCount);
+	std::vector<char> vendorBinaryData;
+	vendorBinaryData.resize(faultCounts.vendorBinarySize);
+
+	// Allocate output arrays and query fault data
+	VkDeviceFaultInfoEXT faultInfo{
+		.sType = VK_STRUCTURE_TYPE_DEVICE_FAULT_INFO_EXT,
+		.pAddressInfos = addressInfos.data(),
+		.pVendorInfos = vendorInfos.data(),
+		.pVendorBinaryData = vendorBinaryData.data()
+	};
+
+	GetDeviceFaultInfoEXT(device, &faultCounts, &faultInfo);
+
+	GFSDK_Aftermath_CrashDump_Status status = GFSDK_Aftermath_CrashDump_Status_Unknown;
+	GFSDK_Aftermath_GetCrashDumpStatus(&status);
+
+	auto tdrTerminationTimeout = std::chrono::seconds(3);
+	auto tStart = std::chrono::steady_clock::now();
+	auto tElapsed = std::chrono::milliseconds::zero();
+
+	while (
+		status != GFSDK_Aftermath_CrashDump_Status_CollectingDataFailed &&
+		status != GFSDK_Aftermath_CrashDump_Status_Finished &&
+		tElapsed < tdrTerminationTimeout
+	) {
+		// Sleep 50ms and poll the status again until timeout or Aftermath finished processing the crash dump.
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		GFSDK_Aftermath_GetCrashDumpStatus(&status);
+
+		auto tEnd = std::chrono::steady_clock::now();
+		tElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(tEnd - tStart);
+	}
+
+	if (status != GFSDK_Aftermath_CrashDump_Status_Finished)
+	{
+		std::stringstream err_msg;
+		err_msg << "Unexpected crash dump status: " << status;
+	}
+}
 
 bool Vulkan::WindowGraphicsBinding::Initialize(Window *window) {
 	this->window = window;
 	maxFramesInFlight = 3;
 
-	VkResult err = glfwCreateWindowSurface(Vulkan::Core::Get().GetInstance(), static_cast<GlfwWindow*>(window)->GetHandle(), NULL, &surface);
-	if (err) {
+	VkResult result = glfwCreateWindowSurface(Vulkan::Core::Get().GetInstance(), static_cast<GlfwWindow*>(window)->GetHandle(), NULL, &surface);
+	if (result != VK_SUCCESS) {
+		WaitForAftermathCrash();
+		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to create window surface ({})!", VkResultToString(result));
 		return false;
 	}
 
@@ -80,7 +197,7 @@ VkSwapchainKHR Vulkan::WindowGraphicsBinding::GetSwapchain() {
 void Vulkan::WindowGraphicsBinding::SubmitWindowObjects(WindowBindingDataNative& windowBindingData) {
 	swapChain = windowBindingData.swapChain;
 	if (renderPass == nullptr) {
-		renderPass = new Vulkan::RenderPass(windowBindingData.renderPass, "Swapchain Render Pass");
+		renderPass = Memory::AllocatorCore::Allocate<Vulkan::RenderPass>(windowBindingData.renderPass, "Swapchain Render Pass");
 	}
 	else {
 		static_cast<RenderPass*>(renderPass)->Update(windowBindingData.renderPass);
@@ -94,23 +211,19 @@ void Vulkan::WindowGraphicsBinding::SubmitWindowObjects(WindowBindingDataNative&
 		ImageSet& imageSet = imageSets[i];
 
 		if (imageSet.framebuffer == nullptr) {
-			imageSet.framebuffer = new Vulkan::Framebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height, "Swapchain Framebuffer");
+			imageSet.framebuffer = Memory::AllocatorCore::Allocate<Vulkan::Framebuffer>(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height, "Swapchain Framebuffer");
 		}
 		else {
 			static_cast<Framebuffer*>(imageSet.framebuffer)->UpdateNativeFramebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height);
 		}
 
 		if (imageSet.swapChainTarget == nullptr) {
-			imageSet.swapChainTarget = new Vulkan::Image(native.image, swapchainVulkanFormat, i);
+			imageSet.swapChainTarget = Memory::AllocatorCore::Allocate<Vulkan::Image>(native.image, swapchainVulkanFormat, i);
 		}
 		else {
 			static_cast<Vulkan::Image*>(imageSet.swapChainTarget)->UpdateNativeImage(native.image, native.imageView, swapchainVulkanFormat);
 		}
 	}
-}
-
-Base::Format Vulkan::WindowGraphicsBinding::GetDeviceColorFormat() const {
-	return swapchainFormat;
 }
 
 Vulkan::SwapChainSupportDetails Vulkan::WindowGraphicsBinding::QuerySwapChainSupport(VkPhysicalDevice device) {
@@ -170,8 +283,8 @@ VkExtent2D Vulkan::WindowGraphicsBinding::ChooseSwapExtent(const VkSurfaceCapabi
 			static_cast<uint32_t>(height)
 		};
 
-		actualExtent.width = max(capabilities.minImageExtent.width, min(capabilities.maxImageExtent.width, actualExtent.width));
-		actualExtent.height = max(capabilities.minImageExtent.height, min(capabilities.maxImageExtent.height, actualExtent.height));
+		actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
+		actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
 
 		return actualExtent;
 	}
@@ -196,6 +309,7 @@ void Vulkan::WindowGraphicsBinding::CreateSyncObjects() {
 			vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
 			vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
 
+			WaitForAftermathCrash();
 			GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan: Failed to create synchronization objects for a frame!");
 		}
 	}
@@ -222,7 +336,11 @@ void Vulkan::WindowGraphicsBinding::CreateImageSets() {
 
 	imageSets.resize(imageCount);
 	for (uint32_t i = 0; i < imageCount; ++i) {
-		Vulkan::Image* rt = new Vulkan::Image(
+
+		std::string imageDebugName = std::string("Swapchain Image ") + std::to_string(i);
+		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, swapChainImages[i], imageDebugName.c_str());
+
+		Vulkan::Image* rt = Memory::AllocatorCore::Allocate<Vulkan::Image>(
 			swapChainImages[i],
 			swapchainVulkanFormat,
 			i
@@ -232,13 +350,15 @@ void Vulkan::WindowGraphicsBinding::CreateImageSets() {
 		framebufferInfo.pAttachments = attachments;
 
 		VkFramebuffer vkFramebuffer = nullptr;
-		if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &vkFramebuffer) != VK_SUCCESS) {
-			GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create framebuffer!");
+		VkResult result = vkCreateFramebuffer(device, &framebufferInfo, nullptr, &vkFramebuffer);
+		if (result != VK_SUCCESS) {
+			WaitForAftermathCrash();
+			GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to create framebuffer ({})", VkResultToString(result));
 		}
 
 		Vulkan::ImageSet& imageSet = imageSets[i];
 		imageSet.swapChainTarget = rt;
-		imageSet.framebuffer = new Vulkan::Framebuffer(
+		imageSet.framebuffer = Memory::AllocatorCore::Allocate<Vulkan::Framebuffer>(
 			renderPass,
 			vkFramebuffer,
 			swapExtent.width,
@@ -250,11 +370,15 @@ void Vulkan::WindowGraphicsBinding::CreateImageSets() {
 	}
 }
 
+void Vulkan::WindowGraphicsBinding::WaitForRenderingFence() {
+	Vulkan::Core& vkCore = Vulkan::Core::Get();
+	VkDevice device = vkCore.GetDevice();
+	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+}
+
 bool Vulkan::WindowGraphicsBinding::AcquireNextImage() {
 	Vulkan::Core& vkCore = Vulkan::Core::Get();
 	VkDevice device = vkCore.GetDevice();
-
-	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
 	VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &currentSwapchainImageIndex);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -262,7 +386,8 @@ bool Vulkan::WindowGraphicsBinding::AcquireNextImage() {
 		return false;
 	}
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to acquire swap chain image!");
+		WaitForAftermathCrash();
+		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to acquire swap chain image! ({})!", VkResultToString(result));
 	}
 
 	Vulkan::ImageSet& imageSet = imageSets[currentFrame];
@@ -304,8 +429,8 @@ void Vulkan::WindowGraphicsBinding::RecreateSwapchain() {
 	}
 
 	for (size_t i = 0; i < imageSets.size(); i++) {
-		delete imageSets[i].framebuffer;
-		delete imageSets[i].swapChainTarget;
+		Memory::AllocatorCore::Free(imageSets[i].framebuffer);
+		Memory::AllocatorCore::Free(imageSets[i].swapChainTarget);
 	}
 	imageSets.clear();
 
@@ -336,8 +461,10 @@ void Vulkan::WindowGraphicsBinding::SubmitCommandBufferNoSynchronization(Graphic
 	submitInfo.signalSemaphoreCount = 0u;
 	submitInfo.pSignalSemaphores = nullptr;
 
-	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, fence) != VK_SUCCESS) {
-		GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to submit draw command buffer!");
+	VkResult result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, fence);
+	if (result != VK_SUCCESS) {
+		WaitForAftermathCrash();
+		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to submit draw command buffer ({})!", VkResultToString(result));
 	}
 
 	vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX);
@@ -366,8 +493,10 @@ void Vulkan::WindowGraphicsBinding::SubmitCommandBufferForCurrentFrame(GraphicsA
 
 	vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
-	if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
-		GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to submit draw command buffer!");
+	VkResult result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]);
+	if (result != VK_SUCCESS) {
+		WaitForAftermathCrash();
+		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to submit draw command buffer ({})!", VkResultToString(result));
 	}
 }
 
@@ -375,17 +504,15 @@ bool Vulkan::WindowGraphicsBinding::PresentSwapchain() {
 	Vulkan::Core& vkCore = Vulkan::Core::Get();
 	VkQueue presentQueue = vkCore.presentQueue;
 
-	VkPresentInfoKHR presentInfo = {};
-	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = &renderFinishedSemaphores[currentFrame];
-
-	VkSwapchainKHR swapChains[] = { swapChain };
-	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = swapChains;
-
-	presentInfo.pImageIndices = &currentSwapchainImageIndex;
+	VkSwapchainKHR swapChains[] { swapChain };
+	VkPresentInfoKHR presentInfo {
+		.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+		.waitSemaphoreCount = 1,
+		.pWaitSemaphores = &renderFinishedSemaphores[currentFrame],
+		.swapchainCount = 1,
+		.pSwapchains = swapChains,
+		.pImageIndices = &currentSwapchainImageIndex
+	};
 
 	VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
@@ -393,6 +520,10 @@ bool Vulkan::WindowGraphicsBinding::PresentSwapchain() {
 		RecreateSwapchain();
 		isSwapchainDirty = false;
 		return false;
+	}
+	else if (result != VK_SUCCESS) {
+		WaitForAftermathCrash();
+		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to present queue ({})!", VkResultToString(result));
 	}
 
 	currentFrame = (currentFrame + 1) % maxFramesInFlight;
@@ -415,19 +546,19 @@ void Vulkan::WindowGraphicsBinding::CreateSwapChain() {
 		imageCount = swapChainSupport.capabilities.maxImageCount;
 	}
 
-	VkSwapchainCreateInfoKHR createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	createInfo.surface = surface;
-
 	swapchainVulkanFormat = surfaceFormat.format;
 	swapchainFormat = TranslateFormatFromVulkan(swapchainVulkanFormat);
 
-	createInfo.minImageCount = imageCount;
-	createInfo.imageFormat = swapchainVulkanFormat;
-	createInfo.imageColorSpace = surfaceFormat.colorSpace;
-	createInfo.imageExtent = swapExtent;
-	createInfo.imageArrayLayers = 1;
-	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	VkSwapchainCreateInfoKHR createInfo{
+		.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+		.surface = surface,
+		.minImageCount = imageCount,
+		.imageFormat = swapchainVulkanFormat,
+		.imageColorSpace = surfaceFormat.colorSpace,
+		.imageExtent = swapExtent,
+		.imageArrayLayers = 1,
+		.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+	};
 
 	QueueFamilyIndices indices = Vulkan::Core::Get().FindQueueFamilies(physicalDevice);
 	uint32_t queueFamilyIndices[] = { indices.graphicsFamily, indices.presentFamily };
@@ -446,8 +577,10 @@ void Vulkan::WindowGraphicsBinding::CreateSwapChain() {
 	createInfo.presentMode = presentMode;
 	createInfo.clipped = VK_TRUE;
 
-	if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
-		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create swap chain!");
+	VkResult result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain);
+	if (result != VK_SUCCESS) {
+		WaitForAftermathCrash();
+		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to create swap chain ({})!", VkResultToString(result));
 	}
 
 	CreateRenderPass();
@@ -455,50 +588,57 @@ void Vulkan::WindowGraphicsBinding::CreateSwapChain() {
 }
 
 void Vulkan::WindowGraphicsBinding::CreateRenderPass() {
-	VkAttachmentDescription colorAttachment{};
-	colorAttachment.format = swapchainVulkanFormat;
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	VkAttachmentDescription colorAttachment{
+		.format = swapchainVulkanFormat,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+	};
 
-	VkAttachmentReference colorAttachmentRef{};
-	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	VkAttachmentReference colorAttachmentRef{
+		.attachment = 0,
+		.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+	};
 
-	VkSubpassDescription subpass{};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachmentRef;
+	VkSubpassDescription subpass{
+		.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+		.colorAttachmentCount = 1,
+		.pColorAttachments = &colorAttachmentRef
+	};
 
-	VkSubpassDependency dependency{};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	VkSubpassDependency dependency{
+		.srcSubpass = VK_SUBPASS_EXTERNAL,
+		.dstSubpass = 0,
+		.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		.srcAccessMask = 0,
+		.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
+	};
 
-	VkRenderPassCreateInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &colorAttachment;
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subpass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;
+	VkRenderPassCreateInfo renderPassInfo{
+		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+		.attachmentCount = 1,
+		.pAttachments = &colorAttachment,
+		.subpassCount = 1,
+		.pSubpasses = &subpass,
+		.dependencyCount = 1,
+		.pDependencies = &dependency
+	};
 
 	VkDevice device = Vulkan::Core::Get().GetDevice();
 	VkRenderPass vkRenderPass = nullptr;
-	if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &vkRenderPass) != VK_SUCCESS) {
-		GPRINT_FATAL(LogSource::GraphicsAPI, "failed to create render pass!");
+	VkResult result = vkCreateRenderPass(device, &renderPassInfo, nullptr, &vkRenderPass);
+	if (result != VK_SUCCESS) {
+		WaitForAftermathCrash();
+		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to create render pass ({})", VkResultToString(result));
 	}
 
 	if (renderPass == nullptr) {
-		renderPass = new Vulkan::RenderPass(vkRenderPass, "Swapchain Render Pass");
+		renderPass = Memory::AllocatorCore::Allocate<Vulkan::RenderPass>(vkRenderPass, "Swapchain Render Pass");
 	}
 	else {
 		static_cast<Vulkan::RenderPass*>(renderPass)->Update(vkRenderPass);

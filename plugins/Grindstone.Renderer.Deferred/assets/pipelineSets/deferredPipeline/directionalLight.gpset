@@ -23,11 +23,10 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 					float sourceRadius;
 					float3 direction;
 					float intensity;
-					float shadowResolution;
+					float4 shadowRenderArea;
 				};
 
 				ConstantBuffer<LightUbo> light : register(b0, space2);
-				Texture2D<float4> shadowMap : register(t1,  space2);
 
 				float3 LightDirCalc(
 					in float3 albedo,
@@ -109,7 +108,8 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 							rotation.y * poissonDisk[i].x + rotation.x * poissonDisk[i].y
 						);
 
-						float pcfDepth = shadowMap.Sample(gbufferSampler, projCoords.xy + offset * texelSize * 4.0f).r;
+						float2 shadowUv = (projCoords.xy * light.shadowRenderArea.zw) + light.shadowRenderArea.xy;
+						float pcfDepth = shadowMap.Sample(gbufferSampler, shadowUv + offset * texelSize * 0.0f).r;
 						bool isInLight = pcfDepth + 0.05f >= pixelDepth;
 						shadow += isInLight ? 1.0f : 0.0f;
 					}

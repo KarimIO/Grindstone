@@ -18,13 +18,16 @@ namespace Grindstone {
 	struct ComputePipelineAsset : public Asset {
 		ComputePipelineAsset(Uuid uuid) : Asset(uuid, uuid.ToString()) {}
 		
-		std::array<GraphicsAPI::DescriptorSetLayout*, 16> descriptorSetLayouts = {};
 		Grindstone::GraphicsAPI::ComputePipeline* pipeline = nullptr;
+		Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = nullptr;
 
-		Grindstone::GraphicsAPI::ComputePipeline* GetPipeline() {
+		Grindstone::GraphicsAPI::ComputePipeline* GetPipeline() const {
 			return pipeline;
 		}
 
+		Grindstone::GraphicsAPI::PipelineLayout* GetPipelineLayout() const {
+			return pipelineLayout;
+		}
 
 		DEFINE_ASSET_TYPE("Compute PipelineSet", AssetType::ComputePipelineSet)
 	};

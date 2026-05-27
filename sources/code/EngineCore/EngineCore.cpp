@@ -15,6 +15,7 @@
 #include <EngineCore/Rendering/RenderPassRegistry.hpp>
 #include <EngineCore/WorldContext/WorldContextManager.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/Rendering/RenderGraphContextSet.hpp>
 #include <Common/Event/WindowEvent.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Console/Cvars.hpp>
@@ -43,7 +44,7 @@ bool EngineCore::EarlyInitialize(EarlyCreateInfo& createInfo) {
 
 	Grindstone::HashedString::CreateHashMap();
 	eventDispatcher = AllocatorCore::Allocate<Events::Dispatcher>();
-	auto cvarSystem = Grindstone::CreateCvarSystemInstance();
+	Grindstone::CvarSystem* cvarSystem = Grindstone::CreateCvarSystemInstance();
 	cvarSystem->CreateFloatCvar("test.cvar", "This is a test of the cvar system.", 0.0, 2.0, Grindstone::CvarFlags::EditorNumberSlider);
 
 	firstFrameTime = std::chrono::steady_clock::now();
@@ -107,6 +108,7 @@ bool EngineCore::Initialize(LateCreateInfo& createInfo) {
 	}
 
 	worldContextManager = AllocatorCore::Allocate<Grindstone::WorldContextManager>();
+	pluginInterface->RegisterWorldContextFactory<Grindstone::Rendering::RenderGraphWorldContext>(Rendering::renderGraphWorldContextName);
 
 	{
 		GRIND_PROFILE_SCOPE("Initialize Graphics Core");
@@ -179,18 +181,20 @@ void EngineCore::Run() {
 
 void EngineCore::RunEditorLoopIteration() {
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
+	windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding()->WaitForRenderingFence();
 	deferredDeletionQueue.DeleteForFrame();
 	assetManager->ReloadQueuedAssets();
 	CalculateDeltaTime();
-	systemRegistrar->EditorUpdate(GetEntityRegistry());
+	systemRegistrar->EditorUpdate(*worldContextManager->GetActiveWorldContextSet());
 	GRIND_PROFILE_END_SESSION();
 }
 
 void EngineCore::RunLoopIteration() {
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
+	windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding()->WaitForRenderingFence();
 	deferredDeletionQueue.DeleteForFrame();
 	CalculateDeltaTime();
-	systemRegistrar->Update(GetEntityRegistry());
+	systemRegistrar->Update(*worldContextManager->GetActiveWorldContextSet());
 	GRIND_PROFILE_END_SESSION();
 }
 
@@ -219,6 +223,7 @@ EngineCore::~EngineCore() {
 	}
 
 	if (worldContextManager != nullptr) {
+		pluginInterface->UnregisterWorldContextFactory(Rendering::renderGraphWorldContextName);
 		worldContextManager->ClearContextSets();
 	}
 
@@ -244,6 +249,7 @@ EngineCore::~EngineCore() {
 	AllocatorCore::Free(systemRegistrar);
 	Logger::GetLoggerState()->dispatcher = nullptr;
 	AllocatorCore::Free(eventDispatcher);
+	AllocatorCore::Free(Grindstone::CvarSystem::GetInstance());
 	AllocatorCore::Free(Grindstone::HashedString::GetHashedStringMap());
 
 	if (!AllocatorCore::IsEmpty()) {

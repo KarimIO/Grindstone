@@ -48,21 +48,21 @@ void SystemRegistrar::UnregisterEditorSystem(const char* name) {
 	editorSystemFactories.erase(sys);
 }
 
-void SystemRegistrar::Update(entt::registry& registry) {
+void SystemRegistrar::Update(Grindstone::WorldContextSet& worldContextSet) {
 	GRIND_PROFILE_SCOPE("SystemRegistrar::Update");
 	for (auto& systemFactory : systemFactories) {
 		GRIND_PROFILE_SCOPE(systemFactory.first.c_str());
 		auto systemFn = systemFactory.second;
-		systemFn(registry);
+		systemFn(worldContextSet);
 	}
 }
 
-void SystemRegistrar::EditorUpdate(entt::registry& registry) {
+void SystemRegistrar::EditorUpdate(Grindstone::WorldContextSet& worldContextSet) {
 	GRIND_PROFILE_SCOPE("SystemRegistrar::EditorUpdate");
 	for (auto& systemFactory : editorSystemFactories) {
 		GRIND_PROFILE_SCOPE(systemFactory.first.c_str());
 		auto systemFn = systemFactory.second;
-		systemFn(registry);
+		systemFn(worldContextSet);
 	}
 }
 

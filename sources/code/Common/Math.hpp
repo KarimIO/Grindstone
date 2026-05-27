@@ -1,3 +1,5 @@
+#pragma once
+
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
@@ -26,4 +28,22 @@ namespace Grindstone::Math {
 	using Matrix4 = glm::mat4;
 
 	using Quaternion = glm::quat;
+
+	typedef struct ExportableVector {
+		float x;
+		float y;
+		float z;
+	} ExportableVector;
+
+	typedef struct ExportableQuaternion {
+		float x;
+		float y;
+		float z;
+		float w;
+	} ExportableQuaternion;
+
+	glm::vec3 ImportVector(const ExportableVector inVec);
+	glm::quat ImportQuaternion(const ExportableQuaternion inQuat);
+	ExportableVector ExportVector(const glm::vec3 inVec);
+	ExportableQuaternion ExportQuaternion(const glm::quat inQuat);
 }

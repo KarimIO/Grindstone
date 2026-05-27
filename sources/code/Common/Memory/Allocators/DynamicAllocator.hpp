@@ -18,6 +18,8 @@ namespace Grindstone::Memory::Allocators {
 	 */
 	class DynamicAllocator {
 	public:
+		static const size_t DEBUG_NAME_SIZE = 128;
+
 		struct FreeHeader {
 			size_t blockSize;
 			FreeHeader* nextFreeBlock = nullptr;
@@ -49,7 +51,7 @@ namespace Grindstone::Memory::Allocators {
 		void* GetMemory() const;
 
 #ifdef _DEBUG
-		const std::map<void*, const char*>& GetNameMap() const {
+		const std::map<void*, char[DEBUG_NAME_SIZE]>& GetNameMap() const {
 			return nameMap;
 		}
 #endif
@@ -131,7 +133,7 @@ namespace Grindstone::Memory::Allocators {
 		bool hasAllocatedOwnMemory = false;
 
 #ifdef _DEBUG
-		std::map<void*, const char*> nameMap;
+		std::map<void*, char[DEBUG_NAME_SIZE]> nameMap;
 #endif
 	};
 }

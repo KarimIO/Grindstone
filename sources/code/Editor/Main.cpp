@@ -188,6 +188,10 @@ int main(int argc, char* argv[]) {
 	#endif
 		}
 
+		while (projectPath.filename().empty()) {
+			projectPath = projectPath.parent_path();
+		}
+
 		Editor::Manager editorManager;
 		editorManager.SetInstance(&editorManager);
 		if (editorManager.Initialize(projectPath)) {

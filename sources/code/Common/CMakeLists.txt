@@ -18,74 +18,76 @@ file(
     ${COMMON_DIR}/HashedString.hpp
     ${COMMON_DIR}/IntTypes.hpp
     ${COMMON_DIR}/Logging.hpp
+    ${COMMON_DIR}/Math.cpp
     ${COMMON_DIR}/Math.hpp
+    ${COMMON_DIR}/Observable.hpp
     ${COMMON_DIR}/String.hpp
 )
 
 file(GLOB_RECURSE SOURCE_ASSETS "${COMMON_DIR}/Assets/*.cpp")
 file(GLOB_RECURSE HEADER_ASSETS "${COMMON_DIR}/Assets/*.hpp")
-source_group("Assets\\Source Files" FILES ${SOURCE_ASSETS})
-source_group("Assets\\Header Files" FILES ${HEADER_ASSETS})
+source_group("Source Files\\Assets" FILES ${SOURCE_ASSETS})
+source_group("Header Files\\Assets" FILES ${HEADER_ASSETS})
 
 file(GLOB_RECURSE SOURCE_CONSOLE "${COMMON_DIR}/Console/*.cpp")
 file(GLOB_RECURSE HEADER_CONSOLE "${COMMON_DIR}/Console/*.hpp")
-source_group("Console\\Source Files" FILES ${SOURCE_CONSOLE})
-source_group("Console\\Header Files" FILES ${HEADER_CONSOLE})
+source_group("Source Files\\Console" FILES ${SOURCE_CONSOLE})
+source_group("Header Files\\Console" FILES ${HEADER_CONSOLE})
 
 file(GLOB_RECURSE SOURCE_CONTAINERS "${COMMON_DIR}/Containers/*.cpp")
 file(GLOB_RECURSE HEADER_CONTAINERS "${COMMON_DIR}/Containers/*.hpp")
-source_group("Containers\\Source Files" FILES ${SOURCE_CONTAINERS})
-source_group("Containers\\Header Files" FILES ${HEADER_CONTAINERS})
+source_group("Source Files\\Containers" FILES ${SOURCE_CONTAINERS})
+source_group("Header Files\\Containers" FILES ${HEADER_CONTAINERS})
 
 file(GLOB_RECURSE SOURCE_DISPLAY "${COMMON_DIR}/Display/*.cpp")
 file(GLOB_RECURSE HEADER_DISPLAY "${COMMON_DIR}/Display/*.hpp")
-source_group("Display\\Source Files" FILES ${SOURCE_DISPLAY})
-source_group("Display\\Header Files" FILES ${HEADER_DISPLAY})
+source_group("Source Files\\Display" FILES ${SOURCE_DISPLAY})
+source_group("Header Files\\Display" FILES ${HEADER_DISPLAY})
 
 file(GLOB_RECURSE SOURCE_EVENT "${COMMON_DIR}/Event/*.cpp")
 file(GLOB_RECURSE HEADER_EVENT "${COMMON_DIR}/Event/*.hpp")
-source_group("Event\\Source Files" FILES ${SOURCE_EVENT})
-source_group("Event\\Header Files" FILES ${HEADER_EVENT})
+source_group("Source Files\\Event" FILES ${SOURCE_EVENT})
+source_group("Header Files\\Event" FILES ${HEADER_EVENT})
 
 file(GLOB_RECURSE SOURCE_FORMATS "${COMMON_DIR}/Formats/*.cpp")
 file(GLOB_RECURSE HEADER_FORMATS "${COMMON_DIR}/Formats/*.hpp")
-source_group("Formats\\Source Files" FILES ${SOURCE_FORMATS})
-source_group("Formats\\Header Files" FILES ${HEADER_FORMATS})
+source_group("Source Files\\Formats" FILES ${SOURCE_FORMATS})
+source_group("Header Files\\Formats" FILES ${HEADER_FORMATS})
 
 file(GLOB_RECURSE SOURCE_GRAPHICS "${COMMON_DIR}/Graphics/*.cpp")
 file(GLOB_RECURSE HEADER_GRAPHICS "${COMMON_DIR}/Graphics/*.hpp")
-source_group("Graphics\\Source Files" FILES ${SOURCE_GRAPHICS})
-source_group("Graphics\\Header Files" FILES ${HEADER_GRAPHICS})
+source_group("Source Files\\Graphics" FILES ${SOURCE_GRAPHICS})
+source_group("Header Files\\Graphics" FILES ${HEADER_GRAPHICS})
 
 file(GLOB_RECURSE SOURCE_INPUT "${COMMON_DIR}/Input/*.cpp")
 file(GLOB_RECURSE HEADER_INPUT "${COMMON_DIR}/Input/*.hpp")
-source_group("Input\\Source Files" FILES ${SOURCE_INPUT})
-source_group("Input\\Header Files" FILES ${HEADER_INPUT})
+source_group("Source Files\\Input" FILES ${SOURCE_INPUT})
+source_group("Header Files\\Input" FILES ${HEADER_INPUT})
 
 file(GLOB_RECURSE SOURCE_MEMORY "${COMMON_DIR}/Memory/*.cpp")
 file(GLOB_RECURSE HEADER_MEMORY "${COMMON_DIR}/Memory/*.hpp")
-source_group("Memory\\Source Files" FILES ${SOURCE_MEMORY})
-source_group("Memory\\Header Files" FILES ${HEADER_MEMORY})
+source_group("Source Files\\Memory" FILES ${SOURCE_MEMORY})
+source_group("Header Files\\Memory" FILES ${HEADER_MEMORY})
 
 file(GLOB_RECURSE SOURCE_RENDERING "${COMMON_DIR}/Rendering/*.cpp")
 file(GLOB_RECURSE HEADER_RENDERING "${COMMON_DIR}/Rendering/*.hpp")
-source_group("Rendering\\Source Files" FILES ${SOURCE_RENDERING})
-source_group("Rendering\\Header Files" FILES ${HEADER_RENDERING})
+source_group("Source Files\\Rendering" FILES ${SOURCE_RENDERING})
+source_group("Header Files\\Rendering" FILES ${HEADER_RENDERING})
 
 file(GLOB_RECURSE SOURCE_RESOURCE_PIPELINE "${COMMON_DIR}/ResourcePipeline/*.cpp")
 file(GLOB_RECURSE HEADER_RESOURCE_PIPELINE "${COMMON_DIR}/ResourcePipeline/*.hpp")
-source_group("ResourcePipeline\\Source Files" FILES ${SOURCE_RESOURCE_PIPELINE})
-source_group("ResourcePipeline\\Header Files" FILES ${HEADER_RESOURCE_PIPELINE})
+source_group("Source Files\\ResourcePipeline" FILES ${SOURCE_RESOURCE_PIPELINE})
+source_group("Header Files\\ResourcePipeline" FILES ${HEADER_RESOURCE_PIPELINE})
 
 file(GLOB_RECURSE SOURCE_UTILITIES "${COMMON_DIR}/Utilities/*.cpp")
 file(GLOB_RECURSE HEADER_UTILITIES "${COMMON_DIR}/Utilities/*.hpp")
-source_group("Utilities\\Source Files" FILES ${SOURCE_UTILITIES})
-source_group("Utilities\\Header Files" FILES ${HEADER_UTILITIES})
+source_group("Source Files\\Utilities" FILES ${SOURCE_UTILITIES})
+source_group("Header Files\\Utilities" FILES ${HEADER_UTILITIES})
 
 file(GLOB_RECURSE SOURCE_WINDOW "${COMMON_DIR}/Window/*.cpp")
 file(GLOB_RECURSE HEADER_WINDOW "${COMMON_DIR}/Window/*.hpp")
-source_group("Window\\Source Files" FILES ${SOURCE_WINDOW})
-source_group("Window\\Header Files" FILES ${HEADER_WINDOW})
+source_group("Source Files\\Window" FILES ${SOURCE_WINDOW})
+source_group("Header Files\\Window" FILES ${HEADER_WINDOW})
 
 set(COMMON_SOURCES
     ${SOURCE_MAIN}
@@ -133,6 +135,7 @@ target_compile_features(Common PRIVATE cxx_std_20)
 target_link_libraries(Common glfw)
 
 target_include_directories(Common PUBLIC ${COMMON_DIR} ${CODE_DIR} ${PLUGIN_DIR})
+target_compile_definitions(Common PUBLIC NOMINMAX GLM_ENABLE_EXPERIMENTAL)
 
 message(STATUS
 "Common provides CMake targets:

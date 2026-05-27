@@ -1,5 +1,4 @@
 include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/matrixTransformations.gpset"
-include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/rendererUniform.gpset"
 include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/defaultSampler.gpset"
 
 computeSet "Screen-Space Reflections" {
@@ -10,16 +9,28 @@ computeSet "Screen-Space Reflections" {
 		GsComputeClipSpacePosition,
 		GsComputeViewSpacePosition,
 		GsViewSpaceToScreenSpace,
-		GsRendererUniform,
 		GsDefaultSampler
 	]
 
 	shaderHlsl {
-		RWTexture2D<float4> outImage : register(u0,  space2);
-		Texture2D<float4> colorImage : register(t2,  space2);
-		Texture2D<float4> gbufferDepth : register(t3,  space2);
-		Texture2D<float4> gbufferNormal : register(t4,  space2);
-		Texture2D<float4> gbufferSpecularRoughness : register(t5,  space2);
+		struct RendererUBO {
+			column_major float4x4 projectionMatrix;
+			column_major float4x4 viewMatrix;
+			column_major float4x4 inverseProjectionMatrix;
+			column_major float4x4 inverseViewMatrix;
+			float3 eyePos;
+			float2 framebufferResolution;
+			float2 renderResolution;
+			float2 renderScale;
+			float time;
+		};
+
+		ConstantBuffer<RendererUBO> rendererUbo : register(b0, space2);
+		RWTexture2D<half4> outImage : register(u2,  space2);
+		Texture2D<float4> colorImage : register(t3,  space2);
+		Texture2D<float4> gbufferDepth : register(t4,  space2);
+		Texture2D<float4> gbufferNormal : register(t5,  space2);
+		Texture2D<float4> gbufferSpecularRoughness : register(t6,  space2);
 
 		float4 GetPosition(float2 texCoords) {
 			float depthFromTexture = gbufferDepth.SampleLevel(defaultSampler, texCoords * rendererUbo.renderScale, 0).x;

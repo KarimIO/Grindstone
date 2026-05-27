@@ -138,7 +138,7 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	Grindstone::Editor::EditorCamera::SetupRenderPasses();
 	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAfterCameraInitialization");
 
-	editorWorldContext = engineCore->GetWorldContextManager()->Create();
+	editorWorldContext = engineCore->GetWorldContextManager()->Create("Editor");
 
 	engineCore->GetPluginManager()->LoadPluginsByStage("EditorBeforeSceneInitialization");
 	engineCore->InitializeScene(true);
@@ -149,6 +149,8 @@ bool Manager::Initialize(std::filesystem::path projectPath) {
 	InitializeQuitCommands();
 
 	imguiEditor->CreateWindows();
+
+	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAfterUiSetup");
 
 	return true;
 }
@@ -208,10 +210,10 @@ void Manager::TransferPlayMode(PlayMode newPlayMode) {
 		worldContextManager->SetActiveWorldContextSet(editorWorldContext);
 	}
 	else if (newPlayMode == PlayMode::Play && playMode == PlayMode::Editor) {
-		runtimeWorldContext = worldContextManager->Create();
-		componentRegistry->CopyRegistry(*runtimeWorldContext, *editorWorldContext);
-		componentRegistry->CallCreateOnRegistry(*editorWorldContext);
+		runtimeWorldContext = worldContextManager->Create("Play Mode");
 		worldContextManager->SetActiveWorldContextSet(runtimeWorldContext);
+		componentRegistry->CopyRegistry(*runtimeWorldContext, *editorWorldContext);
+		componentRegistry->CallCreateOnRegistry(*runtimeWorldContext);
 	}
 
 	selection.Clear();
@@ -316,7 +318,7 @@ bool Manager::LoadEngine() {
 	Grindstone::CvarSystem::SetInstance(pluginInterface->GetCvarSystem());
 
 	EngineCore::LateCreateInfo lateCreateInfo;
-	lateCreateInfo.assetLoader = Grindstone::Memory::AllocatorCore::Allocate<Assets::FileAssetLoader>();
+	assetLoader = lateCreateInfo.assetLoader = Grindstone::Memory::AllocatorCore::Allocate<Assets::FileAssetLoader>();
 	Grindstone::Plugins::EditorPluginManager* pluginManager = Grindstone::Memory::AllocatorCore::Allocate<Grindstone::Plugins::EditorPluginManager>();
 	lateCreateInfo.pluginManagerOverride = pluginManager;
 	pluginManager->AddPluginsFolder(Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins");
@@ -360,6 +362,10 @@ Manager::~Manager() {
 				cxtManager->Remove(editorWorldContext);
 			}
 		}
+
+		Plugins::Interface* pluginInterface = engineCore->GetPluginInterface();
+		Grindstone::Memory::AllocatorCore::Free(pluginInterface->GetEditorInterface());
+		Grindstone::Memory::AllocatorCore::Free(assetLoader);
 
 		if (engineCoreLibraryHandle) {
 			using DestroyEngineFunction = void *();

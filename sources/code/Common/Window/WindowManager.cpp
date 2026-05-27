@@ -16,9 +16,9 @@ Grindstone::WindowManager::~WindowManager() {
 Grindstone::Window* Grindstone::WindowManager::Create(Grindstone::Window::CreateInfo& createInfo) {
 /*
 #if defined(_WIN32)
-	Grindstone::Win32Window *win = new Grindstone::Win32Window();
+	Grindstone::Win32Window *win = Grindstone::Memory::AllocatorCore::Allocate<Grindstone::Win32Window>();
 #elif defined(__linux__)
-	Grindstone::X11Window *win = new Grindstone::X11Window();
+	Grindstone::X11Window *win = Grindstone::Memory::AllocatorCore::Allocate<Grindstone::X11Window>();
 #else
 #endif
 */
@@ -29,7 +29,7 @@ Grindstone::Window* Grindstone::WindowManager::Create(Grindstone::Window::Create
 		return win;
 	}
 	else {
-		delete win;
+		AllocatorCore::Free(win);
 		return nullptr;
 	}
 }

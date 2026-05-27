@@ -11,6 +11,7 @@
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
 #include <Editor/EditorManager.hpp>
+#include <Editor/EditorCamera.hpp>
 
 #include "ViewportPanel.hpp"
 #include "ImguiEditor.hpp"
@@ -122,8 +123,6 @@ void ImguiEditor::CreateWindows() {
 }
 
 ImguiEditor::~ImguiEditor() {
-	AllocatorCore::Free(imguiRenderer);
-
 	if (input) {
 		AllocatorCore::Free(input);
 	}
@@ -145,6 +144,8 @@ ImguiEditor::~ImguiEditor() {
 	AllocatorCore::Free(assetPicker);
 	AllocatorCore::Free(statusBar);
 	AllocatorCore::Free(tracingPanel);
+
+	AllocatorCore::Free(imguiRenderer);
 }
 
 void ImguiEditor::PerformResize() {

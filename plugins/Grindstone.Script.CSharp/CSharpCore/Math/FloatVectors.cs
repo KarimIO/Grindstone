@@ -76,22 +76,33 @@ namespace Grindstone.Math
 		#endregion
 
 		#region Public Methods
-		public double GetMagnitude()
+		public readonly float GetMagnitude()
 		{
-			return System.Math.Sqrt(
+			return System.MathF.Sqrt(
 				x * x +
 				y * y
 			);
 		}
 
-		public float Dot(Float2 other)
+		public readonly Float2 Normalize()
+		{
+			float magnitude = GetMagnitude();
+			if (magnitude == 0)
+			{
+				return this;
+			}
+
+			return this/magnitude;
+		}
+
+		public readonly float Dot(Float2 other)
 		{
 			return
 				x * other.x +
 				y * other.y;
 		}
 
-		public Float2 Cross(Float2 other)
+		public readonly Float2 Cross(Float2 other)
 		{
 			return new Float2(
 				y * other.x - x * other.x,
@@ -99,7 +110,7 @@ namespace Grindstone.Math
 			);
 		}
 
-		public override string ToString() => $"Float2({x}, {y})";
+		public readonly override string ToString() => $"Float2({x}, {y})";
 		#endregion
 	}
 
@@ -191,16 +202,27 @@ namespace Grindstone.Math
 		#endregion
 
 		#region Public Methods
-		public double GetMagnitude()
+		public readonly float GetMagnitude()
 		{
-			return System.Math.Sqrt(
+			return System.MathF.Sqrt(
 				x * x +
 				y * y +
 				z * z
 			);
 		}
 
-		public float Dot(Float3 other)
+		public readonly Float3 Normalize()
+		{
+			float magnitude = GetMagnitude();
+			if (magnitude == 0)
+			{
+				return this;
+			}
+
+			return this/magnitude;
+		}
+
+		public readonly float Dot(Float3 other)
 		{
 			return
 				x * other.x +
@@ -208,7 +230,7 @@ namespace Grindstone.Math
 				z * other.z;
 		}
 
-		public Float3 Cross(Float3 other)
+		public readonly Float3 Cross(Float3 other)
 		{
 			return new Float3(
 				y * other.z - z * other.y,
@@ -217,7 +239,7 @@ namespace Grindstone.Math
 			);
 		}
 
-		public override string ToString() => $"Float3({x}, {y}, {z})";
+		public readonly override string ToString() => $"Float3({x}, {y}, {z})";
 		#endregion
 	}
 
@@ -325,9 +347,9 @@ namespace Grindstone.Math
 		#endregion
 
 		#region Public Methods
-		public double GetMagnitude()
+		public readonly float GetMagnitude()
 		{
-			return System.Math.Sqrt(
+			return System.MathF.Sqrt(
 				x * x +
 				y * y +
 				z * z +
@@ -335,7 +357,18 @@ namespace Grindstone.Math
 			);
 		}
 
-		public float Dot(Float4 other)
+		public readonly Float4 Normalize()
+		{
+			float magnitude = GetMagnitude();
+			if (magnitude == 0)
+			{
+				return this;
+			}
+
+			return this/magnitude;
+		}
+
+		public readonly float Dot(Float4 other)
 		{
 			return
 				x * other.x +
@@ -344,7 +377,7 @@ namespace Grindstone.Math
 				w * other.w;
 		}
 
-		public override string ToString() => $"Float4({x}, {y}, {z}, {w})";
+		public readonly override string ToString() => $"Float4({x}, {y}, {z}, {w})";
 		#endregion
 	}
 }

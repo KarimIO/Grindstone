@@ -17,27 +17,41 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void BindRenderPass(
 			Grindstone::GraphicsAPI::RenderPass* renderPass,
 			Grindstone::GraphicsAPI::Framebuffer* framebuffer,
-			uint32_t width,
-			uint32_t height,
-			ClearColorValue* colorClearValues,
+			Grindstone::Math::IntRect2D rect,
+			ClearColor* colorClearValues,
 			uint32_t colorClearCount,
 			ClearDepthStencil depthStencilClearValue
 		) override;
 		virtual void UnbindRenderPass() override;
+
+		virtual void BeginRendering(
+			const char* name,
+			Grindstone::Math::IntRect2D rect,
+			RenderAttachment* colorAttachments,
+			uint32_t colorAttachmentCount,
+			RenderAttachment* depthAttachment,
+			RenderAttachment* stencilAttachment,
+			float* debugColor
+		) override;
+		virtual void EndRendering() override;
+
 		virtual void BeginDebugLabelSection(const char* name, float color[4] = nullptr) override;
 		virtual void EndDebugLabelSection() override;
 		virtual void BindGraphicsDescriptorSet(
-			const GraphicsAPI::GraphicsPipeline* graphicsPipeline,
+			const GraphicsAPI::PipelineLayout* pipelineLayout,
 			const GraphicsAPI::DescriptorSet* const* descriptorSets,
 			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) override;
 		virtual void BindComputeDescriptorSet(
-			const GraphicsAPI::ComputePipeline* graphicsPipeline,
+			const GraphicsAPI::PipelineLayout* pipelineLayout,
 			const GraphicsAPI::DescriptorSet* const* descriptorSets,
 			uint32_t descriptorSetOffset,
 			uint32_t descriptorSetCount
 		) override;
+		virtual void ClearAttachments(ClearAttachment* attachments, uint32_t attachmentCount, ClearRect* rects, uint32_t rectCount) override;
+		virtual void CopyBufferRegions(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, BufferCopyRegion* regions, uint32_t regionCount) override;
+		virtual void CopyBufferRegion(GraphicsAPI::Buffer* srcBuffer, GraphicsAPI::Buffer* dstBuffer, uint64_t size, uint32_t srcOffset, uint32_t dstOffset) override;
 		virtual void BindCommandBuffers(Grindstone::GraphicsAPI::CommandBuffer** commandBuffers, uint32_t commandBuffersCount) override;
 		virtual void SetViewport(float offsetX, float offsetY, float width, float height, float depthMin = 0.0f, float depthMax = 1.0f) override;
 		virtual void SetScissor(int32_t offsetX, int32_t offsetY, uint32_t width, uint32_t height) override;
@@ -55,10 +69,11 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 			Grindstone::GraphicsAPI::Image* dst,
 			Grindstone::GraphicsAPI::ImageLayout oldLayout,
 			Grindstone::GraphicsAPI::ImageLayout newLayout,
-			uint32_t width, uint32_t height, uint32_t depth
+			Grindstone::GraphicsAPI::TextureFilter filter,
+			Grindstone::Math::IntBox3D srcRegion,
+			Grindstone::Math::IntBox3D dstRegion
 		) override;
 		virtual void PipelineBarrier(
-			GraphicsAPI::PipelineStageBit srcPipelineStageMask, GraphicsAPI::PipelineStageBit dstPipelineStageMask,
 			const GraphicsAPI::BufferBarrier* bufferBarriers, uint32_t bufferBarrierCount,
 			const GraphicsAPI::ImageBarrier* imageBarriers, uint32_t imageBarrierCount
 		) override;

@@ -15,7 +15,7 @@ namespace Grindstone {
 			return sceneIntPtr != System.IntPtr.Zero;
 		}
 
-		public override string ToString() {
+		public override string? ToString() {
 			if (!IsValidScene()) {
 				Logger.PrintError("Scene::ToString() - Calling on invalid scene.");
 				return null;
@@ -24,7 +24,7 @@ namespace Grindstone {
 			return $"Scene({GetName()})";
 		}
 
-		public string GetName() {
+		public string? GetName() {
 			if (!IsValidScene()) {
 				Logger.PrintError("Scene::GetName() - Calling on invalid scene.");
 				return null;
@@ -33,7 +33,7 @@ namespace Grindstone {
 			return Marshal.PtrToStringAnsi(SceneGetName(sceneIntPtr));
 		}
 
-		public string GetPath() {
+		public string? GetPath() {
 			if (!IsValidScene()) {
 				Logger.PrintError("Scene::GetPath() - Calling on invalid scene.");
 				return null;

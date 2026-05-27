@@ -40,8 +40,12 @@ namespace Grindstone::ECS {
 	struct has_clone : std::false_type {};
 
 	template<typename T>
-	struct has_clone<T, std::void_t<decltype(std::declval<const T&>().Clone(
-		std::declval<Grindstone::WorldContextSet&>(), std::declval<entt::entity>()))>> : std::true_type {};
+	struct has_clone<T, std::void_t<decltype(
+		std::declval<const T&>().Clone(
+			std::declval<Grindstone::WorldContextSet&>(),
+			std::declval<entt::entity>()
+		)
+	)>> : std::true_type {};
 
 	template<typename T>
 	constexpr bool has_clone_v = has_clone<T>::value;

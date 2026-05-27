@@ -5,7 +5,6 @@
 
 #include <Grindstone.Editor.PipelineSetImporter/include/PipelineSet/Converter/Output.hpp>
 
-#define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <wrl/client.h>

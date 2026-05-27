@@ -32,7 +32,7 @@ inline void GizmoRenderer::AppendData(
 
 	shapeMetaData[static_cast<size_t>(shapeType)] = { currentIndexOffset, indexCount, currentVertexOffset };
 
-	currentVertexOffset += vertexCount * 3;
+	currentVertexOffset += vertexCount;
 	currentIndexOffset += indexCount;
 }
 
@@ -518,7 +518,7 @@ void GizmoRenderer::Initialize() {
 	gizmoDescriptorSetLayoutCreateInfo.debugName = "Gizmo Descriptor Layout";
 	gizmoDescriptorSetLayoutCreateInfo.bindingCount = 1u;
 	gizmoDescriptorSetLayoutCreateInfo.bindings = &gizmoDescriptorLayoutBinding;
-	gizmoDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(gizmoDescriptorSetLayoutCreateInfo);
+	gizmoDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(gizmoDescriptorSetLayoutCreateInfo);
 
 
 	GraphicsAPI::DescriptorSet::CreateInfo gizmoDescriptorSetCreateInfo{};
@@ -575,13 +575,15 @@ void GizmoRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer
 		return;
 	}
 
+	Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = pipelineAsset->GetFirstPassPipelineLayout();
+
 	for (auto& data : dataBuffer) {
 		data.transform = projView * data.transform;
 	}
 
 	gizmoUniformBuffers[imageIndex]->UploadData(dataBuffer.data());
 	commandBuffer->BindGraphicsPipeline(gizmoPipeline);
-	commandBuffer->BindGraphicsDescriptorSet(gizmoPipeline, &gizmoDescriptorSets[imageIndex], 2, 1);
+	commandBuffer->BindGraphicsDescriptorSet(pipelineLayout, &gizmoDescriptorSets[imageIndex], 2, 1);
 	commandBuffer->BindVertexArrayObject(gizmoShapesVao);
 
 	for (uint32_t i = 0; i < drawCount; ++i) {

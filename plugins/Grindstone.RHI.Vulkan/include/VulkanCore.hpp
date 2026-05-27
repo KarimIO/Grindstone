@@ -3,11 +3,13 @@
 #include <functional>
 
 #include <vma/vk_mem_alloc.h>
+#include <vulkan/vulkan.h>
 
 #include <Common/Logging.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/DLLDefs.hpp>
-#include <vulkan/vulkan.h>
+
+class GpuCrashTracker;
 
 namespace Grindstone::GraphicsAPI::Vulkan {
 	struct SwapChainSupportDetails {
@@ -46,6 +48,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual uint32_t GetGraphicsFamily();
 		virtual void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
 		VkCommandPool GetGraphicsCommandPool() const;
+		GpuCrashTracker& GetGpuCrashTracker();
 	private:
 
 		VkInstance instance = nullptr;
@@ -88,6 +91,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void DeleteBuffer(GraphicsAPI::Buffer *ptr) override;
 		virtual void DeleteGraphicsPipeline(GraphicsAPI::GraphicsPipeline* ptr) override;
 		virtual void DeleteComputePipeline(GraphicsAPI::ComputePipeline* ptr) override;
+		virtual void DeletePipelineLayout(GraphicsAPI::PipelineLayout* ptr) override;
 		virtual void DeleteRenderPass(GraphicsAPI::RenderPass *ptr) override;
 		virtual void DeleteSampler(GraphicsAPI::Sampler* ptr) override;
 		virtual void DeleteImage(GraphicsAPI::Image* ptr) override;
@@ -100,6 +104,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual GraphicsAPI::RenderPass* CreateRenderPass(const GraphicsAPI::RenderPass::CreateInfo& ci) override;
 		virtual GraphicsAPI::GraphicsPipeline* CreateGraphicsPipeline(const GraphicsAPI::GraphicsPipeline::CreateInfo& ci) override;
 		virtual GraphicsAPI::ComputePipeline* CreateComputePipeline(const GraphicsAPI::ComputePipeline::CreateInfo& ci) override;
+		virtual GraphicsAPI::PipelineLayout* CreatePipelineLayout(const GraphicsAPI::PipelineLayout::CreateInfo& ci) override;
 		virtual GraphicsAPI::CommandBuffer* CreateCommandBuffer(const GraphicsAPI::CommandBuffer::CreateInfo& ci) override;
 		virtual GraphicsAPI::VertexArrayObject* CreateVertexArrayObject(const GraphicsAPI::VertexArrayObject::CreateInfo& ci) override;
 		virtual GraphicsAPI::Buffer* CreateBuffer(const GraphicsAPI::Buffer::CreateInfo& ci) override;
@@ -107,8 +112,15 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual GraphicsAPI::Image* CreateImage(const GraphicsAPI::Image::CreateInfo& ci) override;
 		virtual GraphicsAPI::DescriptorSet* CreateDescriptorSet(const GraphicsAPI::DescriptorSet::CreateInfo& ci) override;
 		virtual GraphicsAPI::DescriptorSetLayout* CreateDescriptorSetLayout(const GraphicsAPI::DescriptorSetLayout::CreateInfo& ci) override;
-		
-		virtual GraphicsAPI::GraphicsPipeline* GetOrCreateGraphicsPipelineFromCache(const GraphicsPipeline::PipelineData& pipelineData, const VertexInputLayout* vertexInputLayout) override;
+
+		virtual GraphicsAPI::GraphicsPipeline* GetOrCreateGraphicsPipelineFromCache(
+			GraphicsAPI::PipelineLayout* pipelineLayout,
+			const GraphicsAPI::GraphicsPipeline::PipelineData& pipelineData,
+			const GraphicsAPI::VertexInputLayout* vertexInputLayout
+		) override;
+		virtual GraphicsAPI::DescriptorSetLayout* GetOrCreateDescriptorSetLayoutFromCache(const Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo& createInfo) override;
+		virtual GraphicsAPI::PipelineLayout* GetOrCreatePipelineLayoutFromCache(const Grindstone::GraphicsAPI::PipelineLayout::CreateInfo& createInfo) override;
+		virtual GraphicsAPI::Sampler* GetOrCreateSampler(const Grindstone::GraphicsAPI::Sampler::CreateInfo& createInfo) override;
 
 		virtual inline bool ShouldUseImmediateMode() const override;
 		virtual inline bool SupportsCommandBuffers() const override;
@@ -136,6 +148,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		std::string adapterName;
 		std::string apiVersion;
 		VmaAllocator allocator;
+		GpuCrashTracker* gpuCrashTracker = nullptr;
 
 		Window* primaryWindow = nullptr;
 
@@ -147,7 +160,13 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void BindDefaultFramebufferRead() override;
 		virtual void ResizeViewport(uint32_t w, uint32_t h) override;
 
+		using SamplerHash = size_t;
 		using PipelineHash = size_t;
+		using PipelineLayoutHash = size_t;
+		using DescriptorSetLayoutHash = size_t;
+		std::unordered_map<DescriptorSetLayoutHash, Grindstone::GraphicsAPI::DescriptorSetLayout*> descriptorSetLayoutCache;
+		std::unordered_map<PipelineLayoutHash, Grindstone::GraphicsAPI::PipelineLayout*> pipelineLayoutCache;
 		std::unordered_map<PipelineHash, Grindstone::GraphicsAPI::GraphicsPipeline*> graphicsPipelineCache;
-	};
+		std::unordered_map<SamplerHash, Grindstone::GraphicsAPI::Sampler*> samplerCache;
+};
 }

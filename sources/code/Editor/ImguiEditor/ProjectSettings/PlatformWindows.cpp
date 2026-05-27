@@ -14,3 +14,11 @@ void Settings::PlatformWindows::Open() {
 void Settings::PlatformWindows::Render() {
 	compilerProperties.Render();
 }
+
+void Settings::PlatformWindows::Save() {
+	compilerProperties.Save();
+}
+
+void Settings::PlatformWindows::Reset() {
+	compilerProperties.Reset();
+}

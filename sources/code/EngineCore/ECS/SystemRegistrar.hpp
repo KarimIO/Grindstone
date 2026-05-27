@@ -16,8 +16,8 @@ namespace Grindstone {
 			virtual void RegisterEditorSystem(const char* name, SystemFactory factory);
 			virtual void UnregisterSystem(const char* name);
 			virtual void UnregisterEditorSystem(const char* name);
-			void Update(entt::registry& registry);
-			void EditorUpdate(entt::registry& registry);
+			void Update(Grindstone::WorldContextSet& worldContextSet);
+			void EditorUpdate(Grindstone::WorldContextSet& worldContextSet);
 			~SystemRegistrar();
 			std::unordered_map<std::string, SystemFactory> systemFactories;
 			std::unordered_map<std::string, SystemFactory> editorSystemFactories;

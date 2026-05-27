@@ -9,6 +9,7 @@ namespace Grindstone::Reflection {
 
 		enum class ReflectionTypeData : char {
 			Struct = 0,
+			FixedArray,
 			Vector,
 			String,
 			Bool,
@@ -20,10 +21,17 @@ namespace Grindstone::Reflection {
 			Int2,
 			Int3,
 			Int4,
-			Uint,
 			Uint2,
 			Uint3,
 			Uint4,
+			Int8,
+			Int16,
+			Int32,
+			Int64,
+			Uint8,
+			Uint16,
+			Uint32,
+			Uint64,
 			Float,
 			Float2,
 			Float3,
@@ -34,7 +42,9 @@ namespace Grindstone::Reflection {
 			Double4,
 			Quaternion,
 			AssetReference,
-			Entity
+			Entity,
+			PhysicsLayer,
+			PhysicsLayerMask
 		};
 		ReflectionTypeData type;
 

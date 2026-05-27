@@ -2,12 +2,65 @@
 
 using namespace Grindstone::GraphicsAPI;
 
+ImageAspectBits Grindstone::GraphicsAPI::GetFormatAspect(Format format) {
+	// TODO: Incomplete
+	switch (format) {
+		// Depth
+		case Format::D16_UNORM:
+		case Format::X8_D24_UNORM_PACK32:
+		case Format::D32_SFLOAT:
+			return ImageAspectBits::Depth;
+
+		// Stencil
+		case Format::S8_UINT:
+			return ImageAspectBits::Stencil;
+
+		// Depth Stencil
+		case Format::D16_UNORM_S8_UINT:
+		case Format::D24_UNORM_S8_UINT:
+		case Format::D32_SFLOAT_S8_UINT:
+			return ImageAspectBits::Depth | ImageAspectBits::Stencil;
+
+		// 3-plane
+		case Format::G8_B8_R8_3PLANE_420_UNORM:
+		case Format::G10X6_B10X6_R10X6_3PLANE_420_UNORM_3PACK16:
+		case Format::G12X4_B12X4_R12X4_3PLANE_420_UNORM_3PACK16:
+		case Format::G16_B16_R16_3PLANE_420_UNORM:
+		case Format::G8_B8_R8_3PLANE_422_UNORM:
+		case Format::G10X6_B10X6_R10X6_3PLANE_422_UNORM_3PACK16:
+		case Format::G12X4_B12X4_R12X4_3PLANE_422_UNORM_3PACK16:
+		case Format::G16_B16_R16_3PLANE_422_UNORM:
+		case Format::G8_B8_R8_3PLANE_444_UNORM:
+		case Format::G10X6_B10X6_R10X6_3PLANE_444_UNORM_3PACK16:
+		case Format::G12X4_B12X4_R12X4_3PLANE_444_UNORM_3PACK16:
+		case Format::G16_B16_R16_3PLANE_444_UNORM:
+			return ImageAspectBits::Plane0 | ImageAspectBits::Plane1 | ImageAspectBits::Plane2;
+
+		// 2-plane
+		case Format::G8_B8R8_2PLANE_420_UNORM:
+		case Format::G10X6_B10X6R10X6_2PLANE_420_UNORM_3PACK16:
+		case Format::G12X4_B12X4R12X4_2PLANE_420_UNORM_3PACK16:
+		case Format::G16_B16R16_2PLANE_420_UNORM:
+		case Format::G8_B8R8_2PLANE_422_UNORM:
+		case Format::G10X6_B10X6R10X6_2PLANE_422_UNORM_3PACK16:
+		case Format::G12X4_B12X4R12X4_2PLANE_422_UNORM_3PACK16:
+		case Format::G16_B16R16_2PLANE_422_UNORM:
+		case Format::G8_B8R8_2PLANE_444_UNORM:
+		case Format::G10X6_B10X6R10X6_2PLANE_444_UNORM_3PACK16:
+		case Format::G12X4_B12X4R12X4_2PLANE_444_UNORM_3PACK16:
+		case Format::G16_B16R16_2PLANE_444_UNORM:
+			return ImageAspectBits::Plane0 | ImageAspectBits::Plane1;
+
+		default: return ImageAspectBits::Color;
+	}
+}
+
 FormatDepthStencilType Grindstone::GraphicsAPI::GetFormatDepthStencilType(Format format) {
 	switch (format) {
 	case Format::D16_UNORM: return FormatDepthStencilType::NotDepthStencil;
 	case Format::X8_D24_UNORM_PACK32: return FormatDepthStencilType::NotDepthStencil;
-	case Format::D32_SFLOAT: return FormatDepthStencilType::DepthOnly;
-	case Format::S8_UINT: return FormatDepthStencilType::StencilOnly;
+	case Format::D32_SFLOAT: return FormatDepthStencilType::Depth;
+	case Format::S8_UINT: return FormatDepthStencilType::Stencil;
 	case Format::D16_UNORM_S8_UINT: return FormatDepthStencilType::DepthStencil;
 	case Format::D24_UNORM_S8_UINT: return FormatDepthStencilType::DepthStencil;
 	case Format::D32_SFLOAT_S8_UINT: return FormatDepthStencilType::DepthStencil;
@@ -182,7 +235,7 @@ uint8_t Grindstone::GraphicsAPI::GetCompressedFormatBlockSize(Format format) {
 }
 
 uint8_t Grindstone::GraphicsAPI::GetFormatBytesPerPixel(Grindstone::GraphicsAPI::Format format) {
-	constexpr uint32_t formatSizeInBytes[] = {
+	constexpr uint8_t formatSizeInBytes[] = {
 		0, // Invalid
 		1, // R4G4_UNORM_PACK8
 		2, // R4G4B4A4_UNORM_PACK16

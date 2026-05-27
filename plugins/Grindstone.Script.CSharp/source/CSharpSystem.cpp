@@ -2,10 +2,10 @@
 #include <Grindstone.Script.CSharp/include/CSharpManager.hpp>
 using namespace Grindstone::Scripting;
 
-void CSharp::UpdateSystem(entt::registry& registry) {
-	CSharpManager::GetInstance().Update(registry);
+void CSharp::UpdateSystem(Grindstone::WorldContextSet& worldContextSet) {
+	CSharpManager::GetInstance().Update(worldContextSet.GetEntityRegistry());
 }
 
-void CSharp::UpdateEditorSystem(entt::registry& registry) {
-	CSharpManager::GetInstance().EditorUpdate(registry);
+void CSharp::UpdateEditorSystem(Grindstone::WorldContextSet& worldContextSet) {
+	CSharpManager::GetInstance().EditorUpdate(worldContextSet.GetEntityRegistry());
 }

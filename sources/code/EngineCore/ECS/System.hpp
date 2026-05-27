@@ -23,5 +23,5 @@ namespace Grindstone {
 #define SYSTEM_BODY(T)	static Grindstone::ECS::SystemType static_system_type_; \
 						static const char *system_name_; \
 						T(Grindstone::Scene *s) { scene_ = s; system_type_ = Grindstone::ECS::INVALID_SYSTEM; } \
-						static Grindstone::ECS::ISystem* createSystem(Grindstone::Scene *s) { return new T(s); }
+						static Grindstone::ECS::ISystem* createSystem(Grindstone::Scene *s) { return Grindstone::Memory::AllocatorCore::Allocate<T>(s); }
 #define SYSTEM_DEFINE(T, Name) Grindstone::ECS::SystemType T::static_system_type_ = 0; const char * T::system_name_ = Name

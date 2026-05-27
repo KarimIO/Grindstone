@@ -13,8 +13,8 @@ namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 Vulkan::Image::Image(VkImage image, VkFormat format, uint32_t swapchainIndex) :
 	GraphicsAPI::Image(1, 1, 1, 1, 1, 1, ImageDimension::Dimension2D, Format::Invalid, ImageUsageFlags::Sampled, MemoryUsage::GPUOnly),
 	imageName(std::string("Image View ") + std::to_string(swapchainIndex)),
-	imageViewType(VkImageViewType::VK_IMAGE_VIEW_TYPE_2D),
-	aspect(VK_IMAGE_ASPECT_COLOR_BIT) {
+	aspect(VK_IMAGE_ASPECT_COLOR_BIT),
+	imageViewType(VkImageViewType::VK_IMAGE_VIEW_TYPE_2D) {
 	UpdateNativeImage(image, imageView, format);
 	imageView = CreateImageView(image, imageViewType, vkFormat, aspect, mipLevels, arrayLayers);
 
@@ -23,7 +23,6 @@ Vulkan::Image::Image(VkImage image, VkFormat format, uint32_t swapchainIndex) :
 }
 
 Vulkan::Image::Image(const CreateInfo& createInfo) :
-	imageName(createInfo.debugName),
 	GraphicsAPI::Image(
 		createInfo.width,
 		createInfo.height,
@@ -35,7 +34,8 @@ Vulkan::Image::Image(const CreateInfo& createInfo) :
 		createInfo.format,
 		createInfo.imageUsage,
 		createInfo.memoryUsage
-	) {
+	),
+	imageName(createInfo.debugName) {
 	Create();
 
 	bool hasInitialData = createInfo.initialData != nullptr && createInfo.initialDataSize > 0;
@@ -74,10 +74,10 @@ void Vulkan::Image::Create() {
 		case FormatDepthStencilType::DepthStencil:
 			aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 			break;
-		case FormatDepthStencilType::StencilOnly:
+		case FormatDepthStencilType::Stencil:
 			aspect = VK_IMAGE_ASPECT_STENCIL_BIT;
 			break;
-		case FormatDepthStencilType::DepthOnly:
+		case FormatDepthStencilType::Depth:
 			aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
 			break;
 		}
@@ -278,8 +278,6 @@ Vulkan::Image::~Image() {
 }
 
 void Vulkan::Image::CreateImage() {
-	VkDevice device = Vulkan::Core::Get().GetDevice();
-
 	vkFormat = TranslateFormatToVulkan(format);
 
 	VkImageCreateFlags createFlags = 0;
@@ -451,17 +449,36 @@ void Vulkan::Image::UploadDataRegions(void* buffer, size_t bufferSize, ImageRegi
 	memcpy(mappedData, buffer, static_cast<size_t>(bufferSize));
 	vkUnmapMemory(device, stagingBufferMemory);
 
-	TransitionImageLayout(
-		image,
-		vkFormat,
-		aspect,
-		VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		mipLevels,
-		arrayLayers
+	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+
+	VkImageMemoryBarrier preCopyBarrier = {
+		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+		.srcAccessMask = VK_ACCESS_NONE,
+		.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+		.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+		.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+		.image = image,
+		.subresourceRange = {
+			.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+			.baseMipLevel = 0,
+			.levelCount = mipLevels,
+			.baseArrayLayer = 0,
+			.layerCount = 1,
+		},
+	};
+
+	vkCmdPipelineBarrier(
+		commandBuffer,
+		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		VK_PIPELINE_STAGE_TRANSFER_BIT,
+		0,
+		0, nullptr,
+		0, nullptr,
+		1, &preCopyBarrier
 	);
 
-	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 	uint64_t offset = 0;
 
 	std::vector<VkBufferImageCopy> vkRegions;
@@ -501,6 +518,34 @@ void Vulkan::Image::UploadDataRegions(void* buffer, size_t bufferSize, ImageRegi
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 		regionCount,
 		vkRegions.data()
+	);
+
+	VkImageMemoryBarrier postCopyBarrier = {
+		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+		.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+		.dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
+		.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+		.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+		.image = image,
+		.subresourceRange = {
+			.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+			.baseMipLevel = 0,
+			.levelCount = mipLevels,
+			.baseArrayLayer = 0,
+			.layerCount = 1,
+		},
+	};
+
+	vkCmdPipelineBarrier(
+		commandBuffer,
+		VK_PIPELINE_STAGE_TRANSFER_BIT,
+		VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		0,
+		0, nullptr,
+		0, nullptr,
+		1, &postCopyBarrier
 	);
 
 	EndSingleTimeCommands(commandBuffer);

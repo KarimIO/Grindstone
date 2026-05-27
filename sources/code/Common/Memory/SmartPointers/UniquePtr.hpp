@@ -38,7 +38,9 @@ namespace Grindstone {
 		template<typename U,
 			std::enable_if_t<std::is_convertible_v<U*, T*>, int> = 0>
 		UniquePtr(UniquePtr<U>&& other) noexcept
-			: ptr(other.Release()), deleteFn(std::move(other.GetDeleter())) {}
+			: ptr(other.Get()), deleteFn(std::move(other.GetDeleter())) {
+			other.Release();
+		}
 
 		template<typename U,
 			std::enable_if_t<std::is_convertible_v<U*, T*>, int> = 0>
@@ -79,7 +81,7 @@ namespace Grindstone {
 		}
 
 		bool operator==(const Grindstone::UniquePtr<T>& other) const noexcept {
-			return ptr == other.ptr && deleteFn == other.deleteFn;
+			return ptr == other.ptr && deleteFn.target<void(void)>() == other.deleteFn.target<void(void)>();
 		}
 
 		bool operator==(const T* other) const noexcept {

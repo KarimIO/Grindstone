@@ -1,0 +1,27 @@
+{
+	"name": "Grindstone.Physics.Jolt",
+	"displayName": "Jolt Physics System",
+	"version": "0.3.0",
+	"description": "A world context for simulating physics, and components to add physics objects to the scene.",
+	"author": "Grindstone Foundation",
+	"assets": [],
+	"dependencies": [],
+	"binaries": [
+		{
+			"path": "lib/{Configuration}/PluginJoltPhysics",
+			"loadStage": "EndOfEngineSetup",
+			"cmakeTarget": "PluginJoltPhysics"
+		},
+		{
+			"path": "lib/{Configuration}/PluginJoltPhysicsEditor",
+			"loadStage": "EditorAfterUiSetup",
+			"cmakeTarget": "PluginJoltPhysicsEditor"
+		},
+		{
+			"path": "scripts/bin/{Configuration}/net10.0/Grindstone.Physics.Jolt.CSharpIntegration",
+			"loadStage": "EndOfEngineSetup",
+			"dotnetTarget": "scripts/CSharpIntegration.json"
+		}
+	],
+	"cmake": "CMakeLists.txt"
+}

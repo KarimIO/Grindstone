@@ -20,7 +20,7 @@ namespace Grindstone {
 		}
 
 		// Move-Constructor
-		Buffer(Buffer&& other) noexcept : capacity(other.capacity), bufferPtr(other.bufferPtr) {
+		Buffer(Buffer&& other) noexcept : bufferPtr(other.bufferPtr), capacity(other.capacity) {
 			other.bufferPtr = nullptr;
 			other.capacity = 0;
 		}

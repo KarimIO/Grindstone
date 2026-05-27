@@ -47,6 +47,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 
 		// Inherited via WindowGraphicsBinding
 		virtual bool Initialize(Window *window) override;
+		virtual void WaitForRenderingFence() override;
 		virtual bool AcquireNextImage() override;
 		virtual void SubmitCommandBufferNoSynchronization(GraphicsAPI::CommandBuffer* buffer) override;
 		virtual void SubmitCommandBufferForCurrentFrame(GraphicsAPI::CommandBuffer* buffer) override;
@@ -58,8 +59,10 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void ImmediateSetContext() override;
 		virtual void ImmediateSwapBuffers() override;
 		virtual void Resize(uint32_t width, uint32_t height) override;
+		GraphicsAPI::Image* GetSwapchainImage(uint32_t index) const { return imageSets[index].swapChainTarget; }
+		virtual GraphicsAPI::Format GetSwapchainFormat() const override { return swapchainFormat; }
+		VkFormat GetSwapchainVulkanFormat() const { return swapchainVulkanFormat; }
 	private:
-		Format GetDeviceColorFormat() const;
 		VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 		VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);

@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <iostream>
 
+#include <Common/PhysicsLayer.hpp>
 #include "Common/Math.hpp"
 #include "EngineCore/Profiling.hpp"
 #include "EngineCore/EngineCore.hpp"
@@ -18,6 +19,11 @@
 
 using namespace Grindstone;
 using namespace Grindstone::SceneManagement;
+
+
+static void ParseMember( void* memberPtr, Reflection::TypeDescriptor* member, rapidjson::Value& parameter);
+static void ParseFixedArray(void* memberPtr, Reflection::TypeDescriptor* member, rapidjson::Value& parameter);
+static void ParseVectorArray(void* memberPtr, Reflection::TypeDescriptor* member, rapidjson::Value& parameter);
 
 SceneLoaderJson::SceneLoaderJson(Scene* scene, Grindstone::Uuid uuid) : scene(scene), uuid(uuid) {
 	Load(uuid);
@@ -179,18 +185,28 @@ void SceneLoaderJson::ProcessComponentParameter(
 	ParseMember(memberPtr, member->type, parameter);
 }
 
-void SceneLoaderJson::ParseMember(
+static void ParseMember(
 	void* memberPtr,
 	Reflection::TypeDescriptor* member,
 	rapidjson::Value& parameter
 ) {
 	switch (member->type) {
 	default:
-		GPRINT_ERROR(LogSource::EngineCore, "Unhandled reflection type in SceneLoaderJson!");
+		GPRINT_ERROR_V(LogSource::EngineCore, "Unhandled reflection type '{}' in SceneLoaderJson!", member->GetFullName());
 		break;
 	case ReflectionTypeData::Entity: {
 		entt::entity& entity = *(entt::entity*)memberPtr;
 		entity = static_cast<entt::entity>(parameter.GetUint());
+		break;
+	}
+	case ReflectionTypeData::PhysicsLayer: {
+		Grindstone::Physics::Layer& layer = *(Grindstone::Physics::Layer*)memberPtr;
+		layer.layer = static_cast<uint8_t>(parameter.GetUint());
+		break;
+	}
+	case ReflectionTypeData::PhysicsLayerMask: {
+		Grindstone::Physics::LayerMask& mask = *(Grindstone::Physics::LayerMask*)memberPtr;
+		mask.mask = static_cast<uint32_t>(parameter.GetUint());
 		break;
 	}
 	case ReflectionTypeData::AssetReference: {
@@ -210,7 +226,11 @@ void SceneLoaderJson::ParseMember(
 		GPRINT_ERROR(LogSource::EngineCore, "Unhandled Struct in SceneLoaderJson!");
 		break;
 	case ReflectionTypeData::Vector: {
-		ParseArray(memberPtr, member, parameter);
+		ParseVectorArray(memberPtr, member, parameter);
+		break;
+	}
+	case ReflectionTypeData::FixedArray: {
+		ParseFixedArray(memberPtr, member, parameter);
 		break;
 	}
 	case ReflectionTypeData::String: {
@@ -246,6 +266,26 @@ void SceneLoaderJson::ParseMember(
 		ptr = parameter.GetInt();
 		break;
 	}
+	case ReflectionTypeData::Int8: {
+		int8_t& str = *(int8_t*)memberPtr;
+		str = parameter.GetInt();
+		break;
+	}
+	case ReflectionTypeData::Int16: {
+		int16_t& str = *(int16_t*)memberPtr;
+		str = parameter.GetInt();
+		break;
+	}
+	case ReflectionTypeData::Int32: {
+		int32_t& str = *(int32_t*)memberPtr;
+		str = parameter.GetInt();
+		break;
+	}
+	case ReflectionTypeData::Int64: {
+		int64_t& str = *(int64_t*)memberPtr;
+		str = parameter.GetInt64();
+		break;
+	}
 	case ReflectionTypeData::Int2:
 		CopyDataArrayInt(parameter, static_cast<int*>(memberPtr), 2);
 		break;
@@ -255,9 +295,24 @@ void SceneLoaderJson::ParseMember(
 	case ReflectionTypeData::Int4:
 		CopyDataArrayInt(parameter, static_cast<int*>(memberPtr), 4);
 		break;
-	case ReflectionTypeData::Uint: {
-		uint32_t& value = *(uint32_t*)memberPtr;
-		value = parameter.GetUint();
+	case ReflectionTypeData::Uint8: {
+		uint8_t& str = *(uint8_t*)memberPtr;
+		str = parameter.GetUint();
+		break;
+	}
+	case ReflectionTypeData::Uint16: {
+		uint16_t& str = *(uint16_t*)memberPtr;
+		str = parameter.GetUint();
+		break;
+	}
+	case ReflectionTypeData::Uint32: {
+		uint32_t& str = *(uint32_t*)memberPtr;
+		str = parameter.GetUint();
+		break;
+	}
+	case ReflectionTypeData::Uint64: {
+		uint64_t& str = *(uint64_t*)memberPtr;
+		str = parameter.GetUint64();
 		break;
 	}
 	case ReflectionTypeData::Uint2:
@@ -309,8 +364,7 @@ inline void SetupArray(void* memberPtr, size_t arraySize, void*& elementPtr, siz
 	elementPtr = reinterpret_cast<void*>(vectorPtr);
 }
 
-void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* member, rapidjson::Value& parameter) {
-	Reflection::TypeDescriptor_StdVector* vectorTypeDescriptor = static_cast<Reflection::TypeDescriptor_StdVector*>(member);
+static void ParseArray(void* memberPtr, Reflection::TypeDescriptor* itemType, rapidjson::Value& parameter) {
 	auto srcArray = parameter.GetArray();
 
 	if (srcArray.Size() == 0) {
@@ -321,7 +375,7 @@ void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* me
 	size_t arraySize = static_cast<size_t>(srcArray.Size());
 	void* elementPtr = nullptr;
 
-	switch (vectorTypeDescriptor->itemType->type) {
+	switch (itemType->type) {
 		case ReflectionTypeData::Struct: break;
 		case ReflectionTypeData::AssetReference:
 			SetupArray<GenericAssetReference>(memberPtr, arraySize, elementPtr, elementSize);
@@ -361,8 +415,17 @@ void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* me
 		case ReflectionTypeData::Double4:
 			SetupArray<Math::Double4>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
-		case ReflectionTypeData::Int:
-			SetupArray<Math::Int>(memberPtr, arraySize, elementPtr, elementSize);
+		case ReflectionTypeData::Int8:
+			SetupArray<int8_t>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Int16:
+			SetupArray<int16_t>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Int32:
+			SetupArray<int32_t>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Int64:
+			SetupArray<int64_t>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Int2:
 			SetupArray<Math::Int2>(memberPtr, arraySize, elementPtr, elementSize);
@@ -373,8 +436,17 @@ void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* me
 		case ReflectionTypeData::Int4:
 			SetupArray<Math::Int4>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
-		case ReflectionTypeData::Uint:
-			SetupArray<Math::Uint>(memberPtr, arraySize, elementPtr, elementSize);
+		case ReflectionTypeData::Uint8:
+			SetupArray<uint8_t>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Uint16:
+			SetupArray<uint16_t>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Uint32:
+			SetupArray<uint32_t>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::Uint64:
+			SetupArray<uint64_t>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
 		case ReflectionTypeData::Uint2:
 			SetupArray<Math::Uint2>(memberPtr, arraySize, elementPtr, elementSize);
@@ -397,6 +469,15 @@ void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* me
 		case ReflectionTypeData::Float4:
 			SetupArray<Math::Float4>(memberPtr, arraySize, elementPtr, elementSize);
 			break;
+		case ReflectionTypeData::Entity:
+			SetupArray<entt::entity>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::PhysicsLayer:
+			SetupArray<Grindstone::Physics::Layer>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
+		case ReflectionTypeData::PhysicsLayerMask:
+			SetupArray<Grindstone::Physics::LayerMask>(memberPtr, arraySize, elementPtr, elementSize);
+			break;
 	}
 
 	for (
@@ -406,10 +487,20 @@ void SceneLoaderJson::ParseArray(void* memberPtr, Reflection::TypeDescriptor* me
 	) {
 		ParseMember(
 			elementPtr,
-			vectorTypeDescriptor->itemType,
+			itemType,
 			*elementIterator
 		);
 
 		elementPtr = (char*)elementPtr + elementSize;
 	}
+}
+
+static void ParseFixedArray(void* memberPtr, Reflection::TypeDescriptor* member, rapidjson::Value& parameter) {
+	Reflection::TypeDescriptor_FixedArray* vectorTypeDescriptor = static_cast<Reflection::TypeDescriptor_FixedArray*>(member);
+	ParseArray(memberPtr, vectorTypeDescriptor->itemType, parameter);
+}
+
+static void ParseVectorArray(void* memberPtr, Reflection::TypeDescriptor* member, rapidjson::Value& parameter) {
+	Reflection::TypeDescriptor_StdVector* vectorTypeDescriptor = static_cast<Reflection::TypeDescriptor_StdVector*>(member);
+	ParseArray(memberPtr, vectorTypeDescriptor->itemType, parameter);
 }

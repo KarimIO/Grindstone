@@ -12,12 +12,9 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		GraphicsPipeline(const CreateInfo& createInfo);
 		~GraphicsPipeline();
 		VkPipeline GetGraphicsPipeline() const;
-		VkPipelineLayout GetGraphicsPipelineLayout() const;
 	public:
 		virtual void Bind() {};
 	private:
-	private:
-		VkPipelineLayout pipelineLayout = nullptr;
 		VkPipeline graphicsPipeline = nullptr;
 	};
 }

@@ -1,7 +1,9 @@
 # Project Files
 *.sln
+*.slnx
 *.tlog
 *.vcxproj*
+*.csproj
 x64/*
 **/.idea/**.iws
 **/.idea/workspace.xml
@@ -97,3 +99,8 @@ cmake-*/*
 # Makefiles
 Makefile
 */Makefile
+
+# Dependencies
+!deps/NvidiaAftermath/lib/*
+!deps/NvidiaAftermath/lib/*/*.dll
+!deps/NvidiaAftermath/lib/*/*.lib

@@ -66,7 +66,7 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	textureAsset.image = graphicsCore->CreateImage(imgCreateInfo);
-	textureAsset.defaultSampler = graphicsCore->CreateSampler(samplerCreateInfo);
+	textureAsset.defaultSampler = graphicsCore->GetOrCreateSampler(samplerCreateInfo);
 	textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Ready;
 
 	return true;
