@@ -15,7 +15,7 @@
 
 #include <Editor/PluginSystem/EditorPluginInterface.hpp>
 
-#include <Grindstone.Physics.Jolt/include/Components/CharacterControllerComponent.hpp>
+#include <Grindstone.Physics.Jolt/include/Components/CharacterRigidbodyControllerComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/Components/ColliderComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/Components/RigidBodyComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/PhysicsSystem.hpp>
@@ -69,6 +69,7 @@ void SetupColliderComponent(Grindstone::WorldContextSet& cxt, entt::entity entit
 
 	colliderComponent.Initialize();
 
+	CharacterRigidbodyControllerComponent* ccComponent = registry.try_get<CharacterRigidbodyControllerComponent>(entity);
 	RigidBodyComponent* rigidBodyComponent = registry.try_get<RigidBodyComponent>(entity);
 	TransformComponent* transformComponent = registry.try_get<TransformComponent>(entity);
 	if (rigidBodyComponent != nullptr && transformComponent != nullptr) {
@@ -79,11 +80,20 @@ void SetupColliderComponent(Grindstone::WorldContextSet& cxt, entt::entity entit
 			&colliderComponent
 		);
 	}
+
+	if (ccComponent != nullptr && transformComponent != nullptr) {
+		SetupCharacterRigidbodyControllerComponentWithCollider(
+			cxt,
+			ccComponent,
+			transformComponent,
+			&colliderComponent
+		);
+	}
 }
 
 using namespace Grindstone::Memory::AllocatorCore;
 static void* JoltPhysAllocate(size_t inSize) {
-	constexpr size_t defaultAlignment = 4;
+	constexpr size_t defaultAlignment = JPH_VECTOR_ALIGNMENT;
 	return AllocatorCore::AllocateRaw(inSize, defaultAlignment, "Jolt Allocation");
 }
 static void JoltPhysFree(void* inBlock) { AllocatorCore::Free(inBlock); }
@@ -127,13 +137,15 @@ extern "C" {
 
 		pluginInterface->RegisterWorldContextFactory<Grindstone::Physics::WorldContext>(physicsWorldContextName);
 		pluginInterface->RegisterComponent<RigidBodyComponent>(SetupRigidBodyComponent);
-		pluginInterface->RegisterComponent<CharacterControllerComponent>(SetupCharacterControllerComponent);
+		pluginInterface->RegisterComponent<CharacterRigidbodyControllerComponent>(SetupCharacterRigidbodyControllerComponent);
+		// TODO: Setup CharacterRigidbody
 		pluginInterface->RegisterSystem("PhysicsSystem", PhysicsJoltSystem);
 	}
 
 	JOLT_PHYSICS_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
 		pluginInterface->UnregisterSystem("PhysicsSystem");
-		pluginInterface->UnregisterComponent<CharacterControllerComponent>();
+		// TODO: Remove CharacterRigidbody
+		pluginInterface->UnregisterComponent<CharacterRigidbodyControllerComponent>();
 		pluginInterface->UnregisterComponent<RigidBodyComponent>();
 		pluginInterface->UnregisterWorldContextFactory(physicsWorldContextName);
 

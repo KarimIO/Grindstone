@@ -42,7 +42,7 @@ void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
 		transformComponent->rotation.y,
 		transformComponent->rotation.z,
 		transformComponent->rotation.w
-	);
+	).Normalized();
 	JPH::RVec3 position(
 		transformComponent->position.x,
 		transformComponent->position.y,
@@ -66,8 +66,19 @@ void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
 
 RigidBodyComponent::RigidBodyComponent(float mass, ColliderComponent* colliderComponent) : mass(mass) {}
 
+RigidBodyComponent::~RigidBodyComponent() {
+	// TODO: Maybe we need to pass cxt set here? That would mean a destructor that passes contexts.
+	Grindstone::WorldContextSet* cxtSet = Grindstone::EngineCore::GetInstance().GetWorldContextManager()->GetActiveWorldContextSet();
+	Grindstone::Physics::WorldContext* physWorldContext = static_cast<Grindstone::Physics::WorldContext*>(cxtSet->GetContext(physicsWorldContextName));
+	if (physWorldContext != nullptr) {
+		physWorldContext->GetBodyInterface().RemoveBody(GetBodyID());
+	}
+}
+
 RigidBodyComponent RigidBodyComponent::Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const {
 	RigidBodyComponent newRb;
+	newRb.isStatic = isStatic;
+	newRb.layer = layer;
 	newRb.mass = mass;
 	newRb.friction = friction;
 	newRb.restitution = restitution;

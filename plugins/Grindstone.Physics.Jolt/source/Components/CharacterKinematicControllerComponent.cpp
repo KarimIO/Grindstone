@@ -1,11 +1,11 @@
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/Collision/ObjectLayer.h>
-#include <Jolt/Physics/Character/Character.h>
+#include <Jolt/Physics/Character/CharacterVirtual.h>
 
 #include <Common/Math.hpp>
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
 
-#include <Grindstone.Physics.Jolt/include/Components/CharacterControllerComponent.hpp>
+#include <Grindstone.Physics.Jolt/include/Components/CharacterKinematicControllerComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/Components/ColliderComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/PhysicsWorldContext.hpp>
 
@@ -14,26 +14,27 @@ using namespace JPH::literals;
 using namespace Grindstone::Physics;
 using namespace Grindstone::Math;
 
-REFLECT_STRUCT_BEGIN(CharacterControllerComponent)
+REFLECT_STRUCT_BEGIN(CharacterKinematicControllerComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::Physics::SetupCharacterControllerComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+// TODO: CharacterVirtual is really not handled thoroughly, I just wanted a stub to remember where to pick this up later on.
+void Grindstone::Physics::SetupCharacterKinematicControllerComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	entt::registry& registry = cxtSet.GetEntityRegistry();
 	ColliderComponent* colliderComponent = GetCollider(registry, entity);
 	if (colliderComponent == nullptr) {
 		return;
 	}
 
-	CharacterControllerComponent& CharacterControllerComponent = registry.get<Physics::CharacterControllerComponent>(entity);
+	CharacterKinematicControllerComponent& CharacterKinematicControllerComponent = registry.get<Physics::CharacterKinematicControllerComponent>(entity);
 	TransformComponent& transformComponent = registry.get<TransformComponent>(entity);
 
-	SetupCharacterControllerComponentWithCollider(cxtSet, &CharacterControllerComponent, &transformComponent, colliderComponent);
+	SetupCharacterKinematicControllerComponentWithCollider(cxtSet, &CharacterKinematicControllerComponent, &transformComponent, colliderComponent);
 }
 
-void Grindstone::Physics::SetupCharacterControllerComponentWithCollider(
+void Grindstone::Physics::SetupCharacterKinematicControllerComponentWithCollider(
 	Grindstone::WorldContextSet& cxtSet,
-	CharacterControllerComponent* CharacterControllerComponent,
+	CharacterKinematicControllerComponent* characterComponent,
 	TransformComponent* transformComponent,
 	ColliderComponent* colliderComponent
 ) {
@@ -51,26 +52,25 @@ void Grindstone::Physics::SetupCharacterControllerComponentWithCollider(
 
 	JPH::Shape* shape = colliderComponent->collisionShape;
 
-	JPH::CharacterSettings settings;
+	JPH::CharacterVirtualSettings settings{};
 	settings.mShape = shape;
-	settings.mLayer = Layers::MOVING;
 	settings.mMass = 80.0f;
 
 	Grindstone::Physics::WorldContext* physWorldContext = static_cast<Grindstone::Physics::WorldContext*>(cxtSet.GetContext(physicsWorldContextName));
 	if (physWorldContext != nullptr) {
 		JPH::uint64 userParameter = 0;
 		JPH::PhysicsSystem* physSystem = &physWorldContext->GetPhysicsSystem();
-		JPH::Character* character = new JPH::Character(&settings, position, rotation, userParameter, physSystem);
-		character->AddToPhysicsSystem();
+		characterComponent->character = new JPH::CharacterVirtual(&settings, position, rotation, userParameter, physSystem);
+		// TODO: Add character to world
 	}
 }
 
-CharacterControllerComponent CharacterControllerComponent::Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const {
-	CharacterControllerComponent character{};
+CharacterKinematicControllerComponent CharacterKinematicControllerComponent::Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const {
+	CharacterKinematicControllerComponent character{};
 
 	return character;
 }
 
-void CharacterControllerComponent::SetVelocity(Math::Float3 velocity) const {
+void CharacterKinematicControllerComponent::SetVelocity(Math::Float3 velocity) const {
 	character->SetLinearVelocity(JPH::Vec3(velocity.x, velocity.y, velocity.z));
 }

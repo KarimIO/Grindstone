@@ -14,26 +14,26 @@ namespace Grindstone {
 }
 
 namespace JPH {
-	class Character;
+	class CharacterVirtual;
 }
 
 namespace Grindstone::Physics {
 	struct ColliderComponent;
 
-	void SetupCharacterControllerComponent(Grindstone::WorldContextSet&, entt::entity);
+	void SetupCharacterKinematicControllerComponent(Grindstone::WorldContextSet&, entt::entity);
 
-	struct CharacterControllerComponent {
-		CharacterControllerComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
+	struct CharacterKinematicControllerComponent {
+		CharacterKinematicControllerComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
 		void SetVelocity(Math::Float3 velocity) const;
-	private:
-		JPH::Character* character = nullptr;
 
-		REFLECT("CharacterController")
+		JPH::Ref<JPH::CharacterVirtual> character = nullptr;
+
+		REFLECT("CharacterKinematicController")
 	};
 
-	void SetupCharacterControllerComponentWithCollider(
+	void SetupCharacterKinematicControllerComponentWithCollider(
 		Grindstone::WorldContextSet& cxt,
-		CharacterControllerComponent* characterControllerComponent,
+		CharacterKinematicControllerComponent* characterControllerComponent,
 		TransformComponent* transformComponent,
 		ColliderComponent* colliderComponent
 	);

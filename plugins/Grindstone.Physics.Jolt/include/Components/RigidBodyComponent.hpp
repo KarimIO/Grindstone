@@ -24,6 +24,7 @@ namespace Grindstone {
 			RigidBodyComponent() = default;
 			RigidBodyComponent(float mass, ColliderComponent* colliderComponent);
 			RigidBodyComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
+			~RigidBodyComponent();
 
 			void SetFriction(float friction);
 			void SetRestitution(float restitution);

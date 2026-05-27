@@ -1,79 +1,49 @@
+#include <Common/Math.hpp>
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 #include "TransformComponent.hpp"
 #include "EngineCore/Scenes/Scene.hpp"
 using namespace Grindstone;
 
-ENGINE_CORE_API typedef struct ExportableVector {
-	float x;
-	float y;
-	float z;
-} ExportableVector;
-
-ENGINE_CORE_API typedef struct ExportableQuaternion {
-	float x;
-	float y;
-	float z;
-	float w;
-} ExportableQuaternion;
-
-glm::vec3 ImportVector(const ExportableVector inVec) {
-	return { inVec.x, inVec.y, inVec.z };
-}
-
-glm::quat ImportQuaternion(const ExportableQuaternion inQuat) {
-	return { inQuat.x, inQuat.y, inQuat.z, inQuat.w };
-}
-
 extern "C" {
-	ExportableVector ExportVector(const glm::vec3 inVec) {
-		return { inVec.x, inVec.y, inVec.z };
-	}
-
-	ExportableQuaternion ExportQuaternion(const glm::quat inQuat) {
-		return { inQuat.x, inQuat.y, inQuat.z, inQuat.w };
-	}
-
 	ENGINE_CORE_API void* EntityGetTransformComponent(Grindstone::SceneManagement::Scene* scene, uint32_t entity) {
-		entt::registry& reg = EngineCore::GetInstance().GetEntityRegistry();
-		const entt::entity entityId = static_cast<entt::entity>(entity);
-
-		return reg.try_get<TransformComponent>(entityId);
+		entt::registry& reg = Grindstone::EngineCore::GetInstance().GetWorldContextManager()->GetActiveWorldContextSet()->GetEntityRegistry();
+		return reg.try_get<TransformComponent>((entt::entity)entity);
 	}
 
-	ENGINE_CORE_API ExportableQuaternion TransformComponentGetRotation(const TransformComponent& component) {
-		return ExportQuaternion(component.rotation);
+	ENGINE_CORE_API Grindstone::Math::ExportableQuaternion TransformComponentGetRotation(const TransformComponent& component) {
+		return Grindstone::Math::ExportQuaternion(component.rotation);
 	}
 
-	ENGINE_CORE_API void TransformComponentSetRotation(TransformComponent& component, ExportableQuaternion rotation) {
-		component.rotation = ImportQuaternion(rotation);
+	ENGINE_CORE_API void TransformComponentSetRotation(TransformComponent& component, Grindstone::Math::ExportableQuaternion rotation) {
+		component.rotation = Grindstone::Math::ImportQuaternion(rotation);
 	}
 
-	ENGINE_CORE_API ExportableVector TransformComponentGetPosition(const TransformComponent& component) {
-		return ExportVector(component.position);
+	ENGINE_CORE_API Grindstone::Math::ExportableVector TransformComponentGetPosition(const TransformComponent& component) {
+		return Grindstone::Math::ExportVector(component.position);
 	}
 
-	ENGINE_CORE_API void TransformComponentSetPosition(TransformComponent& component, ExportableVector position) {
-		component.position = ImportVector(position);
+	ENGINE_CORE_API void TransformComponentSetPosition(TransformComponent& component, Grindstone::Math::ExportableVector position) {
+		component.position = Grindstone::Math::ImportVector(position);
 	}
 
-	ENGINE_CORE_API ExportableVector TransformComponentGetScale(const TransformComponent& component) {
-		return ExportVector(component.scale);
+	ENGINE_CORE_API Grindstone::Math::ExportableVector TransformComponentGetScale(const TransformComponent& component) {
+		return Grindstone::Math::ExportVector(component.scale);
 	}
 
-	ENGINE_CORE_API void TransformComponentSetScale(TransformComponent& component, const ExportableVector scale) {
+	ENGINE_CORE_API void TransformComponentSetScale(TransformComponent& component, const Grindstone::Math::ExportableVector scale) {
 		component.scale = ImportVector(scale);
 	}
 
-	ENGINE_CORE_API ExportableVector TransformComponentGetForward(const TransformComponent& component) {
-		return ExportVector(component.GetForward());
+	ENGINE_CORE_API Grindstone::Math::ExportableVector TransformComponentGetForward(const TransformComponent& component) {
+		return Grindstone::Math::ExportVector(component.GetForward());
 	}
 
-	ENGINE_CORE_API ExportableVector TransformComponentGetRight(const TransformComponent& component) {
-		return ExportVector(component.GetRight());
+	ENGINE_CORE_API Grindstone::Math::ExportableVector TransformComponentGetRight(const TransformComponent& component) {
+		return Grindstone::Math::ExportVector(component.GetRight());
 	}
 
-	ENGINE_CORE_API ExportableVector TransformComponentGetUp(const TransformComponent& component) {
-		return ExportVector(component.GetUp());
+	ENGINE_CORE_API Grindstone::Math::ExportableVector TransformComponentGetUp(const TransformComponent& component) {
+		return Grindstone::Math::ExportVector(component.GetUp());
 	}
 }
 
