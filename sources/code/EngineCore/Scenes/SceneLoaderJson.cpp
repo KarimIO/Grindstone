@@ -246,26 +246,6 @@ static void ParseMember(
 		ptr = parameter.GetBool();
 		break;
 	}
-	case ReflectionTypeData::Char: {
-		char& ptr = *static_cast<char*>(memberPtr);
-		ptr = parameter.GetInt();
-		break;
-	}
-	case ReflectionTypeData::Uchar: {
-		unsigned char& ptr = *static_cast<unsigned char*>(memberPtr);
-		ptr = parameter.GetInt();
-		break;
-	}
-	case ReflectionTypeData::Short: {
-		short& ptr = *static_cast<short*>(memberPtr);
-		ptr = parameter.GetInt();
-		break;
-	}
-	case ReflectionTypeData::Ushort: {
-		unsigned short& ptr = *static_cast<unsigned short*>(memberPtr);
-		ptr = parameter.GetInt();
-		break;
-	}
 	case ReflectionTypeData::Int8: {
 		int8_t& str = *(int8_t*)memberPtr;
 		str = parameter.GetInt();

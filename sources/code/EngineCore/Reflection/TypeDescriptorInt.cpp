@@ -2,56 +2,6 @@
 #include "Common/Math.hpp"
 
 namespace Grindstone::Reflection {
-	struct TypeDescriptor_Char : TypeDescriptor {
-		TypeDescriptor_Char() : TypeDescriptor{ "Char", sizeof(char), ReflectionTypeData::Char } {}
-	};
-
-	template <>
-	TypeDescriptor* GetPrimitiveDescriptor<char>() {
-		static TypeDescriptor_Char typeDesc;
-		return &typeDesc;
-	}
-
-	struct TypeDescriptor_Uchar : TypeDescriptor {
-		TypeDescriptor_Uchar() : TypeDescriptor{ "Uchar", sizeof(unsigned char), ReflectionTypeData::Uchar } {}
-	};
-
-	template <>
-	TypeDescriptor* GetPrimitiveDescriptor<unsigned char>() {
-		static TypeDescriptor_Uchar typeDesc;
-		return &typeDesc;
-	}
-
-	struct TypeDescriptor_Short : TypeDescriptor {
-		TypeDescriptor_Short() : TypeDescriptor{ "Short", sizeof(short), ReflectionTypeData::Short } {}
-	};
-
-	template <>
-	TypeDescriptor* GetPrimitiveDescriptor<short>() {
-		static TypeDescriptor_Short typeDesc;
-		return &typeDesc;
-	}
-
-	struct TypeDescriptor_Ushort : TypeDescriptor {
-		TypeDescriptor_Ushort() : TypeDescriptor{ "Ushort", sizeof(unsigned short), ReflectionTypeData::Ushort } {}
-	};
-
-	template <>
-	TypeDescriptor* GetPrimitiveDescriptor<unsigned short>() {
-		static TypeDescriptor_Ushort typeDesc;
-		return &typeDesc;
-	}
-
-	struct TypeDescriptor_Int : TypeDescriptor {
-		TypeDescriptor_Int() : TypeDescriptor{ "Int", sizeof(int), ReflectionTypeData::Int } {}
-	};
-
-	template <>
-	TypeDescriptor* GetPrimitiveDescriptor<int>() {
-		static TypeDescriptor_Int typeDesc;
-		return &typeDesc;
-	}
-
 	struct TypeDescriptor_Int2 : TypeDescriptor {
 		TypeDescriptor_Int2() : TypeDescriptor{ "Int2", sizeof(Math::Int2), ReflectionTypeData::Int2 } {}
 	};

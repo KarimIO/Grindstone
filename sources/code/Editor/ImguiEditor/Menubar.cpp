@@ -34,13 +34,15 @@ void Menubar::Render() {
 		RenderViewMenu();
 	}
 
-	if (ImGui::BeginMenu("Custom Commands")) {
-		for (Menubar::MenubarItem& item : menuItems) {
-			if (ImGui::MenuItem(item.text.c_str(), item.shortcut.c_str(), false)) {
-				item.fnPtr();
+	if (!menuItems.empty()) {
+		if (ImGui::BeginMenu("Custom Commands")) {
+			for (Menubar::MenubarItem& item : menuItems) {
+				if (ImGui::MenuItem(item.text.c_str(), item.shortcut.c_str(), false)) {
+					item.fnPtr();
+				}
 			}
+			ImGui::EndMenu();
 		}
-		ImGui::EndMenu();
 	}
 
 	ImGui::EndMenuBar();

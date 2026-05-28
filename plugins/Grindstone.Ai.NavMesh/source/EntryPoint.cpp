@@ -2,7 +2,7 @@
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 
-#include <Grindstone.Physics.Bullet/include/Components/ColliderComponent.hpp>
+#include <Grindstone.Physics.Jolt/include/Components/ColliderComponent.hpp>
 
 #include <Grindstone.Ai.NavMesh/include/pch.hpp>
 #include <Grindstone.Ai.NavMesh/include/NavMeshSystem.hpp>
@@ -62,6 +62,10 @@ static void PopulateGeometry(
 	glm::vec3& boundMin,
 	glm::vec3& boundMax
 ) {
+	constexpr float inf = std::numeric_limits<float>().infinity();
+	constexpr float ninf = std::numeric_limits<float>().lowest();
+	boundMin = { inf, inf, inf };
+	boundMax = { ninf, ninf, ninf };
 	int index = 0;
 
 	{
@@ -72,24 +76,26 @@ static void PopulateGeometry(
 				const TransformComponent& transformComponent,
 				const Physics::BoxColliderComponent& boxComponent
 			) {
-				const btBoxShape* box = static_cast<const btBoxShape*>(boxComponent.collisionShape.Get());
-				box->getHalfExtentsWithMargin();
-				btVector3 halfExtents = box->getHalfExtentsWithMargin();
+				glm::vec3 halfExtents = boxComponent.GetSize() / 2.0f;
 				glm::mat4 transformMatrix = transformComponent.GetWorldTransformMatrix(entity, registry);
+				glm::vec3 scale = transformComponent.scale;
 
 				glm::vec4 v[8] = {
-					{ -halfExtents.x(), -halfExtents.y(), -halfExtents.z(), 1.0f },
-					{  halfExtents.x(), -halfExtents.y(), -halfExtents.z(), 1.0f },
-					{  halfExtents.x(),  halfExtents.y(), -halfExtents.z(), 1.0f },
-					{ -halfExtents.x(),  halfExtents.y(), -halfExtents.z(), 1.0f },
-					{ -halfExtents.x(), -halfExtents.y(),  halfExtents.z(), 1.0f },
-					{  halfExtents.x(), -halfExtents.y(),  halfExtents.z(), 1.0f },
-					{  halfExtents.x(),  halfExtents.y(),  halfExtents.z(), 1.0f },
-					{ -halfExtents.x(),  halfExtents.y(),  halfExtents.z(), 1.0f },
+					{ -halfExtents.x, -halfExtents.y, -halfExtents.z, 1.0f },
+					{  halfExtents.x, -halfExtents.y, -halfExtents.z, 1.0f },
+					{  halfExtents.x,  halfExtents.y, -halfExtents.z, 1.0f },
+					{ -halfExtents.x,  halfExtents.y, -halfExtents.z, 1.0f },
+					{ -halfExtents.x, -halfExtents.y,  halfExtents.z, 1.0f },
+					{  halfExtents.x, -halfExtents.y,  halfExtents.z, 1.0f },
+					{  halfExtents.x,  halfExtents.y,  halfExtents.z, 1.0f },
+					{ -halfExtents.x,  halfExtents.y,  halfExtents.z, 1.0f },
 				};
 
 				for (int i = 0; i < 8; ++i) {
-					glm::vec3 position = transformMatrix * v[i];
+					glm::vec3 position = (transformMatrix * v[i]);
+					position.x /= scale.x;
+					position.y /= scale.y;
+					position.z /= scale.z;
 					vertexPositions.emplace_back(glm::vec3(position.x, position.y, position.z));
 
 					boundMin = CalculateMinimumBounds(position, boundMin);
@@ -98,12 +104,12 @@ static void PopulateGeometry(
 
 				// Define triangles (two per face)
 				int indices[36] = {
-					0,1,2, 2,3,0,  // -Z
-					1,5,6, 6,2,1,  // +X
-					5,4,7, 7,6,5,  // +Z
-					4,0,3, 3,7,4,  // -X
-					3,2,6, 6,7,3,  // +Y (top)
-					4,5,1, 1,0,4   // -Y (bottom)
+					0,1,2, 2,3,0,   // -Z
+					1,5,6, 6,2,1,   // +X
+					5,4,7, 7,6,5,   // +Z
+					4,0,3, 3,7,4,   // -X
+					3,7,6, 6,2,3,   // +Y (top)
+					4,1,5, 5,0,4    // -Y (bottom)
 				};
 
 				for (int i = 0; i < 36; ++i) {
@@ -116,20 +122,23 @@ static void PopulateGeometry(
 	}
 }
 
-static rcPolyMesh* BakeNavMeshForAgent(const entt::registry& registry, rcContext* context, const Ai::NavMeshComponent& navMeshData, const Ai::NavAgentType& agentType) {
+static std::pair<rcPolyMesh*, rcPolyMeshDetail*> BakeNavMeshForAgent(const entt::registry& registry, rcContext* context, const Ai::NavMeshComponent& navMeshData, const Ai::NavAgentType& agentType) {
 	glm::vec3 bmin, bmax;
 	std::vector<glm::vec3> verts;
 	std::vector<int> tris;
 
 	PopulateGeometry(registry, verts, tris, bmin, bmax);
 
-	int borderSize = 1;
+	bmin -= glm::vec3(2.0f, 2.0f, 2.0f);
+	bmax += glm::vec3(2.0f, 2.0f, 2.0f);
+
+	int borderSize = 0;
 	int tileSize = 4;
 	float edgeMaxLen = 12.0f;
 	float edgeMaxError = 1.3f;
 	int regionMinSize = 8.0f;
 	int regionMergeSize = 20.0f;
-	int vertsPerPoly = 6;
+	int vertsPerPoly = 3;
 	float detailSampleDist = 6.0f;
 	float detailSampleMaxError = 1.0f;
 
@@ -148,24 +157,37 @@ static rcPolyMesh* BakeNavMeshForAgent(const entt::registry& registry, rcContext
 		.maxSimplificationError = edgeMaxError,
 		.minRegionArea = (int)rcSqr(regionMinSize),
 		.mergeRegionArea = (int)rcSqr(regionMergeSize),
-		.maxVertsPerPoly = 3,
+		.maxVertsPerPoly = vertsPerPoly,
 		.detailSampleDist = detailSampleDist < 0.9f ? 0 : navMeshData.cellSize * detailSampleDist,
 		.detailSampleMaxError = navMeshData.cellHeight * detailSampleMaxError,
 	};
 
 	rcCalcGridSize(config.bmin, config.bmax, config.cs, &config.width, &config.height);
 
-	int numVerts = verts.size() * 3u;
+	int numVerts = verts.size();
 	float* vertsPtr = reinterpret_cast<float*>(verts.data());
-	int numTris = tris.size() * 3u;
+	int numTris = tris.size() / 3;
 	std::vector<unsigned char> areas;
+	areas.resize(numTris);
 
 	// Create and Build Heightfield
 
 	rcHeightfield* heightfield = rcAllocHeightfield();
-	rcCreateHeightfield(context, *heightfield, config.width, config.height, config.bmin, config.bmax, config.cs, config.ch);
+	if (heightfield == nullptr) {
+		GPRINT_ERROR(LogSource::EngineCore, "BakeNavMeshForAgent: Unable to allocate memory for heightfield.");
+		return { nullptr, nullptr };
+	}
+
+	if (!rcCreateHeightfield(context, *heightfield, config.width, config.height, config.bmin, config.bmax, config.cs, config.ch)) {
+		GPRINT_ERROR(LogSource::EngineCore, "BakeNavMeshForAgent: Unable to create heightfield.");
+		return { nullptr, nullptr };
+	}
+
 	rcMarkWalkableTriangles(context, config.walkableSlopeAngle, vertsPtr, numVerts, tris.data(), numTris, areas.data());
-	rcRasterizeTriangles(context, vertsPtr, numVerts, tris.data(), areas.data(), numTris, *heightfield, config.walkableClimb);
+	if (!rcRasterizeTriangles(context, vertsPtr, numVerts, tris.data(), areas.data(), numTris, *heightfield, config.walkableClimb)) {
+		GPRINT_ERROR(LogSource::EngineCore, "BakeNavMeshForAgent: Unable to rasterize triangles.");
+		return { nullptr, nullptr };
+	}
 
 	// Apply Filters
 
@@ -176,30 +198,72 @@ static rcPolyMesh* BakeNavMeshForAgent(const entt::registry& registry, rcContext
 	// Build Compact Heightfield
 
 	rcCompactHeightfield* compactHeightfield = rcAllocCompactHeightfield();
-	rcBuildCompactHeightfield(context, config.walkableHeight, config.walkableClimb, *heightfield, *compactHeightfield);
+	if (compactHeightfield == nullptr) {
+		GPRINT_ERROR(LogSource::EngineCore, "BakeNavMeshForAgent: Unable to allocate memory for compact heightfield.");
+		return { nullptr, nullptr };
+	}
+
+	if (!rcBuildCompactHeightfield(context, config.walkableHeight, config.walkableClimb, *heightfield, *compactHeightfield)) {
+		GPRINT_ERROR(LogSource::EngineCore, "BakeNavMeshForAgent: Unable to build compact heightfield.");
+		return { nullptr, nullptr };
+	}
+
 	rcFreeHeightField(heightfield);
 
 	// Build Regions and Contours
 
-	rcBuildDistanceField(context, *compactHeightfield);
-	rcBuildRegions(context, *compactHeightfield, config.borderSize, config.minRegionArea, config.mergeRegionArea);
+	if (!rcBuildDistanceField(context, *compactHeightfield)) {
+		GPRINT_ERROR(LogSource::EngineCore, "BakeNavMeshForAgent: Unable to build distance field.");
+		return { nullptr, nullptr };
+	}
+
+	if (!rcBuildRegions(context, *compactHeightfield, config.borderSize, config.minRegionArea, config.mergeRegionArea)) {
+		GPRINT_ERROR(LogSource::EngineCore, "BakeNavMeshForAgent: Unable to build regions.");
+		return { nullptr, nullptr };
+	}
 
 	rcContourSet* contourSet = rcAllocContourSet();
-	rcBuildContours(context, *compactHeightfield, config.maxSimplificationError, config.maxEdgeLen, *contourSet, RC_CONTOUR_TESS_WALL_EDGES);
+	if (contourSet == nullptr) {
+		GPRINT_ERROR(LogSource::EngineCore, "BakeNavMeshForAgent: Unable to allocate memory for contour set.");
+		return { nullptr, nullptr };
+	}
+
+	if (!rcBuildContours(context, *compactHeightfield, config.maxSimplificationError, config.maxEdgeLen, *contourSet, RC_CONTOUR_TESS_WALL_EDGES)) {
+		GPRINT_ERROR(LogSource::EngineCore, "BakeNavMeshForAgent: Unable to build contours.");
+		return { nullptr, nullptr };
+	}
 
 	// Build Polygon Mesh
 
 	rcPolyMesh* polyMesh = rcAllocPolyMesh();
-	rcBuildPolyMesh(context, *contourSet, config.maxVertsPerPoly, *polyMesh);
-	rcFreeContourSet(contourSet);  // Contour set no longer needed
+	if (polyMesh == nullptr) {
+		GPRINT_ERROR(LogSource::EngineCore, "BakeNavMeshForAgent: Unable to allocate memory for poly mesh.");
+		return { nullptr, nullptr };
+	}
+
+	if (!rcBuildPolyMesh(context, *contourSet, config.maxVertsPerPoly, *polyMesh)) {
+		GPRINT_ERROR(LogSource::EngineCore, "BakeNavMeshForAgent: Unable to build poly mesh.");
+		return { nullptr, nullptr };
+	}
+
+	rcFreeContourSet(contourSet);
 
 	// Build Detail Mesh(Optional)
 
 	rcPolyMeshDetail* polyMeshDetail = rcAllocPolyMeshDetail();
-	rcBuildPolyMeshDetail(context, *polyMesh, *compactHeightfield, config.detailSampleDist, config.detailSampleMaxError, *polyMeshDetail);
-	rcFreeCompactHeightfield(compactHeightfield);  // Compact heightfield no longer needed
+	if (polyMeshDetail == nullptr) {
+		GPRINT_ERROR(LogSource::EngineCore, "BakeNavMeshForAgent: Unable to allocate memory for poly mesh detail.");
+		return { polyMesh, nullptr };
+	}
 
-	return polyMesh;
+	if (!rcBuildPolyMeshDetail(context, *polyMesh, *compactHeightfield, config.detailSampleDist, config.detailSampleMaxError, *polyMeshDetail)) {
+		GPRINT_ERROR(LogSource::EngineCore, "BakeNavMeshForAgent: Unable to build poly mesh detail.");
+		return { polyMesh, nullptr };
+	}
+
+	rcFreeCompactHeightfield(compactHeightfield);
+
+	return { polyMesh, polyMeshDetail };
 }
 
 static dtNavMesh* CreateNavMeshFromData(
@@ -213,43 +277,48 @@ static dtNavMesh* CreateNavMeshFromData(
 	unsigned char* navData = 0;
 	int navDataSize = 0;
 
-	dtNavMeshCreateParams params{};
-	params.verts = polyMesh->verts;
-	params.vertCount = polyMesh->nverts;
-	params.polys = polyMesh->polys;
-	params.polyAreas = polyMesh->areas;
-	params.polyFlags = polyMesh->flags;
-	params.polyCount = polyMesh->npolys;
-	params.nvp = polyMesh->nvp;
-	params.detailMeshes = polyMeshDetail->meshes;
-	params.detailVerts = polyMeshDetail->verts;
-	params.detailVertsCount = polyMeshDetail->nverts;
-	params.detailTris = polyMeshDetail->tris;
-	params.detailTriCount = polyMeshDetail->ntris;
-	params.offMeshConVerts = offMeshConnections.vertexPositions;
-	params.offMeshConRad = offMeshConnections.radii;
-	params.offMeshConDir = reinterpret_cast<unsigned char*>(offMeshConnections.directions);
-	params.offMeshConAreas = static_cast<unsigned char*>(offMeshConnections.areas);
-	params.offMeshConFlags = static_cast<unsigned short*>(offMeshConnections.flags);
-	params.offMeshConUserID = offMeshConnections.userIds;
-	params.offMeshConCount = offMeshConnections.connectionCount;
-	params.walkableHeight = agentType.height;
-	params.walkableRadius = agentType.radius;
-	params.walkableClimb = agentType.stepHeight;
+	dtNavMeshCreateParams params{
+		.verts = polyMesh->verts,
+		.vertCount = polyMesh->nverts,
+		.polys = polyMesh->polys,
+		.polyFlags = polyMesh->flags,
+		.polyAreas = polyMesh->areas,
+		.polyCount = polyMesh->npolys,
+		.nvp = polyMesh->nvp,
+		.offMeshConVerts = offMeshConnections.vertexPositions,
+		.offMeshConRad = offMeshConnections.radii,
+		.offMeshConFlags = static_cast<unsigned short*>(offMeshConnections.flags),
+		.offMeshConAreas = static_cast<unsigned char*>(offMeshConnections.areas),
+		.offMeshConDir = reinterpret_cast<unsigned char*>(offMeshConnections.directions),
+		.offMeshConUserID = offMeshConnections.userIds,
+		.offMeshConCount = offMeshConnections.connectionCount,
+		.walkableHeight = agentType.height,
+		.walkableRadius = agentType.radius,
+		.walkableClimb = agentType.stepHeight,
+		.cs = polyMesh->cs, // navMeshData.cellSize,
+		.ch = polyMesh->ch, // navMeshData.cellHeight
+		.buildBvTree = true
+	};
+
+	if (polyMeshDetail) {
+		params.detailMeshes = polyMeshDetail->meshes;
+		params.detailVerts = polyMeshDetail->verts;
+		params.detailVertsCount = polyMeshDetail->nverts;
+		params.detailTris = polyMeshDetail->tris;
+		params.detailTriCount = polyMeshDetail->ntris;
+	}
+
 	rcVcopy(params.bmin, polyMesh->bmin);
 	rcVcopy(params.bmax, polyMesh->bmax);
-	params.cs = polyMesh->cs; // navMeshData.cellSize;
-	params.ch = polyMesh->ch; // navMeshData.cellHeight;
-	params.buildBvTree = true;
 
 	if (!dtCreateNavMeshData(&params, &navData, &navDataSize)) {
-		GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Could not build Detour navmesh.");
+		GPRINT_ERROR(Grindstone::LogSource::EngineCore, "BakeNavMeshForAgent: Could not build Detour navmesh.");
 		return nullptr;
 	}
 
 	dtNavMesh* navMesh = dtAllocNavMesh();
 	if (!navMesh) {
-		GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Could not create Detour navmesh");
+		GPRINT_ERROR(Grindstone::LogSource::EngineCore, "BakeNavMeshForAgent: Could not create Detour navmesh");
 		dtFree(navData);
 		return nullptr;
 	}
@@ -258,7 +327,7 @@ static dtNavMesh* CreateNavMeshFromData(
 
 	status = navMesh->init(navData, navDataSize, DT_TILE_FREE_DATA);
 	if (dtStatusFailed(status)) {
-		GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Could not init Detour navmesh");
+		GPRINT_ERROR(Grindstone::LogSource::EngineCore, "BakeNavMeshForAgent: Could not init Detour navmesh");
 		dtFree(navData);
 		dtFreeNavMesh(navMesh);
 		return nullptr;
@@ -268,11 +337,11 @@ static dtNavMesh* CreateNavMeshFromData(
 }
 
 static void* RecastAllocFn(size_t size, rcAllocHint hint) {
-	return Grindstone::Memory::AllocatorCore::AllocateRaw(size, 1, "Recast Memory");
+	return Grindstone::Memory::AllocatorCore::AllocateRaw(size, 16, "Recast Memory");
 }
 
 static void* DetourAllocFn(size_t size, dtAllocHint hint) {
-	return Grindstone::Memory::AllocatorCore::AllocateRaw(size, 1, "Detour Memory");
+	return Grindstone::Memory::AllocatorCore::AllocateRaw(size, 16, "Detour Memory");
 }
 
 static void RecastFreeFn(void* ptr) {
@@ -294,10 +363,12 @@ struct NavMeshTileHeader {
 	uint32_t dataSize;
 };
 
-static void WriteNavmesh(const std::filesystem::path& path, const dtNavMesh* mesh) {
-	if (!mesh) {
+static void WriteNavmesh(const std::filesystem::path& path, const std::vector<dtNavMesh*>& meshes) {
+	if (meshes.empty()) {
 		return;
 	}
+
+	GS_ASSERT(meshes.size() == 1); // TODO: Support more than one nav agent type.
 
 	std::ofstream fstream(path, std::ios::binary);
 	if (fstream.fail()) {
@@ -310,6 +381,7 @@ static void WriteNavmesh(const std::filesystem::path& path, const dtNavMesh* mes
 		.numTiles = 0,
 	};
 
+	const dtNavMesh* mesh = meshes[0];
 	for (int i = 0; i < mesh->getMaxTiles(); ++i) {
 		const dtMeshTile* tile = mesh->getTile(i);
 		if (!tile || !tile->header || !tile->dataSize) {
@@ -339,8 +411,9 @@ static void WriteNavmesh(const std::filesystem::path& path, const dtNavMesh* mes
 	}
 }
 
-static dtNavMesh* LoadNavmesh(const char* path) {
-	FILE* fp = fopen(path, "rb");
+static dtNavMesh* LoadNavmesh(const std::filesystem::path& path) {
+	std::string pathStr = path.string();
+	FILE* fp = fopen(pathStr.c_str(), "rb");
 	if (!fp) {
 		return nullptr;
 	}
@@ -425,6 +498,8 @@ static void MenuItemGenerateNavMesh() {
 		return;
 	}
 
+	OffMeshConnectionDataArrays offMeshConnections{};
+
 	Ai::NavMeshComponent navMeshData{};
 	std::vector<Ai::NavAgentType> agentTypes;
 	agentTypes.emplace_back(Ai::NavAgentType{
@@ -436,21 +511,80 @@ static void MenuItemGenerateNavMesh() {
 		.jumpDistance = 1.0f,
 	});
 
-	std::vector<rcPolyMesh*> meshes;
+
+	std::vector<dtNavMesh*> meshes;
 
 	for (Ai::NavAgentType& agentType : agentTypes) {
 		// Get data from the below step and cache it
-		rcPolyMesh* mesh = BakeNavMeshForAgent(registry, context, navMeshData, agentType);
-		meshes.emplace_back(mesh);
+		auto [mesh, detailMesh] = BakeNavMeshForAgent(registry, context, navMeshData, agentType);
+
+		if (mesh != nullptr) {
+			dtNavMesh* dtNavMesh = CreateNavMeshFromData(
+				context,
+				navMeshData,
+				agentType,
+				offMeshConnections,
+				mesh,
+				detailMesh
+			);
+
+			meshes.emplace_back(dtNavMesh);
+
+			rcFreePolyMesh(mesh);
+		}
+
+		if (detailMesh != nullptr) {
+			rcFreePolyMeshDetail(detailMesh);
+		}
+
 		break;
 	}
 
-	std::filesystem::path path = "";
-	WriteNavmesh(path, meshes[0]);
+	std::filesystem::path path = "C:\\Work\\Navmesh.gnav";
+	WriteNavmesh(path, meshes);
 
 	Grindstone::Memory::AllocatorCore::Free(context);
 
 	GPRINT_INFO(LogSource::EngineCore, "Generated Navigation Mesh.");
+}
+
+static void MenuItemLoadNavMesh() {
+	GPRINT_INFO(LogSource::EngineCore, "Loading Navigation Mesh...");
+
+	Ai::GrindstoneRecastContext* context = Grindstone::Memory::AllocatorCore::Allocate<Ai::GrindstoneRecastContext>();
+	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+	Grindstone::WorldContextSet* worldContextSet = engineCore.GetWorldContextManager()->GetActiveWorldContextSet();
+
+	if (worldContextSet == nullptr) {
+		GPRINT_INFO(LogSource::EngineCore, "Failed to load Navigation Mesh - no active WorldContextSet.");
+		return;
+	}
+
+	Grindstone::Ai::NavMeshComponent* foundNavMeshComp = nullptr;
+	entt::registry& registry = worldContextSet->GetEntityRegistry();
+	registry.view<Grindstone::Ai::NavMeshComponent>().each(
+		[&foundNavMeshComp](
+			Grindstone::Ai::NavMeshComponent& navMesh
+		) {
+			foundNavMeshComp = &navMesh;
+		}
+	);
+	if (foundNavMeshComp == nullptr) {
+		GPRINT_INFO(LogSource::EngineCore, "Failed to load Navigation Mesh - no NavigationMeshComponent found.");
+		return;
+	}
+
+	std::filesystem::path path = "C:\\Work\\Navmesh.gnav";
+
+	if (!std::filesystem::exists(path)) {
+		GPRINT_INFO(LogSource::EngineCore, "Failed to load Navigation Mesh - no NavigationMeshComponent found.");
+		return;
+	}
+
+	dtNavMesh* navMesh = LoadNavmesh(path);
+	foundNavMeshComp->navMesh = navMesh;
+
+	GPRINT_INFO(LogSource::EngineCore, "Loaded Navigation Mesh.");
 }
 
 extern "C" {
@@ -470,6 +604,7 @@ extern "C" {
 		Grindstone::Plugins::EditorPluginInterface* editorInterface = static_cast<Grindstone::Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 		if (editorInterface != nullptr) {
 			editorInterface->RegisterMenuItem("Build/Generate Navigation Mesh", MenuItemGenerateNavMesh);
+			editorInterface->RegisterMenuItem("Build/Load Navigation Mesh", MenuItemLoadNavMesh);
 		}
 	}
 
@@ -477,6 +612,7 @@ extern "C" {
 		Grindstone::Plugins::EditorPluginInterface* editorInterface = static_cast<Grindstone::Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 		if (editorInterface != nullptr) {
 			editorInterface->DeregisterMenuItem("Build/Generate Navigation Mesh");
+			editorInterface->DeregisterMenuItem("Build/Load Navigation Mesh");
 		}
 
 		pluginInterface->UnregisterComponent<Grindstone::Ai::OffNavMeshConnectionComponent>();
