@@ -23,17 +23,391 @@ using namespace Grindstone::Editor;
 
 static size_t maxObjects = 500;
 
+const size_t boxVertexCount = 8u;
+const size_t boxOutlineIndexCount = 24u;
+const size_t boxFillIndexCount = 36u;
+
+const size_t sphereSectorCount = 20u;
+const size_t sphereStackCount = 20u;
+static_assert(sphereSectorCount % 2 == 0);
+static_assert(sphereStackCount % 4 == 0);
+const size_t sphereVertexCount = (sphereSectorCount + 1u) * (sphereStackCount + 1u) * 3u;
+// Full wireframe outline index count: (sphereSectorCount * (sphereStackCount - 1) * 4) + (sphereSectorCount * 2);
+const size_t sphereOutlineIndexCount = ((sphereSectorCount + 1u) * 2u) + (sphereStackCount * 4u * 2u);
+const size_t sphereFillIndexCount = sphereSectorCount * (sphereStackCount - 1) * 6u;
+
+const size_t circleVertexCount = 20u;
+const size_t circleOutlineIndexCount = circleVertexCount * 2u;
+const size_t circleFillIndexCount = 3u * (circleVertexCount - 2u);
+
+const size_t cylinderEdgeCount = 20u;
+static_assert(cylinderEdgeCount % 4 == 0);
+const size_t cylinderVertexCount = cylinderEdgeCount * 2u; // One for each cap = 2
+const size_t cylinderPerCapOutlineIndexCount = cylinderEdgeCount * 2u;
+const size_t cylinderPerCapFillIndexCount = 3u * (cylinderEdgeCount - 2u);
+const size_t cylinderSideOutlineIndexCount = 4u * 2u; // We just want four lines around for simplicity
+const size_t cylinderSideFillIndexCount = 3u * 2u * cylinderEdgeCount; // Two triangles per face, three indices per face.
+const size_t cylinderOutlineIndexCount = (2 * cylinderPerCapOutlineIndexCount) + cylinderSideOutlineIndexCount;
+const size_t cylinderFillIndexCount = (2 * cylinderPerCapFillIndexCount) + cylinderSideFillIndexCount;
+
+const size_t planeVertexCount = 12u;
+const size_t planeOutlineIndexCount = 8u;
+const size_t planeFillIndexCount = 6u;
+
+const size_t vertexCount = 3 * (
+	boxVertexCount +
+	sphereVertexCount +
+	circleVertexCount +
+	planeVertexCount +
+	cylinderVertexCount
+);
+
+const size_t outlineIndexCount =
+	boxOutlineIndexCount +
+	sphereOutlineIndexCount +
+	circleOutlineIndexCount +
+	planeOutlineIndexCount +
+	cylinderOutlineIndexCount;
+
+const size_t fillIndexCount =
+	boxFillIndexCount +
+	sphereFillIndexCount +
+	circleFillIndexCount +
+	planeFillIndexCount +
+	cylinderFillIndexCount;
+
+static void GenerateCircle(
+	size_t circleVertexCount,
+	float* circleVertices,
+	uint16_t* circleOutlineIndices,
+	uint16_t* circleFillIndices
+) {
+	float theta = 2 * glm::pi<float>() / static_cast<float>(circleVertexCount);
+	float angle = 0;
+
+	size_t vertexIndex = 0;
+	for (size_t i = 0; i < circleVertexCount; ++i) {
+		circleVertices[vertexIndex++] = std::cos(angle);
+		circleVertices[vertexIndex++] = std::sin(angle);
+		circleVertices[vertexIndex++] = 0.0f;
+		angle += theta;
+	}
+
+	size_t outlineIndex = 0;
+	size_t fillIndex = 0;
+	// Face count = verts - 2, Outline count = verts, so generate the last two faces after.
+	for (uint16_t i = 0; i < circleVertexCount - 2u; ++i) {
+		circleOutlineIndices[outlineIndex++] = i;
+		circleOutlineIndices[outlineIndex++] = i + 1u;
+		circleFillIndices[fillIndex++] = 0;
+		circleFillIndices[fillIndex++] = i + 1u;
+		circleFillIndices[fillIndex++] = i + 2u;
+	}
+
+	circleOutlineIndices[outlineIndex++] = circleVertexCount - 1u;
+	circleOutlineIndices[outlineIndex++] = circleVertexCount;
+	circleOutlineIndices[outlineIndex++] = circleVertexCount;
+	circleOutlineIndices[outlineIndex++] = 0u;
+
+	GS_ASSERT_ENGINE(fillIndex == circleFillIndexCount);
+	GS_ASSERT_ENGINE(outlineIndex == circleOutlineIndexCount);
+}
+
+static void GenerateCylinder(
+	size_t cylinderEdgeCount,
+	float* cylinderVertices,
+	uint16_t* cylinderOutlineIndices,
+	uint16_t* cylinderFillIndices
+) {
+	size_t vertsPerCap = cylinderEdgeCount * 3u;
+	float theta = 2 * glm::pi<float>() / static_cast<float>(cylinderEdgeCount);
+	float angle = 0;
+
+	size_t vertexIndex = 0;
+	for (size_t i = 0; i < cylinderEdgeCount; ++i) {
+		size_t top = vertexIndex;
+		size_t bottom = vertexIndex + vertsPerCap;
+
+		float x = std::cos(angle);
+		float y = std::sin(angle);
+
+		cylinderVertices[top + 0] = x;
+		cylinderVertices[top + 1] = 0.5;
+		cylinderVertices[top + 2] = y;
+
+		cylinderVertices[bottom + 0] = x;
+		cylinderVertices[bottom + 1] = -0.5;
+		cylinderVertices[bottom + 2] = y;
+
+		vertexIndex += 3;
+
+		angle += theta;
+	}
+
+	size_t outlineIndex = 0;
+	size_t fillIndex = 0;
+
+	// Generate Caps
+	for (uint16_t c = 0; c < 2; ++c) {
+		uint16_t offset = c * cylinderEdgeCount;
+		// Face count = verts - 2, Outline count = verts, so generate the last two faces after.
+		for (uint16_t i = 0; i < cylinderEdgeCount - 2u; ++i) {
+			cylinderOutlineIndices[outlineIndex++] = offset + i;
+			cylinderOutlineIndices[outlineIndex++] = offset + i + 1u;
+
+			// Swapped to reverse winding order for faces.
+			if (c == 0) {
+				cylinderFillIndices[fillIndex++] = offset;
+				cylinderFillIndices[fillIndex++] = offset + i + 2u;
+				cylinderFillIndices[fillIndex++] = offset + i + 1u;
+			}
+			else {
+				cylinderFillIndices[fillIndex++] = offset;
+				cylinderFillIndices[fillIndex++] = offset + i + 1u;
+				cylinderFillIndices[fillIndex++] = offset + i + 2u;
+			}
+		}
+
+		cylinderOutlineIndices[outlineIndex++] = offset + cylinderEdgeCount - 2u;
+		cylinderOutlineIndices[outlineIndex++] = offset + cylinderEdgeCount - 1u;
+		cylinderOutlineIndices[outlineIndex++] = offset + cylinderEdgeCount - 1u;
+		cylinderOutlineIndices[outlineIndex++] = offset;
+	}
+
+	// Generate Fill Sides
+	for (uint16_t i = 0; i < cylinderEdgeCount - 1u; ++i) {
+		cylinderFillIndices[fillIndex++] = i;
+		cylinderFillIndices[fillIndex++] = i + 1u;
+		cylinderFillIndices[fillIndex++] = i + cylinderEdgeCount;
+
+		cylinderFillIndices[fillIndex++] = i + cylinderEdgeCount;
+		cylinderFillIndices[fillIndex++] = i + 1u;
+		cylinderFillIndices[fillIndex++] = i + cylinderEdgeCount + 1u;
+	}
+
+	uint16_t last = cylinderEdgeCount - 1u;
+	cylinderFillIndices[fillIndex++] = last;
+	cylinderFillIndices[fillIndex++] = 0;
+	cylinderFillIndices[fillIndex++] = last + cylinderEdgeCount;
+
+	cylinderFillIndices[fillIndex++] = 0;
+	cylinderFillIndices[fillIndex++] = cylinderEdgeCount;
+	cylinderFillIndices[fillIndex++] = last + cylinderEdgeCount;
+
+	// Generate Outline Sides
+	for (size_t i = 0; i < 4; ++i) {
+		size_t offset = (cylinderEdgeCount / 4) * i;
+
+		// Top
+		cylinderOutlineIndices[outlineIndex++] = offset;
+		// Bottom
+		cylinderOutlineIndices[outlineIndex++] = offset + cylinderEdgeCount;
+	}
+
+	GS_ASSERT_ENGINE(fillIndex == cylinderFillIndexCount);
+	GS_ASSERT_ENGINE(outlineIndex == cylinderOutlineIndexCount);
+}
+
+// Source: https://songho.ca/opengl/gl_sphere.html
+static void GenerateSphere(
+	size_t sectorCount,
+	size_t stackCount,
+	float* vertices,
+	uint16_t* outlineIndices,
+	uint16_t* fillIndices
+) {
+	float radius = 1.0f;
+	float sectorStep = 2 * glm::pi<float>() / sectorCount;
+	float stackStep = glm::pi<float>() / stackCount;
+	float sectorAngle, stackAngle;
+
+	size_t vertexIndex = 0;
+	size_t fillIndicesIndex = 0;
+	size_t outlineIndicesIndex = 0;
+
+	for (size_t i = 0; i <= stackCount; ++i) {
+		stackAngle = glm::pi<float>() / 2 - i * stackStep;  // starting from pi/2 to -pi/2
+		float xz = radius * std::cos(stackAngle);			// r * cos(u)
+		float y = radius * std::sin(stackAngle);				// r * sin(u)
+
+		// add (sectorCount+1) vertices per stack
+		// first and last vertices have same position and normal, but different tex coords
+		for (size_t j = 0; j <= sectorCount; ++j) {
+			sectorAngle = j * sectorStep;           // starting from 0 to 2pi
+
+			// vertex position (x, y, z)
+			float x = xz * std::cos(sectorAngle);       // r * cos(u) * cos(v)
+			float z = xz * std::sin(sectorAngle);       // r * cos(u) * sin(v)
+			vertices[vertexIndex++] = x;
+			vertices[vertexIndex++] = y;
+			vertices[vertexIndex++] = z;
+		}
+	}
+
+	int k1, k2;
+	for (int i = 0; i < stackCount; ++i) {
+		k1 = i * (sectorCount + 1);     // beginning of current stack
+		k2 = k1 + sectorCount + 1;      // beginning of next stack
+
+		for (int j = 0; j < sectorCount; ++j, ++k1, ++k2) {
+			// 2 triangles per sector excluding first and last stacks
+			// k1 => k2 => k1+1
+			if (i != 0) {
+				fillIndices[fillIndicesIndex++] = k1;
+				fillIndices[fillIndicesIndex++] = k2;
+				fillIndices[fillIndicesIndex++] = k1 + 1;
+			}
+
+			// k1+1 => k2 => k2+1
+			if (i != (stackCount - 1)) {
+				fillIndices[fillIndicesIndex++] = k1 + 1;
+				fillIndices[fillIndicesIndex++] = k2;
+				fillIndices[fillIndicesIndex++] = k2 + 1;
+			}
+
+			/*
+				// This outline code generates outlines for every face.
+				// It's commented in case we ever want to go back to this instead of the
+				// three rings outline method.
+				outlineIndices[outlineIndicesIndex++] = k1;
+				outlineIndices[outlineIndicesIndex++] = k2;
+				if (i != 0) {
+					outlineIndices[outlineIndicesIndex++] = k1;
+					outlineIndices[outlineIndicesIndex++] = k1 + 1;
+				}
+			*/
+
+			// Render outline slices along x/z axes.
+			if (j % (sectorCount / 4) == 0) {
+				outlineIndices[outlineIndicesIndex++] = k1;
+				outlineIndices[outlineIndicesIndex++] = k2;
+			}
+		}
+	}
+
+	int k = (stackCount / 2) * (sectorCount + 1);
+	for (int i = 0; i < sectorCount; ++i) {
+		outlineIndices[outlineIndicesIndex++] = k + i;
+		outlineIndices[outlineIndicesIndex++] = k + i + 1;
+	}
+	outlineIndices[outlineIndicesIndex++] = k + sectorCount - 1u;
+	outlineIndices[outlineIndicesIndex++] = k;
+
+	GS_ASSERT_ENGINE(fillIndicesIndex == sphereFillIndexCount);
+	GS_ASSERT_ENGINE(outlineIndicesIndex == sphereOutlineIndexCount);
+}
+
+static auto GenerateGeometryArrays() {
+	std::array<float, vertexCount> shapeVertices{
+		// Cube
+		-0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,
+		-0.5f,  0.5f, -0.5f,
+		 0.5f,  0.5f, -0.5f,
+		-0.5f, -0.5f,  0.5f,
+		 0.5f, -0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f,
+
+		 // Plane
+		 -0.5f, 0.0f, -0.5f,
+		 -0.5f, 0.0f,  0.5f,
+		  0.5f, 0.0f,  0.5f,
+		  0.5f, 0.0f, -0.5f
+	};
+
+	std::array<uint16_t, outlineIndexCount + fillIndexCount> shapeIndices{};
+
+	std::array<uint16_t, boxOutlineIndexCount> boxOutlineIndices = {
+		0,1,    0,2,
+		1,3,    2,3,
+		4,5,    4,6,
+		5,7,    6,7,
+		0,4,    1,5,
+		2,6,    3,7,
+	};
+
+	std::array<uint16_t, boxFillIndexCount> boxFillIndices = {
+		0, 2, 3,    0, 3, 1,
+		4, 5, 7,    4, 7, 6,
+		0, 4, 6,    0, 6, 2,
+		1, 3, 7,    1, 7, 5,
+		0, 1, 5,    0, 5, 4,
+		2, 6, 7,    2, 7, 3,
+	};
+
+	std::array<uint16_t, boxOutlineIndexCount> planeOutlineIndices{ 0,1,    1,2,    2,3,    3,0 };
+	std::array<uint16_t, boxFillIndexCount> planeFillIndices{ 0,1,2,    0,2,3 };
+
+	auto circleVertexIt = shapeVertices.data() + (3u * boxVertexCount) + (3u * planeVertexCount);
+	auto sphereVertexIt = circleVertexIt + (3u * circleVertexCount);
+	auto cylinderVertexIt = sphereVertexIt + (3u * sphereVertexCount);
+
+	auto idxTarget = shapeIndices.begin();
+	std::copy(boxFillIndices.begin(), boxFillIndices.end(), idxTarget);
+	idxTarget += boxFillIndexCount;
+	std::copy(planeFillIndices.begin(), planeFillIndices.end(), idxTarget);
+	idxTarget += planeFillIndexCount;
+	auto circleFillIt = idxTarget;
+	idxTarget += circleFillIndexCount;
+	auto sphereFillIt = idxTarget;
+	idxTarget += sphereFillIndexCount;
+	auto cylinderFillIt = idxTarget;
+	idxTarget += cylinderFillIndexCount;
+
+	std::copy(boxOutlineIndices.begin(), boxOutlineIndices.end(), idxTarget);
+	idxTarget += boxOutlineIndexCount;
+	std::copy(planeOutlineIndices.begin(), planeOutlineIndices.end(), idxTarget);
+	idxTarget += planeOutlineIndexCount;
+	auto circleOutlineIt = idxTarget;
+	idxTarget += circleOutlineIndexCount;
+	auto sphereOutlineIt = idxTarget;
+	idxTarget += sphereOutlineIndexCount;
+	auto cylinderOutlineIt = idxTarget;
+	idxTarget += cylinderOutlineIndexCount;
+	assert(idxTarget == shapeIndices.end());
+
+	GenerateCircle(
+		circleVertexCount,
+		circleVertexIt,
+		std::to_address(circleOutlineIt),
+		std::to_address(circleFillIt)
+	);
+
+	GenerateCylinder(
+		cylinderEdgeCount,
+		cylinderVertexIt,
+		std::to_address(cylinderOutlineIt),
+		std::to_address(cylinderFillIt)
+	);
+
+	GenerateSphere(
+		sphereSectorCount,
+		sphereStackCount,
+		sphereVertexIt,
+		std::to_address(sphereOutlineIt),
+		std::to_address(sphereFillIt)
+	);
+
+	return std::pair(shapeVertices, shapeIndices);
+}
+
 inline void GizmoRenderer::AppendData(
 	ShapeType shapeType,
-	uint32_t& currentVertexOffset, uint32_t& currentIndexOffset,
-	uint32_t vertexCount, uint32_t indexCount
+	uint32_t& currentVertexOffset, uint32_t& currentOutlineIndexOffset, uint32_t& currentFilledIndexOffset,
+	uint32_t vertexCount, uint32_t outlineIndexCount, uint32_t filledIndexCount
 ) {
-	indexCount *= 2;
-
-	shapeMetaData[static_cast<size_t>(shapeType)] = { currentIndexOffset, indexCount, currentVertexOffset };
+	shapeMetaData[static_cast<size_t>(shapeType)] = ShapeMetaData{
+		.firstOutlineIndex = currentOutlineIndexOffset,
+		.outlineIndexCount = outlineIndexCount,
+		.firstFilledIndex = currentFilledIndexOffset,
+		.filledIndexCount = filledIndexCount,
+		.vertexOffset = currentVertexOffset
+	};
 
 	currentVertexOffset += vertexCount;
-	currentIndexOffset += indexCount;
+	currentOutlineIndexOffset += outlineIndexCount;
+	currentFilledIndexOffset += filledIndexCount;
 }
 
 void GizmoRenderer::Initialize() {
@@ -57,393 +431,7 @@ void GizmoRenderer::Initialize() {
 			}
 		).Build();
 
-	std::array<float, 3 * (8 + 80 + 16 + 17 + 4 + 32)> shapeVertices{
-		// Cube
-		-0.5f, -0.5f, -0.5f,
-		 0.5f, -0.5f, -0.5f,
-		-0.5f,  0.5f, -0.5f,
-		 0.5f,  0.5f, -0.5f,
-		-0.5f, -0.5f,  0.5f,
-		 0.5f, -0.5f,  0.5f,
-		-0.5f,  0.5f,  0.5f,
-		 0.5f,  0.5f,  0.5f,
-
-		 // Sphere
-		 0.0f, 1.0f, 0.0f,
-		 0.3826834323650898f, 0.9238795325112867f, 0.0f,
-		 0.7071067811865475f, 0.7071067811865476f, 0.0f,
-		 0.9238795325112867f, 0.38268343236508984f, 0.0f,
-		 1.0f, 0.0f, 0.0f,
-		 0.9238795325112867f, -0.3826834323650897f, 0.0f,
-		 0.7071067811865476f, -0.7071067811865475f, 0.0f,
-		 0.3826834323650899f, -0.9238795325112867f, 0.0f,
-		 0.0f, -1.0f, 0.0f,
-		 -0.38268343236508967f, -0.9238795325112868f, 0.0f,
-		 -0.7071067811865475f, -0.7071067811865477f, 0.0f,
-		 -0.9238795325112865f, -0.38268343236509034f, 0.0f,
-		 -1.0f, 0.0f, 0.0f,
-		 -0.9238795325112866f, 0.38268343236509f, 0.0f,
-		 -0.7071067811865477f, 0.7071067811865474f, 0.0f,
-		 -0.3826834323650904f, 0.9238795325112865f, 0.0f,
-
-		 0.0f, 0.0f, 1.0f,
-		 0.0f, 0.3826834323650898f, 0.9238795325112867f,
-		 0.0f, 0.7071067811865475f, 0.7071067811865476f,
-		 0.0f, 0.9238795325112867f, 0.38268343236508984f,
-		 0.0f, 1.0f, 0.0f,
-		 0.0f, 0.9238795325112867f, -0.3826834323650897f,
-		 0.0f, 0.7071067811865476f, -0.7071067811865475f,
-		 0.0f, 0.3826834323650899f, -0.9238795325112867f,
-		 0.0f, 0.0f, -1.0f,
-		 0.0f, -0.38268343236508967f, -0.9238795325112868f,
-		 0.0f, -0.7071067811865475f, -0.7071067811865477f,
-		 0.0f, -0.9238795325112865f, -0.38268343236509034f,
-		 0.0f, -1.0f, 0.0f,
-		 0.0f, -0.9238795325112866f, 0.38268343236509f,
-		 0.0f, -0.7071067811865477f, 0.7071067811865474f,
-		 0.0f, -0.3826834323650904f, 0.9238795325112865f,
-
-		 0.0f, 0.0f, 1.0f,
-		 0.3826834323650898f, 0.0f, 0.9238795325112867f,
-		 0.7071067811865475f, 0.0f, 0.7071067811865476f,
-		 0.9238795325112867f, 0.0f, 0.38268343236508984f,
-		 1.0f, 0.0f, 0.0f,
-		 0.9238795325112867f, 0.0f, -0.3826834323650897f,
-		 0.7071067811865476f, 0.0f, -0.7071067811865475f,
-		 0.3826834323650899f, 0.0f, -0.9238795325112867f,
-		 0.0f, 0.0f, -1.0f,
-		 -0.38268343236508967f, 0.0f, -0.9238795325112868f,
-		 -0.7071067811865475f,  0.0f, -0.7071067811865477f,
-		 -0.9238795325112865f,  0.0f, -0.38268343236509034f,
-		 -1.0f, 0.0f, 0.0f,
-		 -0.9238795325112866f, 0.0f,0.38268343236509f,
-		 -0.7071067811865477f, 0.0f,0.7071067811865474f,
-		 -0.3826834323650904f, 0.0f,0.9238795325112865f,
-
-		 0.0f, 1.0f, 0.0f,
-		 0.2705980500730985f, 0.9238795325112867f, 0.2705980500730985f,
-		 0.5f, 0.7071067811865476f, 0.5f,
-		 0.6532814824381882f, 0.38268343236508984f, 0.6532814824381882f,
-		 0.707107f, 0.0f, 0.707107f,
-		 0.6532814824381882f, -0.3826834323650897f, 0.6532814824381882f,
-		 0.5f, -0.7071067811865475f, 0.5f,
-		 0.2705980500730985f, -0.9238795325112867f, 0.2705980500730985f,
-		 0.0f, -1.0f, 0.0f,
-		 -0.2705980500730985f, -0.9238795325112868f, -0.2705980500730985f,
-		 -0.5f, -0.7071067811865477f, -0.5f,
-		 -0.6532814824381882f, -0.38268343236509034f, -0.6532814824381882f,
-		 -0.707107f, 0.0f, -0.707107f,
-		 -0.6532814824381882f, 0.38268343236509f, -0.6532814824381882f,
-		 -0.5f, 0.7071067811865474f, -0.5f,
-		 -0.2705980500730985f, 0.9238795325112865f, -0.2705980500730985f,
-
-		 0.0f, 1.0f, 0.0f,
-		 -0.2705980500730985f, 0.9238795325112867f, 0.2705980500730985f,
-		 -0.5f, 0.7071067811865476f, 0.5f,
-		 -0.6532814824381882f, 0.38268343236508984f, 0.6532814824381882f,
-		 -0.707107f, 0.0f, 0.707107f,
-		 -0.6532814824381882f, -0.3826834323650897f, 0.6532814824381882f,
-		 -0.5f, -0.7071067811865475f, 0.5f,
-		 -0.2705980500730985f, -0.9238795325112867f, 0.2705980500730985f,
-		 0.0f, -1.0f, 0.0f,
-		 0.2705980500730985f, -0.9238795325112868f, -0.2705980500730985f,
-		 0.5f, -0.7071067811865477f, -0.5f,
-		 0.6532814824381882f, -0.38268343236509034f, -0.6532814824381882f,
-		 0.707107f, 0.0f, -0.707107f,
-		 0.6532814824381882f, 0.38268343236509f, -0.6532814824381882f,
-		 0.5f, 0.7071067811865474f, -0.5f,
-		 0.2705980500730985f, 0.9238795325112865f, -0.2705980500730985f,
-
-		// Circle
-		0.0f, 1.0f, 0.0f,
-		0.3826834323650898f, 0.9238795325112867f, 0.0f,
-		0.7071067811865475f, 0.7071067811865476f, 0.0f,
-		0.9238795325112867f, 0.38268343236508984f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		0.9238795325112867f, -0.3826834323650897f, 0.0f,
-		0.7071067811865476f, -0.7071067811865475f, 0.0f,
-		0.3826834323650899f, -0.9238795325112867f, 0.0f,
-		0.0f, -1.0f, 0.0f,
-		-0.38268343236508967f, -0.9238795325112868f, 0.0f,
-		-0.7071067811865475f, -0.7071067811865477f, 0.0f,
-		-0.9238795325112865f, -0.38268343236509034f, 0.0f,
-		-1.0f, 0.0f, 0.0f,
-		-0.9238795325112866f, 0.38268343236509f, 0.0f,
-		-0.7071067811865477f, 0.7071067811865474f, 0.0f,
-		-0.3826834323650904f, 0.9238795325112865f, 0.0f,
-
-		// Cone
-		0.0f, 0.5f, 0.0f,
-		0.0f, -0.5f, 1.0f,
-		0.3826834323650898f, -0.5f, 0.9238795325112867f,
-		0.7071067811865475f, -0.5f, 0.7071067811865476f,
-		0.9238795325112867f, -0.5f, 0.38268343236508984f,
-		1.0f, -0.5f, 0.0f,
-		0.9238795325112867f, -0.5f, -0.3826834323650897f,
-		0.7071067811865476f, -0.5f, -0.7071067811865475f,
-		0.3826834323650899f, -0.5f, -0.9238795325112867f,
-		0.0f, -0.5f, -1.0f,
-		-0.3826834323650896f, -0.5f, -0.9238795325112868f,
-		-0.7071067811865475f, -0.5f, -0.7071067811865477f,
-		-0.9238795325112865f, -0.5f, -0.38268343236509034f,
-		-1.0f, -0.5f, 0.0f,
-		-0.9238795325112866f, -0.5f, 0.38268343236509f,
-		-0.7071067811865477f, -0.5f, 0.7071067811865474f,
-		-0.3826834323650904f, -0.5f, 0.9238795325112865f,
-
-		// Plane
-		-0.5, 0.0f, -0.5f,
-		-0.5, 0.0f,  0.5f,
-		 0.5, 0.0f,  0.5f,
-		 0.5, 0.0f, -0.5f,
-
-		 // Cylinder
-		0.0f, 0.5f, 1.0f,
-		0.3826834323650898f, 0.5f, 0.9238795325112867f,
-		0.7071067811865475f, 0.5f, 0.7071067811865476f,
-		0.9238795325112867f, 0.5f, 0.38268343236508984f,
-		1.0f, 0.5f, 0.0f,
-		0.9238795325112867f, 0.5f, -0.3826834323650897f,
-		0.7071067811865476f, 0.5f, -0.7071067811865475f,
-		0.3826834323650899f, 0.5f, -0.9238795325112867f,
-		0.0f, 0.5f, -1.0f,
-		-0.3826834323650896f, 0.5f, -0.9238795325112868f,
-		-0.7071067811865475f, 0.5f, -0.7071067811865477f,
-		-0.9238795325112865f, 0.5f, -0.38268343236509034f,
-		-1.0f, 0.5f, 0.0f,
-		-0.9238795325112866f, 0.5f, 0.38268343236509f,
-		-0.7071067811865477f, 0.5f, 0.7071067811865474f,
-		-0.3826834323650904f, 0.5f, 0.9238795325112865f,
-		0.0f, -0.5f, 1.0f,
-		0.3826834323650898f, -0.5f, 0.9238795325112867f,
-		0.7071067811865475f, -0.5f, 0.7071067811865476f,
-		0.9238795325112867f, -0.5f, 0.38268343236508984f,
-		1.0f, -0.5f, 0.0f,
-		0.9238795325112867f, -0.5f, -0.3826834323650897f,
-		0.7071067811865476f, -0.5f, -0.7071067811865475f,
-		0.3826834323650899f, -0.5f, -0.9238795325112867f,
-		0.0f, -0.5f, -1.0f,
-		-0.3826834323650896f, -0.5f, -0.9238795325112868f,
-		-0.7071067811865475f, -0.5f, -0.7071067811865477f,
-		-0.9238795325112865f, -0.5f, -0.38268343236509034f,
-		-1.0f, -0.5f, 0.0f,
-		-0.9238795325112866f, -0.5f, 0.38268343236509f,
-		-0.7071067811865477f, -0.5f, 0.7071067811865474f,
-		-0.3826834323650904f, -0.5f, 0.9238795325112865f,
-	};
-
-	std::array<uint16_t, 2 * (12 + 80 + 16 + 32 + 4 + 48)> shapeIndices{
-		// Cube
-		0,1,
-		0,2,
-		1,3,
-		2,3,
-		4,5,
-		4,6,
-		5,7,
-		6,7,
-		0,4,
-		1,5,
-		2,6,
-		3,7,
-
-		// Sphere
-		0, 1,
-		1, 2,
-		2, 3,
-		3, 4,
-		4, 5,
-		5, 6,
-		6, 7,
-		7, 8,
-		8, 9,
-		9, 10,
-		10, 11,
-		11, 12,
-		12, 13,
-		13, 14,
-		14, 15,
-		15, 0,
-
-		16, 17,
-		17, 18,
-		18, 19,
-		19, 20,
-		20, 21,
-		21, 22,
-		22, 23,
-		23, 24,
-		24, 25,
-		25, 26,
-		26, 27,
-		27, 28,
-		28, 29,
-		29, 30,
-		30, 31,
-		31, 16,
-
-		32, 33,
-		33, 34,
-		34, 35,
-		35, 36,
-		36, 37,
-		37, 38,
-		38, 39,
-		39, 40,
-		40, 41,
-		41, 42,
-		42, 43,
-		43, 44,
-		44, 45,
-		45, 46,
-		46, 47,
-		47, 32,
-
-		48, 49,
-		49, 50,
-		50, 51,
-		51, 52,
-		52, 53,
-		53, 54,
-		54, 55,
-		55, 56,
-		56, 57,
-		57, 58,
-		58, 59,
-		59, 60,
-		60, 61,
-		61, 62,
-		62, 63,
-		63, 48,
-
-		64, 65,
-		65, 66,
-		66, 67,
-		67, 68,
-		68, 69,
-		69, 70,
-		70, 71,
-		71, 72,
-		72, 73,
-		73, 74,
-		74, 75,
-		75, 76,
-		76, 77,
-		77, 78,
-		78, 79,
-		79, 64,
-
-		// Circle
-		0,1,
-		1,2,
-		2,3,
-		3,4,
-		4,5,
-		5,6,
-		6,7,
-		7,8,
-		8,9,
-		9,10,
-		10,11,
-		11,12,
-		12,13,
-		13,14,
-		14,15,
-		15,0,
-
-		// Cone
-		1,2,
-		2,3,
-		3,4,
-		4,5,
-		5,6,
-		6,7,
-		7,8,
-		8,9,
-		9,10,
-		10,11,
-		11,12,
-		12,13,
-		13,14,
-		14,15,
-		15,16,
-		16,1,
-
-		1,0,
-		2,0,
-		3,0,
-		4,0,
-		5,0,
-		6,0,
-		7,0,
-		8,0,
-		9,0,
-		10,0,
-		11,0,
-		12,0,
-		13,0,
-		14,0,
-		15,0,
-		16,0,
-
-		// Plane
-		0,1,
-		1,2,
-		2,3,
-		3,0,
-
-		// Cylinder
-		0,1,
-		1,2,
-		2,3,
-		3,4,
-		4,5,
-		5,6,
-		6,7,
-		7,8,
-		8,9,
-		9,10,
-		10,11,
-		11,12,
-		12,13,
-		13,14,
-		14,15,
-		15,0,
-
-		16,17,
-		17,18,
-		18,19,
-		19,20,
-		20,21,
-		21,22,
-		22,23,
-		23,24,
-		24,25,
-		25,26,
-		26,27,
-		27,28,
-		28,29,
-		29,30,
-		30,31,
-		31,16,
-
-		0,16,
-		1,17,
-		2,18,
-		3,19,
-		4,20,
-		5,21,
-		6,22,
-		7,23,
-		8,24,
-		9,25,
-		10,26,
-		11,27,
-		12,28,
-		13,29,
-		14,30,
-		15,31,
-	};
+	auto [shapeVertices, shapeIndices] = GenerateGeometryArrays();
 
 	dataBuffer.resize(maxObjects);
 	drawShapes.resize(maxObjects);
@@ -462,24 +450,26 @@ void GizmoRenderer::Initialize() {
 		gizmoUniformBuffers[i] = graphicsCore->CreateBuffer(ubCi);
 	}
 
-	GraphicsAPI::Buffer::CreateInfo gizmoShapesVertexBufferCi{};
-	gizmoShapesVertexBufferCi.debugName = "Gizmo Shape Vertex Buffer";
-	gizmoShapesVertexBufferCi.content = shapeVertices.data();
-	gizmoShapesVertexBufferCi.bufferSize = sizeof(shapeVertices);
-	gizmoShapesVertexBufferCi.bufferUsage =
-		GraphicsAPI::BufferUsage::Vertex |
-		GraphicsAPI::BufferUsage::TransferSrc |
-		GraphicsAPI::BufferUsage::TransferDst;
+	GraphicsAPI::Buffer::CreateInfo gizmoShapesVertexBufferCi{
+		.debugName = "Gizmo Shape Vertex Buffer",
+		.content = shapeVertices.data(),
+		.bufferSize = sizeof(shapeVertices),
+		.bufferUsage =
+			GraphicsAPI::BufferUsage::Vertex |
+			GraphicsAPI::BufferUsage::TransferSrc |
+			GraphicsAPI::BufferUsage::TransferDst
+	};
 	gizmoShapesVertexBuffer = graphicsCore->CreateBuffer(gizmoShapesVertexBufferCi);
 
-	GraphicsAPI::Buffer::CreateInfo gizmoShapesIndexBufferCi{};
-	gizmoShapesIndexBufferCi.debugName = "Gizmo Shape Index Buffer";
-	gizmoShapesIndexBufferCi.content = shapeIndices.data();
-	gizmoShapesIndexBufferCi.bufferSize = sizeof(shapeIndices);
-	gizmoShapesIndexBufferCi.bufferUsage =
-		GraphicsAPI::BufferUsage::Index |
-		GraphicsAPI::BufferUsage::TransferSrc |
-		GraphicsAPI::BufferUsage::TransferDst;
+	GraphicsAPI::Buffer::CreateInfo gizmoShapesIndexBufferCi{
+		.debugName = "Gizmo Shape Index Buffer",
+		.content = shapeIndices.data(),
+		.bufferSize = sizeof(shapeIndices),
+		.bufferUsage =
+			GraphicsAPI::BufferUsage::Index |
+			GraphicsAPI::BufferUsage::TransferSrc |
+			GraphicsAPI::BufferUsage::TransferDst
+	};
 	gizmoShapesIndexBuffer = graphicsCore->CreateBuffer(gizmoShapesIndexBufferCi);
 
 	GraphicsAPI::VertexArrayObject::CreateInfo vaoCi{};
@@ -490,18 +480,19 @@ void GizmoRenderer::Initialize() {
 	vaoCi.layout = gizmoVertexLayout;
 	gizmoShapesVao = graphicsCore->CreateVertexArrayObject(vaoCi);
 
-	uint32_t indexOffset = 0;
+	uint32_t filledIndexOffset = 0;
+	uint32_t outlineIndexOffset = fillIndexCount;
 	uint32_t vertexOffset = 0;
 	shapeMetaData[static_cast<size_t>(ShapeType::Undefined)	] = { 0, 0, 0 };
-	AppendData(ShapeType::Cube, vertexOffset, indexOffset, 8, 12);
-	AppendData(ShapeType::Sphere, vertexOffset, indexOffset, 80, 80);
-	AppendData(ShapeType::Circle, vertexOffset, indexOffset, 16, 16);
-	AppendData(ShapeType::Cone, vertexOffset, indexOffset, 17, 32);
-	AppendData(ShapeType::Plane, vertexOffset, indexOffset, 4, 4);
-	AppendData(ShapeType::Cyclinder, vertexOffset, indexOffset, 32, 48);
-
+	AppendData(ShapeType::Cube, vertexOffset, outlineIndexOffset, filledIndexOffset, boxVertexCount, boxOutlineIndexCount, boxFillIndexCount);
+	AppendData(ShapeType::Plane, vertexOffset, outlineIndexOffset, filledIndexOffset, planeVertexCount, planeOutlineIndexCount, planeFillIndexCount);
+	AppendData(ShapeType::Circle, vertexOffset, outlineIndexOffset, filledIndexOffset, circleVertexCount, circleOutlineIndexCount, circleFillIndexCount);
+	AppendData(ShapeType::Sphere, vertexOffset, outlineIndexOffset, filledIndexOffset, sphereVertexCount, sphereOutlineIndexCount, sphereFillIndexCount);
+	AppendData(ShapeType::Cyclinder, vertexOffset, outlineIndexOffset, filledIndexOffset, cylinderVertexCount, cylinderOutlineIndexCount, cylinderFillIndexCount);
+	
 	// TODO: Capsule is currently just copying cylinder. We need to actually handle the capsule
 	shapeMetaData[static_cast<size_t>(ShapeType::Capsule)] = shapeMetaData[static_cast<size_t>(ShapeType::Cyclinder)];
+	shapeMetaData[static_cast<size_t>(ShapeType::Cone)] = shapeMetaData[static_cast<size_t>(ShapeType::Cyclinder)];
 
 	std::vector<GraphicsAPI::GraphicsPipeline::ShaderStageData> shaderStageCreateInfos;
 	std::vector<std::vector<char>> fileData;
@@ -534,32 +525,39 @@ void GizmoRenderer::Initialize() {
 	}
 }
 
+static glm::vec4 MakeFillColor(const glm::vec4& srcColor) {
+	return glm::vec4(srcColor.r, srcColor.g, srcColor.b, srcColor.a * 0.3f);
+}
+
 void GizmoRenderer::SubmitCubeGizmo(const glm::mat4& transform, glm::vec3 size, glm::vec4 color) {
 	drawShapes[drawCount] = ShapeType::Cube;
-	dataBuffer[drawCount] = { transform * glm::scale(size) , color};
+	dataBuffer[drawCount] = { transform * glm::scale(size), color, MakeFillColor(color) };
 	++drawCount;
 }
 
 void GizmoRenderer::SubmitCapsuleGizmo(const glm::mat4& transform, float height, float radius, glm::vec4 color) {
 	drawShapes[drawCount] = ShapeType::Capsule;
-	dataBuffer[drawCount] = { transform * glm::scale(glm::vec3(radius, height, radius)) , color};
+	dataBuffer[drawCount] = { transform * glm::scale(glm::vec3(radius, height, radius)) , color, MakeFillColor(color) };
 	++drawCount;
 }
 
 // TODO: Fix the transform
 void GizmoRenderer::SubmitPlaneGizmo(const glm::mat4& transform, glm::vec3 normal, float positionAlongNormal, glm::vec4 color) {
 	drawShapes[drawCount] = ShapeType::Plane;
-	dataBuffer[drawCount] = { transform , color };
+	dataBuffer[drawCount] = { transform , color, MakeFillColor(color) };
 	++drawCount;
 }
 
 void GizmoRenderer::SubmitSphereGizmo(const glm::mat4& transform, float radius, glm::vec4 color) {
 	drawShapes[drawCount] = ShapeType::Sphere;
-	dataBuffer[drawCount] = { transform * glm::scale(glm::vec3(radius, radius, radius)) , color};
+	dataBuffer[drawCount] = { transform * glm::scale(glm::vec3(radius, radius, radius)) , color, MakeFillColor(color) };
 	++drawCount;
 }
 
 void GizmoRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::mat4 projView) {
+	size_t currentDrawCount = drawCount;
+	drawCount = 0;
+
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
@@ -570,26 +568,49 @@ void GizmoRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer
 		return;
 	}
 
-	Grindstone::GraphicsAPI::GraphicsPipeline* gizmoPipeline = pipelineAsset->GetFirstPassPipeline(&gizmoVertexLayout);
-	if (gizmoPipeline == nullptr) {
-		return;
-	}
-
-	Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = pipelineAsset->GetFirstPassPipelineLayout();
-
 	for (auto& data : dataBuffer) {
 		data.transform = projView * data.transform;
 	}
 
 	gizmoUniformBuffers[imageIndex]->UploadData(dataBuffer.data());
-	commandBuffer->BindGraphicsPipeline(gizmoPipeline);
+
+	Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = pipelineAsset->GetFirstPassPipelineLayout();
 	commandBuffer->BindGraphicsDescriptorSet(pipelineLayout, &gizmoDescriptorSets[imageIndex], 2, 1);
 	commandBuffer->BindVertexArrayObject(gizmoShapesVao);
 
-	for (uint32_t i = 0; i < drawCount; ++i) {
-		ShapeMetaData& metaData = shapeMetaData[static_cast<size_t>(drawShapes[i])];
-		commandBuffer->DrawIndices(metaData.firstIndex, metaData.indexCount, i, 1, metaData.vertexOffset);
+	// Draw Outlines
+	{
+		Grindstone::GraphicsAPI::GraphicsPipeline* gizmoPipeline = pipelineAsset->GetPassPipelineByName("wireframe", &gizmoVertexLayout);
+		if (gizmoPipeline != nullptr) {
+			commandBuffer->BindGraphicsPipeline(gizmoPipeline);
+
+			for (uint32_t i = 0; i < currentDrawCount; ++i) {
+				ShapeMetaData& metaData = shapeMetaData[static_cast<size_t>(drawShapes[i])];
+				commandBuffer->DrawIndices(
+					metaData.firstOutlineIndex,
+					metaData.outlineIndexCount,
+					i, 1,
+					metaData.vertexOffset
+				);
+			}
+		}
 	}
 
-	drawCount = 0;
+	// Draw Fills
+	{
+		const Grindstone::GraphicsAPI::GraphicsPipeline* gizmoPipeline = pipelineAsset->GetPassPipelineByName("fill", &gizmoVertexLayout);
+		if (gizmoPipeline != nullptr) {
+			commandBuffer->BindGraphicsPipeline(gizmoPipeline);
+
+			for (uint32_t i = 0; i < currentDrawCount; ++i) {
+				ShapeMetaData& metaData = shapeMetaData[static_cast<size_t>(drawShapes[i])];
+				commandBuffer->DrawIndices(
+					metaData.firstFilledIndex,
+					metaData.filledIndexCount,
+					i, 1,
+					metaData.vertexOffset
+				);
+			}
+		}
+	}
 }

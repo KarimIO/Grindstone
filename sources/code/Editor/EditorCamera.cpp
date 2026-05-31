@@ -526,7 +526,7 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 	);
 
 	renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
-		"Gizmo Renderpass",
+		"Grid Pass",
 		Renderer::MetaRect::Swapchain(),
 		[colorImageRef, depthImageRef](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
 			Renderer::RenderGraphBuilderResourceRef outputRef = pass.ReadWriteColorAttachment(colorImageRef);
@@ -550,6 +550,31 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 			if (isGridEnabled) {
 				gridRenderer.Render(commandBuffer, renderScale, adjustedPerspectiveMatrix, view, nearPlaneDistance, farPlaneDistance, glm::quat(), 0.0f);
 			}
+		}
+	);
+
+	renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
+		"Gizmo Pass",
+		Renderer::MetaRect::Swapchain(),
+		[this, colorImageRef, depthImageRef](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
+			Renderer::RenderGraphBuilderResourceRef outputRef = pass.ReadWriteColorAttachment(colorImageRef);
+			pass.ReadExternalSampler(sampler);
+			pass.ReadSampledImage(depthImageRef);
+			return outputRef;
+		},
+		[this, adjustedPerspectiveMatrix](
+			Grindstone::Math::IntRect2D rect,
+			const Grindstone::Renderer::RenderGraphContext& cxt,
+			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+			Renderer::RenderGraphBuilderResourceRef& outputRef
+		) {
+			Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
+			Grindstone::Editor::Manager& editorManager = Editor::Manager::GetInstance();
+			Grindstone::GraphicsAPI::CommandBuffer* commandBuffer = cxt.commandBuffer;
+			Grindstone::GraphicsAPI::Core* graphicsCore = cxt.graphicsCore;
+
+			glm::mat4 projView = adjustedPerspectiveMatrix * view;
+			glm::vec2 renderScale = glm::vec2(1.0f, 1.0f);
 
 			if (editorManager.GetSelection().GetSelectedEntityCount() > 0) {
 				static const glm::vec4 boundingBoxColor = glm::vec4(0.2f, 0.9f, 0.3f, 1.0f);

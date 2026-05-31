@@ -180,11 +180,12 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		const V1::PassPipelineHeader& srcPass = pipelinePasses[passIndex];
 		const char* passName = reinterpret_cast<const char*>(&blobs[srcPass.pipelineNameOffsetFromBlobStart]);
 		Grindstone::HashedString renderQueueName = Grindstone::HashedString(reinterpret_cast<const char*>(&blobs[srcPass.renderQueueNameOffsetFromBlobStart]));
-		pass.passPipelineName = result.displayName + " " + passName;
+		pass.passDebugName = result.displayName + " " + passName;
+		pass.passPipelineName = passName;
 		pass.renderQueue = renderQueueName;
 
 		GraphicsPipeline::PipelineData& pipelineData = pass.pipelineData;
-		pipelineData.debugName = result.displayName.c_str();
+		pipelineData.debugName = pass.passDebugName.c_str();
 		pipelineData.width = 0.0f;
 		pipelineData.height = 0.0f;
 		pipelineData.scissorX = 0;
@@ -257,7 +258,6 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 			.descriptorSetLayoutCount = static_cast<uint32_t>(descriptorSetLayoutCount),
 		};
 
-		pass.passPipelineName = result.displayName;
 		pass.pipelineLayout = graphicsCore->CreatePipelineLayout(pipelineLayoutCreateInfo);
 		pipelineData.colorAttachmentData = colorAttachmentData.data();
 	}
