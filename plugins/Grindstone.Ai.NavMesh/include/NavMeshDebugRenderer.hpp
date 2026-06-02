@@ -30,6 +30,7 @@ namespace Grindstone::Ai {
 
 		virtual ~NavMeshDebugRenderer() override;
 
+		void Clear();
 		void BuildVertexBuffers();
 
 		virtual Grindstone::Renderer::RenderGraphBuilderResourceRef DrawRenderPass(

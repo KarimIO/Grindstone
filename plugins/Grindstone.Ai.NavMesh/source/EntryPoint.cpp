@@ -490,6 +490,8 @@ static dtNavMesh* LoadNavmesh(const std::filesystem::path& path) {
 static void MenuItemGenerateNavMesh() {
 	GPRINT_INFO(LogSource::EngineCore, "Generating Navigation Mesh...");
 
+	debugRenderer->Clear();
+
 	Ai::GrindstoneRecastContext* context = Grindstone::Memory::AllocatorCore::Allocate<Ai::GrindstoneRecastContext>();
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 	Grindstone::WorldContextSet* worldContextSet = engineCore.GetWorldContextManager()->GetActiveWorldContextSet();

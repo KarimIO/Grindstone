@@ -58,6 +58,12 @@ void Grindstone::Ai::NavMeshDebugRenderer::Initialize() {
 
 Grindstone::Ai::NavMeshDebugRenderer::~NavMeshDebugRenderer() {}
 
+void Grindstone::Ai::NavMeshDebugRenderer::Clear() {
+	currentCall = nullptr;
+	drawCalls.clear();
+	vertices.clear();
+}
+
 void Grindstone::Ai::NavMeshDebugRenderer::BuildVertexBuffers() {
 	if (vertices.size() == 0) {
 		return;
@@ -80,8 +86,6 @@ void Grindstone::Ai::NavMeshDebugRenderer::BuildVertexBuffers() {
 	};
 
 	vertexBuffer = graphicsCore->CreateBuffer(bufferCreateInfo);
-
-	vertices.clear();
 }
 
 Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Ai::NavMeshDebugRenderer::DrawRenderPass(
