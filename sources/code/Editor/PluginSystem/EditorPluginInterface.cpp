@@ -7,6 +7,8 @@
 #include <Editor/ImguiEditor/Menubar.hpp>
 
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
+#include <Editor/ImguiEditor/ViewportPanel.hpp>
+#include <Editor/EditorCamera.hpp>
 #include <Editor/ImguiEditor/ProjectSettings/ProjectSettingsWindow.hpp>
 
 #include "EditorPluginInterface.hpp"
@@ -20,6 +22,23 @@ struct ImGuiContext* EditorPluginInterface::GetImguiContext() const {
 Grindstone::Editor::Manager* EditorPluginInterface::GetEditorInstance() const {
 	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
 	return &manager;
+}
+
+void EditorPluginInterface::RegisterGizmoPass(
+	std::function<
+		Grindstone::Renderer::RenderGraphBuilderResourceRef(
+			Grindstone::Renderer::RenderGraphBuilder&,
+			Grindstone::Renderer::RenderGraphBuilderResourceRef,
+			Grindstone::Renderer::RenderGraphBuilderResourceRef
+		)
+	> callback
+) {
+	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
+	Grindstone::Editor::ImguiEditor::ImguiEditor& imguiEditor = manager.GetImguiEditor();
+	Grindstone::Editor::ImguiEditor::ViewportPanel* viewport = imguiEditor.GetViewportPanel();
+	Grindstone::Editor::EditorCamera* editorCamera = viewport->GetCamera();
+
+	editorCamera->RegisterGizmoPass(callback);
 }
 
 void EditorPluginInterface::MapExtensionToImporterType(const char* extension, Grindstone::HashedString importerType) {

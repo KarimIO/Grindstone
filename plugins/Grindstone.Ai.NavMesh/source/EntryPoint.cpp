@@ -11,6 +11,7 @@
 #include <Grindstone.Ai.NavMesh/include/Components/NavMeshComponent.hpp>
 #include <Grindstone.Ai.NavMesh/include/Components/NavAgentComponent.hpp>
 #include <Grindstone.Ai.NavMesh/include/Components/OffNavMeshConnectionComponent.hpp>
+#include <Grindstone.Ai.NavMesh/include/NavMeshDebugRenderer.hpp>
 
 #include <Editor/PluginSystem/EditorPluginInterface.hpp>
 
@@ -23,6 +24,8 @@
 #include <DetourNavMeshQuery.h>
 
 using namespace Grindstone;
+
+Grindstone::Ai::NavMeshDebugRenderer* debugRenderer = nullptr;
 
 struct OffMeshConnectionDataArrays {
 	// Two vertices per connection, each of size 3 floats
@@ -131,6 +134,18 @@ static std::pair<rcPolyMesh*, rcPolyMeshDetail*> BakeNavMeshForAgent(const entt:
 
 	bmin -= glm::vec3(2.0f, 2.0f, 2.0f);
 	bmax += glm::vec3(2.0f, 2.0f, 2.0f);
+
+	duDebugDrawBoxWire(
+		debugRenderer,
+		bmin[0],
+		bmin[1],
+		bmin[2],
+		bmax[0],
+		bmax[1],
+		bmax[2],
+		duRGBA(255, 255, 255, 128),
+		1.0f
+	);
 
 	int borderSize = 0;
 	int tileSize = 4;
@@ -511,7 +526,6 @@ static void MenuItemGenerateNavMesh() {
 		.jumpDistance = 1.0f,
 	});
 
-
 	std::vector<dtNavMesh*> meshes;
 
 	for (Ai::NavAgentType& agentType : agentTypes) {
@@ -530,6 +544,8 @@ static void MenuItemGenerateNavMesh() {
 
 			meshes.emplace_back(dtNavMesh);
 
+			duDebugDrawPolyMesh(debugRenderer, *mesh);
+
 			rcFreePolyMesh(mesh);
 		}
 
@@ -542,6 +558,8 @@ static void MenuItemGenerateNavMesh() {
 
 	std::filesystem::path path = "C:\\Work\\Navmesh.gnav";
 	WriteNavmesh(path, meshes);
+
+	debugRenderer->BuildVertexBuffers();
 
 	Grindstone::Memory::AllocatorCore::Free(context);
 
@@ -594,6 +612,9 @@ extern "C" {
 		Grindstone::EngineCore::SetInstance(*pluginInterface->GetEngineCore());
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
 
+		debugRenderer = Grindstone::Memory::AllocatorCore::Allocate<Grindstone::Ai::NavMeshDebugRenderer>();
+		debugRenderer->Initialize();
+
 		rcAllocSetCustom(RecastAllocFn, RecastFreeFn);
 		dtAllocSetCustom(DetourAllocFn, RecastFreeFn);
 
@@ -603,6 +624,15 @@ extern "C" {
 
 		Grindstone::Plugins::EditorPluginInterface* editorInterface = static_cast<Grindstone::Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 		if (editorInterface != nullptr) {
+			editorInterface->RegisterGizmoPass(
+				[](
+					Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
+					Grindstone::Renderer::RenderGraphBuilderResourceRef colorImageRef,
+					Grindstone::Renderer::RenderGraphBuilderResourceRef depthImageRef
+				) -> Grindstone::Renderer::RenderGraphBuilderResourceRef {
+					return debugRenderer->DrawRenderPass(renderGraphBuilder, colorImageRef, depthImageRef);
+				}
+			);
 			editorInterface->RegisterMenuItem("Build/Generate Navigation Mesh", MenuItemGenerateNavMesh);
 			editorInterface->RegisterMenuItem("Build/Load Navigation Mesh", MenuItemLoadNavMesh);
 		}
@@ -613,6 +643,10 @@ extern "C" {
 		if (editorInterface != nullptr) {
 			editorInterface->DeregisterMenuItem("Build/Generate Navigation Mesh");
 			editorInterface->DeregisterMenuItem("Build/Load Navigation Mesh");
+		}
+
+		if (debugRenderer != nullptr) {
+			Grindstone::Memory::AllocatorCore::Free(debugRenderer);
 		}
 
 		pluginInterface->UnregisterComponent<Grindstone::Ai::OffNavMeshConnectionComponent>();

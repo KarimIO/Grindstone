@@ -5,23 +5,30 @@ set(AI_NAVMESH_LIB ${AI_NAVMESH_BASE}/lib)
 set(SRC ${AI_NAVMESH_BASE}/source)
 set(INC ${AI_NAVMESH_BASE}/include)
 
-set(AI_NAVMESH_SOURCES ${SRC}/NavMeshSystem.cpp ${SRC}/NavMeshWorldContext.cpp ${SRC}/NavMeshBuildContext.cpp ${SRC}/EntryPoint.cpp)
-set(AI_NAVMESH_HEADERS ${INC}/NavMeshSystem.hpp ${INC}/NavMeshWorldContext.hpp ${INC}/NavMeshBuildContext.hpp ${INC}/NavAgentType.hpp ${INC}/NavMeshAreaTypes.hpp)
+set(AI_NAVMESH_SOURCES ${SRC}/NavMeshSystem.cpp ${SRC}/NavMeshDebugRenderer.cpp ${SRC}/NavMeshWorldContext.cpp ${SRC}/NavMeshBuildContext.cpp ${SRC}/EntryPoint.cpp)
+set(AI_NAVMESH_HEADERS ${INC}/NavMeshSystem.hpp ${INC}/NavMeshDebugRenderer.hpp ${INC}/NavMeshWorldContext.hpp ${INC}/NavMeshBuildContext.hpp ${INC}/NavAgentType.hpp ${INC}/NavMeshAreaTypes.hpp)
+
+file(GLOB_RECURSE AI_NAVMESH_ASSETS_SOURCES "${SRC}/Assets/*.cpp")
+file(GLOB_RECURSE AI_NAVMESH_ASSETS_HEADER "${INC}/Assets/*.hpp")
+source_group("Source Files\\Assets" FILES ${AI_NAVMESH_ASSETS_SOURCES})
+source_group("Header Files\\Assets" FILES ${AI_NAVMESH_ASSETS_HEADER})
 
 file(GLOB_RECURSE AI_NAVMESH_COMPONENTS_SOURCES "${SRC}/Components/*.cpp")
 file(GLOB_RECURSE AI_NAVMESH_COMPONENTS_HEADER "${INC}/Components/*.hpp")
-source_group("Components\\Source Files" FILES ${AI_NAVMESH_COMPONENTS_SOURCES})
-source_group("Components\\Header Files" FILES ${AI_NAVMESH_COMPONENTS_HEADER})
+source_group("Source Files\\Components" FILES ${AI_NAVMESH_COMPONENTS_SOURCES})
+source_group("Header Files\\Components" FILES ${AI_NAVMESH_COMPONENTS_HEADER})
 
 file(GLOB_RECURSE SOURCE_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.cpp")
 file(GLOB_RECURSE HEADER_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.hpp")
-source_group("Reflection\\Source Files" FILES ${SOURCE_REFLECTION})
-source_group("Reflection\\Header Files" FILES ${HEADER_REFLECTION})
+source_group("Source Files\\Reflection" FILES ${SOURCE_REFLECTION})
+source_group("Header Files\\Reflection" FILES ${HEADER_REFLECTION})
 
 add_library(
 	PluginNavigationMesh MODULE
 	${AI_NAVMESH_SOURCES}
 	${AI_NAVMESH_HEADERS}
+	${AI_NAVMESH_ASSETS_SOURCES}
+	${AI_NAVMESH_ASSETS_HEADER}
 	${AI_NAVMESH_COMPONENTS_SOURCES}
 	${AI_NAVMESH_COMPONENTS_HEADER}
 	${SOURCE_REFLECTION}

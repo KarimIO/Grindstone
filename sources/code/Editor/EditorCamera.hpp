@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include <Common/Rendering/RenderGraphBuilder.hpp>
 #include "GridRenderer.hpp"
 #include "GizmoRenderer.hpp"
 
@@ -40,6 +41,7 @@ namespace Grindstone {
 			static void SetupRenderPasses();
 			EditorCamera();
 			~EditorCamera();
+			void RegisterGizmoPass(std::function<Grindstone::Renderer::RenderGraphBuilderResourceRef(Grindstone::Renderer::RenderGraphBuilder&, Grindstone::Renderer::RenderGraphBuilderResourceRef, Grindstone::Renderer::RenderGraphBuilderResourceRef)> callback);
 			void CaptureMousePick(GraphicsAPI::CommandBuffer* commandBuffer, int x, int y);
 			uint32_t GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandBuffer);
 			uint64_t GetRenderOutput();
@@ -54,6 +56,7 @@ namespace Grindstone {
 			glm::mat4& GetProjectionMatrix();
 			glm::mat4& GetViewMatrix();
 			BaseRenderer* GetRenderer() const;
+			void ClearRenderer();
 
 			glm::vec3 GetPosition() const;
 			glm::vec3 GetForward() const;
@@ -79,6 +82,15 @@ namespace Grindstone {
 			GraphicsAPI::Sampler* sampler = nullptr;
 			GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
 			std::array<GraphicsAPI::DescriptorSet*, 3> descriptorSet;
+			std::vector<
+				std::function<
+					Grindstone::Renderer::RenderGraphBuilderResourceRef(
+						Grindstone::Renderer::RenderGraphBuilder&,
+						Grindstone::Renderer::RenderGraphBuilderResourceRef,
+						Grindstone::Renderer::RenderGraphBuilderResourceRef
+					)
+				>
+			> gizmoRenderCallbacks;
 
 			GraphicsAPI::DescriptorSetLayout* mousePickDescriptorSetLayout = nullptr;
 			std::array<GraphicsAPI::Image*, 3> mousePickRenderTarget{};

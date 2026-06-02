@@ -297,8 +297,19 @@ EditorCamera::EditorCamera() {
 }
 
 EditorCamera::~EditorCamera() {
-	AllocatorCore::Free(renderer);
-	renderer = nullptr;
+	ClearRenderer();
+}
+
+void Grindstone::Editor::EditorCamera::RegisterGizmoPass(
+	std::function<
+		Grindstone::Renderer::RenderGraphBuilderResourceRef(
+			Grindstone::Renderer::RenderGraphBuilder&,
+			Grindstone::Renderer::RenderGraphBuilderResourceRef,
+			Grindstone::Renderer::RenderGraphBuilderResourceRef
+		)
+	> callback
+) {
+	gizmoRenderCallbacks.emplace_back(callback);
 }
 
 void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuffer* commandBuffer, int x, int y) {
@@ -525,7 +536,7 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		depthImageRef
 	);
 
-	renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
+	Renderer::RenderGraphBuilderResourceRef gridImageRef = renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
 		"Grid Pass",
 		Renderer::MetaRect::Swapchain(),
 		[colorImageRef, depthImageRef](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
@@ -553,11 +564,11 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		}
 	);
 
-	renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
+	Renderer::RenderGraphBuilderResourceRef gizmoImageRef = renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
 		"Gizmo Pass",
 		Renderer::MetaRect::Swapchain(),
-		[this, colorImageRef, depthImageRef](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
-			Renderer::RenderGraphBuilderResourceRef outputRef = pass.ReadWriteColorAttachment(colorImageRef);
+		[this, gridImageRef, depthImageRef](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
+			Renderer::RenderGraphBuilderResourceRef outputRef = pass.ReadWriteColorAttachment(gridImageRef);
 			pass.ReadExternalSampler(sampler);
 			pass.ReadSampledImage(depthImageRef);
 			return outputRef;
@@ -636,6 +647,10 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 			}
 		}
 	);
+
+	for (auto& callback : gizmoRenderCallbacks) {
+		gizmoImageRef = callback(renderGraphBuilder, gizmoImageRef, depthImageRef);
+	}
 
 	auto renderGraph = renderGraphBuilder.Compile();
 	renderGraph.ExecuteGraph(context);
@@ -906,4 +921,9 @@ glm::mat4& EditorCamera::GetViewMatrix() {
 
 BaseRenderer* EditorCamera::GetRenderer() const {
 	return renderer;
+}
+
+void Grindstone::Editor::EditorCamera::ClearRenderer() {
+	AllocatorCore::Free(renderer);
+	renderer = nullptr;
 }

@@ -19,6 +19,8 @@
 #include <Editor/ScriptBuilder/CSharpBuildManager.hpp>
 #include <Editor/PluginSystem/EditorPluginInterface.hpp>
 #include <Editor/PluginSystem/EditorPluginManager.hpp>
+#include <Editor/ImguiEditor/ViewportPanel.hpp>
+#include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
@@ -336,9 +338,15 @@ Manager::~Manager() {
 		engineCore->GetGraphicsCore()->WaitUntilIdle();
 	}
 
+	// Remove the renderer earlier because it (and its virtual destructor) are defined in an editor plugin.
 	if (imguiEditor) {
-		AllocatorCore::Free(imguiEditor);
-		imguiEditor = nullptr;
+		auto viewport = imguiEditor->GetViewportPanel();
+		if (viewport != nullptr) {
+			auto camera = viewport->GetCamera();
+			if (camera != nullptr) {
+				camera->ClearRenderer();
+			}
+		}
 	}
 
 	if (engineCore != nullptr) {
@@ -349,7 +357,14 @@ Manager::~Manager() {
 		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAssetImportLate");
 		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAssetImportEarly");
 		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorEarly");
+	}
 
+	if (imguiEditor) {
+		AllocatorCore::Free(imguiEditor);
+		imguiEditor = nullptr;
+	}
+
+	if (engineCore != nullptr) {
 		engineCore->GetSceneManager()->CloseActiveScenes();
 
 		Grindstone::WorldContextManager* cxtManager = engineCore->GetWorldContextManager();

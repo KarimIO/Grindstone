@@ -1,4 +1,5 @@
 #include <iostream>
+#include <ranges>
 #include <imgui.h>
 
 #include <Common/Window/WindowManager.hpp>
@@ -190,9 +191,10 @@ void Menubar::RegisterMenuItem(const char* menuItem, void(*fn)(), const char* sh
 }
 
 void Menubar::DeregisterMenuItem(const char* menuItem) {
-	for (auto iterator = menuItems.begin(); iterator != menuItems.end(); iterator++) {
-		if (iterator->text == menuItem) {
-			menuItems.erase(iterator);
+	for (auto it = menuItems.rbegin(); it < menuItems.rend(); it++) {
+		if (it->text == menuItem) {
+			menuItems.erase((it + 1).base());
+			break;
 		}
 	}
 }
