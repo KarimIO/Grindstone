@@ -28,6 +28,7 @@ struct ModelImporterRendererState {
 	bool shouldOptimizeMeshes;
 	bool shouldOptimizeScene;
 	bool shouldSplitLargeMeshes;
+	bool isLeftHanded;
 	float scale;
 };
 
@@ -46,6 +47,7 @@ static void* OnSetupModelImporterRenderer(const std::filesystem::path& path) {
 	payload->shouldOptimizeMeshes = settings.Get("OptimizeMeshes", true);
 	payload->shouldOptimizeScene = settings.Get("OptimizeScene", true);
 	payload->shouldSplitLargeMeshes = settings.Get("SplitLargeMeshes", false);
+	payload->isLeftHanded = settings.Get("IsLeftHanded", false);
 	payload->scale = static_cast<float>(settings.Get("Scale", 1.0f));
 
 	return payload;
@@ -67,6 +69,7 @@ static void OnRenderModelImporterRenderer(void* payload) {
 	ImGui::Checkbox("Optimize Scene", &state->shouldOptimizeScene);
 	ImGui::Checkbox("Optimize Meshes", &state->shouldOptimizeMeshes);
 	ImGui::Checkbox("Split Large Meshes", &state->shouldSplitLargeMeshes);
+	ImGui::Checkbox("Is Left Handed", &state->isLeftHanded);
 
 	if (ImGui::Button("Save")) {
 		Grindstone::Editor::ImporterSettings& settings = state->metaFile.GetImporterSettings();
@@ -79,6 +82,7 @@ static void OnRenderModelImporterRenderer(void* payload) {
 		settings.Set("OptimizeMeshes", state->shouldOptimizeMeshes);
 		settings.Set("OptimizeScene", state->shouldOptimizeScene);
 		settings.Set("SplitLargeMeshes", state->shouldSplitLargeMeshes);
+		settings.Set("IsLeftHanded", state->isLeftHanded);
 		settings.Set("Scale", static_cast<double>(state->scale));
 		state->metaFile.Save(modelImporterVersion);
 	}
