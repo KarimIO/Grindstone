@@ -1,0 +1,28 @@
+var searchData=
+[
+  ['pass_0',['Pass',['../md_pages_2Rendering_2DeferredRenderer.html#autotoc_md71',1,'Lighting Pass'],['../md_pages_2Rendering_2DeferredRenderer.html#autotoc_md70',1,'Opaque Geometry Pass']]],
+  ['pass_1',['&lt;span class=&quot;tt&quot;&gt;pass&lt;/span&gt;',['../md_pages_2Rendering_2PipelineSets.html#autotoc_md124',1,'']]],
+  ['passes_2',['Unlit, Sky, and Transparent Passes',['../md_pages_2Rendering_2DeferredRenderer.html#autotoc_md72',1,'']]],
+  ['patterns_3',['Usage Patterns',['../md_pages_2Assets_2Overview.html#autotoc_md35',1,'']]],
+  ['pipeline_4',['Pipeline',['../md_pages_2Rendering_2PipelineSets.html#autotoc_md149',1,'Example 1: Graphics Pipeline'],['../md_pages_2Rendering_2PipelineSets.html#autotoc_md151',1,'Example 2: Compute Pipeline']]],
+  ['pipeline_20configuration_20keywords_5',['Pipeline Configuration Keywords',['../md_pages_2Rendering_2PipelineSets.html#autotoc_md128',1,'']]],
+  ['pipeline_20system_20documentation_6',['Shader Pipeline System Documentation',['../md_pages_2Rendering_2PipelineSets.html',1,'']]],
+  ['pipelineset_20and_20computeset_7',['&lt;span class=&quot;tt&quot;&gt;pipelineSet&lt;/span&gt; and &lt;span class=&quot;tt&quot;&gt;computeSet&lt;/span&gt;',['../md_pages_2Rendering_2PipelineSets.html#autotoc_md120',1,'']]],
+  ['plugin_8',['Plugin',['../md_pages_2Plugins_2Overview.html#autotoc_md61',1,'Example 1: Runtime Plugin'],['../md_pages_2Plugins_2Overview.html#autotoc_md62',1,'Example 2: Editor Plugin']]],
+  ['plugin_20folder_20structure_9',['Plugin Folder Structure',['../md_pages_2Plugins_2NewDesign.html#autotoc_md53',1,'']]],
+  ['plugin_20implementation_10',['Plugin Implementation',['../md_pages_2Plugins_2Overview.html#autotoc_md60',1,'']]],
+  ['plugin_20list_11',['Plugin List',['../md_pages_2Plugins_2Overview.html#autotoc_md58',1,'']]],
+  ['plugin_20manifests_12',['Plugin Manifests',['../md_pages_2Plugins_2NewDesign.html#autotoc_md49',1,'']]],
+  ['plugin_20metadata_13',['Plugin Metadata',['../md_pages_2Plugins_2NewDesign.html#autotoc_md55',1,'']]],
+  ['plugin_20registry_14',['Plugin Registry',['../md_pages_2Plugins_2NewDesign.html#autotoc_md51',1,'']]],
+  ['plugin_20system_202_200_20specification_15',['Plugin System 2.0 Specification',['../md_pages_2Plugins_2NewDesign.html',1,'']]],
+  ['plugin_20system_20roadmap_16',['Grindstone Plugin System Roadmap',['../md_pages_2Plugins_2Overview.html',1,'']]],
+  ['points_17',['Shader Entry Points',['../md_pages_2Rendering_2PipelineSets.html#autotoc_md129',1,'']]],
+  ['post_20processing_18',['Post Processing',['../md_pages_2Rendering_2DeferredRenderer.html#autotoc_md74',1,'Post-Processing'],['../md_pages_2Rendering_2Overview.html#autotoc_md109',1,'Post-Processing']]],
+  ['practices_19',['Best Practices',['../md_pages_2Rendering_2Materials.html#autotoc_md96',1,'']]],
+  ['processing_20',['Processing',['../md_pages_2Rendering_2DeferredRenderer.html#autotoc_md74',1,'Post-Processing'],['../md_pages_2Rendering_2Overview.html#autotoc_md109',1,'Post-Processing']]],
+  ['project_21',['Building the Project',['../md_pages_2BuildingTheProject.html',1,'']]],
+  ['properties_22',['2. Material Properties',['../md_pages_2Rendering_2Materials.html#autotoc_md83',1,'']]],
+  ['properties_23',['&lt;span class=&quot;tt&quot;&gt;properties&lt;/span&gt;',['../md_pages_2Rendering_2PipelineSets.html#autotoc_md133',1,'']]],
+  ['purpose_24',['Purpose',['../md_pages_2Assets_2Overview.html#autotoc_md19',1,'']]]
+];

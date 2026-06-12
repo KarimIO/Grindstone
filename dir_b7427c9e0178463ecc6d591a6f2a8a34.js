@@ -1,0 +1,27 @@
+var dir_b7427c9e0178463ecc6d591a6f2a8a34 =
+[
+    [ "Commands", "dir_5b17c3fffadf0cf868137298818b3a26.html", "dir_5b17c3fffadf0cf868137298818b3a26" ],
+    [ "ImguiEditor", "dir_476cf4cbcbf57055a89a5374b1d77a45.html", "dir_476cf4cbcbf57055a89a5374b1d77a45" ],
+    [ "Importers", "dir_3d032ab8fb0a82697658a4361201230c.html", "dir_3d032ab8fb0a82697658a4361201230c" ],
+    [ "PluginSystem", "dir_b8ecd8b1950a81d49a4e801020b90120.html", "dir_b8ecd8b1950a81d49a4e801020b90120" ],
+    [ "ScriptBuilder", "dir_733b6adae5e7c72ccfa94b71fad607a8.html", "dir_733b6adae5e7c72ccfa94b71fad607a8" ],
+    [ "AssetPackSerializer.hpp", "AssetPackSerializer_8hpp_source.html", null ],
+    [ "AssetRegistry.hpp", "AssetRegistry_8hpp_source.html", null ],
+    [ "AssetTemplateRegistry.hpp", "AssetTemplateRegistry_8hpp_source.html", null ],
+    [ "BuildProcess.hpp", "BuildProcess_8hpp_source.html", null ],
+    [ "EditorCamera.hpp", "EditorCamera_8hpp_source.html", null ],
+    [ "EditorManager.hpp", "EditorManager_8hpp_source.html", null ],
+    [ "FileAssetLoader.hpp", "FileAssetLoader_8hpp_source.html", null ],
+    [ "FileManager.hpp", "FileManager_8hpp_source.html", null ],
+    [ "GitManager.hpp", "GitManager_8hpp_source.html", null ],
+    [ "GizmoRenderer.hpp", "GizmoRenderer_8hpp_source.html", null ],
+    [ "GridRenderer.hpp", "GridRenderer_8hpp_source.html", null ],
+    [ "IEditor.hpp", "IEditor_8hpp_source.html", null ],
+    [ "NewAssetTemplates.hpp", "NewAssetTemplates_8hpp_source.html", null ],
+    [ "pch.hpp", "Editor_2pch_8hpp_source.html", null ],
+    [ "SceneManager.hpp", "SceneManager_8hpp_source.html", null ],
+    [ "Selection.hpp", "Selection_8hpp_source.html", null ],
+    [ "TaskSystem.hpp", "TaskSystem_8hpp_source.html", null ],
+    [ "ThumbnailManager.hpp", "ThumbnailManager_8hpp_source.html", null ],
+    [ "Utilities.hpp", "Editor_2Utilities_8hpp_source.html", null ]
+];

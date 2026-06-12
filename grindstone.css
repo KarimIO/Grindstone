@@ -1,0 +1,40 @@
+html {
+	/* primary theme color. This will affect the entire websites color scheme: links, arrows, labels, ... */
+	--primary-color: #7c24ce;
+	--primary-dark-color: #55178f;
+	--primary-light-color: #af88d1;
+
+	/* page base colors */
+	--side-nav-background:  #f3f3f3;
+	--page-background-color: #f3f3f3;
+	--page-foreground-color: #111;
+	--page-secondary-foreground-color: #444;
+}
+
+@media (prefers-color-scheme: dark) {
+	html:not(.light-mode) {
+		/* primary theme color. This will affect the entire websites color scheme: links, arrows, labels, ... */
+		--primary-color: #933be6;
+		--primary-dark-color: #612a96;
+		--primary-light-color: #701fbb;
+
+		/* page base colors */
+		--side-nav-background:  #141318;
+		--page-background-color: #141318;
+		--page-foreground-color: #eee;
+		--page-secondary-foreground-color: #999;
+	}
+}
+
+html.dark-mode  {
+	/* primary theme color. This will affect the entire websites color scheme: links, arrows, labels, ... */
+	--primary-color: #933be6;
+	--primary-dark-color: #612a96;
+	--primary-light-color: #701fbb;
+
+	/* page base colors */
+	--side-nav-background:  #141318;
+	--page-background-color: #141318;
+	--page-foreground-color: #eee;
+	--page-secondary-foreground-color: #999;
+}
