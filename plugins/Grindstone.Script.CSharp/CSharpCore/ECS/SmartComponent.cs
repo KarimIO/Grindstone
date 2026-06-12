@@ -26,8 +26,8 @@ namespace Grindstone {
 			entity.DeleteComponent<T>();
 		}
 
-		public TransformComponent? GetTransform() {
-			return GetComponent<TransformComponent>();
+		public TransformComponent? GetTransformComponent() {
+			return entity.GetTransformComponent();
 		}
 		#endregion
 	}
