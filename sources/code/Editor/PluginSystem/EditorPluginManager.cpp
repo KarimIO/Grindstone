@@ -364,7 +364,7 @@ void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
 				}
 				case Grindstone::Plugins::MetaData::BinaryBuildType::Dotnet: {
 					auto scriptManager = static_cast<Grindstone::Scripting::CSharp::CSharpManager*>(Grindstone::EngineCore::GetInstance().scriptManager);
-					scriptManager->LoadAssemblyIntoMap(metaData.name + ":Grindstone.Physics.Jolt.CSharpIntegration"); // TODO: Get Library
+					scriptManager->LoadAssemblyIntoMap(metaData.name + ":" + binary.libraryRelativePath.filename().string());
 					break;
 				}
 				}

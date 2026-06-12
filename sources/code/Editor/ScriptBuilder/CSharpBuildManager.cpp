@@ -182,11 +182,7 @@ static DWORD ReadDataFromExtProgram(const std::string& path) {
 }
 
 static bool CreateChildProcess() {
-#if _DEBUG
-	constexpr const char* configuration = "Debug";
-#else
-	constexpr const char* configuration = "Release";
-#endif
+	constexpr const char* configuration = CMAKE_INTDIR;
 
 	const std::string filename = "Application-CSharp.csproj";
 	const std::filesystem::path outputFilePath = Grindstone::Editor::Manager::GetInstance().GetProjectPath() / filename;
