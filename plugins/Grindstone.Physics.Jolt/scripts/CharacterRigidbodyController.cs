@@ -8,6 +8,10 @@ namespace Grindstone.Physics.Jolt {
 			this.componentPtr = componentPtr;
 		}
 
+		public CharacterRigidbodyControllerComponent(Grindstone.Entity entity) {
+			componentPtr = EntityGetCharacterRigidbodyControllerComponent(entity.scene.sceneIntPtr, entity.entityHandle);
+		}
+
 		public bool IsOnGround {
 			get => CharacterRigidbodyControllerComponentGetIsOnGround(componentPtr);
 		}

@@ -49,8 +49,10 @@ namespace Grindstone::Editor {
 		};
 
 		struct ShapeMetaData {
-			uint32_t firstIndex;
-			uint32_t indexCount;
+			uint32_t firstOutlineIndex;
+			uint32_t outlineIndexCount;
+			uint32_t firstFilledIndex;
+			uint32_t filledIndexCount;
 			uint32_t vertexOffset;
 		};
 
@@ -58,13 +60,18 @@ namespace Grindstone::Editor {
 
 		struct GizmoUniformBuffer {
 			glm::mat4 transform;
-			glm::vec4 color;
+			glm::vec4 outlineColor;
+			glm::vec4 fillColor;
 		};
 
 		std::vector<GizmoUniformBuffer> dataBuffer;
 		std::vector<ShapeType> drawShapes;
 		size_t drawCount = 0;
 
-		inline void AppendData(ShapeType shapeType, uint32_t& currentVertexOffset, uint32_t& currentIndexOffset, uint32_t vertexCount, uint32_t indexCount);
+		inline void AppendData(
+			ShapeType shapeType,
+			uint32_t& currentVertexOffset, uint32_t& currentOutlineIndexOffset, uint32_t& currentFilledIndexOffset,
+			uint32_t vertexCount, uint32_t outlineIndexCount, uint32_t filledIndexCount
+		);
 	};
 }

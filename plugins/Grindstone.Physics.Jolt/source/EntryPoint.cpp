@@ -67,11 +67,14 @@ void SetupColliderComponent(Grindstone::WorldContextSet& cxt, entt::entity entit
 	entt::registry& registry = cxt.GetEntityRegistry();
 	ComponentType& colliderComponent = registry.get<ComponentType>(entity);
 
-	colliderComponent.Initialize();
-
 	CharacterRigidbodyControllerComponent* ccComponent = registry.try_get<CharacterRigidbodyControllerComponent>(entity);
 	RigidBodyComponent* rigidBodyComponent = registry.try_get<RigidBodyComponent>(entity);
 	TransformComponent* transformComponent = registry.try_get<TransformComponent>(entity);
+
+	if (transformComponent != nullptr) {
+		colliderComponent.Initialize(*transformComponent);
+	}
+
 	if (rigidBodyComponent != nullptr && transformComponent != nullptr) {
 		SetupRigidBodyComponentWithCollider(
 			cxt,

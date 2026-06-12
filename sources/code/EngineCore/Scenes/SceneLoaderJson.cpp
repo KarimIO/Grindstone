@@ -242,8 +242,8 @@ static void ParseMember(
 		CopyDataArrayFloat(parameter, static_cast<float*>(memberPtr), 4);
 		break;
 	case ReflectionTypeData::Bool: {
-		bool& str = *(bool*)memberPtr;
-		str = parameter.GetBool();
+		bool& ptr = *static_cast<bool*>(memberPtr);
+		ptr = parameter.GetBool();
 		break;
 	}
 	case ReflectionTypeData::Int8: {
@@ -305,8 +305,8 @@ static void ParseMember(
 		CopyDataArrayUint(parameter, static_cast<uint32_t*>(memberPtr), 4);
 		break;
 	case ReflectionTypeData::Float: {
-		float& str = *(float*)memberPtr;
-		str = parameter.GetFloat();
+		float& ptr = *static_cast<float*>(memberPtr);
+		ptr = parameter.GetFloat();
 		break;
 	}
 	case ReflectionTypeData::Float2:
@@ -319,8 +319,8 @@ static void ParseMember(
 		CopyDataArrayFloat(parameter, static_cast<float*>(memberPtr), 4);
 		break;
 	case ReflectionTypeData::Double: {
-		double& str = *static_cast<double*>(memberPtr);
-		str = parameter.GetDouble();
+		double& ptr = *static_cast<double*>(memberPtr);
+		ptr = parameter.GetDouble();
 		break;
 	}
 	case ReflectionTypeData::Double2:

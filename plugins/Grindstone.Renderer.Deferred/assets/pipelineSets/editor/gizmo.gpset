@@ -1,8 +1,38 @@
 include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/rendererUniform.gpset"
 
+shaderBlock GizmoBase {
+	shaderHlsl {
+		struct Element {
+			column_major float4x4 matrix;
+			float4 outlineColor;
+			float4 fillColor;
+		};
+
+		#define maxObjects 500
+		
+		struct GizmoUbo {
+			Element elements[maxObjects];
+		};
+
+		ConstantBuffer<GizmoUbo> elementsBuffer : register(b0, space2);
+
+		struct VertexInput {
+			[[vk::location(0)]] float3 position : POSITION0;
+		};
+
+		struct VertexToFragment {
+			float4 position : SV_Position;
+			[[vk::location(0)]] float4 color : COLOR0;
+		};
+
+		SamplerState gbufferSampler : register(s0, space1);
+		Texture2D<float4> gbufferDepth : register(t1, space1);
+	}
+}
+
 pipelineSet "Gizmo" {
 	configuration "main" {
-		pass "main" {
+		pass "wireframe" {
 			shaderEntrypoint: vertex mainVertex
 			shaderEntrypoint: fragment mainFragment
 			renderQueue: "Gizmo"
@@ -23,41 +53,70 @@ pipelineSet "Gizmo" {
 			}
 
 			requiresBlocks [
-				GsRendererUniform
+				GsRendererUniform,
+				GizmoBase
 			]
 
 			shaderHlsl {
-				struct Element {
-					column_major float4x4 matrix;
-					float4 color;
-				};
-
-				#define maxObjects 500
-				
-				struct GizmoUbo {
-					Element elements[maxObjects];
-				};
-
-				ConstantBuffer<GizmoUbo> elementsBuffer : register(b0, space2);
-
-				struct VertexInput {
-					[[vk::location(0)]] float3 position : POSITION0;
-				};
-
-				struct VertexToFragment {
-					float4 position : SV_Position;
-					[[vk::location(0)]] float4 color : COLOR0;
-				};
-
 				VertexToFragment mainVertex(VertexInput input, [[vk::builtin("BaseInstance")]] uint baseInstance : BASEINSTANCE) {
 					VertexToFragment output = (VertexToFragment)0;
 					output.position = mul(elementsBuffer.elements[baseInstance].matrix, float4(input.position, 1.0));
-					output.color = elementsBuffer.elements[baseInstance].color;
+					output.color = elementsBuffer.elements[baseInstance].outlineColor;
 					return output;
 				}
 
 				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
-					return input.color;
+					float2 uv = input.position.xy / rendererUbo.renderResolution;
+					float dGbuffer = gbufferDepth.SampleLevel(gbufferSampler, uv, 0);
+					float dDraw = input.position.z;
+					float4 color = input.color;
+					return color;
+				}
+			}
+		}
+
+		pass "fill" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+			renderQueue: "Gizmo"
+
+			properties {
+				cull: back
+				depthBias: false
+				depthWrite: false
+				depthTest: false
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: {
+					colorMask: rgba
+					blendPreset: translucent
+				}
+			}
+
+			requiresBlocks [
+				GsRendererUniform,
+				GizmoBase
+			]
+
+			shaderHlsl {
+				VertexToFragment mainVertex(VertexInput input, [[vk::builtin("BaseInstance")]] uint baseInstance : BASEINSTANCE) {
+					VertexToFragment output = (VertexToFragment)0;
+					output.position = mul(elementsBuffer.elements[baseInstance].matrix, float4(input.position, 1.0));
+					output.color = elementsBuffer.elements[baseInstance].fillColor;
+					return output;
+				}
+
+				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
+					float2 uv = input.position.xy / rendererUbo.renderResolution;
+					float dGbuffer = gbufferDepth.SampleLevel(gbufferSampler, uv, 0);
+					float dDraw = input.position.z;
+					float4 color = input.color;
+
+					if (dDraw > dGbuffer) {
+						color.a *= 0.5f;
+					}
+
+					return color;
 				}
 			}
 		}

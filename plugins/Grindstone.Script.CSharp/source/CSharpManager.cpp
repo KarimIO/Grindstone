@@ -23,11 +23,7 @@ using namespace Grindstone;
 using namespace Grindstone::Memory;
 using namespace Grindstone::Scripting::CSharp;
 
-#ifdef _DEBUG
-const char* config = "Debug";
-#else
-const char* config = "Release";
-#endif
+const char* config = CMAKE_INTDIR;
 
 namespace Grindstone {
 	using CreateAppDomainFnPtr = void (*)(void*);

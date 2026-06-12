@@ -15,6 +15,10 @@ using namespace JPH::literals;
 using namespace Grindstone::Physics;
 using namespace Grindstone::Math;
 
+static float GetMinComponent(const glm::vec3& scale) {
+	return glm::min(scale.x, scale.y, scale.z);
+}
+
 ColliderComponent* Grindstone::Physics::GetCollider(entt::registry& registry, entt::entity entityHandle) {
 	SphereColliderComponent* sphere = registry.try_get<SphereColliderComponent>(entityHandle);
 	if (sphere != nullptr) {
@@ -51,11 +55,12 @@ SphereColliderComponent SphereColliderComponent::Clone(Grindstone::WorldContextS
 	return sphere;
 }
 
-void SphereColliderComponent::Initialize() {
-	collisionShape = new JPH::SphereShape(radius, nullptr);
+void SphereColliderComponent::Initialize(const TransformComponent& transformComponent) {
+	collisionShape = new JPH::SphereShape(radius * GetMinComponent(transformComponent.scale), nullptr);
 }
 
 void SphereColliderComponent::SetRadius(float radius) {
+	// TODO: Get scale
 	collisionShape = new JPH::SphereShape(radius, nullptr);
 
 	this->radius = radius;
@@ -79,10 +84,11 @@ PlaneColliderComponent PlaneColliderComponent::Clone(Grindstone::WorldContextSet
 	return plane;
 }
 
-void PlaneColliderComponent::Initialize() {
+void PlaneColliderComponent::Initialize(const TransformComponent& transformComponent) {
 }
 
 void PlaneColliderComponent::SetCollider(Float3 planeNormal, float positionAlongNormal) {
+	// TODO: Get scale
 	this->planeNormal = planeNormal;
 	this->positionAlongNormal = positionAlongNormal;
 }
@@ -107,18 +113,31 @@ BoxColliderComponent BoxColliderComponent::Clone(Grindstone::WorldContextSet& cx
 	return box;
 }
 
-void BoxColliderComponent::Initialize() {
+void BoxColliderComponent::Initialize(const TransformComponent& transformComponent) {
+	// NOTE: Not sure if it's better to scale uniformly or not for boxes.
+	const glm::vec3& scale = transformComponent.scale;
+	glm::vec3 halfExtents(
+		size.x * scale.x / 2.0f,
+		size.y * scale.y / 2.0f,
+		size.z * scale.z / 2.0f
+	);
+
+	float minComponent = GetMinComponent(halfExtents);
+	float convexRadius = glm::min(minComponent / 2.0f, JPH::cDefaultConvexRadius);
+
 	JPH::BoxShapeSettings boxShapeSettings(
 		JPH::Vec3(
-			size.x / 2.0f,
-			size.y / 2.0f,
-			size.z / 2.0f
-		)
+			halfExtents.x,
+			halfExtents.y,
+			halfExtents.z
+		),
+		convexRadius
 	);
 	collisionShape = boxShapeSettings.Create().Get();
 }
 
 void BoxColliderComponent::SetSize(Float3 size) {
+	// TODO: Get scale
 	JPH::BoxShapeSettings boxShapeSettings(
 		JPH::Vec3(
 			size.x / 2.0f,
@@ -149,11 +168,13 @@ CapsuleColliderComponent CapsuleColliderComponent::Clone(Grindstone::WorldContex
 	return capsule;
 }
 
-void CapsuleColliderComponent::Initialize() {
-	collisionShape = new JPH::CapsuleShape(height / 2.0f, radius, nullptr);
+void CapsuleColliderComponent::Initialize(const TransformComponent& transformComponent) {
+	float scale = GetMinComponent(transformComponent.scale);
+	collisionShape = new JPH::CapsuleShape(height * scale / 2.0f, radius * scale, nullptr);
 }
 
 void CapsuleColliderComponent::SetCollider(float radius, float height) {
+	// TODO: Get scale
 	collisionShape = new JPH::CapsuleShape(height / 2.0f, radius, nullptr);
 
 	this->radius = radius;

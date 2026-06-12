@@ -1,0 +1,15 @@
+{
+    "assetImporterVersion": 1,
+    "metaFileVersion": 1,
+    "defaultUuid": "a9d6d846-ca58-403c-8b33-1833ab4aad74",
+    "subassets": [
+        {
+            "displayName": "navmesh",
+            "address": "@CORESHADERS/editor/navmesh",
+            "subassetIdentifier": "navmesh",
+            "uuid": "a9d6d846-ca58-403c-8b33-1833ab4aad74",
+            "type": "GraphicsPipelineSet"
+        }
+    ],
+    "importerSettings": {}
+}

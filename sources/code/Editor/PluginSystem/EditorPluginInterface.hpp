@@ -3,6 +3,7 @@
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Common/HashedString.hpp>
 #include <Common/Memory/SmartPointers/UniquePtr.hpp>
+#include <Common/Rendering/RenderGraphBuilder.hpp>
 #include <Editor/Importers/ImporterManager.hpp>
 #include <Editor/ImguiEditor/Settings/BaseSettingsPage.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
@@ -19,6 +20,16 @@ namespace Grindstone::Plugins {
 		virtual ImGuiContext* GetImguiContext() const;
 		virtual Grindstone::Editor::Manager* GetEditorInstance() const;
 
+		virtual void RegisterGizmoPass(
+			std::function<
+				Grindstone::Renderer::RenderGraphBuilderResourceRef(
+					Grindstone::Renderer::RenderGraphBuilder&,
+					Grindstone::Renderer::RenderGraphBuilderResourceRef,
+					Grindstone::Renderer::RenderGraphBuilderResourceRef
+				)
+			> callback
+		);
+
 		virtual void MapExtensionToImporterType(const char* extension, Grindstone::HashedString importerType);
 		virtual void UnmapExtensionToImporterType(const char* extension);
 
@@ -31,6 +42,9 @@ namespace Grindstone::Plugins {
 		virtual void RegisterThumbnailGenerator(AssetType assetType, bool (*fn)(Grindstone::Uuid));
 		virtual void DeregisterThumbnailGenerator(AssetType assetType, bool (*fn)(Grindstone::Uuid));
 
+		virtual void RegisterMenuItem(const char* menuItem, void(*fn)(), const char* shortcut = nullptr);
+		virtual void DeregisterMenuItem(const char* menuItem);
+    
 		virtual void RegisterProjectSettingsPage(std::string displayName, Grindstone::UniquePtr<Grindstone::Editor::ImguiEditor::Settings::BasePage> page);
 		virtual void DeregisterProjectSettingsPage(std::string displayName);
 

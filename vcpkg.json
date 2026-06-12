@@ -28,6 +28,7 @@
 		"opengl",
 		"opengl-registry",
 		"rapidjson",
+		"recastnavigation",
 		"spirv-reflect",
 		"stb",
 		"vulkan",

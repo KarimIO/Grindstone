@@ -297,8 +297,19 @@ EditorCamera::EditorCamera() {
 }
 
 EditorCamera::~EditorCamera() {
-	AllocatorCore::Free(renderer);
-	renderer = nullptr;
+	ClearRenderer();
+}
+
+void Grindstone::Editor::EditorCamera::RegisterGizmoPass(
+	std::function<
+		Grindstone::Renderer::RenderGraphBuilderResourceRef(
+			Grindstone::Renderer::RenderGraphBuilder&,
+			Grindstone::Renderer::RenderGraphBuilderResourceRef,
+			Grindstone::Renderer::RenderGraphBuilderResourceRef
+		)
+	> callback
+) {
+	gizmoRenderCallbacks.emplace_back(callback);
 }
 
 void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuffer* commandBuffer, int x, int y) {
@@ -525,8 +536,8 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		depthImageRef
 	);
 
-	renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
-		"Gizmo Renderpass",
+	Renderer::RenderGraphBuilderResourceRef gridImageRef = renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
+		"Grid Pass",
 		Renderer::MetaRect::Swapchain(),
 		[colorImageRef, depthImageRef](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
 			Renderer::RenderGraphBuilderResourceRef outputRef = pass.ReadWriteColorAttachment(colorImageRef);
@@ -550,6 +561,31 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 			if (isGridEnabled) {
 				gridRenderer.Render(commandBuffer, renderScale, adjustedPerspectiveMatrix, view, nearPlaneDistance, farPlaneDistance, glm::quat(), 0.0f);
 			}
+		}
+	);
+
+	Renderer::RenderGraphBuilderResourceRef gizmoImageRef = renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
+		"Gizmo Pass",
+		Renderer::MetaRect::Swapchain(),
+		[this, gridImageRef, depthImageRef](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
+			Renderer::RenderGraphBuilderResourceRef outputRef = pass.ReadWriteColorAttachment(gridImageRef);
+			pass.ReadExternalSampler(sampler);
+			pass.ReadSampledImage(depthImageRef);
+			return outputRef;
+		},
+		[this, adjustedPerspectiveMatrix](
+			Grindstone::Math::IntRect2D rect,
+			const Grindstone::Renderer::RenderGraphContext& cxt,
+			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+			Renderer::RenderGraphBuilderResourceRef& outputRef
+		) {
+			Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
+			Grindstone::Editor::Manager& editorManager = Editor::Manager::GetInstance();
+			Grindstone::GraphicsAPI::CommandBuffer* commandBuffer = cxt.commandBuffer;
+			Grindstone::GraphicsAPI::Core* graphicsCore = cxt.graphicsCore;
+
+			glm::mat4 projView = adjustedPerspectiveMatrix * view;
+			glm::vec2 renderScale = glm::vec2(1.0f, 1.0f);
 
 			if (editorManager.GetSelection().GetSelectedEntityCount() > 0) {
 				static const glm::vec4 boundingBoxColor = glm::vec4(0.2f, 0.9f, 0.3f, 1.0f);
@@ -611,6 +647,10 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 			}
 		}
 	);
+
+	for (auto& callback : gizmoRenderCallbacks) {
+		gizmoImageRef = callback(renderGraphBuilder, gizmoImageRef, depthImageRef);
+	}
 
 	auto renderGraph = renderGraphBuilder.Compile();
 	renderGraph.ExecuteGraph(context);
@@ -881,4 +921,9 @@ glm::mat4& EditorCamera::GetViewMatrix() {
 
 BaseRenderer* EditorCamera::GetRenderer() const {
 	return renderer;
+}
+
+void Grindstone::Editor::EditorCamera::ClearRenderer() {
+	AllocatorCore::Free(renderer);
+	renderer = nullptr;
 }

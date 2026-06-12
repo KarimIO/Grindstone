@@ -1,0 +1,93 @@
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/rendererUniform.gpset"
+
+shaderBlock NavmeshBase {
+	shaderHlsl {
+		struct VertexInput {
+			[[vk::location(0)]] float3 position : POSITION0;
+			[[vk::location(1)]] float2 texCoord0 : TEXCOORD0;
+			[[vk::location(2)]] float4 color : COLOR0;
+		};
+
+		struct VertexToFragment {
+			float4 position : SV_Position;
+			[[vk::location(0)]] float4 color : COLOR0;
+		};
+
+		struct FragmentOutput {
+			float4 color : SV_Target;
+		};
+
+		VertexToFragment mainVertex(VertexInput input) {
+			VertexToFragment output;
+
+			float4 worldPos = float4(input.position.xyz, 1.0);
+			float4 viewPos  = mul(rendererUbo.viewMatrix, worldPos);
+			output.position = mul(rendererUbo.projectionMatrix, viewPos);
+			output.color = input.color;
+
+			return output;
+		}
+
+		FragmentOutput mainFragment(VertexToFragment input) {
+			FragmentOutput output;
+			output.color = input.color;
+			return output;
+		}
+	}
+}
+
+pipelineSet "navmesh" {
+	configuration "main" {
+		pass "triangles" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+			renderQueue: "Gizmo"
+
+			properties {
+				cull: none
+				depthWrite: false
+				depthTest: true
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: [
+					{
+						colorMask: rgba
+						blendPreset: translucent
+					}
+				]
+			}
+
+			requiresBlocks [
+				GsRendererUniform,
+				NavmeshBase
+			]
+		}
+
+		pass "lines" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment mainFragment
+			renderQueue: "Gizmo"
+
+			properties {
+				cull: none
+				geometryType: lines
+				fillMode: line
+				depthWrite: false
+				depthTest: true
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: [
+					{
+						colorMask: rgba
+						blendPreset: translucent
+					}
+				]
+			}
+
+			requiresBlocks [
+				GsRendererUniform,
+				NavmeshBase
+			]
+		}
+	}
+}

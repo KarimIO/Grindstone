@@ -292,7 +292,7 @@ Grindstone::Rendering::GeometryRenderStats Mesh3dRenderer::RenderQueue(
 					continue;
 				}
 
-				const GraphicsAPI::GraphicsPipeline* pipeline = graphicsPipelineAsset->GetPassPipeline(renderQueueHash, &meshAsset->vertexArrayObject->GetLayout());
+				const GraphicsAPI::GraphicsPipeline* pipeline = graphicsPipelineAsset->GetPassPipelineByRenderQueue(renderQueueHash, &meshAsset->vertexArrayObject->GetLayout());
 				if (pipeline == nullptr) {
 					continue;
 				}

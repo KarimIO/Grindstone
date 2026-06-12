@@ -65,6 +65,7 @@ namespace Grindstone {
 				ImFont* GetFont(FontType type) const;
 				const ImGui::MarkdownConfig& GetMarkdownConfig() const;
 				ImguiRenderer& GetImguiRenderer();
+				Menubar& GetMenuBar();
 
 				Settings::UserSettingsWindow* userSettingsWindow = nullptr;
 				Settings::ProjectSettingsWindow* projectSettingsWindow = nullptr;

@@ -159,8 +159,26 @@ namespace Grindstone {
 				return;
 			}
 
-			var method = unboxedObject.GetType().GetMethod("OnAttach");
-			method?.Invoke(unboxedObject, null);
+			Type type = unboxedObject.GetType();
+			MethodInfo? method = type.GetMethod("OnAttach");
+			if (method == null) {
+				return;
+			}
+
+			try {
+				method?.Invoke(unboxedObject, null);
+			}
+			catch (TargetInvocationException ex) {
+				Exception inner = ex.InnerException ?? ex;
+				Grindstone.Logger.PrintError(
+					$"Failed to call OnAttach on {type.FullName}:\n" +
+					$"{inner.GetType().Name}: {inner.Message}\n" +
+					$"{inner.StackTrace}"
+				);
+			}
+			catch (Exception ex) {
+				Grindstone.Logger.PrintError($"Failed to call OnAttach on {type.FullName}: {ex.Message}");
+			}
 		}
 
 		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
@@ -173,8 +191,26 @@ namespace Grindstone {
 				return;
 			}
 
-			var method = unboxedObject.GetType().GetMethod("OnStart");
-			method?.Invoke(unboxedObject, null);
+			Type type = unboxedObject.GetType();
+			MethodInfo? method = type.GetMethod("OnStart");
+			if (method == null) {
+				return;
+			}
+
+			try {
+				method?.Invoke(unboxedObject, null);
+			}
+			catch (TargetInvocationException ex) {
+				Exception inner = ex.InnerException ?? ex;
+				Grindstone.Logger.PrintError(
+					$"Failed to call OnStart on {type.FullName}:\n" +
+					$"{inner.GetType().Name}: {inner.Message}\n" +
+					$"{inner.StackTrace}"
+				);
+			}
+			catch (Exception ex) {
+				Grindstone.Logger.PrintError($"Failed to call OnStart on {type.FullName}: {ex.Message}");
+			}
 		}
 
 		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
@@ -187,8 +223,26 @@ namespace Grindstone {
 				return;
 			}
 
-			var method = unboxedObject.GetType().GetMethod("OnUpdate");
-			method?.Invoke(unboxedObject, null);
+			Type type = unboxedObject.GetType();
+			MethodInfo? method = type.GetMethod("OnUpdate");
+			if (method == null) {
+				return;
+			}
+
+			try {
+				method?.Invoke(unboxedObject, null);
+			}
+			catch (TargetInvocationException ex) {
+				Exception inner = ex.InnerException ?? ex;
+				Grindstone.Logger.PrintError(
+					$"Failed to call OnUpdate on {type.FullName}:\n" +
+					$"{inner.GetType().Name}: {inner.Message}\n" +
+					$"{inner.StackTrace}"
+				);
+			}
+			catch (Exception ex) {
+				Grindstone.Logger.PrintError($"Failed to call OnUpdate on {type.FullName}: {ex.StackTrace}");
+			}
 		}
 
 		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
@@ -201,8 +255,26 @@ namespace Grindstone {
 				return;
 			}
 
-			var method = unboxedObject.GetType().GetMethod("OnEditorUpdate");
-			method?.Invoke(unboxedObject, null);
+			Type type = unboxedObject.GetType();
+			MethodInfo? method = type.GetMethod("OnEditorUpdate");
+			if (method == null) {
+				return;
+			}
+
+			try {
+				method?.Invoke(unboxedObject, null);
+			}
+			catch (TargetInvocationException ex) {
+				Exception inner = ex.InnerException ?? ex;
+				Grindstone.Logger.PrintError(
+					$"Failed to call OnEditorUpdate on {type.FullName}:\n" +
+					$"{inner.GetType().Name}: {inner.Message}\n" +
+					$"{inner.StackTrace}"
+				);
+			}
+			catch (Exception ex) {
+				Grindstone.Logger.PrintError($"Failed to call OnEditorUpdate on {type.FullName}: {ex.Message}");
+			}
 		}
 
 		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
@@ -215,8 +287,26 @@ namespace Grindstone {
 				return;
 			}
 
-			var method = unboxedObject.GetType().GetMethod("OnDestroy");
-			method?.Invoke(unboxedObject, null);
+			Type type = unboxedObject.GetType();
+			MethodInfo? method = type.GetMethod("OnDestroy");
+			if (method == null) {
+				return;
+			}
+
+			try {
+				method?.Invoke(unboxedObject, null);
+			}
+			catch (TargetInvocationException ex) {
+				Exception inner = ex.InnerException ?? ex;
+				Grindstone.Logger.PrintError(
+					$"Failed to call OnDestroy on {type.FullName}:\n" +
+					$"{inner.GetType().Name}: {inner.Message}\n" +
+					$"{inner.StackTrace}"
+				);
+			}
+			catch (Exception ex) {
+				Grindstone.Logger.PrintError($"Failed to call OnDestroy on {type.FullName}: {ex.Message}");
+			}
 		}
 
 		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
