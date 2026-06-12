@@ -92,14 +92,26 @@ void Grindstone::SetupSpotLightComponent(Grindstone::WorldContextSet& cxtSet, en
 }
 
 void Grindstone::DestroySpotLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
-	EngineCore& engineCore = EngineCore::GetInstance();
-	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-
 	SpotLightComponent& spotLightComponent = cxtSet.GetEntityRegistry().get<SpotLightComponent>(entity);
-	graphicsCore->DeleteDescriptorSet(spotLightComponent.shadowMapDescriptorSet);
-	graphicsCore->DeleteDescriptorSetLayout(spotLightComponent.shadowMapDescriptorSetLayout);
-	graphicsCore->DeleteDescriptorSet(spotLightComponent.descriptorSet);
-	graphicsCore->DeleteDescriptorSetLayout(spotLightComponent.descriptorSetLayout);
-	graphicsCore->DeleteBuffer(spotLightComponent.shadowMapUniformBufferObject);
-	graphicsCore->DeleteBuffer(spotLightComponent.uniformBufferObject);
+
+	EngineCore::GetInstance().PushDeletion(
+		[spotLightComponent]() {
+			EngineCore& engineCore = EngineCore::GetInstance();
+			GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+
+			graphicsCore->DeleteDescriptorSet(spotLightComponent.shadowMapDescriptorSet);
+			graphicsCore->DeleteDescriptorSetLayout(spotLightComponent.shadowMapDescriptorSetLayout);
+			graphicsCore->DeleteDescriptorSet(spotLightComponent.descriptorSet);
+			graphicsCore->DeleteDescriptorSetLayout(spotLightComponent.descriptorSetLayout);
+			graphicsCore->DeleteBuffer(spotLightComponent.shadowMapUniformBufferObject);
+			graphicsCore->DeleteBuffer(spotLightComponent.uniformBufferObject);
+		}
+	);
+
+	spotLightComponent.shadowMapDescriptorSet = nullptr;
+	spotLightComponent.shadowMapDescriptorSetLayout = nullptr;
+	spotLightComponent.descriptorSet = nullptr;
+	spotLightComponent.descriptorSetLayout = nullptr;
+	spotLightComponent.shadowMapUniformBufferObject = nullptr;
+	spotLightComponent.uniformBufferObject = nullptr;
 }

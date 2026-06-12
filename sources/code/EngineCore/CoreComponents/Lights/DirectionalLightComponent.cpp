@@ -89,15 +89,26 @@ void Grindstone::SetupDirectionalLightComponent(Grindstone::WorldContextSet& cxt
 }
 
 void Grindstone::DestroyDirectionalLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
-	auto& engineCore = EngineCore::GetInstance();
-	auto graphicsCore = engineCore.GetGraphicsCore();
-	auto eventDispatcher = engineCore.GetEventDispatcher();
-
 	DirectionalLightComponent& directionalLightComponent = cxtSet.GetEntityRegistry().get<DirectionalLightComponent>(entity);
-	graphicsCore->DeleteDescriptorSet(directionalLightComponent.shadowMapDescriptorSet);
-	graphicsCore->DeleteDescriptorSetLayout(directionalLightComponent.shadowMapDescriptorSetLayout);
-	graphicsCore->DeleteDescriptorSet(directionalLightComponent.descriptorSet);
-	graphicsCore->DeleteDescriptorSetLayout(directionalLightComponent.descriptorSetLayout);
-	graphicsCore->DeleteBuffer(directionalLightComponent.shadowMapUniformBufferObject);
-	graphicsCore->DeleteBuffer(directionalLightComponent.uniformBufferObject);
+
+	EngineCore::GetInstance().PushDeletion(
+		[directionalLightComponent]() {
+			EngineCore& engineCore = EngineCore::GetInstance();
+			GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+
+			graphicsCore->DeleteDescriptorSet(directionalLightComponent.shadowMapDescriptorSet);
+			graphicsCore->DeleteDescriptorSetLayout(directionalLightComponent.shadowMapDescriptorSetLayout);
+			graphicsCore->DeleteDescriptorSet(directionalLightComponent.descriptorSet);
+			graphicsCore->DeleteDescriptorSetLayout(directionalLightComponent.descriptorSetLayout);
+			graphicsCore->DeleteBuffer(directionalLightComponent.shadowMapUniformBufferObject);
+			graphicsCore->DeleteBuffer(directionalLightComponent.uniformBufferObject);
+		}
+	);
+
+	directionalLightComponent.shadowMapDescriptorSet = nullptr;
+	directionalLightComponent.shadowMapDescriptorSetLayout = nullptr;
+	directionalLightComponent.descriptorSet = nullptr;
+	directionalLightComponent.descriptorSetLayout = nullptr;
+	directionalLightComponent.shadowMapUniformBufferObject = nullptr;
+	directionalLightComponent.uniformBufferObject = nullptr;
 }
