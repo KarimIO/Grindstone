@@ -22,12 +22,19 @@ namespace Grindstone {
 			Math::Matrix4 matrix = Math::Matrix4(1.0f);
 			entt::entity currentEntity = entity;
 			while (currentEntity != entt::null) {
-				const TransformComponent& transformComp = registry.get<TransformComponent>(currentEntity);
+				const TransformComponent* transformComp = registry.try_get<TransformComponent>(currentEntity);
+				if (transformComp == nullptr) {
+					break;
+				}
 
-				matrix = transformComp.GetTransformMatrix() * matrix;
+				matrix = transformComp->GetTransformMatrix() * matrix;
 
-				const ParentComponent& parentComp = registry.get<ParentComponent>(currentEntity);
-				currentEntity = parentComp.parentEntity;
+				const ParentComponent* parentComp = registry.try_get<ParentComponent>(currentEntity);
+				if (parentComp == nullptr) {
+					break;
+				}
+
+				currentEntity = parentComp->parentEntity;
 			}
 
 			return matrix;
