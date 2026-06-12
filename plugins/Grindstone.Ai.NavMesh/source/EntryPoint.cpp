@@ -5,7 +5,7 @@
 #include <Grindstone.Physics.Jolt/include/Components/ColliderComponent.hpp>
 
 #include <Grindstone.Ai.NavMesh/include/pch.hpp>
-#include <Grindstone.Ai.NavMesh/include/NavMeshSystem.hpp>
+#include <Grindstone.Ai.NavMesh/include/NavMeshAgentSystem.hpp>
 #include <Grindstone.Ai.NavMesh/include/NavMeshBuildContext.hpp>
 #include <Grindstone.Ai.NavMesh/include/NavMeshWorldContext.hpp>
 #include <Grindstone.Ai.NavMesh/include/Components/NavMeshComponent.hpp>
@@ -18,6 +18,7 @@
 #include <Recast.h>
 #include <RecastAlloc.h>
 
+#include <DetourDebugDraw.h>
 #include <DetourAlloc.h>
 #include <DetourNavMesh.h>
 #include <DetourNavMeshBuilder.h>
@@ -603,6 +604,10 @@ static void MenuItemLoadNavMesh() {
 
 	dtNavMesh* navMesh = LoadNavmesh(path);
 	foundNavMeshComp->navMesh = navMesh;
+
+	debugRenderer->Clear();
+	duDebugDrawNavMesh(debugRenderer, *navMesh, DU_DRAWNAVMESH_OFFMESHCONS);
+	debugRenderer->BuildVertexBuffers();
 
 	GPRINT_INFO(LogSource::EngineCore, "Loaded Navigation Mesh.");
 }

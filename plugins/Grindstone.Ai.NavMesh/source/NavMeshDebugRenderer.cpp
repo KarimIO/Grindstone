@@ -82,7 +82,7 @@ void Grindstone::Ai::NavMeshDebugRenderer::BuildVertexBuffers() {
 		.content = vertices.data(),
 		.bufferSize = sizeof(DebugVertex) * vertices.size(),
 		.bufferUsage = Grindstone::GraphicsAPI::BufferUsage::Vertex,
-		.memoryUsage = Grindstone::GraphicsAPI::MemoryUsage::GPUOnly
+		.memoryUsage = Grindstone::GraphicsAPI::MemoryUsage::GPUToCPU
 	};
 
 	vertexBuffer = graphicsCore->CreateBuffer(bufferCreateInfo);

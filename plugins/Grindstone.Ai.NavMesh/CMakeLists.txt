@@ -5,8 +5,8 @@ set(AI_NAVMESH_LIB ${AI_NAVMESH_BASE}/lib)
 set(SRC ${AI_NAVMESH_BASE}/source)
 set(INC ${AI_NAVMESH_BASE}/include)
 
-set(AI_NAVMESH_SOURCES ${SRC}/NavMeshSystem.cpp ${SRC}/NavMeshDebugRenderer.cpp ${SRC}/NavMeshWorldContext.cpp ${SRC}/NavMeshBuildContext.cpp ${SRC}/EntryPoint.cpp)
-set(AI_NAVMESH_HEADERS ${INC}/NavMeshSystem.hpp ${INC}/NavMeshDebugRenderer.hpp ${INC}/NavMeshWorldContext.hpp ${INC}/NavMeshBuildContext.hpp ${INC}/NavAgentType.hpp ${INC}/NavMeshAreaTypes.hpp)
+set(AI_NAVMESH_SOURCES ${SRC}/NavMeshAgentSystem.cpp ${SRC}/NavMeshDebugRenderer.cpp ${SRC}/NavMeshWorldContext.cpp ${SRC}/NavMeshBuildContext.cpp ${SRC}/EntryPoint.cpp)
+set(AI_NAVMESH_HEADERS ${INC}/NavMeshAgentSystem.hpp ${INC}/NavMeshDebugRenderer.hpp ${INC}/NavMeshWorldContext.hpp ${INC}/NavMeshBuildContext.hpp ${INC}/NavAgentType.hpp ${INC}/NavMeshAreaTypes.hpp ${INC}/NavAgentLocomotionData.hpp)
 
 file(GLOB_RECURSE AI_NAVMESH_ASSETS_SOURCES "${SRC}/Assets/*.cpp")
 file(GLOB_RECURSE AI_NAVMESH_ASSETS_HEADER "${INC}/Assets/*.hpp")

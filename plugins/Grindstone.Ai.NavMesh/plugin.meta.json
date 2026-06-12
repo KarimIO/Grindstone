@@ -11,6 +11,11 @@
 			"path": "lib/{Configuration}/PluginNavigationMesh",
 			"loadStage": "EditorAfterUiSetup",
 			"cmakeTarget": "PluginNavigationMesh"
+		},
+		{
+			"path": "scripts/bin/{Configuration}/net10.0/Grindstone.Ai.NavMesh.CSharpIntegration",
+			"loadStage": "EditorAfterUiSetup",
+			"dotnetTarget": "scripts/CSharpIntegration.json"
 		}
 	],
 	"cmake": "CMakeLists.txt"

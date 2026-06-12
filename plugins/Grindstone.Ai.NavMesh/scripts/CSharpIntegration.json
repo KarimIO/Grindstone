@@ -1,0 +1,6 @@
+{
+	"name": "Grindstone.Ai.NavMesh.CSharpIntegration",
+	"references": [
+		"Grindstone.Script.CSharpCore"
+	]
+}
