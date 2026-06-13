@@ -206,6 +206,15 @@ DeferredRendererFactory::~DeferredRendererFactory() {
 	graphicsCore->DeleteRenderPass(ssaoRenderPass);
 	graphicsCore->DeleteRenderPass(mainRenderpass);
 	graphicsCore->DeleteRenderPass(gbufferRenderpass);
+
+	dofSeparationRenderPass = nullptr;
+	dofBlurAndCombinationRenderPass = nullptr;
+	shadowMapRenderPass = nullptr;
+	lightingRenderPass = nullptr;
+	forwardLitRenderPass = nullptr;
+	ssaoRenderPass = nullptr;
+	mainRenderpass = nullptr;
+	gbufferRenderpass = nullptr;
 }
 
 uint16_t DeferredRendererFactory::GetRenderModeCount() const {
