@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <EngineCore/Utils/Utilities.hpp>
 #include "EditorManager.hpp"
 using namespace Grindstone;
 
@@ -168,35 +169,54 @@ static std::filesystem::path CreateOrOpenExistingProject() {
 #endif
 
 int main(int argc, char* argv[]) {
-		std::filesystem::path projectPath;
-		for (int i = 1; i < argc; ++i) {
-			if (strcmp(argv[i], "-projectpath") == 0 && argc > i + 1) {
-				projectPath = argv[i + 1];
+	std::unordered_map<std::string, std::string> cmdArgs;
+	for (int i = 1; i < argc; ++i) {
+		// Only grab keys - ignore args that don't start with '-'
+		if (strlen(argv[i]) > 1 && argv[i][0] == '-') {
+			std::string key = Grindstone::Utils::ToLower(cmdArgs[argv[i] + 1]);
+
+			// If we have a value, use it, otherwise pass it empty.
+			if (argc > i + 1 && argv[i + 1][0] != '-') {
+				cmdArgs[argv[i] + 1] = argv[i + 1];
+			}
+			else {
+				cmdArgs[argv[i] + 1] = "";
 			}
 		}
+	}
 
+	std::filesystem::path projectPath;
+	auto projectPathArgIt = cmdArgs.find("projectpath");
+	if (projectPathArgIt != cmdArgs.end()) {
+		projectPath = projectPathArgIt->second;
+	}
+
+	if (projectPath.empty()) {
+#if _WIN32
+		projectPath = CreateOrOpenExistingProject();
 		if (projectPath.empty()) {
-	#if _WIN32
-			projectPath = CreateOrOpenExistingProject();
-			if (projectPath.empty()) {
-				std::cerr << "Unable to launch Grindstone Editor - no path set." << std::endl;
-				return 1;
-			}
-	#else
 			std::cerr << "Unable to launch Grindstone Editor - no path set." << std::endl;
 			return 1;
-	#endif
 		}
+#else
+		std::cerr << "Unable to launch Grindstone Editor - no path set." << std::endl;
+		return 1;
+#endif
+	}
 
-		while (projectPath.filename().empty()) {
-			projectPath = projectPath.parent_path();
-		}
+	// Handle situations like /file/path/dir//// - each of those slashes at the end is a directory and
+	// we need to bubble up until we get a proper directory.
+	while (projectPath.filename().empty()) {
+		projectPath = projectPath.parent_path();
+	}
 
-		Editor::Manager editorManager;
-		editorManager.SetInstance(&editorManager);
-		if (editorManager.Initialize(projectPath)) {
-			editorManager.Run();
-		}
+	cmdArgs["projectpath"] = projectPath.string();
+
+	Editor::Manager editorManager;
+	editorManager.SetInstance(&editorManager);
+	if (editorManager.Initialize(cmdArgs, projectPath)) {
+		editorManager.Run();
+	}
 
 	return 0;
 }

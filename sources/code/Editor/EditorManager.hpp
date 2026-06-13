@@ -62,7 +62,7 @@ namespace Grindstone::Editor {
 		ScriptBuilder::CSharpBuildManager& GetCSharpBuildManager();
 		static FileManager& GetFileManager();
 		static EngineCore& GetEngineCore();
-		bool Initialize(std::filesystem::path projectPath);
+		bool Initialize(const std::unordered_map<std::string, std::string>& cmdLineArgs, std::filesystem::path projectPath);
 		void InitializeQuitCommands();
 		~Manager();
 		void Run();
