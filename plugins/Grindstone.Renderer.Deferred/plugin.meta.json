@@ -16,7 +16,7 @@
 	"binaries": [
 		{
 			"path": "lib/{Configuration}/PluginRendererDeferred",
-			"loadStage": "EditorAfterCameraInitialization",
+			"loadStage": "EndOfEngineSetup",
 			"cmakeTarget": "PluginRendererDeferred"
 		}
 	],
