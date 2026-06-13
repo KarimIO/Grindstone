@@ -924,6 +924,7 @@ BaseRenderer* EditorCamera::GetRenderer() const {
 }
 
 void Grindstone::Editor::EditorCamera::ClearRenderer() {
+	gizmoRenderCallbacks.clear();
 	AllocatorCore::Free(renderer);
 	renderer = nullptr;
 }
