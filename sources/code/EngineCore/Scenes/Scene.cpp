@@ -34,13 +34,6 @@ extern "C" {
 }
 
 Scene::~Scene() {
-	Grindstone::WorldContextManager* contextManager = EngineCore::GetInstance().GetWorldContextManager();
-	if (contextManager != nullptr) {
-		Grindstone::WorldContextSet* cxtSet = contextManager->GetActiveWorldContextSet();
-		if (cxtSet != nullptr) {
-			cxtSet->GetEntityRegistry().clear();
-		}
-	}
 }
 
 ECS::Entity Scene::CreateEmptyEntity(entt::entity entityToUse) {
