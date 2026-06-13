@@ -55,4 +55,5 @@ void Grindstone::SetupCameraComponent(Grindstone::WorldContextSet& cxtSet, entt:
 void Grindstone::DestroyCameraComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	CameraComponent& cameraComponent = cxtSet.GetEntityRegistry().get<CameraComponent>(entity);
 	AllocatorCore::Free(cameraComponent.renderer);
+	cameraComponent.renderer = nullptr;
 }
