@@ -150,6 +150,10 @@ void EngineCore::PushDeletion(std::function<void()> fn) {
 	deferredDeletionQueue.PushDeletion(fn);
 }
 
+void EngineCore::ForceDeleteAllDeferred() {
+	deferredDeletionQueue.DeleteAll();
+}
+
 void EngineCore::InitializeScene(bool shouldLoadSceneFromDefaults, const char* scenePath) {
 	GRIND_PROFILE_SCOPE("Loading Default Scene");
 

@@ -115,6 +115,7 @@ namespace Grindstone {
 		virtual double GetTimeSinceLaunch() const;
 		virtual double GetDeltaTime() const;
 		virtual void PushDeletion(std::function<void()> fn);
+		virtual void ForceDeleteAllDeferred();
 	public:
 		DisplayManager* displayManager = nullptr;
 		WindowManager* windowManager = nullptr;

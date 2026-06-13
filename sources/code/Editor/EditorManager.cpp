@@ -336,6 +336,7 @@ bool Manager::LoadEngine() {
 Manager::~Manager() {
 	if (engineCore != nullptr && engineCore->GetGraphicsCore() != nullptr) {
 		engineCore->GetGraphicsCore()->WaitUntilIdle();
+		engineCore->ForceDeleteAllDeferred();
 	}
 
 	// Remove the renderer earlier because it (and its virtual destructor) are defined in an editor plugin.
