@@ -134,7 +134,7 @@ void CvarBrowser::Render() {
 			}
 		);
 
-		if (ImGui::TreeNode(category.c_str())) {
+		if (category.empty()) {
 			float maxTextWidth = 0;
 
 			for (auto p : parameters) {
@@ -144,8 +144,21 @@ void CvarBrowser::Render() {
 			for (auto p : parameters) {
 				RenderFieldValue(cvarSystem, p, maxTextWidth);
 			}
+		}
+		else {
+			if (ImGui::TreeNode(category.c_str())) {
+				float maxTextWidth = 0;
 
-			ImGui::TreePop();
+				for (auto p : parameters) {
+					maxTextWidth = std::max(maxTextWidth, ImGui::CalcTextSize(p->name.c_str()).x);
+				}
+
+				for (auto p : parameters) {
+					RenderFieldValue(cvarSystem, p, maxTextWidth);
+				}
+
+				ImGui::TreePop();
+			}
 		}
 	}
 
