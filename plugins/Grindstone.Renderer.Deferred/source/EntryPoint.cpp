@@ -27,5 +27,6 @@ extern "C" {
 		Grindstone::BaseRendererFactory* factory = engineCore->GetRendererFactory();
 
 		Grindstone::Memory::AllocatorCore::Free(factory);
+		engineCore->SetRendererFactory(nullptr);
 	}
 }
