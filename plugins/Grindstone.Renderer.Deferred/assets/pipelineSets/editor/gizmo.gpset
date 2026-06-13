@@ -48,7 +48,7 @@ pipelineSet "Gizmo" {
 				depthCompareOp: lessOrEqual
 				attachments: {
 					colorMask: rgba
-					blendPreset: opaque
+					blendPreset: translucent
 				}
 			}
 
@@ -70,6 +70,11 @@ pipelineSet "Gizmo" {
 					float dGbuffer = gbufferDepth.SampleLevel(gbufferSampler, uv, 0);
 					float dDraw = input.position.z;
 					float4 color = input.color;
+
+					if (dDraw > dGbuffer) {
+						color.a *= 0.5f;
+					}
+
 					return color;
 				}
 			}
@@ -81,7 +86,7 @@ pipelineSet "Gizmo" {
 			renderQueue: "Gizmo"
 
 			properties {
-				cull: back
+				cull: none
 				depthBias: false
 				depthWrite: false
 				depthTest: false
@@ -113,7 +118,7 @@ pipelineSet "Gizmo" {
 					float4 color = input.color;
 
 					if (dDraw > dGbuffer) {
-						color.a *= 0.5f;
+						color.a *= 0.2f;
 					}
 
 					return color;
