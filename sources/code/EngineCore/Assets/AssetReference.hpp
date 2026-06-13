@@ -60,16 +60,20 @@ namespace Grindstone {
 			Grindstone::AssetFunctions::Increment(T::GetStaticType(), uuid);
 		}
 
-		AssetReference(AssetReference&& other) noexcept : GenericAssetReference(other.uuid) {}
+		AssetReference(AssetReference&& other) noexcept : GenericAssetReference(other.uuid) {
+			other.uuid = Grindstone::Uuid();
+		}
 
-		AssetReference& operator=(const AssetReference& other) noexcept {
+		AssetReference& operator=(const AssetReference& other) {
 			if (uuid != other.uuid) {
 				if (uuid.IsValid()) {
 					Grindstone::AssetFunctions::Decrement(T::GetStaticType(), uuid);
 				}
 
 				uuid = other.uuid;
-				Grindstone::AssetFunctions::Increment(T::GetStaticType(), uuid);
+				if (uuid.IsValid()) {
+					Grindstone::AssetFunctions::Increment(T::GetStaticType(), uuid);
+				}
 			}
 
 			return *this;
