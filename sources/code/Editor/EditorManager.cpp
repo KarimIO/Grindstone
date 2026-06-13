@@ -351,6 +351,7 @@ Manager::~Manager() {
 	}
 
 	if (engineCore != nullptr) {
+		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAfterUiSetup");
 		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAfterSceneInitialization");
 		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorBeforeSceneInitialization");
 		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAfterCameraInitialization");
