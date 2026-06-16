@@ -19,7 +19,7 @@ REFLECT_STRUCT_BEGIN(SpotLightComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::SetupSpotLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::SpotLightComponent::Construct(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	auto& engineCore = EngineCore::GetInstance();
 	auto graphicsCore = engineCore.GetGraphicsCore();
 	auto eventDispatcher = engineCore.GetEventDispatcher();
@@ -91,9 +91,10 @@ void Grindstone::SetupSpotLightComponent(Grindstone::WorldContextSet& cxtSet, en
 	}
 }
 
-void Grindstone::DestroySpotLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::SpotLightComponent::Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	SpotLightComponent& spotLightComponent = cxtSet.GetEntityRegistry().get<SpotLightComponent>(entity);
 
+	/*
 	EngineCore::GetInstance().PushDeletion(
 		[spotLightComponent]() {
 			EngineCore& engineCore = EngineCore::GetInstance();
@@ -107,6 +108,7 @@ void Grindstone::DestroySpotLightComponent(Grindstone::WorldContextSet& cxtSet, 
 			graphicsCore->DeleteBuffer(spotLightComponent.uniformBufferObject);
 		}
 	);
+	*/
 
 	spotLightComponent.shadowMapDescriptorSet = nullptr;
 	spotLightComponent.shadowMapDescriptorSetLayout = nullptr;

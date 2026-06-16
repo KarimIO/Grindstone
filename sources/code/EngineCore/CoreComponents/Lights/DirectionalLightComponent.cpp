@@ -16,7 +16,7 @@ REFLECT_STRUCT_BEGIN(DirectionalLightComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::SetupDirectionalLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::DirectionalLightComponent::Construct(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	auto& engineCore = EngineCore::GetInstance();
 	auto graphicsCore = engineCore.GetGraphicsCore();
 	auto eventDispatcher = engineCore.GetEventDispatcher();
@@ -88,7 +88,7 @@ void Grindstone::SetupDirectionalLightComponent(Grindstone::WorldContextSet& cxt
 	}
 }
 
-void Grindstone::DestroyDirectionalLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::DirectionalLightComponent::Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	DirectionalLightComponent& directionalLightComponent = cxtSet.GetEntityRegistry().get<DirectionalLightComponent>(entity);
 
 	EngineCore::GetInstance().PushDeletion(

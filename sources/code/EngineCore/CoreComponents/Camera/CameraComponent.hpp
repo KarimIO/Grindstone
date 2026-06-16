@@ -21,11 +21,10 @@ namespace Grindstone {
 		float aspectRatio = 800.0f / 600.0f;
 		BaseRenderer* renderer = nullptr;
 
+		static void Construct(Grindstone::WorldContextSet&, entt::entity);
+		static void Destroy(Grindstone::WorldContextSet&, entt::entity);
 		bool OnWindowResize(Events::BaseEvent* ev);
 
 		REFLECT("Camera")
 	};
-
-	void SetupCameraComponent(Grindstone::WorldContextSet&, entt::entity);
-	void DestroyCameraComponent(Grindstone::WorldContextSet&, entt::entity);
 }

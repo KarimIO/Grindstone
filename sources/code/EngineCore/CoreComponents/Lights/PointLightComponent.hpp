@@ -25,6 +25,9 @@ namespace Grindstone {
 			// float shadowResolution;
 		};
 
+		static void Construct(Grindstone::WorldContextSet& cxtSet, entt::entity);
+		static void Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity);
+
 		Math::Float3 color;
 		float attenuationRadius;
 		float intensity;
@@ -46,7 +49,4 @@ namespace Grindstone {
 
 		REFLECT("PointLight")
 	};
-
-	void SetupPointLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
-	void DestroyPointLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
 }

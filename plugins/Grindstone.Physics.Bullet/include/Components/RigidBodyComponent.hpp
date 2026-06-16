@@ -1,5 +1,7 @@
 #pragma once
 
+#include <bullet/btBulletDynamicsCommon.h>
+
 #include "Common/Math.hpp"
 #include "EngineCore/ECS/Entity.hpp"
 #include "EngineCore/Reflection/ComponentReflection.hpp"
@@ -14,11 +16,11 @@ namespace Grindstone {
 	namespace Physics {
 		struct ColliderComponent;
 
-		void SetupRigidBodyComponent(Grindstone::WorldContextSet&, entt::entity);
-
 		struct RigidBodyComponent {
 			RigidBodyComponent() = default;
 			RigidBodyComponent(float mass, ColliderComponent* colliderComponent);
+
+			static void Construct(Grindstone::WorldContextSet&, entt::entity);
 			RigidBodyComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
 
 			void SetCollisionShape(ColliderComponent* colliderComponent);

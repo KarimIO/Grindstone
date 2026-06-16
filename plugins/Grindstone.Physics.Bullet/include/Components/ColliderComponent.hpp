@@ -18,6 +18,7 @@ namespace Grindstone::Physics {
 	};
 
 	struct SphereColliderComponent : public ColliderComponent {
+		static void Construct(Grindstone::WorldContextSet& cxtSet, entt::entity entityId);
 		SphereColliderComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
 		virtual void Initialize() override;
 		virtual void SetRadius(float radius);
@@ -29,6 +30,7 @@ namespace Grindstone::Physics {
 	};
 
 	struct PlaneColliderComponent : public ColliderComponent {
+		static void Construct(Grindstone::WorldContextSet& cxtSet, entt::entity entityId);
 		PlaneColliderComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
 		virtual void Initialize() override;
 		virtual void SetCollider(Math::Float3 planeNormal, float positionAlongNormal);
@@ -42,6 +44,7 @@ namespace Grindstone::Physics {
 	};
 
 	struct BoxColliderComponent : public ColliderComponent {
+		static void Construct(Grindstone::WorldContextSet& cxtSet, entt::entity entityId);
 		BoxColliderComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
 		virtual void Initialize() override;
 		virtual void SetSize(Math::Float3);
@@ -53,6 +56,7 @@ namespace Grindstone::Physics {
 	};
 
 	struct CapsuleColliderComponent : public ColliderComponent {
+		static void Construct(Grindstone::WorldContextSet& cxtSet, entt::entity entityId);
 		CapsuleColliderComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
 		virtual void Initialize() override;
 		virtual void SetCollider(float radius, float height);

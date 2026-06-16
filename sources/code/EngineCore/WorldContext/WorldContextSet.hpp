@@ -10,7 +10,8 @@
 namespace Grindstone {
 	class WorldContextSet {
 	public:
-		WorldContextSet(const std::string& name) : name(name), registry(), contexts() {}
+
+		WorldContextSet(const std::string& name);
 
 		WorldContextSet(const WorldContextSet&) = delete;
 		WorldContextSet& operator=(const WorldContextSet&) = delete;
@@ -19,6 +20,8 @@ namespace Grindstone {
 		WorldContextSet& operator=(WorldContextSet&&) noexcept = default;
 
 		virtual ~WorldContextSet();
+
+		void Reset();
 
 		[[nodiscard]] entt::registry& GetEntityRegistry() {
 			return registry;

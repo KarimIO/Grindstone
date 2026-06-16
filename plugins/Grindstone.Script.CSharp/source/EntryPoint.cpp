@@ -56,7 +56,7 @@ extern "C" {
 		Grindstone::EngineCore::GetInstance().scriptManager = &manager;
 
 		globalPluginInterface = pluginInterface;
-		pluginInterface->RegisterComponent<ScriptComponent>(SetupCSharpScriptComponent, DestroyCSharpScriptComponent);
+		pluginInterface->RegisterComponent<ScriptComponent>();
 		pluginInterface->RegisterSystem("Scripting::CSharp::Update", UpdateSystem);
 		pluginInterface->systemRegistrar->RegisterEditorSystem("Scripting::CSharp::UpdateEditor", UpdateEditorSystem);
 		pluginInterface->SetReloadCsharpCallback(QueueReloadCsharp);

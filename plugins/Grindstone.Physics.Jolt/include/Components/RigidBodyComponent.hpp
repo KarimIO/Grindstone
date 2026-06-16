@@ -18,13 +18,12 @@ namespace Grindstone {
 	namespace Physics {
 		struct ColliderComponent;
 
-		void SetupRigidBodyComponent(Grindstone::WorldContextSet&, entt::entity);
-
 		struct RigidBodyComponent {
 			RigidBodyComponent() = default;
 			RigidBodyComponent(float mass, ColliderComponent* colliderComponent);
 			RigidBodyComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
-			~RigidBodyComponent();
+			static void Construct(Grindstone::WorldContextSet&, entt::entity);
+			static void Destroy(Grindstone::WorldContextSet&, entt::entity);
 
 			void SetIsStatic(bool isStatic);
 			void SetLayer(Grindstone::Physics::Layer layer);

@@ -445,8 +445,14 @@ MaterialImporter::~MaterialImporter() {
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
 	for (auto& asset : assets) {
-		graphicsCore->DeleteDescriptorSet(asset.second.materialDescriptorSet);
-		graphicsCore->DeleteBuffer(asset.second.materialDataUniformBuffer);
+		Grindstone::MaterialAsset& assetData = asset.second;
+		if (assetData.materialDescriptorSet != nullptr) {
+			graphicsCore->DeleteDescriptorSet(assetData.materialDescriptorSet);
+		}
+
+		if (assetData.materialDataUniformBuffer != nullptr) {
+			graphicsCore->DeleteBuffer(assetData.materialDataUniformBuffer);
+		}
 	}
 
 	assets.clear();

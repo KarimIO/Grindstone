@@ -10,9 +10,9 @@ namespace Grindstone {
 	struct EnvironmentMapComponent {
 		AssetReference<TextureAsset> specularTexture;
 
+		static void Construct(Grindstone::WorldContextSet& cxtSet, entt::entity);
+		static void Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity);
+
 		REFLECT("EnvironmentMap")
 	};
-
-	void SetupEnvironmentMapComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
-	void DestroyEnvironmentMapComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
 }

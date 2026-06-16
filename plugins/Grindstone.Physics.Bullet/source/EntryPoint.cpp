@@ -19,26 +19,6 @@
 using namespace Grindstone::Memory;
 using namespace Grindstone::Physics;
 
-template<typename ComponentType>
-void SetupColliderComponent(Grindstone::WorldContextSet& cxt, entt::entity entity) {
-	entt::registry& registry = cxt.GetEntityRegistry();
-	ComponentType& colliderComponent = registry.get<ComponentType>(entity);
-
-	colliderComponent.Initialize();
-	colliderComponent.collisionShape->setUserPointer(&colliderComponent);
-
-	RigidBodyComponent* rigidBodyComponent = registry.try_get<RigidBodyComponent>(entity);
-	TransformComponent* transformComponent = registry.try_get<TransformComponent>(entity);
-	if (rigidBodyComponent != nullptr && transformComponent != nullptr) {
-		SetupRigidBodyComponentWithCollider(
-			cxt,
-			rigidBodyComponent,
-			transformComponent,
-			&colliderComponent
-		);
-	}
-}
-
 extern "C" {
 	BULLET_PHYSICS_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
 		Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
@@ -46,24 +26,13 @@ extern "C" {
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
 		EngineCore::SetInstance(*pluginInterface->GetEngineCore());
 
-		pluginInterface->RegisterComponent<BoxColliderComponent>(
-			SetupColliderComponent<BoxColliderComponent>
-		);
-
-		pluginInterface->RegisterComponent<SphereColliderComponent>(
-			SetupColliderComponent<SphereColliderComponent>
-		);
-
-		pluginInterface->RegisterComponent<PlaneColliderComponent>(
-			SetupColliderComponent<PlaneColliderComponent>
-		);
-
-		pluginInterface->RegisterComponent<CapsuleColliderComponent>(
-			SetupColliderComponent<CapsuleColliderComponent>
-		);
+		pluginInterface->RegisterComponent<BoxColliderComponent>();
+		pluginInterface->RegisterComponent<SphereColliderComponent>();
+		pluginInterface->RegisterComponent<PlaneColliderComponent>();
+		pluginInterface->RegisterComponent<CapsuleColliderComponent>();
 
 		pluginInterface->RegisterWorldContextFactory<Grindstone::Physics::WorldContext>(physicsWorldContextName);
-		pluginInterface->RegisterComponent<RigidBodyComponent>(SetupRigidBodyComponent);
+		pluginInterface->RegisterComponent<RigidBodyComponent>();
 		pluginInterface->RegisterSystem("PhysicsSystem", PhysicsBulletSystem);
 	}
 

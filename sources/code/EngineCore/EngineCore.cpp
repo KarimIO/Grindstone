@@ -242,6 +242,8 @@ EngineCore::~EngineCore() {
 	AllocatorCore::Free(assetManager);
 	AllocatorCore::Free(inputManager);
 
+	deferredDeletionQueue.DeleteAll();
+
 	if (pluginManager) {
 		pluginManager->UnloadPluginsByStage("EarlyEngineSetup");
 		AllocatorCore::Free(pluginManager);

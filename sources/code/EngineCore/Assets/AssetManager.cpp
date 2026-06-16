@@ -44,14 +44,17 @@ AssetManager::~AssetManager() {
 		AllocatorCore::Free(assetLoader);
 	}
 
-	AllocatorCore::Free(static_cast<GraphicsPipelineImporter*>(assetTypeImporters[static_cast<size_t>(GraphicsPipelineAsset::GetStaticType())]));
-	AllocatorCore::Free(static_cast<ComputePipelineImporter*>(assetTypeImporters[static_cast<size_t>(ComputePipelineAsset::GetStaticType())]));
-	AllocatorCore::Free(static_cast<TextureImporter*>(assetTypeImporters[static_cast<size_t>(TextureAsset::GetStaticType())]));
 	AllocatorCore::Free(static_cast<MaterialImporter*>(assetTypeImporters[static_cast<size_t>(MaterialAsset::GetStaticType())]));
-	UnregisterAssetType(GraphicsPipelineAsset::GetStaticType());
-	UnregisterAssetType(ComputePipelineAsset::GetStaticType());
-	UnregisterAssetType(TextureAsset::GetStaticType());
 	UnregisterAssetType(MaterialAsset::GetStaticType());
+
+	AllocatorCore::Free(static_cast<TextureImporter*>(assetTypeImporters[static_cast<size_t>(TextureAsset::GetStaticType())]));
+	UnregisterAssetType(TextureAsset::GetStaticType());
+
+	AllocatorCore::Free(static_cast<ComputePipelineImporter*>(assetTypeImporters[static_cast<size_t>(ComputePipelineAsset::GetStaticType())]));
+	UnregisterAssetType(ComputePipelineAsset::GetStaticType());
+
+	AllocatorCore::Free(static_cast<GraphicsPipelineImporter*>(assetTypeImporters[static_cast<size_t>(GraphicsPipelineAsset::GetStaticType())]));
+	UnregisterAssetType(GraphicsPipelineAsset::GetStaticType());
 
 	for (AssetImporter*& importer : assetTypeImporters) {
 		if (importer != nullptr) {

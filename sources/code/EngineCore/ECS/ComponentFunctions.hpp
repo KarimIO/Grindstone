@@ -11,6 +11,7 @@ namespace Grindstone {
 	namespace ECS {
 		using SetupComponentFn = void(*)(Grindstone::WorldContextSet&, entt::entity);
 		using DestroyComponentFn = void(*)(Grindstone::WorldContextSet&, entt::entity);
+		using ClearComponentsFn = void(*)(Grindstone::WorldContextSet&);
 		using GetComponentReflectionDataFn = Grindstone::Reflection::TypeDescriptor_Struct(*)();
 		using TryGetComponentFn = bool(*)(entt::registry&, entt::entity, void*& outEntity);
 		using HasComponentFn = bool(*)(entt::registry&, entt::entity);
@@ -22,6 +23,7 @@ namespace Grindstone {
 		public:
 			SetupComponentFn SetupComponentFn = nullptr;
 			DestroyComponentFn DestroyComponentFn = nullptr;
+			ClearComponentsFn ClearComponentsFn = nullptr;
 			CreateComponentFn CreateComponentFn = nullptr;
 			RemoveComponentFn RemoveComponentFn = nullptr;
 			HasComponentFn HasComponentFn = nullptr;

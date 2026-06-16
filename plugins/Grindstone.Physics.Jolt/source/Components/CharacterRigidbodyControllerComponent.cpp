@@ -20,17 +20,27 @@ REFLECT_STRUCT_BEGIN(CharacterRigidbodyControllerComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::Physics::SetupCharacterRigidbodyControllerComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::Physics::CharacterRigidbodyControllerComponent::Construct(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	entt::registry& registry = cxtSet.GetEntityRegistry();
 	ColliderComponent* colliderComponent = GetCollider(registry, entity);
 	if (colliderComponent == nullptr || colliderComponent->collisionShape == nullptr) {
 		return;
 	}
 
-	CharacterRigidbodyControllerComponent& CharacterRigidbodyControllerComponent = registry.get<Physics::CharacterRigidbodyControllerComponent>(entity);
+	CharacterRigidbodyControllerComponent& characterRigidbodyControllerComponent = registry.get<Physics::CharacterRigidbodyControllerComponent>(entity);
 	TransformComponent& transformComponent = registry.get<TransformComponent>(entity);
 
-	SetupCharacterRigidbodyControllerComponentWithCollider(cxtSet, &CharacterRigidbodyControllerComponent, &transformComponent, colliderComponent);
+	SetupCharacterRigidbodyControllerComponentWithCollider(cxtSet, &characterRigidbodyControllerComponent, &transformComponent, colliderComponent);
+}
+
+void Grindstone::Physics::CharacterRigidbodyControllerComponent::Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+	entt::registry& registry = cxtSet.GetEntityRegistry();
+	CharacterRigidbodyControllerComponent* cc = registry.try_get<Grindstone::Physics::CharacterRigidbodyControllerComponent>(entity);
+	
+	if (cc && cc->character != nullptr) {
+		cc->character->RemoveFromPhysicsSystem();
+		cc->character = nullptr;
+	}
 }
 
 void Grindstone::Physics::SetupCharacterRigidbodyControllerComponentWithCollider(
@@ -96,13 +106,6 @@ void CharacterRigidbodyControllerComponent::SetRotation(Math::Quaternion rot) {
 Grindstone::Math::Quaternion CharacterRigidbodyControllerComponent::GetRotation() const {
 	JPH::Quat v = character->GetRotation();
 	return Math::Quaternion(v.GetY(), v.GetZ(), v.GetW(), v.GetX());
-}
-
-CharacterRigidbodyControllerComponent::~CharacterRigidbodyControllerComponent() {
-	if (character != nullptr) {
-		character->RemoveFromPhysicsSystem();
-		character = nullptr;
-	}
 }
 
 extern "C" {

@@ -18,12 +18,23 @@ namespace Grindstone::ECS {
 	class ComponentRegistrar {
 	public:
 		template<typename ComponentType>
-		void RegisterComponent(SetupComponentFn setupComponentFn = nullptr, DestroyComponentFn destroyComponentFn = nullptr) {
+		void RegisterComponent() {
+			SetupComponentFn setupComponentFn = nullptr;
+			if constexpr (HasConstruct<ComponentType>) {
+				setupComponentFn = ComponentType::Construct;
+			}
+
+			DestroyComponentFn destroyComponentFn = nullptr;
+			if constexpr (HasDestroy<ComponentType>) {
+				destroyComponentFn = ComponentType::Destroy;
+			}
+
 			RegisterComponent(
 				ComponentType::GetComponentHashString(),
 				ComponentFunctions{
 					setupComponentFn,
 					destroyComponentFn,
+					&ECS::ClearComponents<ComponentType>,
 					&ECS::CreateComponent<ComponentType>,
 					&ECS::RemoveComponent<ComponentType>,
 					&ECS::HasComponent<ComponentType>,
@@ -39,8 +50,8 @@ namespace Grindstone::ECS {
 			Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 			Grindstone::WorldContextManager* worldContextManager = engineCore.GetWorldContextManager();
 			if (worldContextManager != nullptr) {
-				for (Grindstone::UniquePtr<Grindstone::WorldContextSet>& worldContext : *worldContextManager) {
-					entt::registry& registry = worldContext.Get()->GetEntityRegistry();
+				for (auto& worldContext : *worldContextManager) {
+					entt::registry& registry = worldContext->GetEntityRegistry();
 					registry.clear<ComponentType>();
 				}
 			}

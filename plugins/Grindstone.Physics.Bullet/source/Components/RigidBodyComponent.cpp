@@ -1,4 +1,3 @@
-#include <bullet/btBulletDynamicsCommon.h>
 
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
@@ -36,7 +35,7 @@ static ColliderComponent* GetCollider(entt::registry& registry, entt::entity ent
 	return nullptr;
 }
 
-void Grindstone::Physics::SetupRigidBodyComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::Physics::RigidBodyComponent::Construct(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	entt::registry& registry = cxtSet.GetEntityRegistry();
 	ColliderComponent* colliderComponent = GetCollider(registry, entity);
 	if (colliderComponent == nullptr) {

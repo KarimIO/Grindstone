@@ -21,7 +21,7 @@ namespace Grindstone {
 		virtual void Remove(Grindstone::WorldContextSet* cxtSet);
 		virtual void ClearContextSets();
 
-		using WorldContextSetArray = std::vector<Grindstone::UniquePtr<Grindstone::WorldContextSet>>;
+		using WorldContextSetArray = std::vector<Grindstone::WorldContextSet*>;
 
 		virtual WorldContextSetArray::iterator begin();
 		virtual WorldContextSetArray::const_iterator begin() const;

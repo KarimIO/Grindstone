@@ -13,7 +13,7 @@ REFLECT_STRUCT_BEGIN(ScriptComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::Scripting::CSharp::SetupCSharpScriptComponent(
+void Grindstone::Scripting::CSharp::ScriptComponent::Construct(
 	Grindstone::WorldContextSet& cxtSet,
 	entt::entity entity
 ) {
@@ -22,9 +22,8 @@ void Grindstone::Scripting::CSharp::SetupCSharpScriptComponent(
 	csManager.SetupComponent(cxtSet, entity, component);
 }
 
-void Grindstone::Scripting::CSharp::DestroyCSharpScriptComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::Scripting::CSharp::ScriptComponent::Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	CSharpManager& csManager = CSharpManager::GetInstance();
 	ScriptComponent& component = cxtSet.GetEntityRegistry().get<ScriptComponent>(entity);
 	csManager.DestroyComponent(cxtSet, entity, component);
 }
-

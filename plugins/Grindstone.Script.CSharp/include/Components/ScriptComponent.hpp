@@ -11,9 +11,9 @@ namespace Grindstone::Scripting::CSharp {
 		std::string scriptClass;
 		void* csharpObject = nullptr;
 
+		static void Construct(Grindstone::WorldContextSet& cxtSet, entt::entity);
+		static void Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity);
+
 		REFLECT("CSharpScript")
 	};
-
-	void SetupCSharpScriptComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
-	void DestroyCSharpScriptComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
 }

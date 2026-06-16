@@ -81,8 +81,8 @@ namespace Grindstone {
 			}
 
 			template<typename ClassType>
-			void RegisterComponent(Grindstone::ECS::SetupComponentFn setupComponentFn = nullptr, Grindstone::ECS::DestroyComponentFn destroyComponentFn = nullptr) {
-				componentRegistrar->RegisterComponent<ClassType>(setupComponentFn, destroyComponentFn);
+			void RegisterComponent() {
+				componentRegistrar->RegisterComponent<ClassType>();
 			}
 
 			template<typename T>
