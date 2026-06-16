@@ -66,17 +66,15 @@ void ComponentRegistrar::CallCreateOnRegistry(Grindstone::WorldContextSet& world
 }
 
 void ComponentRegistrar::CallDestroyOnRegistry(Grindstone::WorldContextSet& worldContextSet) {
-	Grindstone::WorldContextSet& cxtSet = GetActiveWorldContextSet();
-	entt::registry& registry = cxtSet.GetEntityRegistry();
-	auto entityView = registry.view<entt::entity>();
+	entt::registry& registry = worldContextSet.GetEntityRegistry();
 
 	for (auto& compFnPair : componentFunctionsList) {
 		ComponentFunctions& compFns = compFnPair.second;
 
 		if (compFns.DestroyComponentFn != nullptr) {
-			for (entt::entity entity : entityView) {
-				if (compFns.HasComponentFn(registry, entity)) {
-					compFns.DestroyComponentFn(cxtSet, entity);
+			for (entt::entity entity : registry.storage<entt::entity>()) {
+				if (compFns.HasComponentFn(worldContextSet.GetEntityRegistry(), entity)) {
+					compFns.DestroyComponentFn(worldContextSet, entity);
 				}
 			}
 		}
@@ -126,7 +124,7 @@ void* ComponentRegistrar::CreateComponentWithSetup(WorldContextSet& worldContext
 		return nullptr;
 	}
 
-	entt::registry& registry = GetEntityRegistry();
+	entt::registry& registry = worldContextSet.GetEntityRegistry();
 
 	auto& fns = selectedFactory->second;
 	auto comp = fns.CreateComponentFn(registry, entity.GetHandle());
@@ -138,6 +136,7 @@ void* ComponentRegistrar::CreateComponentWithSetup(WorldContextSet& worldContext
 	return comp;
 }
 
+// TODO: Add WorldContextSet?
 void* ComponentRegistrar::CreateComponent(Grindstone::HashedString name, ECS::Entity entity) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
@@ -148,6 +147,7 @@ void* ComponentRegistrar::CreateComponent(Grindstone::HashedString name, ECS::En
 	return selectedFactory->second.CreateComponentFn(registry, entity.GetHandle());
 }
 
+// TODO: Add WorldContextSet?
 void ComponentRegistrar::RemoveComponent(Grindstone::HashedString name, ECS::Entity entity) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {

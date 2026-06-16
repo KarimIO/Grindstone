@@ -28,7 +28,7 @@ namespace Grindstone {
 				entt::registry& registry,
 				Grindstone::HashedString renderQueueHash
 			) override;
-			GraphicsAPI::DescriptorSetLayout* GetPerDrawDescriptorSetLayout() const;
+			static GraphicsAPI::DescriptorSetLayout* GetPerDrawDescriptorSetLayout();
 		private:
 			virtual std::string GetName() const override;
 			virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) override;
@@ -36,6 +36,6 @@ namespace Grindstone {
 			EngineCore* engineCore = nullptr;
 			std::string rendererName = "Mesh3d";
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
-			class GraphicsAPI::DescriptorSetLayout* perDrawDescriptorSetLayout = nullptr;
+			static class GraphicsAPI::DescriptorSetLayout* perDrawDescriptorSetLayout;
 	};
 }

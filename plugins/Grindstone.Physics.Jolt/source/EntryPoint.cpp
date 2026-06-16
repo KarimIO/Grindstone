@@ -62,38 +62,6 @@ static bool AssertFailedImpl(const char* inExpression, const char* inMessage, co
 
 #endif // JPH_ENABLE_ASSERTS
 
-template<typename ComponentType>
-void SetupColliderComponent(Grindstone::WorldContextSet& cxt, entt::entity entity) {
-	entt::registry& registry = cxt.GetEntityRegistry();
-	ComponentType& colliderComponent = registry.get<ComponentType>(entity);
-
-	CharacterRigidbodyControllerComponent* ccComponent = registry.try_get<CharacterRigidbodyControllerComponent>(entity);
-	RigidBodyComponent* rigidBodyComponent = registry.try_get<RigidBodyComponent>(entity);
-	TransformComponent* transformComponent = registry.try_get<TransformComponent>(entity);
-
-	if (transformComponent != nullptr) {
-		colliderComponent.Initialize(*transformComponent);
-	}
-
-	if (rigidBodyComponent != nullptr && transformComponent != nullptr) {
-		SetupRigidBodyComponentWithCollider(
-			cxt,
-			rigidBodyComponent,
-			transformComponent,
-			&colliderComponent
-		);
-	}
-
-	if (ccComponent != nullptr && transformComponent != nullptr) {
-		SetupCharacterRigidbodyControllerComponentWithCollider(
-			cxt,
-			ccComponent,
-			transformComponent,
-			&colliderComponent
-		);
-	}
-}
-
 using namespace Grindstone::Memory::AllocatorCore;
 static void* JoltPhysAllocate(size_t inSize) {
 	constexpr size_t defaultAlignment = JPH_VECTOR_ALIGNMENT;
@@ -122,32 +90,21 @@ extern "C" {
 		JPH::Factory::sInstance = new JPH::Factory();
 		JPH::RegisterTypes();
 
-		pluginInterface->RegisterComponent<BoxColliderComponent>(
-			SetupColliderComponent<BoxColliderComponent>
-		);
-
-		pluginInterface->RegisterComponent<SphereColliderComponent>(
-			SetupColliderComponent<SphereColliderComponent>
-		);
-
-		pluginInterface->RegisterComponent<PlaneColliderComponent>(
-			SetupColliderComponent<PlaneColliderComponent>
-		);
-
-		pluginInterface->RegisterComponent<CapsuleColliderComponent>(
-			SetupColliderComponent<CapsuleColliderComponent>
-		);
+		pluginInterface->RegisterComponent<BoxColliderComponent>();
+		pluginInterface->RegisterComponent<SphereColliderComponent>();
+		pluginInterface->RegisterComponent<PlaneColliderComponent>();
+		pluginInterface->RegisterComponent<CapsuleColliderComponent>();
 
 		pluginInterface->RegisterWorldContextFactory<Grindstone::Physics::WorldContext>(physicsWorldContextName);
-		pluginInterface->RegisterComponent<RigidBodyComponent>(SetupRigidBodyComponent);
-		pluginInterface->RegisterComponent<CharacterRigidbodyControllerComponent>(SetupCharacterRigidbodyControllerComponent);
-		// TODO: Setup CharacterRigidbody
+		pluginInterface->RegisterComponent<RigidBodyComponent>();
+		pluginInterface->RegisterComponent<CharacterRigidbodyControllerComponent>();
+
 		pluginInterface->RegisterSystem("PhysicsSystem", PhysicsJoltSystem);
 	}
 
 	JOLT_PHYSICS_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
 		pluginInterface->UnregisterSystem("PhysicsSystem");
-		// TODO: Remove CharacterRigidbody
+
 		pluginInterface->UnregisterComponent<CharacterRigidbodyControllerComponent>();
 		pluginInterface->UnregisterComponent<RigidBodyComponent>();
 		pluginInterface->UnregisterWorldContextFactory(physicsWorldContextName);

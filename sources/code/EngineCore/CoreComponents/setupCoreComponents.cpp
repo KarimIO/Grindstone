@@ -16,9 +16,9 @@ void Grindstone::SetupCoreComponents(ECS::ComponentRegistrar* registrar) {
 	registrar->RegisterComponent<Grindstone::TagComponent>();
 	registrar->RegisterComponent<Grindstone::TransformComponent>();
 	registrar->RegisterComponent<Grindstone::ParentComponent>();
-	registrar->RegisterComponent<Grindstone::CameraComponent>(SetupCameraComponent, DestroyCameraComponent);
-	registrar->RegisterComponent<Grindstone::SpotLightComponent>(SetupSpotLightComponent, DestroySpotLightComponent);
-	registrar->RegisterComponent<Grindstone::PointLightComponent>(SetupPointLightComponent, DestroyPointLightComponent);
-	registrar->RegisterComponent<Grindstone::DirectionalLightComponent>(SetupDirectionalLightComponent, DestroyDirectionalLightComponent);
-	registrar->RegisterComponent<Grindstone::EnvironmentMapComponent>(SetupEnvironmentMapComponent, DestroyEnvironmentMapComponent);
+	registrar->RegisterComponent<Grindstone::CameraComponent>();
+	registrar->RegisterComponent<Grindstone::SpotLightComponent>();
+	registrar->RegisterComponent<Grindstone::PointLightComponent>();
+	registrar->RegisterComponent<Grindstone::DirectionalLightComponent>();
+	registrar->RegisterComponent<Grindstone::EnvironmentMapComponent>();
 }

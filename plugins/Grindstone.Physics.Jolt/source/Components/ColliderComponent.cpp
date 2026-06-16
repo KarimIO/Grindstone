@@ -9,11 +9,44 @@
 
 #include <Grindstone.Physics.Jolt/include/Components/RigidBodyComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/Components/ColliderComponent.hpp>
+#include <Grindstone.Physics.Jolt/include/Components/CharacterRigidbodyControllerComponent.hpp>
 
 using namespace JPH::literals;
 
 using namespace Grindstone::Physics;
 using namespace Grindstone::Math;
+
+template<typename ComponentType>
+void SetupColliderComponent(Grindstone::WorldContextSet& cxt, entt::entity entity) {
+	entt::registry& registry = cxt.GetEntityRegistry();
+	ComponentType& colliderComponent = registry.get<ComponentType>(entity);
+
+	Grindstone::Physics::CharacterRigidbodyControllerComponent* ccComponent = registry.try_get<Grindstone::Physics::CharacterRigidbodyControllerComponent>(entity);
+	Grindstone::Physics::RigidBodyComponent* rigidBodyComponent = registry.try_get<Grindstone::Physics::RigidBodyComponent>(entity);
+	Grindstone::TransformComponent* transformComponent = registry.try_get<Grindstone::TransformComponent>(entity);
+
+	if (transformComponent != nullptr) {
+		colliderComponent.Initialize(*transformComponent);
+	}
+
+	if (rigidBodyComponent != nullptr && transformComponent != nullptr) {
+		SetupRigidBodyComponentWithCollider(
+			cxt,
+			rigidBodyComponent,
+			transformComponent,
+			&colliderComponent
+		);
+	}
+
+	if (ccComponent != nullptr && transformComponent != nullptr) {
+		SetupCharacterRigidbodyControllerComponentWithCollider(
+			cxt,
+			ccComponent,
+			transformComponent,
+			&colliderComponent
+		);
+	}
+}
 
 static float GetMinComponent(const glm::vec3& scale) {
 	return glm::min(scale.x, scale.y, scale.z);
@@ -48,6 +81,10 @@ REFLECT_STRUCT_BEGIN(SphereColliderComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
+void SphereColliderComponent::Construct(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) {
+	SetupColliderComponent<SphereColliderComponent>(cxt, newEntityId);
+}
+
 SphereColliderComponent SphereColliderComponent::Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const {
 	SphereColliderComponent sphere{};
 	sphere.radius = radius;
@@ -75,6 +112,10 @@ REFLECT_STRUCT_BEGIN(PlaneColliderComponent)
 	REFLECT_STRUCT_MEMBER(positionAlongNormal)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
+
+void PlaneColliderComponent::Construct(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) {
+	SetupColliderComponent<PlaneColliderComponent>(cxt, newEntityId);
+}
 
 PlaneColliderComponent PlaneColliderComponent::Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const {
 	PlaneColliderComponent plane{};
@@ -105,6 +146,10 @@ REFLECT_STRUCT_BEGIN(BoxColliderComponent)
 	REFLECT_STRUCT_MEMBER(size)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
+
+void BoxColliderComponent::Construct(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) {
+	SetupColliderComponent<BoxColliderComponent>(cxt, newEntityId);
+}
 
 BoxColliderComponent BoxColliderComponent::Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const {
 	BoxColliderComponent box{};
@@ -159,6 +204,10 @@ REFLECT_STRUCT_BEGIN(CapsuleColliderComponent)
 	REFLECT_STRUCT_MEMBER(height)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
+
+void CapsuleColliderComponent::Construct(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) {
+	SetupColliderComponent<CapsuleColliderComponent>(cxt, newEntityId);
+}
 
 CapsuleColliderComponent CapsuleColliderComponent::Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const {
 	CapsuleColliderComponent capsule{};

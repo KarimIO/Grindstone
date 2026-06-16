@@ -7,6 +7,7 @@
 #include <Common/Memory/SmartPointers/UniquePtr.hpp>
 #include <Common/Math.hpp>
 #include <EngineCore/ECS/Entity.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
 #include <EngineCore/Reflection/ComponentReflection.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 
@@ -24,6 +25,7 @@ namespace Grindstone::Physics {
 	ColliderComponent* GetCollider(entt::registry& registry, entt::entity entityHandle);
 
 	struct SphereColliderComponent : public ColliderComponent {
+		static void Construct(Grindstone::WorldContextSet& cxt, entt::entity newEntityId);
 		SphereColliderComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
 		virtual void Initialize(const TransformComponent& transformComponent) override;
 		virtual void SetRadius(float radius);
@@ -35,6 +37,7 @@ namespace Grindstone::Physics {
 	};
 
 	struct PlaneColliderComponent : public ColliderComponent {
+		static void Construct(Grindstone::WorldContextSet& cxt, entt::entity newEntityId);
 		PlaneColliderComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
 		virtual void Initialize(const TransformComponent& transformComponent) override;
 		virtual void SetCollider(Math::Float3 planeNormal, float positionAlongNormal);
@@ -48,6 +51,7 @@ namespace Grindstone::Physics {
 	};
 
 	struct BoxColliderComponent : public ColliderComponent {
+		static void Construct(Grindstone::WorldContextSet& cxt, entt::entity newEntityId);
 		BoxColliderComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
 		virtual void Initialize(const TransformComponent& transformComponent) override;
 		virtual void SetSize(Math::Float3);
@@ -59,6 +63,7 @@ namespace Grindstone::Physics {
 	};
 
 	struct CapsuleColliderComponent : public ColliderComponent {
+		static void Construct(Grindstone::WorldContextSet& cxt, entt::entity newEntityId);
 		CapsuleColliderComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
 		virtual void Initialize(const TransformComponent& transformComponent) override;
 		virtual void SetCollider(float radius, float height);

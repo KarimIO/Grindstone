@@ -17,12 +17,11 @@ namespace Grindstone {
 namespace Grindstone::Physics {
 	struct ColliderComponent;
 
-	void SetupCharacterRigidbodyControllerComponent(Grindstone::WorldContextSet&, entt::entity);
-
 	struct CharacterRigidbodyControllerComponent {
+		static void Construct(Grindstone::WorldContextSet&, entt::entity);
+		static void Destroy(Grindstone::WorldContextSet&, entt::entity);
 		CharacterRigidbodyControllerComponent Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const;
 		bool IsOnGround() const;
-		~CharacterRigidbodyControllerComponent();
 		void SetVelocity(Math::Float3 velocity);
 		Grindstone::Math::Float3 GetVelocity() const;
 		void SetRotation(Math::Quaternion rot);

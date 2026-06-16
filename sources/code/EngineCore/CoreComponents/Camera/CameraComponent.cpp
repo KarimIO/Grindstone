@@ -31,7 +31,7 @@ bool CameraComponent::OnWindowResize(Events::BaseEvent* ev) {
 	return false;
 }
 
-void Grindstone::SetupCameraComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::CameraComponent::Construct(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	auto& engineCore = EngineCore::GetInstance();
 	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	auto eventDispatcher = engineCore.GetEventDispatcher();
@@ -52,7 +52,7 @@ void Grindstone::SetupCameraComponent(Grindstone::WorldContextSet& cxtSet, entt:
 	);
 }
 
-void Grindstone::DestroyCameraComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::CameraComponent::Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	CameraComponent& cameraComponent = cxtSet.GetEntityRegistry().get<CameraComponent>(entity);
 	AllocatorCore::Free(cameraComponent.renderer);
 	cameraComponent.renderer = nullptr;

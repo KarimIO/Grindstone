@@ -11,12 +11,12 @@ REFLECT_STRUCT_BEGIN(EnvironmentMapComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::SetupEnvironmentMapComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::EnvironmentMapComponent::Construct(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	EnvironmentMapComponent& envMap = cxtSet.GetEntityRegistry().get<EnvironmentMapComponent>(entity);
 	envMap.specularTexture = Grindstone::AssetReference<Grindstone::TextureAsset>::CreateAndIncrement(envMap.specularTexture.uuid);
 }
 
-void Grindstone::DestroyEnvironmentMapComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::EnvironmentMapComponent::Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	EnvironmentMapComponent& envMap = cxtSet.GetEntityRegistry().get<EnvironmentMapComponent>(entity);
 	envMap.specularTexture.Release();
 }

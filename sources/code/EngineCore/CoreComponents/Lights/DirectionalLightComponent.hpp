@@ -26,6 +26,9 @@ namespace Grindstone {
 			Math::Rect2D shadowRenderArea;
 		};
 
+		static void Construct(Grindstone::WorldContextSet& cxtSet, entt::entity);
+		static void Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity);
+
 		Math::Matrix4 shadowMatrix;
 		Math::Float3 color;
 		float sourceRadius = 0.0f;
@@ -42,7 +45,4 @@ namespace Grindstone {
 
 		REFLECT("DirectionalLight")
 	};
-
-	void SetupDirectionalLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
-	void DestroyDirectionalLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
 }

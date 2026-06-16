@@ -57,10 +57,12 @@ namespace Grindstone {
 
 		virtual void SetFloatCvar(Grindstone::HashedString name, double value) = 0;
 		virtual void SetIntCvar(Grindstone::HashedString name, int32_t value) = 0;
+		virtual void SetBoolCvar(Grindstone::HashedString name, bool value) = 0;
 		virtual void SetStringCvar(Grindstone::HashedString name, const char* value) = 0;
 
 		virtual double* GetFloatCvar(size_t arrayIndex) = 0;
 		virtual int32_t* GetIntCvar(size_t arrayIndex) = 0;
+		virtual bool GetBoolCvar(size_t arrayIndex) const = 0;
 		virtual const char* GetStringCvarCstring(size_t arrayIndex) = 0;
 		virtual std::string* GetStringCvar(size_t arrayIndex) = 0;
 

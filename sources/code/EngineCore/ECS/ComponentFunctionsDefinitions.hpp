@@ -6,6 +6,26 @@
 #include "ComponentFunctions.hpp"
 
 namespace Grindstone::ECS {
+	template<typename T>
+	concept HasConstruct =
+		requires {
+		&T::Construct;
+	}&&
+		std::same_as<
+		decltype(&T::Construct),
+		void (*)(Grindstone::WorldContextSet&, entt::entity)
+		>;
+
+	template<typename T>
+	concept HasDestroy =
+		requires {
+		&T::Destroy;
+	}&&
+		std::same_as<
+		decltype(&T::Destroy),
+		void (*)(Grindstone::WorldContextSet&, entt::entity)
+		>;
+
 	template<typename ComponentType>
 	void* CreateComponent(entt::registry& registry, entt::entity entity) {
 		return &registry.emplace<ComponentType>(entity);
@@ -16,6 +36,12 @@ namespace Grindstone::ECS {
 		if (registry.any_of<ComponentType>(entity)) {
 			registry.remove<ComponentType>(entity);
 		}
+	}
+
+	template<typename ComponentType>
+	void ClearComponents(WorldContextSet& cxtSet) {
+		entt::registry& registry = cxtSet.GetEntityRegistry();
+		registry.clear<ComponentType>();
 	}
 
 	template<typename ComponentType>

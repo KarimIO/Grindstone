@@ -26,7 +26,7 @@ static JPH::BodyInterface& GetActiveBodyInterface() {
 	return physWorldContext->GetBodyInterface();
 }
 
-void Grindstone::Physics::SetupRigidBodyComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::Physics::RigidBodyComponent::Construct(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	entt::registry& registry = cxtSet.GetEntityRegistry();
 	ColliderComponent* colliderComponent = GetCollider(registry, entity);
 	if (colliderComponent == nullptr) {
@@ -37,6 +37,16 @@ void Grindstone::Physics::SetupRigidBodyComponent(Grindstone::WorldContextSet& c
 	TransformComponent& transformComponent = registry.get<TransformComponent>(entity);
 
 	SetupRigidBodyComponentWithCollider(cxtSet, &rigidBodyComponent, &transformComponent, colliderComponent);
+}
+
+void Grindstone::Physics::RigidBodyComponent::Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+	entt::registry& registry = cxtSet.GetEntityRegistry();
+	RigidBodyComponent* rigidBodyComponent = registry.try_get<RigidBodyComponent>(entity);
+
+	Grindstone::Physics::WorldContext* physWorldContext = static_cast<Grindstone::Physics::WorldContext*>(cxtSet.GetContext(physicsWorldContextName));
+	if (rigidBodyComponent != nullptr && physWorldContext != nullptr) {
+		physWorldContext->GetBodyInterface().RemoveBody(rigidBodyComponent->GetBodyID());
+	}
 }
 
 void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
@@ -73,15 +83,6 @@ void Grindstone::Physics::SetupRigidBodyComponentWithCollider(
 }
 
 RigidBodyComponent::RigidBodyComponent(float mass, ColliderComponent* colliderComponent) : mass(mass) {}
-
-RigidBodyComponent::~RigidBodyComponent() {
-	// TODO: Maybe we need to pass cxt set here? That would mean a destructor that passes contexts.
-	Grindstone::WorldContextSet* cxtSet = Grindstone::EngineCore::GetInstance().GetWorldContextManager()->GetActiveWorldContextSet();
-	Grindstone::Physics::WorldContext* physWorldContext = static_cast<Grindstone::Physics::WorldContext*>(cxtSet->GetContext(physicsWorldContextName));
-	if (physWorldContext != nullptr) {
-		physWorldContext->GetBodyInterface().RemoveBody(GetBodyID());
-	}
-}
 
 RigidBodyComponent RigidBodyComponent::Clone(Grindstone::WorldContextSet& cxt, entt::entity newEntityId) const {
 	RigidBodyComponent newRb;

@@ -18,7 +18,7 @@ REFLECT_STRUCT_BEGIN(PointLightComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::SetupPointLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::PointLightComponent::Construct(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	auto& engineCore = EngineCore::GetInstance();
 	auto graphicsCore = engineCore.GetGraphicsCore();
 	auto eventDispatcher = engineCore.GetEventDispatcher();
@@ -136,12 +136,22 @@ void Grindstone::SetupPointLightComponent(Grindstone::WorldContextSet& cxtSet, e
 	*/
 }
 
-void Grindstone::DestroyPointLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::PointLightComponent::Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	EngineCore& engineCore = EngineCore::GetInstance();
-	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-
 	PointLightComponent& pointLightComponent = cxtSet.GetEntityRegistry().get<PointLightComponent>(entity);
-	graphicsCore->DeleteDescriptorSet(pointLightComponent.descriptorSet);
-	graphicsCore->DeleteDescriptorSetLayout(pointLightComponent.descriptorSetLayout);
-	graphicsCore->DeleteBuffer(pointLightComponent.uniformBufferObject);
+
+	engineCore.PushDeletion(
+		[pointLightComponent]() {
+			EngineCore& engineCore = EngineCore::GetInstance();
+			GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+
+			graphicsCore->DeleteDescriptorSet(pointLightComponent.descriptorSet);
+			graphicsCore->DeleteDescriptorSetLayout(pointLightComponent.descriptorSetLayout);
+			graphicsCore->DeleteBuffer(pointLightComponent.uniformBufferObject);
+		}
+	);
+
+	pointLightComponent.descriptorSet = nullptr;
+	pointLightComponent.descriptorSetLayout = nullptr;
+	pointLightComponent.uniformBufferObject = nullptr;
 }

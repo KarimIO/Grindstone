@@ -30,6 +30,9 @@ namespace Grindstone {
 			Math::Rect2D shadowRenderArea;
 		};
 
+		static void Construct(Grindstone::WorldContextSet& cxtSet, entt::entity);
+		static void Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity);
+
 		Math::Matrix4 shadowMatrix;
 		Math::Float3 color;
 		float attenuationRadius = 0.0f;
@@ -48,7 +51,4 @@ namespace Grindstone {
 
 		REFLECT("SpotLight")
 	};
-
-	void SetupSpotLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
-	void DestroySpotLightComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
 }

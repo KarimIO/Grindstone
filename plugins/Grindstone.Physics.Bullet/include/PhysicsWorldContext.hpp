@@ -1,5 +1,7 @@
 #pragma once
 
+#include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
+
 #include <Common/HashedString.hpp>
 #include <Common/Memory/SmartPointers/UniquePtr.hpp>
 #include <EngineCore/WorldContext/WorldContext.hpp>

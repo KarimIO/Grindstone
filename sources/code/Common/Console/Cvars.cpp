@@ -42,6 +42,10 @@ namespace Grindstone {
 			return &cvars[index].current;
 		};
 
+		T* const GetCurrentPtr(size_t index) const {
+			return &cvars[index].current;
+		};
+
 		T GetCurrent(size_t index) {
 			return cvars[index].current;
 		};
@@ -97,10 +101,12 @@ namespace Grindstone {
 
 		virtual void SetFloatCvar(Grindstone::HashedString name, double value) override;
 		virtual void SetIntCvar(Grindstone::HashedString name, int32_t value) override;
+		virtual void SetBoolCvar(Grindstone::HashedString name, bool value) override;
 		virtual void SetStringCvar(Grindstone::HashedString name, const char* value) override;
 
 		virtual double* GetFloatCvar(size_t arrayIndex) override;
 		virtual int32_t* GetIntCvar(size_t arrayIndex) override;
+		virtual bool GetBoolCvar(size_t arrayIndex) const;
 		virtual const char* GetStringCvarCstring(size_t arrayIndex) override;
 		virtual std::string* GetStringCvar(size_t arrayIndex) override;
 
@@ -127,8 +133,16 @@ namespace Grindstone {
 		template<typename T>
 		CvarArray<T>* GetCvarArray();
 
+		template<typename T>
+		const CvarArray<T>* GetCvarArray() const;
+
 		template<>
 		CvarArray<int32_t>* GetCvarArray() {
+			return &intCvars;
+		}
+
+		template<>
+		const CvarArray<int32_t>* GetCvarArray() const {
 			return &intCvars;
 		}
 
@@ -138,7 +152,17 @@ namespace Grindstone {
 		}
 
 		template<>
+		const CvarArray<double>* GetCvarArray() const {
+			return &floatCvars;
+		}
+
+		template<>
 		CvarArray<std::string>* GetCvarArray() {
+			return &stringCvars;
+		}
+
+		template<>
+		const CvarArray<std::string>* GetCvarArray() const {
 			return &stringCvars;
 		}
 
@@ -223,6 +247,10 @@ void CvarSystemImpl::SetIntCvar(Grindstone::HashedString name, int32_t value) {
 	SetCvarCurrent<int32_t>(name, value);
 }
 
+void CvarSystemImpl::SetBoolCvar(Grindstone::HashedString name, bool value) {
+	SetCvarCurrent<int32_t>(name, value ? 1 : 0);
+}
+
 void CvarSystemImpl::SetStringCvar(Grindstone::HashedString name, const char* value) {
 	SetCvarCurrent<std::string>(name, value);
 }
@@ -233,6 +261,11 @@ double* CvarSystemImpl::GetFloatCvar(size_t arrayIndex) {
 
 int32_t* CvarSystemImpl::GetIntCvar(size_t arrayIndex) {
 	return GetCvarArray<int32_t>()->GetCurrentPtr(arrayIndex);
+}
+
+bool CvarSystemImpl::GetBoolCvar(size_t arrayIndex) const {
+	const int32_t* ptr = GetCvarArray<int32_t>()->GetCurrentPtr(arrayIndex);
+	return (*ptr == 0) ? false : true;
 }
 
 const char* CvarSystemImpl::GetStringCvarCstring(size_t arrayIndex) {
@@ -254,7 +287,6 @@ void CvarSystemImpl::SetIntCvar(size_t arrayIndex, int32_t value) {
 void CvarSystemImpl::SetStringCvar(size_t arrayIndex, const char* value) {
 	*GetCvarArray<std::string>()->GetCurrentPtr(arrayIndex) = value;
 }
-
 
 CvarParameter* CvarSystemImpl::CreateFloatCvar(const char* name, const char* description, double defaultValue, double currentValue, CvarFlags flags) {
 	std::unique_lock lock(mutex);
