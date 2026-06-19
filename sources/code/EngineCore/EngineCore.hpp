@@ -7,6 +7,7 @@
 #include <entt/entity/registry.hpp>
 
 #include <EngineCore/Utils/DeferredDeletionQueue.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <Common/Logging.hpp>
 
 namespace Grindstone {
@@ -107,7 +108,6 @@ namespace Grindstone {
 		virtual std::filesystem::path GetEngineAssetsPath() const;
 		virtual std::filesystem::path GetAssetPath(std::string subPath) const;
 		virtual entt::registry& GetEntityRegistry();
-		virtual void ReloadCsharpBinaries();
 
 		virtual bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
 		virtual bool OnForceQuit(Grindstone::Events::BaseEvent* ev);
@@ -116,6 +116,42 @@ namespace Grindstone {
 		virtual double GetDeltaTime() const;
 		virtual void PushDeletion(std::function<void()> fn);
 		virtual void ForceDeleteAllDeferred();
+
+		template<typename T, typename... Args>
+		void RegisterServiceEmplaced(Args&&... params) {
+			const size_t hash = typeid(T).hash_code();
+			auto it = services.find(hash);
+			if (it == services.end()) {
+				services[hash] = Grindstone::Memory::AllocatorCore::Allocate<T>(std::forward<Args>(params)...);
+			}
+		}
+
+		template<typename T>
+		void RegisterService(T* instance) {
+			const size_t hash = typeid(T).hash_code();
+			auto it = services.find(hash);
+			if (it == services.end()) {
+				services.emplace(hash, instance);
+			}
+		}
+
+		template<typename T>
+		void UnregisterService() {
+			const size_t hash = typeid(T).hash_code();
+			auto it = services.find(hash);
+			if (it == services.end()) {
+				services.erase(it);
+			}
+		}
+
+		template<typename T>
+		T* TryGetService() {
+			const size_t hash = typeid(T).hash_code();
+			auto it = services.find(hash);
+			return (it != services.end())
+				? static_cast<T*>(it->second)
+				: nullptr;
+		}
 	public:
 		DisplayManager* displayManager = nullptr;
 		WindowManager* windowManager = nullptr;
@@ -123,8 +159,6 @@ namespace Grindstone {
 		AssetRendererManager* assetRendererManager = nullptr;
 		WorldContextManager* worldContextManager = nullptr;
 		Profiler::Manager* profiler = nullptr;
-		void* scriptManager = nullptr;
-		std::function<void()> callbackReloadCsharp;
 		bool isEditor = false;
 	private:
 		Grindstone::DeferredDeletionQueue deferredDeletionQueue;
@@ -142,6 +176,7 @@ namespace Grindstone {
 		Plugins::IPluginManager* pluginManager = nullptr;
 		GraphicsAPI::Core* graphicsCore = nullptr;
 		Input::Interface* inputManager = nullptr;
+		std::unordered_map<std::size_t, void*> services;
 		bool shouldClose = false;
 		std::filesystem::path projectPath;
 		std::filesystem::path binaryPath;

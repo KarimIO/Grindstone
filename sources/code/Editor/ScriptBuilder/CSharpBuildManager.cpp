@@ -176,8 +176,6 @@ static DWORD ReadDataFromExtProgram(const std::string& path) {
 	CloseHandle(dotnetProcessInfo.hProcess);
 	CloseHandle(dotnetProcessInfo.hThread);
 
-	Grindstone::Editor::Manager::GetEngineCore().ReloadCsharpBinaries();
-
 	return 0;
 }
 

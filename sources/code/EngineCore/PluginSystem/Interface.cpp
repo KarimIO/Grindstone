@@ -64,10 +64,6 @@ void Plugins::Interface::RegisterDisplayManager(DisplayManager* displayManager) 
 	GetEngineCore()->displayManager = displayManager;
 }
 
-void Plugins::Interface::SetReloadCsharpCallback(std::function<void()> callback) {
-	GetEngineCore()->callbackReloadCsharp = callback;
-}
-
 Grindstone::HashedString::HashMap* Grindstone::Plugins::Interface::GetHashedStringMap() const {
 	return Grindstone::HashedString::GetHashedStringMap();
 }
