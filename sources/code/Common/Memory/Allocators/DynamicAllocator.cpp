@@ -102,6 +102,8 @@ static void FindBlockFromFreelistBest(DynamicAllocator::FreeHeader* head, size_t
 	size_t currentPadding = 0;
 	DynamicAllocator::FreeHeader* node = head;
 	DynamicAllocator::FreeHeader* previous = nullptr;
+	bestNodeFound = nullptr;
+	bestNodeFoundPrevious = nullptr;
 
 	while (node != nullptr) {
 		currentPadding = CalculatePaddingWithHeader(reinterpret_cast<size_t>(node), alignment, allocationHeaderSize);
