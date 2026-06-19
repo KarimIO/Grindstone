@@ -18,7 +18,7 @@ namespace Grindstone.Ai {
 		}
 
 		public void SetMoveTo(Grindstone.Math.Float3 position) {
-			NavmeshAgentComponentMoveTo(componentPtr, position);
+			NavmeshAgentComponentMoveTo(0, componentPtr, position);
 		}
 
 		#region DllImports
