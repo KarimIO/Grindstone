@@ -25,6 +25,21 @@ using namespace Grindstone::Scripting::CSharp;
 
 const char* config = CMAKE_INTDIR;
 
+struct FieldCountAndBufferSizeResponse {
+	uint32_t fieldCount;
+	uint32_t bufferSize;
+};
+
+struct FieldMetaDataBlittable {
+	using SetterCallback = void(*)(void* componentPtr, void* valuePtr);
+	char name[128];
+	char displayName[128];
+	InspectorFieldType fieldType;
+	uint32_t valueArenaOffset;
+	uint32_t valueArenaSize;
+	SetterCallback setterCallback = nullptr;
+};
+
 namespace Grindstone {
 	using CreateAppDomainFnPtr = void (*)(void*);
 	using LoadAssemblyFnPtr = AssemblyHash(*)(void*);
@@ -33,6 +48,8 @@ namespace Grindstone {
 	using CallLifetimeFnPtr = void (*)(void*);
 	using DestroyObjectFnPtr = void (*)(void*);
 	using VoidFnPtr = void (*)();
+	using GetComponentFieldCountAndBufferSizeFnPtr = FieldCountAndBufferSizeResponse(*)(void*);
+	using FillComponentFieldsFnPtr  = void(*)(void*, FieldMetaDataBlittable*, uint32_t, char*, uint32_t);
 
 	struct CsharpGlobals {
 		hostfxr_handle fxrHandle = nullptr;
@@ -54,6 +71,8 @@ namespace Grindstone {
 		CallLifetimeFnPtr CallOnUpdate;
 		CallLifetimeFnPtr CallOnEditorUpdate;
 		CallLifetimeFnPtr CallOnDestroy;
+		GetComponentFieldCountAndBufferSizeFnPtr GetComponentFieldCountAndBufferSize;
+		FillComponentFieldsFnPtr FillComponentFields;
 	};
 }
 
@@ -234,6 +253,8 @@ static bool LoadGrindstoneCoreFunctions() {
 	bool hasLoadedOnUpdateFn = LoadGrindstoneCoreFunction(coreDllWide, "CallOnUpdate", reinterpret_cast<void**>(&csharpGlobals.CallOnUpdate));
 	bool hasLoadedOnEditorUpdateFn = LoadGrindstoneCoreFunction(coreDllWide, "CallOnEditorUpdate", reinterpret_cast<void**>(&csharpGlobals.CallOnEditorUpdate));
 	bool hasLoadedOnDestroyFn = LoadGrindstoneCoreFunction(coreDllWide, "CallOnDestroy", reinterpret_cast<void**>(&csharpGlobals.CallOnDestroy));
+	bool hasGetComponentFieldCountAndBufferSizeFn = LoadGrindstoneCoreFunction(coreDllWide, "GetComponentFieldCountAndBufferSize", reinterpret_cast<void**>(&csharpGlobals.GetComponentFieldCountAndBufferSize));
+	bool hasFillComponentFieldsFn = LoadGrindstoneCoreFunction(coreDllWide, "FillComponentFields", reinterpret_cast<void**>(&csharpGlobals.FillComponentFields));
 
 	if (
 		hasLoadedCreateAppDomainFn &&
@@ -246,7 +267,9 @@ static bool LoadGrindstoneCoreFunctions() {
 		hasLoadedOnStartFn &&
 		hasLoadedOnUpdateFn &&
 		hasLoadedOnEditorUpdateFn &&
-		hasLoadedOnDestroyFn
+		hasLoadedOnDestroyFn &&
+		hasGetComponentFieldCountAndBufferSizeFn &&
+		hasFillComponentFieldsFn
 	) {
 		return true;
 	}
@@ -309,10 +332,10 @@ void CSharpManager::Initialize() {
 }
 
 void CSharpManager::Cleanup() {
-	for (auto& smartComponent : smartComponents) {
+	for (auto& smartComponent : classMetaData) {
 		AllocatorCore::Free(smartComponent.second);
 	}
-	smartComponents.clear();
+	classMetaData.clear();
 
 	csharpGlobals.Close(csharpGlobals.fxrHandle);
 	csharpGlobals = {};
@@ -354,7 +377,7 @@ bool CSharpManager::LoadAssembly(const char* basePath, AssemblyData& outAssembly
 		outAssemblyData.assemblyHash = csharpGlobals.LoadAssembly((void*)tmpString.c_str());
 	}
 	else {
- 		outAssemblyData.assemblyHash = csharpGlobals.LoadAssembly((void*)basePath);
+		outAssemblyData.assemblyHash = csharpGlobals.LoadAssembly((void*)basePath);
 	}
 
 	return true;
@@ -386,8 +409,8 @@ bool CSharpManager::LoadAssemblyIntoMap(const std::string& assemblyIdentifier) {
 void CSharpManager::SetupComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity, ScriptComponent& component) {
 	std::string searchString =
 		component.scriptNamespace.empty()
-		? component.scriptClass
-		: component.scriptNamespace + "." + component.scriptClass;
+		? component.scriptClassName
+		: component.scriptNamespace + "." + component.scriptClassName;
 	
 	auto it = assemblies.find(component.assembly);
 
@@ -449,8 +472,33 @@ ScriptClass* CSharpManager::SetupClass(const char* assemblyName, const char* nam
 	return nullptr;
 }
 
+std::pair<Grindstone::Buffer, std::vector<FieldMetaData>> CSharpManager::GetFieldMetaData(ScriptComponent& component) {
+	void* componentPtr = component.csharpObject;
+
+	FieldCountAndBufferSizeResponse res = csharpGlobals.GetComponentFieldCountAndBufferSize(componentPtr);
+
+	Grindstone::Buffer buffer(res.bufferSize);
+	std::vector<FieldMetaDataBlittable> fieldsManaged(res.fieldCount);
+	csharpGlobals.FillComponentFields(componentPtr, fieldsManaged.data(), res.fieldCount, reinterpret_cast<char*>(buffer.Get()), res.bufferSize);
+
+	std::vector<FieldMetaData> fields(res.fieldCount);
+	for (uint32_t i = 0; i < res.fieldCount; ++i) {
+		auto& dst = fields[i];
+		auto& src = fieldsManaged[i];
+
+		dst.displayName = src.displayName;
+		dst.fieldType = src.fieldType;
+		dst.name = src.name;
+		dst.valueArenaOffset = src.valueArenaOffset;
+		dst.valueArenaSize = src.valueArenaSize;
+		dst.setterCallback = src.setterCallback;
+	}
+
+	return { buffer, fields };
+}
+
 void CSharpManager::LoadAssemblyClasses() {
-	for(auto& comp : smartComponents) {
+	for(auto& comp : classMetaData) {
 		Memory::AllocatorCore::Free(comp.second);
 	}
 
@@ -458,7 +506,7 @@ void CSharpManager::LoadAssemblyClasses() {
 		return;
 	}
 
-	smartComponents.clear();
+	classMetaData.clear();
 
 }
 

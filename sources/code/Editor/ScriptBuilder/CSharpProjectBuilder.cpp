@@ -16,6 +16,7 @@ void Grindstone::Editor::ScriptBuilder::CreateProjectFile(const std::filesystem:
 	outputFileStream << "\t\t<TargetFramework>net10.0</TargetFramework>\n";
 	outputFileStream << "\t\t<ImplicitUsings>enable</ImplicitUsings>\n";
 	outputFileStream << "\t\t<Nullable>enable</Nullable>\n";
+	outputFileStream << "\t\t<AllowUnsafeBlocks>true</AllowUnsafeBlocks>";
 	outputFileStream << "\t</PropertyGroup>\n";
 
 	if (!references.empty()) {
