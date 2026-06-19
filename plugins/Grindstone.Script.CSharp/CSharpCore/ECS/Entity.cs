@@ -9,7 +9,7 @@ namespace Grindstone {
 		#endregion
 
 		#region Static Fields
-		public static uint InvalidHandle = uint.MaxValue;
+		public static readonly uint InvalidHandle = uint.MaxValue;
 		#endregion
 
 		#region Public Methods

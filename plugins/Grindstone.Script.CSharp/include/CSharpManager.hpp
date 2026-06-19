@@ -2,7 +2,8 @@
 
 #include <entt/entt.hpp>
 
-#include "EngineCore/ECS/ComponentFunctions.hpp"
+#include <EngineCore/ECS/ComponentFunctions.hpp>
+#include <Common/Buffer.hpp>
 
 namespace Grindstone {
 	class EngineCore;
@@ -15,6 +16,26 @@ namespace Grindstone {
 	namespace Scripting::CSharp {
 		struct ScriptComponent;
 		struct ScriptClass;
+
+		enum class InspectorFieldType {
+			Unknown,
+			Entity,
+			Component,
+			Float, Float2, Float3, Float4,
+			Int, Bool, String,
+			Quaternion,
+			Color
+		};
+
+		struct FieldMetaData {
+			using SetterCallback = void(*)(void* componentPtr, void* valuePtr);
+			std::string name;
+			std::string displayName;
+			InspectorFieldType fieldType;
+			uint32_t valueArenaOffset;
+			uint32_t valueArenaSize;
+			SetterCallback setterCallback = nullptr;
+		};
 
 		class CSharpManager {
 		public:
@@ -38,6 +59,7 @@ namespace Grindstone {
 			void PerformReload();
 			void Update(entt::registry& registry);
 			void EditorUpdate(entt::registry& registry);
+			virtual std::pair<Grindstone::Buffer, std::vector<FieldMetaData>> GetFieldMetaData(ScriptComponent& component);
 		private:
 			void LoadAssemblyClasses();
 			void CallFunctionInComponent(ScriptComponent& scriptComponent, size_t fnOffset);
@@ -50,7 +72,7 @@ namespace Grindstone {
 			ScriptClass* SetupClass(const char* assemblyName, const char* namespaceName, const char* className);
 			
 			std::map<std::string, AssemblyData> assemblies;
-			std::map<std::string, ScriptClass*> smartComponents;
+			std::map<std::string, ScriptClass*> classMetaData;
 			AssemblyData grindstoneCoreDll;
 			bool isReloadQueued = false;
 

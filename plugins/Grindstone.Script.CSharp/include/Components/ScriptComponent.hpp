@@ -8,7 +8,7 @@ namespace Grindstone::Scripting::CSharp {
 	struct ScriptComponent {
 		std::string assembly;
 		std::string scriptNamespace;
-		std::string scriptClass;
+		std::string scriptClassName;
 		void* csharpObject = nullptr;
 
 		static void Construct(Grindstone::WorldContextSet& cxtSet, entt::entity);

@@ -13,6 +13,7 @@
 #include <Editor/EditorManager.hpp>
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
 #include <Grindstone.Script.CSharp/include/Components/ScriptComponent.hpp>
+#include <Grindstone.Script.CSharp/include/CSharpManager.hpp>
 #include <Common/Math.hpp>
 
 #include "ComponentInspector.hpp"
@@ -132,6 +133,74 @@ static bool DrawFloat4(const char* name, float* vec4) {
 	return hasChanged;
 }
 
+static void RenderField(void* componentPtr, Grindstone::Scripting::CSharp::FieldMetaData& field, Grindstone::Buffer& valueBuffer) {
+	using FieldT = Grindstone::Scripting::CSharp::InspectorFieldType;
+	std::string prefixedName = "#" + field.name;
+	const char* namePtr = prefixedName.c_str();
+	void* offset = valueBuffer.Get(field.valueArenaOffset);
+	auto setterCallback = field.setterCallback;
+
+	switch (field.fieldType) {
+	case FieldT::Bool: {
+		ImGui::Checkbox(
+			namePtr,
+			(bool*)offset
+		);
+		break;
+	}
+	case FieldT::Int: {
+		int32_t* intPtr = (int32_t*)offset;
+		int value = *intPtr;
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		if (ImGui::InputInt(namePtr, &value) && setterCallback != nullptr) {
+			setterCallback(componentPtr, &value);
+		}
+		ImGui::PopItemWidth();
+		break;
+	}
+	case FieldT::Float:
+		ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+		if (ImGui::InputFloat(
+			namePtr,
+			(float*)offset
+		) && setterCallback != nullptr) {
+			setterCallback(componentPtr, offset);
+		}
+		ImGui::PopItemWidth();
+		break;
+	case FieldT::Float2: {
+		if (DrawFloat2(namePtr, static_cast<float*>(offset)) && setterCallback != nullptr) {
+			setterCallback(componentPtr, offset);
+		}
+		break;
+	}
+	case FieldT::Float3: {
+		if (DrawFloat3(namePtr, static_cast<float*>(offset)) && setterCallback != nullptr) {
+			setterCallback(componentPtr, offset);
+		}
+		break;
+	}
+	case FieldT::Float4: {
+		if (DrawFloat4(namePtr, static_cast<float*>(offset)) && setterCallback != nullptr) {
+			setterCallback(componentPtr, offset);
+		}
+		break;
+	}
+	case FieldT::Quaternion: {
+		glm::quat* quaternion = (glm::quat*)offset;
+		glm::vec3 euler = glm::degrees(glm::eulerAngles(*quaternion));
+		if (DrawFloat3(
+			namePtr,
+			&euler[0]
+		) && setterCallback != nullptr) {
+			*quaternion = glm::quat(glm::radians(euler));
+			setterCallback(componentPtr, quaternion);
+		}
+		break;
+	}
+	}
+}
+
 ComponentInspector::ComponentInspector(ImguiEditor* editor) : imguiEditor(editor) {}
 
 void ComponentInspector::Render(ECS::Entity entity) {
@@ -245,7 +314,7 @@ void ComponentInspector::RenderCSharpScript(
 
 	{
 		bool shouldRemove = false;
-		const std::string componentName = "(C#) " + component->scriptClass;
+		const std::string componentName = "(C#) " + component->scriptClassName;
 		bool isOpened = ImGui::TreeNodeEx(componentName.c_str(), ImGuiTreeNodeFlags_FramePadding);
 		if (ImGui::BeginPopupContextItem(componentName.c_str())) {
 			if (ImGui::MenuItem("Remove Component")) {
@@ -254,10 +323,23 @@ void ComponentInspector::RenderCSharpScript(
 			ImGui::EndPopup();
 		}
 
-		if (isOpened) {
-			// for (auto& field : component->monoClass->fields) {
-				// RenderMonoField(component->scriptObject, field.second.classFieldPtr);
-			// }
+		if (isOpened) { 
+			Grindstone::Scripting::CSharp::CSharpManager* mgr = EngineCore::GetInstance().TryGetService<Grindstone::Scripting::CSharp::CSharpManager>();
+			auto response = mgr->GetFieldMetaData(*component);
+
+			Grindstone::Buffer& valueBuffer = response.first;
+			auto& fields = response.second;
+			if (ImGui::BeginTable("inspectorSplit", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
+				for (auto& field : fields) {
+					ImGui::TableNextRow();
+					ImGui::TableNextColumn();
+					ImGui::Text(field.displayName.c_str());
+					ImGui::TableNextColumn();
+					RenderField(component->csharpObject, field, valueBuffer);
+				}
+
+				ImGui::EndTable();
+			}
 
 			ImGui::TreePop();
 		}
