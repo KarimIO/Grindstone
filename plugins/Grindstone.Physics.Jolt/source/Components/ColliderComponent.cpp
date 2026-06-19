@@ -93,7 +93,12 @@ SphereColliderComponent SphereColliderComponent::Clone(Grindstone::WorldContextS
 }
 
 void SphereColliderComponent::Initialize(const TransformComponent& transformComponent) {
-	collisionShape = new JPH::SphereShape(radius * GetMinComponent(transformComponent.scale), nullptr);
+	float scaledRadius = radius * GetMinComponent(transformComponent.scale);
+	if (scaledRadius == 0.0f) {
+		return;
+	}
+
+	collisionShape = new JPH::SphereShape(scaledRadius, nullptr);
 }
 
 void SphereColliderComponent::SetRadius(float radius) {
@@ -170,6 +175,10 @@ void BoxColliderComponent::Initialize(const TransformComponent& transformCompone
 	float minComponent = GetMinComponent(halfExtents);
 	float convexRadius = glm::min(minComponent / 2.0f, JPH::cDefaultConvexRadius);
 
+	if (halfExtents.x == 0.0f || halfExtents.y == 0.0f || halfExtents.z == 0.0f) {
+		return;
+	}
+
 	JPH::BoxShapeSettings boxShapeSettings(
 		JPH::Vec3(
 			halfExtents.x,
@@ -219,6 +228,10 @@ CapsuleColliderComponent CapsuleColliderComponent::Clone(Grindstone::WorldContex
 
 void CapsuleColliderComponent::Initialize(const TransformComponent& transformComponent) {
 	float scale = GetMinComponent(transformComponent.scale);
+	if (height == 0.0f || scale == 0.0f || radius == 0.0f) {
+		return;
+	}
+
 	collisionShape = new JPH::CapsuleShape(height * scale / 2.0f, radius * scale, nullptr);
 }
 

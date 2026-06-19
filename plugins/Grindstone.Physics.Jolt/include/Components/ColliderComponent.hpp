@@ -31,7 +31,7 @@ namespace Grindstone::Physics {
 		virtual void SetRadius(float radius);
 		virtual float GetRadius() const;
 	private:
-		float radius = 0.0f;
+		float radius = 1.0f;
 
 		REFLECT("SphereCollider")
 	};
@@ -44,8 +44,8 @@ namespace Grindstone::Physics {
 		virtual Math::Float3 GetPlaneNormal() const;
 		virtual float GetPositionAlongNormal() const;
 	private:
-		Math::Float3 planeNormal;
-		float positionAlongNormal;
+		Math::Float3 planeNormal = Math::Float3(0.0f, 0.0f, 1.0f);
+		float positionAlongNormal = 0.0f;
 
 		REFLECT("PlaneCollider")
 	};
@@ -57,7 +57,7 @@ namespace Grindstone::Physics {
 		virtual void SetSize(Math::Float3);
 		virtual Math::Float3 GetSize() const;
 	private:
-		Math::Float3 size;
+		Math::Float3 size = Math::Float3(1.0f, 1.0f, 1.0f);
 
 		REFLECT("BoxCollider")
 	};
@@ -70,8 +70,8 @@ namespace Grindstone::Physics {
 		virtual float GetRadius() const;
 		virtual float GetHeight() const;
 	private:
-		float radius;
-		float height;
+		float radius = 0.5f;
+		float height = 2.0f;
 
 		REFLECT("CapsuleCollider")
 	};
