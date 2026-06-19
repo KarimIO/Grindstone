@@ -363,7 +363,7 @@ void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
 					break;
 				}
 				case Grindstone::Plugins::MetaData::BinaryBuildType::Dotnet: {
-					auto scriptManager = static_cast<Grindstone::Scripting::CSharp::CSharpManager*>(Grindstone::EngineCore::GetInstance().scriptManager);
+					auto scriptManager = Grindstone::EngineCore::GetInstance().TryGetService<Grindstone::Scripting::CSharp::CSharpManager>();
 					scriptManager->LoadAssemblyIntoMap(metaData.name + ":" + binary.libraryRelativePath.filename().string());
 					break;
 				}

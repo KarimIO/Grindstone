@@ -369,12 +369,6 @@ entt::registry& EngineCore::GetEntityRegistry() {
 	return worldContextManager->GetActiveWorldContextSet()->GetEntityRegistry();
 }
 
-void EngineCore::ReloadCsharpBinaries() {
-	if (callbackReloadCsharp) {
-		callbackReloadCsharp();
-	}
-}
-
 void EngineCore::CalculateDeltaTime() {
 	GRIND_PROFILE_FUNC();
 	const auto now = std::chrono::steady_clock::now();
