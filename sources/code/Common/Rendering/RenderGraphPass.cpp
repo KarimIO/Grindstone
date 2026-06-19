@@ -219,27 +219,34 @@ void Grindstone::Renderer::PipelineRenderGraphPass::RealizeResources(
 		auto [prevLayout, prevAccessFlags, prevPipelineStage] = frameResources.GetLayout(imageRef);
 		auto [newStageMask, newAccessMask, newImageLayout] = DeriveImageSyncInfo(imageDesc.usage);
 
-		Grindstone::GraphicsAPI::ImageAspectBits imageAspect = Any(GraphicsAPI::GetFormatDepthStencilType(image->GetFormat()) & GraphicsAPI::FormatDepthStencilType::Depth)
-			? Grindstone::GraphicsAPI::ImageAspectBits::Depth
-			: Grindstone::GraphicsAPI::ImageAspectBits::Color;
 
-		Grindstone::GraphicsAPI::ImageBarrier imageBarrier{
-			.image = image,
-			.srcStageMask = prevPipelineStage,
-			.dstStageMask = newStageMask,
-			.oldLayout = prevLayout,
-			.newLayout = newImageLayout,
-			.srcAccess = prevAccessFlags,
-			.dstAccess = newAccessMask,
-			.imageAspect = imageAspect,
-			.baseMipLevel = 0,
-			.levelCount = 1,
-			.baseArrayLayer = 0,
-			.layerCount = 1
-		};
+		if (
+			prevLayout != newImageLayout ||
+			prevAccessFlags != newAccessMask ||
+			prevPipelineStage != newStageMask
+		) {
+			Grindstone::GraphicsAPI::ImageAspectBits imageAspect = Any(GraphicsAPI::GetFormatDepthStencilType(image->GetFormat()) & GraphicsAPI::FormatDepthStencilType::Depth)
+				? Grindstone::GraphicsAPI::ImageAspectBits::Depth
+				: Grindstone::GraphicsAPI::ImageAspectBits::Color;
 
-		frameResources.SetLayout(imageRef, newImageLayout, newAccessMask, newStageMask);
-		imageBarriers.emplace_back(imageBarrier);
+			Grindstone::GraphicsAPI::ImageBarrier imageBarrier{
+				.image = image,
+				.srcStageMask = prevPipelineStage,
+				.dstStageMask = newStageMask,
+				.oldLayout = prevLayout,
+				.newLayout = newImageLayout,
+				.srcAccess = prevAccessFlags,
+				.dstAccess = newAccessMask,
+				.imageAspect = imageAspect,
+				.baseMipLevel = 0,
+				.levelCount = 1,
+				.baseArrayLayer = 0,
+				.layerCount = 1
+			};
+
+			frameResources.SetLayout(imageRef, newImageLayout, newAccessMask, newStageMask);
+			imageBarriers.emplace_back(imageBarrier);
+		}
 	}
 
 	for (const Grindstone::Renderer::PassBufferDesc& bufferDesc : bufferDescs) {
