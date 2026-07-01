@@ -1,19 +1,24 @@
 #include "EntityCommands.hpp"
-#include "EngineCore/Scenes/Scene.hpp"
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
+#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
 using namespace Grindstone::Editor;
 
-AddEntityCommand::AddEntityCommand(SceneManagement::Scene* scene) : scene(scene) {
+AddEntityCommand::AddEntityCommand(Grindstone::WorldContextSet* cxtSet) : cxtSet(cxtSet) {
 	Redo();
 }
 
 void AddEntityCommand::Redo() {
-	auto entity = scene->CreateEntity();
-	entityId = entity.GetHandle();
+	entt::registry& registry = cxtSet->GetEntityRegistry();
+	entt::entity entity = registry.create();
+	registry.emplace<TagComponent>(entity).tag = "Unnamed Entity";
+	registry.emplace<TransformComponent>(entity);
+	registry.emplace<ParentComponent>(entity);
+	entityId = entity;
 }
 
 void AddEntityCommand::Undo() {
-	scene->DestroyEntity(entityId);
+	cxtSet->GetEntityRegistry().destroy(entityId);
 }
 
 void DeleteEntityCommand::Redo() {

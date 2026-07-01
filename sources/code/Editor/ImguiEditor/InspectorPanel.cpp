@@ -5,8 +5,6 @@
 #include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <Editor/AssetRegistry.hpp>
 #include <Editor/EditorManager.hpp>
-#include <EngineCore/Scenes/Manager.hpp>
-#include <EngineCore/Scenes/Scene.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 
@@ -24,9 +22,9 @@ struct InspectorState {
 
 static void RenderGenericFile(const std::filesystem::path& path) {
 	static std::string newAddress;
-	static Uuid selectedEntryToEdit;
+	static Grindstone::Uuid selectedEntryToEdit;
 
-	Grindstone::Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
+	Grindstone::Editor::AssetRegistry& assetRegistry = Grindstone::Editor::Manager::GetInstance().GetAssetRegistry();
 
 	Grindstone::Editor::AssetRegistry::Entry entry;
 	if (assetRegistry.TryGetAssetDataFromAbsolutePath(path, entry)) {
@@ -45,7 +43,7 @@ static void RenderGenericFile(const std::filesystem::path& path) {
 					metaFile.SaveWithoutImporterVersionChange();
 					assetRegistry.WriteFile();
 
-					selectedEntryToEdit = Uuid();
+					selectedEntryToEdit = Grindstone::Uuid();
 				}
 			}
 			else {

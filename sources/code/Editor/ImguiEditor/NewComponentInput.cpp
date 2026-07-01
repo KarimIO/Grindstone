@@ -1,4 +1,3 @@
-#include "EngineCore/Scenes/Scene.hpp"
 #include "Editor/EditorManager.hpp"
 #include "NewComponentInput.hpp"
 

@@ -32,7 +32,7 @@ void AssetRendererManager::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* de
 Grindstone::Rendering::GeometryRenderStats AssetRendererManager::RenderQueue(
 	GraphicsAPI::CommandBuffer* commandBuffer,
 	const Grindstone::Rendering::RenderViewData& viewData,
-	entt::registry& registry,
+	Grindstone::WorldContextSet* cxtSet,
 	Grindstone::HashedString renderQueue
 ) {
 	Grindstone::Rendering::GeometryRenderStats stats{};
@@ -40,7 +40,7 @@ Grindstone::Rendering::GeometryRenderStats AssetRendererManager::RenderQueue(
 	std::string renderQueueLabel = std::vformat("Render Queue '{}'", std::make_format_args(renderQueue.ToString()));
 	commandBuffer->BeginDebugLabelSection(renderQueueLabel.c_str());
 	for (auto& assetRenderer : assetRenderers) {
-		Grindstone::Rendering::GeometryRenderStats currentStats = assetRenderer.second->RenderQueue(commandBuffer, viewData, registry, renderQueue);
+		Grindstone::Rendering::GeometryRenderStats currentStats = assetRenderer.second->RenderQueue(commandBuffer, viewData, cxtSet, renderQueue);
 
 		stats.drawCalls += currentStats.drawCalls;
 		stats.triangles += currentStats.triangles;

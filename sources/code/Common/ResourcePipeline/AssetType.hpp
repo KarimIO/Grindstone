@@ -5,6 +5,7 @@
 namespace Grindstone {
 	enum class AssetType : uint16_t {
 		Undefined,
+		Prefab,
 		Texture,
 		GraphicsPipelineSet,
 		ComputePipelineSet,
@@ -13,8 +14,6 @@ namespace Grindstone {
 		Mesh3d,
 		Rig,
 		Animation,
-		Script,
-		Scene,
 		Count
 	};
 

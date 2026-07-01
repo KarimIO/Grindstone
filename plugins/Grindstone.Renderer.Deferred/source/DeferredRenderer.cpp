@@ -23,7 +23,6 @@
 #include <EngineCore/CoreComponents/Lights/DirectionalLightComponent.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <EngineCore/Rendering/RenderPassRegistry.hpp>
-#include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/Profiling.hpp>
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/Rendering/RenderGraphContextSet.hpp>
@@ -31,6 +30,8 @@
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererFactory.hpp>
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
 #include <Grindstone.Renderer.Deferred/include/DeferredRenderer.hpp>
+
+using namespace Grindstone;
 
 const bool shouldFastResize = true;
 

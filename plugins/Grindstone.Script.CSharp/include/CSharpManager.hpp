@@ -52,9 +52,6 @@ namespace Grindstone {
 			virtual void DestroyComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity, ScriptComponent& component);
 			void RegisterComponents();
 			void RegisterComponent(const Grindstone::String& csharpClass, ECS::ComponentFunctions& fns);
-			void CallCreateComponent(SceneManagement::Scene* scene, entt::entity entityHandle);
-			void CallHasComponent(SceneManagement::Scene* scene, entt::entity entityHandle);
-			void CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entityHandle);
 			void QueueReload();
 			void PerformReload();
 			void Update(entt::registry& registry);
@@ -75,11 +72,6 @@ namespace Grindstone {
 			std::map<std::string, ScriptClass*> classMetaData;
 			AssemblyData grindstoneCoreDll;
 			bool isReloadQueued = false;
-
-			// std::map<MonoType*, ECS::CreateComponentFn> createComponentFuncs;
-			// std::map<MonoType*, ECS::TryGetComponentFn> tryGetComponentFuncs;
-			// std::map<MonoType*, ECS::HasComponentFn> hasComponentFuncs;
-			// std::map<MonoType*, ECS::RemoveComponentFn> removeComponentFuncs;
 		};
 	}
 }

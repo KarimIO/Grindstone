@@ -3,7 +3,6 @@
 #include <imgui.h>
 
 #include <Common/Window/WindowManager.hpp>
-#include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Logger.hpp>
 #include <Editor/AssetPackSerializer.hpp>
@@ -51,22 +50,14 @@ void Menubar::Render() {
 
 void Menubar::RenderFileMenu() {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
-	SceneManagement::Scene* scene = engineCore.GetSceneManager()->scenes.begin()->second;
-	bool doesSceneHavePath = scene && scene->HasPath();
 
 	if (ImGui::MenuItem("New", "Ctrl+N", false)) {
 		OnNewFile();
-	}
-	if (ImGui::MenuItem("Save", "Ctrl+S", false, doesSceneHavePath)) {
-		OnSaveFile();
 	}
 	if (ImGui::MenuItem("Save As...", "Ctrl+Shift+S", false)) {
 		OnSaveAsFile();
 	}
 	ImGui::Separator();
-	if (ImGui::MenuItem("Reload", nullptr, false, doesSceneHavePath)) {
-		OnReloadFile();
-	}
 	if (ImGui::MenuItem("Load...", "Ctrl+O", false)) {
 		OnLoadFile();
 	}
@@ -112,8 +103,7 @@ void Menubar::RenderViewMenu() {
 }
 
 void Menubar::OnNewFile() {
-	SceneManagement::SceneManager* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
-	sceneManager->CreateEmptyScene("Untitled Scene");
+	// TODO: New Prefab
 }
 
 void Menubar::OnSaveFile() {
@@ -132,8 +122,7 @@ void Menubar::OnSaveAsFile() {
 }
 
 void Menubar::OnReloadFile() {
-	Grindstone::SceneManagement::SceneManager* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
-	sceneManager->LoadScene(sceneManager->scenes.begin()->first);
+	// TODO: Reload Prefab
 }
 
 void Menubar::OnLoadFile() {
@@ -145,8 +134,7 @@ void Menubar::OnLoadFile() {
 	Grindstone::Uuid uuid;
 	std::string filePathStr = filePath.string();
 	if (!filePath.empty() && Grindstone::Uuid::MakeFromString(filePathStr.c_str(), uuid)) {
-		Grindstone::SceneManagement::SceneManager* sceneManager = engineCore.GetSceneManager();
-		sceneManager->LoadScene(uuid);
+		// TODO: Load Prefab
 	}
 }
 
@@ -171,19 +159,7 @@ void Menubar::OnExit() {
 }
 
 void Menubar::SaveFile(const std::filesystem::path& path) {
-	auto* sceneManager = Editor::Manager::GetEngineCore().GetSceneManager();
-	if (sceneManager->scenes.empty()) {
-		GPRINT_ERROR(LogSource::Editor, "No active scenes.");
-	}
-	else {
-		SceneManagement::Scene* scene = sceneManager->scenes.begin()->second;
-		if (path.empty()) {
-			sceneManager->SaveScene(scene->GetPath(), scene);
-		}
-		else {
-			sceneManager->SaveScene(path, scene);
-		}
-	}
+	// TODO: Save Prefab
 }
 
 void Menubar::RegisterMenuItem(const char* menuItem, void(*fn)(), const char* shortcut) {

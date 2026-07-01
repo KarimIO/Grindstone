@@ -19,7 +19,7 @@
 #include "SystemPanel.hpp"
 #include "InspectorPanel.hpp"
 #include "AssetBrowserPanel.hpp"
-#include "SceneHeirarchyPanel.hpp"
+#include "EntityHeirarchyPanel.hpp"
 #include "UserSettings/UserSettingsWindow.hpp"
 #include "ProjectSettings/ProjectSettingsWindow.hpp"
 #include "PluginsWindow.hpp"
@@ -98,7 +98,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 void ImguiEditor::CreateWindows() {
 	imguiRenderer = ImguiRenderer::Create();
 
-	sceneHeirarchyPanel = AllocatorCore::Allocate<SceneHeirarchyPanel>(engineCore->GetSceneManager(), this);
+	entityHeirarchyPanel = AllocatorCore::Allocate<EntityHeirarchyPanel>(this);
 	inspectorPanel = AllocatorCore::Allocate<InspectorPanel>(engineCore, this);
 	assetBrowserPanel = AllocatorCore::Allocate<AssetBrowserPanel>(imguiRenderer, engineCore, this);
 	userSettingsWindow = AllocatorCore::Allocate<Settings::UserSettingsWindow>();
@@ -128,7 +128,7 @@ ImguiEditor::~ImguiEditor() {
 	}
 
 	AllocatorCore::Free(cvarBrowser);
-	AllocatorCore::Free(sceneHeirarchyPanel);
+	AllocatorCore::Free(entityHeirarchyPanel);
 	AllocatorCore::Free(inspectorPanel);
 	AllocatorCore::Free(assetBrowserPanel);
 	AllocatorCore::Free(userSettingsWindow);
@@ -313,7 +313,7 @@ void ImguiEditor::Render() {
 	RenderDockspace();
 	tracingPanel->Render();
 	controlBar->Render();
-	sceneHeirarchyPanel->Render();
+	entityHeirarchyPanel->Render();
 	viewportPanel->Render();
 	consolePanel->Render();
 	assetBrowserPanel->Render();

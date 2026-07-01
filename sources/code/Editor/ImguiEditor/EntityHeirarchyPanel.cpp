@@ -3,30 +3,51 @@
 #include <entt/entt.hpp>
 
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
-#include <EngineCore/Scenes/Manager.hpp>
 #include <Editor/Commands/EntityCommands.hpp>
 #include <Editor/EditorManager.hpp>
 #include <Editor/ImguiEditor/ViewportPanel.hpp>
 #include <Editor/EditorCamera.hpp>
+#include <EngineCore/WorldContext/WorldContextManager.hpp>
 
 #include "ImguiEditor.hpp"
-#include "SceneHeirarchyPanel.hpp"
+#include "EntityHeirarchyPanel.hpp"
 
+using namespace Grindstone;
 using namespace Grindstone::Editor::ImguiEditor;
 
-SceneHeirarchyPanel::SceneHeirarchyPanel(
-	SceneManagement::SceneManager* sceneManager,
-	ImguiEditor* editor
-) : sceneManager(sceneManager), editor(editor) {}
+ECS::Entity entityToRename;
+std::string entityRenameNewName;
 
-void SceneHeirarchyPanel::Render() {
+struct ChildEntity {
+	entt::entity childEntity;
+	TagComponent* tagComponent;
+	ParentComponent* parentComponent;
+
+	ChildEntity(entt::entity childEntity, TagComponent* tagComponent, ParentComponent* parentComponent)
+		: childEntity(childEntity), tagComponent(tagComponent), parentComponent(parentComponent) {
+	}
+};
+
+static void RenderWorldContextSet(Grindstone::WorldContextSet* cxtSet);
+static void RenderEntity(
+	EntityParentTagView& view,
+	Grindstone::ECS::Entity entity,
+	Grindstone::TagComponent& tagComponent,
+	Grindstone::ParentComponent& parentComponent
+);
+
+EntityHeirarchyPanel::EntityHeirarchyPanel(
+	ImguiEditor* editor
+) : editor(editor) {}
+
+void EntityHeirarchyPanel::Render() {
 	if (isShowingPanel) {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-		ImGui::Begin("Scene Heirarchy", &isShowingPanel);
+		ImGui::Begin("Entity Heirarchy", &isShowingPanel);
 
 		// BeginChild is used as a DropTarget for use of unparenting entities.
 		// We begin a new child because windows can't be drop targets
-		ImGui::BeginChild("Scene Heirarchy DropTarget", ImVec2(0,0), false, ImGuiWindowFlags_NoDocking);
+		ImGui::BeginChild("Entity Heirarchy DropTarget", ImVec2(0,0), false, ImGuiWindowFlags_NoDocking);
 
 		if (
 			ImGui::IsMouseReleased(ImGuiMouseButton_Left) &&
@@ -36,24 +57,8 @@ void SceneHeirarchyPanel::Render() {
 			Editor::Manager::GetInstance().GetSelection().Clear();
 		}
 
-		auto numScenes = sceneManager->scenes.size();
-		if (numScenes == 0) {
-			ImGui::Text("No scenes mounted.");
-		}
-		else if (numScenes == 1) {
-			auto sceneIterator = sceneManager->scenes.begin();
-			RenderScene(sceneIterator->second);
-		}
-		else {
-			for (auto& scenePair : sceneManager->scenes) {
-				SceneManagement::Scene* scene = scenePair.second;
-				const char* sceneName = scene->GetName().c_str();
-				if (ImGui::TreeNode(sceneName)) {
-					RenderScene(scene);
-					ImGui::TreePop();
-				}
-			}
-		}
+		Grindstone::WorldContextSet* worldContextSet = Grindstone::EngineCore::GetInstance().GetWorldContextManager()->GetActiveWorldContextSet();
+		RenderWorldContextSet(worldContextSet);
 
 		ImGui::EndChild();
 
@@ -71,53 +76,42 @@ void SceneHeirarchyPanel::Render() {
 	}
 }
 
-void SceneHeirarchyPanel::RenderScene(SceneManagement::Scene* scene) {
+static void RenderWorldContextSet(Grindstone::WorldContextSet* cxtSet) {
 	if (ImGui::BeginPopupContextWindow()) {
 		if (ImGui::MenuItem("Add new entity")) {
-			Editor::Manager::GetInstance().GetCommandList().AddNewEntity(scene);
+			Editor::Manager::GetInstance().GetCommandList().AddNewEntity(cxtSet);
 		}
 		ImGui::EndPopup();
 	}
 
-	WorldContextSet* cxtSet = EngineCore::GetInstance().GetWorldContextManager()->GetActiveWorldContextSet();
 	entt::registry& registry = cxtSet->GetEntityRegistry();
 	bool hasEntities = false;
 
 	EntityParentTagView view = registry.view<entt::entity, TagComponent, ParentComponent>();
 
 	view.each(
-		[&](
+		[&cxtSet, &view, &hasEntities](
 			entt::entity entity,
 			TagComponent& tagComponent,
 			ParentComponent& parentComponent
 		) {
 			if (parentComponent.parentEntity == entt::null) {
-				RenderEntity(view, { entity, scene }, tagComponent, parentComponent);
+				RenderEntity(view, { entity, cxtSet }, tagComponent, parentComponent);
 				hasEntities = true;
 			}
 		}
 	);
 
 	if (!hasEntities) {
-		ImGui::Text("No entities in scene.");
+		ImGui::Text("No entities in world.");
 	}
 }
 
-struct ChildEntity {
-	entt::entity childEntity;
-	TagComponent* tagComponent;
-	ParentComponent* parentComponent;
-
-	ChildEntity(entt::entity childEntity, TagComponent* tagComponent, ParentComponent* parentComponent)
-		: childEntity(childEntity), tagComponent(tagComponent), parentComponent(parentComponent)
-	{}
-};
-
-void SceneHeirarchyPanel::RenderEntity(
+static void RenderEntity(
 	EntityParentTagView& view,
-	ECS::Entity entity,
-	TagComponent& tagComponent,
-	ParentComponent& parentComponent
+	Grindstone::ECS::Entity entity,
+	Grindstone::TagComponent& tagComponent,
+	Grindstone::ParentComponent& parentComponent
 ) {
 	const float panelWidth = ImGui::GetContentRegionAvail().x;
 	ImGui::PushItemWidth(panelWidth);
@@ -165,7 +159,6 @@ void SceneHeirarchyPanel::RenderEntity(
 
 	if (ImGui::BeginDragDropTarget()) {
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity")) {
-			entt::registry& registry = entity.GetSceneEntityRegistry();
 			ECS::Entity newTargetEntity = *static_cast<ECS::Entity*>(payload->Data);
 			newTargetEntity.SetParent(entity);
 		}
@@ -181,7 +174,7 @@ void SceneHeirarchyPanel::RenderEntity(
 
 	if (ImGui::IsItemHovered()) {
 		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-			Grindstone::TransformComponent& transform = entity.GetSceneEntityRegistry().get<Grindstone::TransformComponent>(entity.GetHandle());
+			Grindstone::TransformComponent& transform = entity.GetComponent<Grindstone::TransformComponent>();
 			Grindstone::Editor::Manager& editor = Grindstone::Editor::Manager::GetInstance();
 			Grindstone::Editor::EditorCamera* editorCamera = editor.GetImguiEditor().GetViewportPanel()->GetCamera();
 			glm::vec3 newPosition = transform.position + (editorCamera->GetForward() * -2.0f);
@@ -209,7 +202,7 @@ void SceneHeirarchyPanel::RenderEntity(
 		}
 		if (ImGui::MenuItem("Delete")) {
 			selection.RemoveEntity(entity);
-			entity.GetScene()->DestroyEntity(entity);
+			entity.Destroy();
 		}
 		ImGui::EndPopup();
 	}
@@ -220,7 +213,7 @@ void SceneHeirarchyPanel::RenderEntity(
 
 	if (isOpened) {
 		for (ChildEntity& child : children) {
-			RenderEntity(view, { child.childEntity, entity.GetScene() }, *child.tagComponent, *child.parentComponent);
+			RenderEntity(view, { child.childEntity, entity.GetWorldContextSet() }, *child.tagComponent, *child.parentComponent);
 		}
 
 		ImGui::TreePop();

@@ -33,7 +33,7 @@ namespace Grindstone {
 			}
 
 			class PluginsWindow;
-			class SceneHeirarchyPanel;
+			class EntityHeirarchyPanel;
 			class AssetBrowserPanel;
 			class InspectorPanel;
 			class ViewportPanel;
@@ -83,7 +83,7 @@ namespace Grindstone {
 				ImGui::MarkdownConfig markdownConfig;
 				EngineCore* engineCore = nullptr;
 				ImguiInput* input = nullptr;
-				SceneHeirarchyPanel* sceneHeirarchyPanel = nullptr;
+				EntityHeirarchyPanel* entityHeirarchyPanel = nullptr;
 				AssetBrowserPanel* assetBrowserPanel = nullptr;
 				AssetPicker* assetPicker = nullptr;
 				CvarBrowser* cvarBrowser = nullptr;

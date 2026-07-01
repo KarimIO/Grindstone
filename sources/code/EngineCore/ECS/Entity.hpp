@@ -2,25 +2,23 @@
 
 #include <Common/Math.hpp>
 #include <Common/HashedString.hpp>
-#include <EngineCore/CoreComponents/Parent/ParentComponent.hpp>
 
 #include "EntityHandle.hpp"
 
 namespace Grindstone {
-	namespace SceneManagement {
-		class Scene;
-	}
+	class WorldContextSet;
 
 	namespace ECS {
 		class Entity {
 		private:
 			EntityHandle entityId = entt::null;
-			SceneManagement::Scene* scene = nullptr;
+			WorldContextSet* cxtSet = nullptr;
+			virtual entt::registry& GetWorldContextSetEntityRegistry() const;
 		public:
 			Entity() = default;
 			Entity(const Entity& other) = default;
-			Entity(entt::entity entityId, SceneManagement::Scene * scene)
-				: entityId(entityId), scene(scene) {}
+			Entity(entt::entity entityId, WorldContextSet * cxtSet)
+				: entityId(entityId), cxtSet(cxtSet) {}
 
 			virtual void* AddComponent(Grindstone::HashedString componentType);
 			virtual void* AddComponentWithoutSetup(Grindstone::HashedString componentType);
@@ -51,26 +49,25 @@ namespace Grindstone {
 			virtual Math::Float3 GetWorldUp() const;
 
 			virtual void Destroy();
-			virtual entt::registry& GetSceneEntityRegistry() const;
 
 			template<typename ComponentType, typename... Args>
 			ComponentType& AddComponent(Args&&... args) {
-				return GetSceneEntityRegistry().emplace<ComponentType>(entityId, std::forward<Args>(args)...);
+				return GetWorldContextSetEntityRegistry().emplace<ComponentType>(entityId, std::forward<Args>(args)...);
 			}
 
 			template<typename ComponentType>
 			bool HasComponent() const {
-				return GetSceneEntityRegistry().all_of<ComponentType>(entityId);
+				return GetWorldContextSetEntityRegistry().all_of<ComponentType>(entityId);
 			}
 
 			template<typename ComponentType>
 			ComponentType& GetComponent() const {
-				return GetSceneEntityRegistry().get<ComponentType>(entityId);
+				return GetWorldContextSetEntityRegistry().get<ComponentType>(entityId);
 			}
 
 			template<typename ComponentType>
 			bool TryGetComponent(ComponentType*& outComponent) const {
-				ComponentType* testComponent = GetSceneEntityRegistry().try_get<ComponentType>(entityId);
+				ComponentType* testComponent = GetWorldContextSetEntityRegistry().try_get<ComponentType>(entityId);
 				if (testComponent != nullptr) {
 					outComponent = testComponent;
 					return true;
@@ -81,23 +78,23 @@ namespace Grindstone {
 
 			template<typename ComponentType>
 			void RemoveComponent() {
-				GetSceneEntityRegistry().remove<ComponentType>(entityId);
+				GetWorldContextSetEntityRegistry().remove<ComponentType>(entityId);
 			}
 
 			virtual EntityHandle GetHandle() const {
 				return entityId;
 			}
 
-			virtual SceneManagement::Scene* GetScene() const {
-				return scene;
+			virtual WorldContextSet* GetWorldContextSet() const {
+				return cxtSet;
 			}
 
 			explicit operator bool() const {
-				return entityId != entt::null && scene != nullptr && GetSceneEntityRegistry().valid(entityId);
+				return entityId != entt::null && cxtSet != nullptr && GetWorldContextSetEntityRegistry().valid(entityId);
 			}
 
 			bool operator==(const Entity& other) const {
-				return (entityId == other.entityId) && (scene == other.scene);
+				return (entityId == other.entityId) && (cxtSet == other.cxtSet);
 			}
 
 			bool operator!=(const Entity& other) const {
@@ -106,9 +103,9 @@ namespace Grindstone {
 		};
 
 		inline bool operator < (const ECS::Entity& lhs, const ECS::Entity& rhs) {
-			const bool isSceneLess = lhs.GetScene() < rhs.GetScene();
+			const bool isWorldContextSetLess = lhs.GetWorldContextSet() < rhs.GetWorldContextSet();
 			const bool isEntityLess = lhs.GetHandle() < rhs.GetHandle();
-			return isSceneLess || isEntityLess;
-		}
+			return isWorldContextSetLess || isEntityLess;
+		};
 	}
 }

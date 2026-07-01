@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 			return 1;
 		}
 
-		engineCore->InitializeScene(true);
+		// Set the scene somehow
 		engineCore->ShowMainWindow();
 
 		if (engineCore) {

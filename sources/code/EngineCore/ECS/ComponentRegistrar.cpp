@@ -1,17 +1,11 @@
+#include "ComponentRegistrar.hpp"
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/WorldContext/WorldContextManager.hpp>
 
 #include "ComponentRegistrar.hpp"
+#include <Assert.hpp>
 using namespace Grindstone::ECS;
-
-static Grindstone::WorldContextSet& GetActiveWorldContextSet() {
-	return *EngineCore::GetInstance().GetWorldContextManager()->GetActiveWorldContextSet();
-}
-
-static entt::registry& GetEntityRegistry() {
-	return GetActiveWorldContextSet().GetEntityRegistry();
-}
 
 void ComponentRegistrar::CopyRegistry(WorldContextSet& dst, WorldContextSet& src) {
 	const entt::registry& srcRegistry = src.GetEntityRegistry();
@@ -35,15 +29,14 @@ void ComponentRegistrar::CopyRegistry(WorldContextSet& dst, WorldContextSet& src
 	}
 }
 
-void ComponentRegistrar::DestroyEntity(ECS::Entity entity) {
-	Grindstone::WorldContextSet& cxtSet = GetActiveWorldContextSet();
-	entt::registry& registry = cxtSet.GetEntityRegistry();
+void ComponentRegistrar::DestroyEntity(Grindstone::WorldContextSet& worldContextSet, ECS::Entity entity) {
+	entt::registry& registry = worldContextSet.GetEntityRegistry();
 	entt::entity entityHandle = entity.GetHandle();
 
 	for (auto& compFnPair : componentFunctionsList) {
 		ComponentFunctions& compFns = compFnPair.second;
-		if (compFns.HasComponentFn(registry, entityHandle) && compFns.DestroyComponentFn) {
-			compFns.DestroyComponentFn(cxtSet, entityHandle);
+		if (compFns.HasComponentFn(worldContextSet, entityHandle) && compFns.DestroyComponentFn) {
+			compFns.DestroyComponentFn(worldContextSet, entityHandle);
 		}
 	}
 
@@ -58,7 +51,7 @@ void ComponentRegistrar::CallCreateOnRegistry(Grindstone::WorldContextSet& world
 		ComponentFunctions& compFns = compFnPair.second;
 
 		for (entt::entity entity : entityView) {
-			if (compFns.SetupComponentFn != nullptr && compFns.HasComponentFn(registry, entity)) {
+			if (compFns.SetupComponentFn != nullptr && compFns.HasComponentFn(worldContextSet, entity)) {
 				compFns.SetupComponentFn(worldContextSet, entity);
 			}
 		}
@@ -73,7 +66,7 @@ void ComponentRegistrar::CallDestroyOnRegistry(Grindstone::WorldContextSet& worl
 
 		if (compFns.DestroyComponentFn != nullptr) {
 			for (entt::entity entity : registry.storage<entt::entity>()) {
-				if (compFns.HasComponentFn(worldContextSet.GetEntityRegistry(), entity)) {
+				if (compFns.HasComponentFn(worldContextSet, entity)) {
 					compFns.DestroyComponentFn(worldContextSet, entity);
 				}
 			}
@@ -99,56 +92,32 @@ void ComponentRegistrar::UnregisterComponent(Grindstone::HashedString name) {
 	componentFunctionsList.erase(comp);
 }
 
-void* ComponentRegistrar::CreateComponentWithSetup(Grindstone::HashedString name, ECS::Entity entity) {
+void* ComponentRegistrar::CreateComponentWithSetup(Grindstone::WorldContextSet& cxtSet, Grindstone::HashedString name, ECS::Entity entity) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return nullptr;
 	}
 
-	entt::registry& registry = GetEntityRegistry();
-
 	auto& fns = selectedFactory->second;
-	auto comp = fns.CreateComponentFn(registry, entity.GetHandle());
+	auto comp = fns.CreateComponentFn(cxtSet, entity.GetHandle());
 
 	if (fns.SetupComponentFn) {
-		Grindstone::WorldContextSet& cxtSet = GetActiveWorldContextSet();
 		fns.SetupComponentFn(cxtSet, entity.GetHandle());
 	}
 
 	return comp;
 }
 
-void* ComponentRegistrar::CreateComponentWithSetup(WorldContextSet& worldContextSet, Grindstone::HashedString name, ECS::Entity entity) {
+void* ComponentRegistrar::CreateComponent(Grindstone::WorldContextSet& worldContextSet, Grindstone::HashedString name, ECS::Entity entity) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return nullptr;
 	}
 
-	entt::registry& registry = worldContextSet.GetEntityRegistry();
-
-	auto& fns = selectedFactory->second;
-	auto comp = fns.CreateComponentFn(registry, entity.GetHandle());
-
-	if (fns.SetupComponentFn) {
-		fns.SetupComponentFn(worldContextSet, entity.GetHandle());
-	}
-
-	return comp;
+	return selectedFactory->second.CreateComponentFn(worldContextSet, entity.GetHandle());
 }
 
-// TODO: Add WorldContextSet?
-void* ComponentRegistrar::CreateComponent(Grindstone::HashedString name, ECS::Entity entity) {
-	auto selectedFactory = componentFunctionsList.find(name);
-	if (selectedFactory == componentFunctionsList.end()) {
-		return nullptr;
-	}
-
-	entt::registry& registry = GetEntityRegistry();
-	return selectedFactory->second.CreateComponentFn(registry, entity.GetHandle());
-}
-
-// TODO: Add WorldContextSet?
-void ComponentRegistrar::RemoveComponent(Grindstone::HashedString name, ECS::Entity entity) {
+void ComponentRegistrar::RemoveComponent(Grindstone::WorldContextSet& worldContextSet, Grindstone::HashedString name, ECS::Entity entity) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return;
@@ -156,31 +125,28 @@ void ComponentRegistrar::RemoveComponent(Grindstone::HashedString name, ECS::Ent
 
 	auto& fns = selectedFactory->second;
 	if (fns.DestroyComponentFn) {
-		fns.DestroyComponentFn(GetActiveWorldContextSet(), entity.GetHandle());
+		fns.DestroyComponentFn(worldContextSet, entity.GetHandle());
 	}
 
-	entt::registry& registry = GetEntityRegistry();
-	fns.RemoveComponentFn(registry, entity.GetHandle());
+	fns.RemoveComponentFn(worldContextSet, entity.GetHandle());
 }
 
-bool ComponentRegistrar::HasComponent(Grindstone::HashedString name, ECS::Entity entity) {
+bool ComponentRegistrar::HasComponent(Grindstone::WorldContextSet& worldContextSet, Grindstone::HashedString name, ECS::Entity entity) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return false;
 	}
 
-	entt::registry& registry = GetEntityRegistry();
-	return selectedFactory->second.HasComponentFn(registry, entity.GetHandle());
+	return selectedFactory->second.HasComponentFn(worldContextSet, entity.GetHandle());
 }
 
-bool ComponentRegistrar::TryGetComponent(Grindstone::HashedString name, ECS::Entity entity, void*& outComponent) {
+bool ComponentRegistrar::TryGetComponent(Grindstone::WorldContextSet& worldContextSet, Grindstone::HashedString name, ECS::Entity entity, void*& outComponent) {
 	auto selectedFactory = componentFunctionsList.find(name);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return false;
 	}
 
-	entt::registry& registry = GetEntityRegistry();
-	return selectedFactory->second.TryGetComponentFn(registry, entity.GetHandle(), outComponent);
+	return selectedFactory->second.TryGetComponentFn(worldContextSet, entity.GetHandle(), outComponent);
 }
 
 bool ComponentRegistrar::TryGetComponentReflectionData(Grindstone::HashedString name, Grindstone::Reflection::TypeDescriptor_Struct& outReflectionData) {
@@ -193,27 +159,15 @@ bool ComponentRegistrar::TryGetComponentReflectionData(Grindstone::HashedString 
 	return true;
 }
 
-void ComponentRegistrar::SetupComponent(Grindstone::HashedString name, ECS::Entity entity, void* componentPtr) {
-	auto selectedFactory = componentFunctionsList.find(name);
+void ComponentRegistrar::SetupComponent(Grindstone::WorldContextSet& cxtSet, Grindstone::HashedString componentTypeName, ECS::Entity entity, void* componentPtr) {
+	auto selectedFactory = componentFunctionsList.find(componentTypeName);
 	if (selectedFactory == componentFunctionsList.end()) {
 		return;
 	}
 
 	auto& fns = selectedFactory->second;
 	if (fns.SetupComponentFn) {
-		fns.SetupComponentFn(GetActiveWorldContextSet(), entity.GetHandle());
-	}
-}
-
-void ComponentRegistrar::SetupComponent(WorldContextSet& worldContextSet, Grindstone::HashedString name, ECS::Entity entity, void* componentPtr) {
-	auto selectedFactory = componentFunctionsList.find(name);
-	if (selectedFactory == componentFunctionsList.end()) {
-		return;
-	}
-
-	auto& fns = selectedFactory->second;
-	if (fns.SetupComponentFn) {
-		fns.SetupComponentFn(worldContextSet, entity.GetHandle());
+		fns.SetupComponentFn(cxtSet, entity.GetHandle());
 	}
 }
 
@@ -231,4 +185,33 @@ ComponentRegistrar::ComponentMap::iterator ComponentRegistrar::end() {
 
 ComponentRegistrar::ComponentMap::const_iterator ComponentRegistrar::end() const {
 	return componentFunctionsList.end();
+}
+
+Grindstone::ECS::ComponentFunctions& ComponentRegistrar::GetComponentAccessFunctions(Grindstone::HashedString componentTypeName) {
+	auto it = componentFunctionsList.find(componentTypeName);
+	GS_ASSERT(it != componentFunctionsList.end());
+	return componentFunctionsList[componentTypeName];
+}
+
+extern "C" {
+	struct ComponentAccessBindings {
+		CreateComponentFn createComponent;
+		TryGetComponentFn tryGetComponent;
+		HasComponentFn hasComponent;
+		DestroyComponentFn destroyComponent;
+	};
+
+	ComponentAccessBindings GetComponentAccessBindings(const char* componentName) {
+		Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+		Grindstone::ECS::ComponentRegistrar* compReg = engineCore.GetComponentRegistrar();
+		GS_ASSERT(compReg);
+		ComponentFunctions& compFns = compReg->GetComponentAccessFunctions(Grindstone::HashedString(componentName));
+
+		return {
+			compFns.CreateComponentFn,
+			compFns.TryGetComponentFn,
+			compFns.HasComponentFn,
+			compFns.DestroyComponentFn
+		};
+	}
 }

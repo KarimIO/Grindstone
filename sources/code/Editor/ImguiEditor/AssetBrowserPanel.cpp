@@ -15,7 +15,6 @@
 #include <Editor/PluginSystem/EditorPluginManager.hpp>
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/EngineCore.hpp>
-#include <EngineCore/Scenes/Manager.hpp>
 
 #include "ImguiRenderer.hpp"
 #include "AssetBrowserPanel.hpp"
@@ -194,15 +193,14 @@ void AssetBrowserPanel::ProcessFolderClicks(const std::filesystem::path& path) {
 void AssetBrowserPanel::ProcessFileClicks(AssetBrowserItem& item) {
 	if (ImGui::IsItemHovered()) {
 		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-			if (item.defaultAssetType == AssetType::Scene) {
+			if (item.defaultAssetType == AssetType::Prefab) {
 				Editor::Manager& engineManager = Editor::Manager::GetInstance();
-				SceneManagement::SceneManager* sceneManager = engineManager.GetEngineCore().GetSceneManager();
 
 				AssetRegistry& assetRegistry = engineManager.GetAssetRegistry();
 
 				AssetRegistry::Entry entry;
 				if (item.defaultUuid.IsValid()) {
-					sceneManager->LoadScene(item.defaultUuid);
+					// TODO: Load prefab here
 				}
 			}
 			else {

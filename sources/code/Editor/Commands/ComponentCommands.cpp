@@ -1,5 +1,4 @@
 #include "ComponentCommands.hpp"
-#include "EngineCore/Scenes/Scene.hpp"
 using namespace Grindstone::Editor;
 
 AddComponentCommand::AddComponentCommand(ECS::Entity entity, Grindstone::HashedString componentName)

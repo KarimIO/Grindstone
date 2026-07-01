@@ -5,19 +5,20 @@
 
 #include <Common/Input/InputInterface.hpp>
 #include <Common/Window/WindowManager.hpp>
+#include <Editor/EditorCamera.hpp>
+#include <Editor/EditorManager.hpp>
 #include <EngineCore/Logger.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
 #include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
-#include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
-#include <Editor/EditorCamera.hpp>
-#include <Editor/EditorManager.hpp>
 #include <EngineCore/Rendering/BaseRenderer.hpp>
+#include <EngineCore/WorldContext/WorldContextManager.hpp>
 
 #include "ViewportPanel.hpp"
 
+using namespace Grindstone;
 using namespace Grindstone::Memory;
 using namespace Grindstone::Editor::ImguiEditor;
 
@@ -234,17 +235,17 @@ void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 		if (shouldMousePickClickLastFrame) {
 			shouldMousePickClickLastFrame = false;
 			shouldMousePickClick = false;
-			Grindstone::SceneManagement::Scene* scene = engineCore.GetSceneManager()->scenes.begin()->second;
+			Grindstone::WorldContextSet* cxtSet = engineCore.GetWorldContextManager()->GetActiveWorldContextSet();
 
 			if (ImGui::GetIO().KeyCtrl || ImGui::GetIO().KeyShift) {
 				if (entityId != entt::null) {
-					ECS::Entity entity(entityId, scene);
+					ECS::Entity entity(entityId, cxtSet);
 					editorManager.GetSelection().AddEntity(entity);
 				}
 			}
 			else {
 				if (entityId != entt::null) {
-					ECS::Entity entity(entityId, scene);
+					ECS::Entity entity(entityId, cxtSet);
 					editorManager.GetSelection().SetSelectedEntity(entity);
 				}
 				else {

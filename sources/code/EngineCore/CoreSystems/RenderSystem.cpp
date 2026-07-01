@@ -50,7 +50,7 @@ namespace Grindstone {
 		auto view = registry.view<entt::entity, const TransformComponent, const CameraComponent>();
 
 		view.each(
-			[&](
+			[&worldContextSet, wgb, width, height](
 				entt::entity entity,
 				const TransformComponent& transformComponent,
 				const CameraComponent& cameraComponent
@@ -71,7 +71,7 @@ namespace Grindstone {
 					return;
 				}
 
-				const glm::mat4 transformMatrix = TransformComponent::GetWorldTransformMatrix(entity, registry);
+				const glm::mat4 transformMatrix = TransformComponent::GetWorldTransformMatrix(entity, worldContextSet);
 				const glm::vec3 upVector = glm::normalize(-glm::vec3(transformMatrix[1]));
 				const glm::vec3 forwardVector = glm::normalize(glm::vec3(transformMatrix[2]));
 				const glm::vec3 pos = glm::vec3(transformMatrix[3]);

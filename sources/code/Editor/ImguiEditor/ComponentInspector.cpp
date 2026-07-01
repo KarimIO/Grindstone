@@ -4,7 +4,6 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include <EngineCore/EngineCore.hpp>
-#include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/ECS/ComponentRegistrar.hpp>
 #include <EngineCore/Reflection/TypeDescriptor.hpp>
 #include <EngineCore/Assets/Asset.hpp>
@@ -456,7 +455,7 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 
 		std::string name = "Unassigned";
 
-		entt::registry& registry = entity.GetSceneEntityRegistry();
+		entt::registry& registry = entity.GetWorldContextSet()->GetEntityRegistry();
 
 		if (targetEntity != entt::null) {
 			Grindstone::TagComponent& tagComponent = registry.get<Grindstone::TagComponent>(targetEntity);
@@ -475,7 +474,7 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity")) {
 				ECS::Entity newTargetEntity = *static_cast<ECS::Entity*>(payload->Data);
 				entt::entity newTargetEntityHandle = newTargetEntity.GetHandle();
-				if (newTargetEntity.GetSceneEntityRegistry().valid(newTargetEntityHandle)) {
+				if (newTargetEntity.GetWorldContextSet()->GetEntityRegistry().valid(newTargetEntityHandle)) {
 					targetEntity = newTargetEntityHandle;
 				}
 			}

@@ -3,6 +3,7 @@
 
 const char* assetTypeStrings[] = {
 	"Undefined",
+	"Prefab",
 	"Texture",
 	"GraphicsPipelineSet",
 	"ComputePipelineSet",
@@ -11,8 +12,6 @@ const char* assetTypeStrings[] = {
 	"Mesh3d",
 	"Rig",
 	"Animation",
-	"Script",
-	"Scene"
 };
 
 const char* Grindstone::GetAssetTypeToString(AssetType type) {

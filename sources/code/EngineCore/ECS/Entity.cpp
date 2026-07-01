@@ -1,48 +1,57 @@
+#include <Common/Assert.hpp>
+
+#include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
+#include <EngineCore/ECS/ComponentRegistrar.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
+
 #include "Entity.hpp"
-#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
-#include "EngineCore/ECS/ComponentRegistrar.hpp"
-#include "EngineCore/Scenes/Scene.hpp"
 using namespace Grindstone::ECS;
 
-entt::registry& Entity::GetSceneEntityRegistry() const {
-	return scene->GetEntityRegistry();
+static ComponentRegistrar* GetComponentRegistrar() {
+	ComponentRegistrar* componentRegistrar = Grindstone::EngineCore::GetInstance().GetComponentRegistrar();
+	GS_ASSERT(componentRegistrar);
+	return componentRegistrar;
+}
+
+entt::registry& Entity::GetWorldContextSetEntityRegistry() const {
+	return cxtSet->GetEntityRegistry();
 }
 
 void* Entity::AddComponent(Grindstone::HashedString componentType) {
-	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
-	return componentRegistrar->CreateComponentWithSetup(componentType, *this);
+	ComponentRegistrar* componentRegistrar = GetComponentRegistrar();
+	return componentRegistrar->CreateComponentWithSetup(*cxtSet, componentType, *this);
 }
 
 void* Entity::AddComponentWithoutSetup(Grindstone::HashedString componentType) {
-	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
-	return componentRegistrar->CreateComponent(componentType, *this);
+	ComponentRegistrar* componentRegistrar = GetComponentRegistrar();
+	return componentRegistrar->CreateComponent(*cxtSet, componentType, *this);
 }
 
 bool Entity::HasComponent(Grindstone::HashedString componentType) const {
-	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
-	return componentRegistrar->HasComponent(componentType, *this);
+	ComponentRegistrar* componentRegistrar = GetComponentRegistrar();
+	return componentRegistrar->HasComponent(*cxtSet, componentType, *this);
 }
 
 void* Entity::GetComponent(Grindstone::HashedString componentType) const {
 	void* outComponent = nullptr;
-	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
-	componentRegistrar->TryGetComponent(componentType, *this, outComponent);
+	ComponentRegistrar* componentRegistrar = GetComponentRegistrar();
+	componentRegistrar->TryGetComponent(*cxtSet, componentType, *this, outComponent);
 
 	return outComponent;
 }
 
 bool Entity::TryGetComponent(Grindstone::HashedString componentType, void*& outComponent) const {
-	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
-	return componentRegistrar->TryGetComponent(componentType, *this, outComponent);
+	ComponentRegistrar* componentRegistrar = GetComponentRegistrar();
+	return componentRegistrar->TryGetComponent(*cxtSet, componentType, *this, outComponent);
 }
 
 void Entity::RemoveComponent(Grindstone::HashedString componentType) {
-	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
-	componentRegistrar->RemoveComponent(componentType, *this);
+	ComponentRegistrar* componentRegistrar = GetComponentRegistrar();
+	componentRegistrar->RemoveComponent(*cxtSet, componentType, *this);
 }
 
 bool Entity::IsChildOf(const Entity& possibleParent) const {
-	if (scene != possibleParent.scene) {
+	if (cxtSet != possibleParent.cxtSet) {
 		return false;
 	}
 
@@ -50,7 +59,7 @@ bool Entity::IsChildOf(const Entity& possibleParent) const {
 		return false;
 	}
 
-	entt::registry& registry = GetSceneEntityRegistry();
+	entt::registry& registry = GetWorldContextSetEntityRegistry();
 	entt::entity currentNode = possibleParent.entityId;
 	while (currentNode != entt::null) {
 		const ParentComponent* parentComponent = registry.try_get<ParentComponent>(currentNode);
@@ -69,9 +78,9 @@ bool Entity::IsChildOf(const Entity& possibleParent) const {
 }
 
 Entity Entity::GetParent() const {
-	entt::registry& registry = GetSceneEntityRegistry();
+	entt::registry& registry = GetWorldContextSetEntityRegistry();
 	const entt::entity parentNode = registry.get<ParentComponent>(entityId).parentEntity;
-	return Entity(parentNode, scene);
+	return Entity(parentNode, cxtSet);
 }
 
 bool Entity::SetParent(const Entity newParent) {
@@ -97,7 +106,7 @@ bool Entity::SetParent(const Entity newParent) {
 }
 
 Math::Matrix4 Entity::GetLocalMatrix() const {
-	entt::registry& registry = GetSceneEntityRegistry();
+	entt::registry& registry = GetWorldContextSetEntityRegistry();
 	const TransformComponent& transformComponent = registry.get<TransformComponent>(entityId);
 
 	return transformComponent.GetTransformMatrix();
@@ -108,7 +117,7 @@ Math::Matrix4 Entity::GetWorldMatrix() const {
 }
 
 Math::Float3 Entity::GetLocalPosition() const {
-	entt::registry& registry = GetSceneEntityRegistry();
+	entt::registry& registry = GetWorldContextSetEntityRegistry();
 	const TransformComponent& transformComponent = registry.get<TransformComponent>(entityId);
 
 	return transformComponent.position;
@@ -119,7 +128,7 @@ Math::Float3 Entity::GetWorldPosition() const {
 }
 
 Math::Quaternion Entity::GetLocalRotation() const {
-	entt::registry& registry = GetSceneEntityRegistry();
+	entt::registry& registry = GetWorldContextSetEntityRegistry();
 	const TransformComponent& transformComponent = registry.get<TransformComponent>(entityId);
 
 	return transformComponent.rotation;
@@ -131,7 +140,7 @@ Math::Quaternion Entity::GetWorldRotation() const {
 }
 
 Math::Float3 Entity::GetLocalScale() const {
-	const entt::registry& registry = GetSceneEntityRegistry();
+	const entt::registry& registry = GetWorldContextSetEntityRegistry();
 	const TransformComponent& transformComponent = registry.get<TransformComponent>(entityId);
 
 	return transformComponent.scale;
@@ -139,7 +148,7 @@ Math::Float3 Entity::GetLocalScale() const {
 
 
 Math::Float3 Entity::GetLocalForward() const {
-	entt::registry& registry = GetSceneEntityRegistry();
+	entt::registry& registry = GetWorldContextSetEntityRegistry();
 	const TransformComponent& transformComponent = registry.get<TransformComponent>(entityId);
 
 	return transformComponent.GetForward();
@@ -151,7 +160,7 @@ Math::Float3 Entity::GetWorldForward() const {
 }
 
 Math::Float3 Entity::GetLocalRight() const {
-	entt::registry& registry = GetSceneEntityRegistry();
+	entt::registry& registry = GetWorldContextSetEntityRegistry();
 	const TransformComponent& transformComponent = registry.get<TransformComponent>(entityId);
 
 	return transformComponent.GetRight();
@@ -163,7 +172,7 @@ Math::Float3 Entity::GetWorldRight() const {
 }
 
 Math::Float3 Entity::GetLocalUp() const {
-	entt::registry& registry = GetSceneEntityRegistry();
+	entt::registry& registry = GetWorldContextSetEntityRegistry();
 	const TransformComponent& transformComponent = registry.get<TransformComponent>(entityId);
 
 	return transformComponent.GetUp();
@@ -176,7 +185,7 @@ Math::Float3 Entity::GetWorldUp() const {
 
 
 void Entity::Destroy() {
-	scene->GetEntityRegistry().destroy(entityId);
+	cxtSet->GetEntityRegistry().destroy(entityId);
 	entityId = entt::null;
-	scene = nullptr;
+	cxtSet = nullptr;
 }

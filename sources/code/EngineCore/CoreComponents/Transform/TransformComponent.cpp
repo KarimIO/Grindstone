@@ -1,12 +1,11 @@
 #include <Common/Math.hpp>
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 #include "TransformComponent.hpp"
-#include "EngineCore/Scenes/Scene.hpp"
 using namespace Grindstone;
 
 extern "C" {
-	ENGINE_CORE_API void* EntityGetTransformComponent(Grindstone::SceneManagement::Scene* scene, uint32_t entity) {
-		entt::registry& reg = Grindstone::EngineCore::GetInstance().GetWorldContextManager()->GetActiveWorldContextSet()->GetEntityRegistry();
+	ENGINE_CORE_API void* EntityGetTransformComponent(Grindstone::WorldContextSet* cxtSet, uint32_t entity) {
+		entt::registry& reg = cxtSet->GetEntityRegistry();
 		return reg.try_get<TransformComponent>((entt::entity)entity);
 	}
 

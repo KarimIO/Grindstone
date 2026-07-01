@@ -45,7 +45,7 @@ Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(Ren
 			};
 
 			// TODO: Get Rendering Stats
-			engineCore.assetRendererManager->RenderQueue(cmd, renderViewData, cxtSet->GetEntityRegistry(), geometryOpaqueRenderPassKey);
+			engineCore.assetRendererManager->RenderQueue(cmd, renderViewData, cxtSet, geometryOpaqueRenderPassKey);
 		}
 	);
 }

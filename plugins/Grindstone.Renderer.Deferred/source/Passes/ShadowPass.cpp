@@ -1,4 +1,3 @@
-#include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
 #include <EngineCore/CoreComponents/Lights/DirectionalLightComponent.hpp>
@@ -8,6 +7,8 @@
 
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
 #include <Grindstone.Renderer.Deferred/include/Passes/ShadowPass.hpp>
+
+using namespace Grindstone;
 
 static void RenderShadowMap(
 	Grindstone::WorldContextSet* cxtSet,
@@ -29,7 +30,7 @@ static void RenderShadowMap(
 	cmd->ClearAttachments(&clearAttachment, 1u, &clearRect, 1u);
 
 	// TODO: Get Rendering Stats
-	engineCore.assetRendererManager->RenderQueue(cmd, renderViewData, cxtSet->GetEntityRegistry(), shadowMapRenderPassKey);
+	engineCore.assetRendererManager->RenderQueue(cmd, renderViewData, cxtSet, shadowMapRenderPassKey);
 }
 
 static void RenderSpotLightComponent(
@@ -210,8 +211,6 @@ Grindstone::Renderer::ShadowPassReturnData Grindstone::Renderer::ShadowPass::Add
 ) {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 
-	Grindstone::SceneManagement::Scene* scene = engineCore.GetSceneManager()->scenes.begin()->second;
-
 	// TODO: Point Light Shadows
 
 	uint32_t totalShadowMapCount = 0;
@@ -237,8 +236,8 @@ Grindstone::Renderer::ShadowPassReturnData Grindstone::Renderer::ShadowPass::Add
 	PrepareAtlas(totalShadowMapCount);
 
 	spotLightView.each(
-		[this, &renderGraph, &shadowAtlasRef, scene](const entt::entity entityHandle, const Grindstone::TagComponent& tag, Grindstone::SpotLightComponent& spotLightComponent) {
-			const ECS::Entity entity = ECS::Entity(entityHandle, scene);
+		[this, &renderGraph, &shadowAtlasRef, &worldContextSet](const entt::entity entityHandle, const Grindstone::TagComponent& tag, Grindstone::SpotLightComponent& spotLightComponent) {
+			const ECS::Entity entity = ECS::Entity(entityHandle, &worldContextSet);
 			Grindstone::Math::IntRect2D renderArea;
 			if (GetAtlasRenderArea(renderArea)) {
 				Grindstone::Renderer::MetaRect metaRect = MetaRect::Pixels(
@@ -253,8 +252,8 @@ Grindstone::Renderer::ShadowPassReturnData Grindstone::Renderer::ShadowPass::Add
 	);
 
 	directionalLightView.each(
-		[this, &renderGraph, &shadowAtlasRef, scene](const entt::entity entityHandle, const Grindstone::TagComponent& tag, DirectionalLightComponent& directionalLightComponent) {
-			const ECS::Entity entity = ECS::Entity(entityHandle, scene);
+		[this, &renderGraph, &shadowAtlasRef, &worldContextSet](const entt::entity entityHandle, const Grindstone::TagComponent& tag, DirectionalLightComponent& directionalLightComponent) {
+			const ECS::Entity entity = ECS::Entity(entityHandle, &worldContextSet);
 			Grindstone::Math::IntRect2D renderArea;
 			if (GetAtlasRenderArea(renderArea)) {
 				Grindstone::Renderer::MetaRect metaRect = MetaRect::Pixels(

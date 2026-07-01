@@ -35,7 +35,7 @@ const Grindstone::Editor::ImporterVersion gsceneAssetVersion = 1;
 const Grindstone::Editor::ImporterVersion ddsAssetVersion = 1;
 
 static void ImportScene(AssetRegistry& assetRegistry, AssetManager& assetManager, const std::filesystem::path& path) {
-	ImportCopyFile(Grindstone::AssetType::Scene, assetRegistry, assetManager, path, gsceneAssetVersion);
+	ImportCopyFile(Grindstone::AssetType::Prefab, assetRegistry, assetManager, path, gsceneAssetVersion);
 }
 
 static void ImportDdsTexture(AssetRegistry& assetRegistry, AssetManager& assetManager, const std::filesystem::path& path) {

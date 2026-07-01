@@ -30,10 +30,6 @@ namespace Grindstone {
 		class SystemRegistrar;
 	}
 
-	namespace SceneManagement {
-		class SceneManager;
-	}
-
 	namespace Events {
 		struct BaseEvent;
 		class Dispatcher;
@@ -78,7 +74,6 @@ namespace Grindstone {
 
 		virtual bool EarlyInitialize(EarlyCreateInfo& ci);
 		virtual bool Initialize(LateCreateInfo& createInfo);
-		virtual void InitializeScene(bool shouldLoadSceneFromDefaults, const char* scenePath = nullptr);
 		virtual void ShowMainWindow();
 
 		virtual ~EngineCore();
@@ -90,7 +85,6 @@ namespace Grindstone {
 		virtual void RegisterInputManager(Input::Interface*);
 		virtual void SetRendererFactory(BaseRendererFactory* factory);
 		virtual Input::Interface* GetInputManager() const;
-		virtual SceneManagement::SceneManager* GetSceneManager() const;
 		virtual Plugins::IPluginManager* GetPluginManager() const;
 		virtual Plugins::Interface* GetPluginInterface() const;
 		virtual ECS::SystemRegistrar* GetSystemRegistrar() const;
@@ -107,7 +101,7 @@ namespace Grindstone {
 		virtual std::filesystem::path GetAssetsPath() const;
 		virtual std::filesystem::path GetEngineAssetsPath() const;
 		virtual std::filesystem::path GetAssetPath(std::string subPath) const;
-		virtual entt::registry& GetEntityRegistry();
+		virtual entt::registry& GetActiveEntityRegistry();
 
 		virtual bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
 		virtual bool OnForceQuit(Grindstone::Events::BaseEvent* ev);
@@ -166,7 +160,6 @@ namespace Grindstone {
 		double deltaTime = 0.0;
 		std::chrono::steady_clock::time_point firstFrameTime;
 		std::chrono::steady_clock::time_point lastFrameTime;
-		SceneManagement::SceneManager* sceneManager = nullptr;
 		ECS::ComponentRegistrar* componentRegistrar = nullptr;
 		ECS::SystemRegistrar* systemRegistrar = nullptr;
 		BaseRendererFactory* rendererFactory = nullptr;

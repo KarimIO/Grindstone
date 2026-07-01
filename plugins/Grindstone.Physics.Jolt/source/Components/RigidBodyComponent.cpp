@@ -194,8 +194,8 @@ REFLECT_STRUCT_BEGIN(RigidBodyComponent)
 REFLECT_STRUCT_END()
 
 extern "C" {
-	JOLT_PHYSICS_EXPORT void* EntityGetRigidbodyComponent(Grindstone::SceneManagement::Scene* scene, uint32_t entity) {
-		entt::registry& reg = Grindstone::EngineCore::GetInstance().GetEntityRegistry();
+	JOLT_PHYSICS_EXPORT void* EntityGetRigidbodyComponent(Grindstone::WorldContextSet* cxtSet, uint32_t entity) {
+		entt::registry& reg = cxtSet->GetEntityRegistry();
 		const entt::entity entityId = static_cast<entt::entity>(entity);
 		Grindstone::Physics::RigidBodyComponent* comp = reg.try_get<Grindstone::Physics::RigidBodyComponent>(entityId);
 		return comp;

@@ -120,7 +120,7 @@ static void RenderRenderQueuesTable(Grindstone::EngineCore& engineCore) {
 		RenderRenderQueueTable("Editor Camera", renderer);
 	}
 	else {
-		entt::registry& entityRegistry = engineCore.GetEntityRegistry();
+		entt::registry& entityRegistry = engineCore.GetActiveEntityRegistry();
 		auto view = entityRegistry.view<Grindstone::TagComponent, Grindstone::CameraComponent>();
 		view.each(
 			[](Grindstone::TagComponent& tagComponent, Grindstone::CameraComponent& cameraComponent) {

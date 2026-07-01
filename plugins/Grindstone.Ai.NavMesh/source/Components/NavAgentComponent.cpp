@@ -1,6 +1,7 @@
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 #include <EngineCore/Reflection/ComponentReflection.hpp>
-#include <EngineCore/Scenes/Scene.hpp>
+#include <EngineCore/WorldContext/WorldContextManager.hpp>
+#include <Common/Assert.hpp>
 
 #include <Grindstone.Ai.NavMesh/include/pch.hpp>
 #include <Grindstone.Ai.NavMesh/include/Components/NavAgentComponent.hpp>
@@ -49,13 +50,14 @@ bool NavAgentComponent::SetTarget(entt::entity entityHandle, glm::vec3 endPositi
 
 	Grindstone::WorldContextManager* cxtMgr = Grindstone::EngineCore::GetInstance().GetWorldContextManager();
 	Grindstone::WorldContextSet* cxtSet = cxtMgr->GetActiveWorldContextSet();
+	GS_ASSERT(cxtSet);
 	entt::registry& registry = cxtSet->GetEntityRegistry();
 
 	if (!registry.all_of<TransformComponent>((entt::entity)entityHandle)) {
 		return false;
 	}
 
-	glm::vec3 startPosition = TransformComponent::GetWorldPosition((entt::entity)entityHandle, registry);
+	glm::vec3 startPosition = TransformComponent::GetWorldPosition((entt::entity)entityHandle, *cxtSet);
 	destination = endPosition;
 
 	dtQueryFilter queryFilter;
@@ -98,8 +100,8 @@ const NavMeshLocomotionData Grindstone::Ai::NavAgentComponent::GetLocomotionData
 }
 
 extern "C" {
-	AI_NAVMESH_EXPORT void* EntityGetNavmeshAgentComponent(Grindstone::SceneManagement::Scene* scene, uint32_t entity) {
-		entt::registry& reg = Grindstone::EngineCore::GetInstance().GetEntityRegistry();
+	AI_NAVMESH_EXPORT void* EntityGetNavmeshAgentComponent(Grindstone::WorldContextSet* cxtSet, uint32_t entity) {
+		entt::registry& reg = cxtSet->GetEntityRegistry();
 		const entt::entity entityId = static_cast<entt::entity>(entity);
 		Grindstone::Ai::NavAgentComponent* comp = reg.try_get<Grindstone::Ai::NavAgentComponent>(entityId);
 		return comp;

@@ -60,12 +60,13 @@ static glm::vec3 CalculateMaximumBounds(glm::vec3 position, glm::vec3 boundMax) 
 }
 
 static void PopulateGeometry(
-	const entt::registry& registry,
+	const Grindstone::WorldContextSet& cxtSet,
 	std::vector<glm::vec3>& vertexPositions,
 	std::vector<int>& triangles,
 	glm::vec3& boundMin,
 	glm::vec3& boundMax
 ) {
+	const entt::registry& registry = cxtSet.GetEntityRegistry();
 	constexpr float inf = std::numeric_limits<float>().infinity();
 	constexpr float ninf = std::numeric_limits<float>().lowest();
 	boundMin = { inf, inf, inf };
@@ -75,13 +76,13 @@ static void PopulateGeometry(
 	{
 		auto view = registry.view<entt::entity, const TransformComponent, const Physics::BoxColliderComponent>();
 		view.each(
-			[&](
+			[&cxtSet, &vertexPositions, &boundMin, &boundMax, &triangles, &index](
 				entt::entity entity,
 				const TransformComponent& transformComponent,
 				const Physics::BoxColliderComponent& boxComponent
 			) {
 				glm::vec3 halfExtents = boxComponent.GetSize() / 2.0f;
-				glm::mat4 transformMatrix = transformComponent.GetWorldTransformMatrix(entity, registry);
+				glm::mat4 transformMatrix = transformComponent.GetWorldTransformMatrix(entity, cxtSet);
 				glm::vec3 scale = transformComponent.scale;
 
 				glm::vec4 v[8] = {
@@ -126,12 +127,12 @@ static void PopulateGeometry(
 	}
 }
 
-static std::pair<rcPolyMesh*, rcPolyMeshDetail*> BakeNavMeshForAgent(const entt::registry& registry, rcContext* context, const Ai::NavMeshComponent& navMeshData, const Ai::NavAgentType& agentType) {
+static std::pair<rcPolyMesh*, rcPolyMeshDetail*> BakeNavMeshForAgent(const Grindstone::WorldContextSet& cxtSet, rcContext* context, const Ai::NavMeshComponent& navMeshData, const Ai::NavAgentType& agentType) {
 	glm::vec3 bmin, bmax;
 	std::vector<glm::vec3> verts;
 	std::vector<int> tris;
 
-	PopulateGeometry(registry, verts, tris, bmin, bmax);
+	PopulateGeometry(cxtSet, verts, tris, bmin, bmax);
 
 	bmin -= glm::vec3(2.0f, 2.0f, 2.0f);
 	bmax += glm::vec3(2.0f, 2.0f, 2.0f);
@@ -533,7 +534,7 @@ static void MenuItemGenerateNavMesh() {
 
 	for (Ai::NavAgentType& agentType : agentTypes) {
 		// Get data from the below step and cache it
-		auto [mesh, detailMesh] = BakeNavMeshForAgent(registry, context, navMeshData, agentType);
+		auto [mesh, detailMesh] = BakeNavMeshForAgent(*worldContextSet, context, navMeshData, agentType);
 
 		if (mesh != nullptr) {
 			dtNavMesh* dtNavMesh = CreateNavMeshFromData(

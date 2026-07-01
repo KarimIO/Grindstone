@@ -1,7 +1,6 @@
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
-#include <EngineCore/Scenes/Manager.hpp>
 
 #include <Grindstone.Renderer.Deferred/include/Passes/LightingPass.hpp>
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
@@ -175,13 +174,10 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 			LightingPassReturnData& lightingImageRef
 		) {
 			GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
+			WorldContextSet* cxtSet = cxt.worldContextSet;
 			EngineCore& engineCore = EngineCore::GetInstance();
 			entt::registry& registry = cxt.worldContextSet->GetEntityRegistry();
 			GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-
-			// TODO: We should be able to get transforms below without a scene.
-			Grindstone::SceneManagement::SceneManager* sceneManager = engineCore.GetSceneManager();
-			Grindstone::SceneManagement::Scene* scene = sceneManager->scenes.begin()->second;
 
 			cmd->BindVertexBuffers(&vertexBuffer, 1);
 			cmd->BindIndexBuffer(indexBuffer);
@@ -215,7 +211,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 					auto view = registry.view<const entt::entity, PointLightComponent>();
 					view.each(
 						[&](const entt::entity entityHandle, PointLightComponent& pointLightComponent) {
-							const ECS::Entity entity(entityHandle, scene);
+							const ECS::Entity entity(entityHandle, cxtSet);
 							PointLightComponent::UniformStruct lightmapStruct{
 								pointLightComponent.color,
 								pointLightComponent.attenuationRadius,
@@ -248,7 +244,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 					auto view = registry.view<const entt::entity, SpotLightComponent>();
 					view.each(
 						[&](const entt::entity entityHandle, SpotLightComponent& spotLightComponent) {
-							const ECS::Entity entity(entityHandle, scene);
+							const ECS::Entity entity(entityHandle, cxtSet);
 
 							SpotLightComponent::UniformStruct lightStruct{
 								bias * spotLightComponent.shadowMatrix,
@@ -287,7 +283,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 					auto view = registry.view<const entt::entity, const TransformComponent, DirectionalLightComponent>();
 					view.each(
 						[&](const entt::entity entityHandle, const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
-							const ECS::Entity entity(entityHandle, scene);
+							const ECS::Entity entity(entityHandle, cxtSet);
 
 							DirectionalLightComponent::UniformStruct lightStruct{
 								bias * directionalLightComponent.shadowMatrix,

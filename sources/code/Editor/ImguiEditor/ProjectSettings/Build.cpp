@@ -26,7 +26,7 @@ static void OnRenderScene(void* listPtr, size_t index, float width) {
 
 	if (ImGui::Button(scenesText, ImVec2(width, 0.0f))) {
 		Grindstone::Editor::Manager::GetInstance().GetImguiEditor().PromptAssetPicker(
-			Grindstone::AssetType::Scene,
+			Grindstone::AssetType::Prefab,
 			[&sceneValue](Grindstone::Uuid assetUuid, std::string assetName) {
 				sceneValue.uuid = assetUuid;
 				sceneValue.displayName = assetName;

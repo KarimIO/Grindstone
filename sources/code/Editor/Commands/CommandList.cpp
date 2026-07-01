@@ -11,8 +11,8 @@ namespace Grindstone {
 			commands.resize(undoCount);
 		}
 
-		void CommandList::AddNewEntity(SceneManagement::Scene* scene) {
-			AddCommand(Memory::AllocatorCore::Allocate<AddEntityCommand>(scene));
+		void CommandList::AddNewEntity(Grindstone::WorldContextSet* cxtSet) {
+			AddCommand(Memory::AllocatorCore::Allocate<AddEntityCommand>(cxtSet));
 		}
 
 		void CommandList::AddComponent(

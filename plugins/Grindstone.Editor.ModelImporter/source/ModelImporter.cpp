@@ -630,7 +630,7 @@ void ModelImporter::WritePrefab() {
 		subassetName = subassetName.substr(0, dotPos);
 	}
 
-	Grindstone::Uuid outUuid = metaFile.GetOrCreateDefaultSubassetUuid(subassetName, Grindstone::AssetType::Scene);
+	Grindstone::Uuid outUuid = metaFile.GetOrCreateDefaultSubassetUuid(subassetName, Grindstone::AssetType::Prefab);
 
 	std::filesystem::path meshOutputPath = assetRegistry->GetCompiledAssetsPath() / outUuid.ToString();
 	std::ofstream output(meshOutputPath, std::ios::binary);

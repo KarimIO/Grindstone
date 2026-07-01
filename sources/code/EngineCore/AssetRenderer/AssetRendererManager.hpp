@@ -23,7 +23,7 @@ namespace Grindstone {
 		virtual Grindstone::Rendering::GeometryRenderStats RenderQueue(
 			GraphicsAPI::CommandBuffer* commandBuffer,
 			const Grindstone::Rendering::RenderViewData& viewData,
-			entt::registry& registry,
+			Grindstone::WorldContextSet* cxtSet,
 			Grindstone::HashedString renderQueue
 		);
 		

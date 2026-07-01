@@ -18,10 +18,10 @@ namespace Grindstone {
 
 		#region DllImports
 		[DllImport("EngineCore")]
-		static extern System.IntPtr TagComponentGetTag(System.IntPtr comp);
+		private static extern System.IntPtr TagComponentGetTag(System.IntPtr comp);
 
 		[DllImport("EngineCore")]
-		static extern void TagComponentSetTag(System.IntPtr comp, string? tag);
+		private static extern void TagComponentSetTag(System.IntPtr comp, string? tag);
 		#endregion
 	}
 }

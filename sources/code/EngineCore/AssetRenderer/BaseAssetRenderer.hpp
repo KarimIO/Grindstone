@@ -9,12 +9,14 @@
 #include <Common/HashedString.hpp>
 #include <Common/Rendering/GeometryRenderingStats.hpp>
 #include <Common/Rendering/RenderViewData.hpp>
-#include "EngineCore/Assets/AssetManager.hpp"
+#include <EngineCore/Assets/AssetManager.hpp>
 
 using RenderQueueIndex = uint8_t;
 const RenderQueueIndex INVALID_RENDER_QUEUE = UINT8_MAX;
 
 namespace Grindstone {
+	class WorldContextSet;
+
 	namespace GraphicsAPI {
 		class CommandBuffer;
 		class DescriptorSet;
@@ -27,7 +29,7 @@ namespace Grindstone {
 		virtual Grindstone::Rendering::GeometryRenderStats RenderQueue(
 			GraphicsAPI::CommandBuffer* commandBuffer,
 			const Grindstone::Rendering::RenderViewData& viewData,
-			entt::registry& registry,
+			Grindstone::WorldContextSet* cxtSet,
 			Grindstone::HashedString renderQueueHash
 		) = 0;
 	};

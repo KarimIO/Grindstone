@@ -22,7 +22,6 @@
 #include <Editor/ImguiEditor/ViewportPanel.hpp>
 #include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/EngineCore.hpp>
-#include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
@@ -143,7 +142,7 @@ bool Manager::Initialize(const std::unordered_map<std::string, std::string>& cmd
 	editorWorldContext = engineCore->GetWorldContextManager()->Create("Editor");
 
 	engineCore->GetPluginManager()->LoadPluginsByStage("EditorBeforeSceneInitialization");
-	engineCore->InitializeScene(true);
+	// TODO: Load scene
 	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAfterSceneInitialization");
 
 	engineCore->ShowMainWindow();
@@ -367,8 +366,6 @@ Manager::~Manager() {
 	}
 
 	if (engineCore != nullptr) {
-		engineCore->GetSceneManager()->CloseActiveScenes();
-
 		Grindstone::WorldContextManager* cxtManager = engineCore->GetWorldContextManager();
 		if (cxtManager) {
 			if (runtimeWorldContext != nullptr) {

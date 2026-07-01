@@ -6,7 +6,6 @@
 #include <EngineCore/ECS/ComponentRegistrar.hpp>
 #include <EngineCore/CoreComponents/setupCoreComponents.hpp>
 #include <EngineCore/CoreSystems/setupCoreSystems.hpp>
-#include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/PluginSystem/DefaultPluginManager.hpp>
 #include <EngineCore/Events/InputManager.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
@@ -134,8 +133,6 @@ bool EngineCore::Initialize(LateCreateInfo& createInfo) {
 		renderpassRegistry = AllocatorCore::Allocate<Grindstone::RenderPassRegistry>();
 	}
 
-	sceneManager = AllocatorCore::Allocate<SceneManagement::SceneManager>();
-
 	GPRINT_INFO(LogSource::EngineCore, "Application Initialized.");
 	GRIND_PROFILE_END_SESSION();
 
@@ -152,24 +149,6 @@ void EngineCore::PushDeletion(std::function<void()> fn) {
 
 void EngineCore::ForceDeleteAllDeferred() {
 	deferredDeletionQueue.DeleteAll();
-}
-
-void EngineCore::InitializeScene(bool shouldLoadSceneFromDefaults, const char* scenePath) {
-	GRIND_PROFILE_SCOPE("Loading Default Scene");
-
-	Grindstone::Uuid uuid;
-	if (shouldLoadSceneFromDefaults) {
-		sceneManager->LoadDefaultScene();
-	}
-	else if (strcmp(scenePath, "") == 0) {
-		sceneManager->CreateEmptyScene("Untitled");
-	}
-	else if (!Grindstone::Uuid::MakeFromString(scenePath, uuid)) {
-		sceneManager->CreateEmptyScene("Untitled");
-	}
-	else {
-		sceneManager->LoadScene(uuid);
-	}
 }
 
 void EngineCore::ShowMainWindow() {
@@ -222,10 +201,6 @@ EngineCore::~EngineCore() {
 		}
 	}
 
-	if (sceneManager != nullptr) {
-		sceneManager->CloseActiveScenes();
-	}
-
 	if (worldContextManager != nullptr) {
 		pluginInterface->UnregisterWorldContextFactory(Rendering::renderGraphWorldContextName);
 		worldContextManager->ClearContextSets();
@@ -237,7 +212,6 @@ EngineCore::~EngineCore() {
 
 	AllocatorCore::Free(worldContextManager);
 	AllocatorCore::Free(renderpassRegistry);
-	AllocatorCore::Free(sceneManager);
 	AllocatorCore::Free(assetRendererManager);
 	AllocatorCore::Free(assetManager);
 	AllocatorCore::Free(inputManager);
@@ -281,10 +255,6 @@ void Grindstone::EngineCore::SetRendererFactory(BaseRendererFactory* factory) {
 
 Input::Interface* EngineCore::GetInputManager() const {
 	return inputManager;
-}
-
-SceneManagement::SceneManager* EngineCore::GetSceneManager() const {
-	return sceneManager;
 }
 
 Plugins::IPluginManager* EngineCore::GetPluginManager() const {
@@ -365,7 +335,7 @@ bool EngineCore::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
 	return false;
 }
 
-entt::registry& EngineCore::GetEntityRegistry() {
+entt::registry& EngineCore::GetActiveEntityRegistry() {
 	return worldContextManager->GetActiveWorldContextSet()->GetEntityRegistry();
 }
 

@@ -7,6 +7,7 @@
 
 #include <EngineCore/ECS/Entity.hpp>
 #include <EngineCore/CoreComponents/Parent/ParentComponent.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
 
 namespace Grindstone {
 	struct TransformComponent {
@@ -15,12 +16,13 @@ namespace Grindstone {
 		Math::Float3 scale = Math::Float3(1.f, 1.f, 1.f);
 
 		static Math::Matrix4 GetWorldTransformMatrix(ECS::Entity entity) {
-			return GetWorldTransformMatrix(entity.GetHandle(), entity.GetSceneEntityRegistry());
+			return GetWorldTransformMatrix(entity.GetHandle(), *entity.GetWorldContextSet());
 		}
 
-		static Math::Matrix4 GetWorldTransformMatrix(entt::entity entity, const entt::registry& registry) {
+		static Math::Matrix4 GetWorldTransformMatrix(entt::entity entity, const Grindstone::WorldContextSet& cxtSet) {
 			Math::Matrix4 matrix = Math::Matrix4(1.0f);
 			entt::entity currentEntity = entity;
+			const entt::registry& registry = cxtSet.GetEntityRegistry();
 			while (currentEntity != entt::null) {
 				const TransformComponent* transformComp = registry.try_get<TransformComponent>(currentEntity);
 				if (transformComp == nullptr) {
@@ -41,11 +43,11 @@ namespace Grindstone {
 		}
 
 		static Math::Float3 GetWorldPosition(const ECS::Entity entity) {
-			return GetWorldPosition(entity.GetHandle(), entity.GetSceneEntityRegistry());
+			return GetWorldPosition(entity.GetHandle(), *entity.GetWorldContextSet());
 		}
 
-		static Math::Float3 GetWorldPosition(const entt::entity entity, const entt::registry& registry) {
-			Math::Matrix4 worldMatrix = GetWorldTransformMatrix(entity, registry);
+		static Math::Float3 GetWorldPosition(const entt::entity entity, const Grindstone::WorldContextSet& cxtSet) {
+			Math::Matrix4 worldMatrix = GetWorldTransformMatrix(entity, cxtSet);
 
 			return Math::Float3(worldMatrix[3][0], worldMatrix[3][1], worldMatrix[3][2]);
 		}

@@ -10,6 +10,7 @@
 #include "PipelineSet/GraphicsPipelineImporter.hpp"
 #include "PipelineSet/ComputePipelineImporter.hpp"
 #include "Textures/TextureImporter.hpp"
+#include "Prefabs/PrefabImporter.hpp"
 
 #include "AssetManager.hpp"
 
@@ -28,6 +29,7 @@ AssetManager::AssetManager(AssetLoader* assetLoader) {
 	assetTypeNames.resize(count);
 	assetTypeImporters.resize(count);
 	RegisterAssetType(AssetType::Undefined, "Undefined", nullptr);
+	RegisterAssetType<PrefabImporter>();
 	RegisterAssetType<GraphicsPipelineImporter>();
 	RegisterAssetType<ComputePipelineImporter>();
 	RegisterAssetType<TextureImporter>();
@@ -55,6 +57,9 @@ AssetManager::~AssetManager() {
 
 	AllocatorCore::Free(static_cast<GraphicsPipelineImporter*>(assetTypeImporters[static_cast<size_t>(GraphicsPipelineAsset::GetStaticType())]));
 	UnregisterAssetType(GraphicsPipelineAsset::GetStaticType());
+
+	AllocatorCore::Free(static_cast<PrefabImporter*>(assetTypeImporters[static_cast<size_t>(PrefabAsset::GetStaticType())]));
+	UnregisterAssetType(PrefabAsset::GetStaticType());
 
 	for (AssetImporter*& importer : assetTypeImporters) {
 		if (importer != nullptr) {

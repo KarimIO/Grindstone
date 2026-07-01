@@ -20,7 +20,7 @@ namespace Grindstone {
 		class CommandList {
 		public:
 			CommandList();
-			void AddNewEntity(SceneManagement::Scene* scene);
+			void AddNewEntity(Grindstone::WorldContextSet* cxtSet);
 			void AddComponent(
 				ECS::Entity entity,
 				Grindstone::HashedString componentName

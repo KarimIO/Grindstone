@@ -527,18 +527,6 @@ void CSharpManager::RegisterComponent(const Grindstone::String& componentName, E
 	std::string csharpClass = "Grindstone." + componentName + "Component";
 }
 
-// TODO: Shouldn't this be !=?
-void CSharpManager::CallCreateComponent(SceneManagement::Scene* scene, entt::entity entity) {
-}
-
-// TODO: Shouldn't this be !=?
-void CSharpManager::CallHasComponent(SceneManagement::Scene* scene, entt::entity entity) {
-}
-
-// TODO: Shouldn't this be !=?
-void CSharpManager::CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entity) {
-}
-
 void CSharpManager::QueueReload() {
 	isReloadQueued = true;
 }
@@ -550,7 +538,7 @@ void CSharpManager::PerformReload() {
 
 	EngineCore& engineCore = EngineCore::GetInstance();
 	Grindstone::WorldContextSet* cxtSet = engineCore.GetWorldContextManager()->GetActiveWorldContextSet();
-	entt::registry& registry = engineCore.GetEntityRegistry();
+	entt::registry& registry = engineCore.GetActiveEntityRegistry();
 
 	if (csharpGlobals.DestroyObject != nullptr) {
 		registry.view<ScriptComponent>().each([](ScriptComponent& script) {

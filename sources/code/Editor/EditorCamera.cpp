@@ -7,9 +7,9 @@
 #include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
+#include <EngineCore/WorldContext/WorldContextManager.hpp>
 #include <EngineCore/Rendering/RenderGraphContextSet.hpp>
 #include <EngineCore/Rendering/RenderPassRegistry.hpp>
-#include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Logger.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanDescriptorSet.hpp>
@@ -321,7 +321,7 @@ void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuff
 
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
 	EngineCore& engineCore = editorManager.GetEngineCore();
-	entt::registry& registry = engineCore.GetEntityRegistry();
+	WorldContextSet* cxtSet = engineCore.GetWorldContextManager()->GetActiveWorldContextSet();
 	Grindstone::AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
@@ -366,7 +366,7 @@ void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuff
 	};
 
 	assetRendererManager->SetEngineDescriptorSet(mousePickDescriptorSet[frameIndex]);
-	assetRendererManager->RenderQueue(commandBuffer, viewData, registry, mousePickRenderQueue);
+	assetRendererManager->RenderQueue(commandBuffer, viewData, cxtSet, mousePickRenderQueue);
 
 	commandBuffer->EndRendering();
 }
@@ -374,7 +374,7 @@ void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuff
 uint32_t EditorCamera::GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandBuffer) {
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
 	EngineCore& engineCore = editorManager.GetEngineCore();
-	entt::registry& registry = engineCore.GetEntityRegistry();
+	entt::registry& registry = engineCore.GetActiveEntityRegistry();
 	Grindstone::AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
@@ -418,17 +418,6 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
 	EngineCore& engineCore = editorManager.GetEngineCore();
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-	SceneManagement::SceneManager* sceneManager = engineCore.GetSceneManager();
-
-	if (renderer == nullptr || sceneManager == nullptr || sceneManager->scenes.size() == 0) {
-		return;
-	}
-
-	SceneManagement::Scene* scene = sceneManager->scenes.begin()->second;
-
-	if (scene == nullptr) {
-		return;
-	}
 
 	auto window = engineCore.windowManager->GetWindowByIndex(0);
 	auto wgb = window->GetWindowGraphicsBinding();
@@ -687,7 +676,7 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 	cameraComponent->aspectRatio = static_cast<float>(width) / height;
 	cameraComponent->renderer->Resize(width, height);
 
-	const glm::mat4 transformMatrix = TransformComponent::GetWorldTransformMatrix(entity, registry);
+	const glm::mat4 transformMatrix = TransformComponent::GetWorldTransformMatrix(entity, *cxtSet);
 
 	const glm::vec3 upVector = glm::normalize(-glm::vec3(transformMatrix[1]));
 	const glm::vec3 forwardVector = glm::normalize(glm::vec3(transformMatrix[2]));

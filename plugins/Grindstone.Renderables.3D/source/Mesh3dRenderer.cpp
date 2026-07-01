@@ -6,7 +6,6 @@
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Assets/Materials/MaterialImporter.hpp>
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
-#include <EngineCore/Scenes/Scene.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 
 #include <Grindstone.Renderables.3D//include/Mesh3dRenderer.hpp>
@@ -228,7 +227,7 @@ struct RenderableBufferPair {
 Grindstone::Rendering::GeometryRenderStats Mesh3dRenderer::RenderQueue(
 	GraphicsAPI::CommandBuffer* commandBuffer,
 	const Grindstone::Rendering::RenderViewData& renderViewData,
-	entt::registry& registry,
+	Grindstone::WorldContextSet* cxtSet,
 	Grindstone::HashedString renderQueueHash
 ) {
 	Grindstone::Rendering::GeometryRenderStats renderingStats{};
@@ -244,10 +243,11 @@ Grindstone::Rendering::GeometryRenderStats Mesh3dRenderer::RenderQueue(
 	bool isOrtho = renderViewData.projectionMatrix[3][3] == 1.0f;
 
 	std::chrono::time_point start = std::chrono::steady_clock::now();
+	entt::registry& registry = cxtSet->GetEntityRegistry();
 
 	auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponent, MeshRendererComponent>();
 	view.each(
-		[&renderingStats, &registry, &renderTasks, &viewMatrix, isOrtho, frustum, renderQueueHash, assetManager, graphicsCore](
+		[cxtSet, &renderingStats, &renderTasks, &viewMatrix, isOrtho, frustum, renderQueueHash, assetManager, graphicsCore](
 			entt::entity entity,
 			const TransformComponent& transformComponent,
 			const MeshComponent& meshComponent,
@@ -260,7 +260,7 @@ Grindstone::Rendering::GeometryRenderStats Mesh3dRenderer::RenderQueue(
 				return;
 			}
 
-			Math::Matrix4 transform = TransformComponent::GetWorldTransformMatrix(entity, registry);
+			Math::Matrix4 transform = TransformComponent::GetWorldTransformMatrix(entity, *cxtSet);
 			glm::mat4 viewTransformTransform = viewMatrix * transform;
 
 			// TODO: Get Ortho culling working
