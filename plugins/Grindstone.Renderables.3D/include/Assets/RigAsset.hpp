@@ -1,4 +1,3 @@
-#if 0
 #pragma once
 
 #include <vector>
@@ -15,7 +14,8 @@ namespace Grindstone {
 
 		std::vector<Bone> bones;
 
-		DEFINE_ASSET_TYPE
+		RigAsset(Uuid uuid, std::string_view name) : Asset(uuid, name) {}
+
+		DEFINE_ASSET_TYPE("Rig", AssetType::Rig)
 	};
 }
-#endif

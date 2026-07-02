@@ -33,7 +33,7 @@ namespace Grindstone {
 			GraphicsAPI::VertexArrayObject* vertexArrayObject = nullptr;
 		};
 
-		Grindstone::Formats::Model::V1::BoundingData boundingData;
+		Grindstone::Formats::Model::V1::BoundingData boundingData{};
 		GraphicsAPI::VertexArrayObject* vertexArrayObject = nullptr;
 		GraphicsAPI::Buffer* positionBuffer = nullptr;
 		GraphicsAPI::Buffer* normalBuffer = nullptr;
