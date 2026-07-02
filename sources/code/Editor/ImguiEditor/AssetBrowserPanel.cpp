@@ -748,8 +748,9 @@ void AssetBrowserPanel::RenderFile(size_t fileIndex) {
 				buttonString = item.filepath.string() + subasset.uuid.ToString();
 				ImGui::PushID(buttonString.c_str());
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
+				ImTextureID textureIcon = Editor::Manager::GetInstance().GetImguiEditor().GetImguiRenderer().GetThumbnailAtlas();
 				ImGui::ImageButton(
-					(ImTextureID)(uint64_t)thumbnailManager.GetAtlasTextureDescriptorSet(), // TODO: We may not want to pass DescriptorSets for non-Vulkan builds
+					textureIcon, // TODO: We may not want to pass DescriptorSets for non-Vulkan builds
 					ImVec2{ THUMBNAIL_SIZE, THUMBNAIL_SIZE },
 					ImVec2{ iconCoords.uv0x, iconCoords.uv0y },
 					ImVec2{ iconCoords.uv1x, iconCoords.uv1y },
