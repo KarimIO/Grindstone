@@ -303,15 +303,19 @@ void ModelImporter::ProcessNodeTree(aiNode* inputNode, size_t parentIndex) {
 }
 
 void ModelImporter::ProcessVertexBoneWeights(aiMesh* inputMesh, OutputMesh& outputMesh) {
+	size_t vertCount = outputMesh.vertexArray.position.size() * NUM_BONES_PER_VERTEX;
+	outputMesh.vertexArray.boneWeights.resize(vertCount);
+	outputMesh.vertexArray.boneIds.resize(vertCount);
+
 	for (unsigned int boneIterator = 0; boneIterator < inputMesh->mNumBones; boneIterator++) {
 		aiBone* bone = inputMesh->mBones[boneIterator];
 		std::string boneName(bone->mName.data);
 		unsigned int boneId = boneMapping[boneName];
 
 		for (unsigned int weightIterator = 0; weightIterator < bone->mNumWeights; weightIterator++) {
-			auto& weight = bone->mWeights[weightIterator];
+			aiVertexWeight& weight = bone->mWeights[weightIterator];
 
-			auto vertexId = weight.mVertexId;
+			unsigned int vertexId = weight.mVertexId;
 			float vertexWeight = weight.mWeight;
 			AddBoneData(outputMesh, vertexId, boneId, vertexWeight);
 		}
@@ -384,6 +388,16 @@ void ModelImporter::ProcessCamera(aiCamera* camera) {
 	}
 }
 
+template<typename T>
+static size_t GetVectorSize(const std::vector<T>& data) {
+	return data.size() * sizeof(data[0]);
+}
+
+template<typename T>
+static void OutputVector(std::ofstream& output, const std::vector<T>& data, size_t vectorSize) {
+	output.write(reinterpret_cast<const char*>(data.data()), vectorSize);
+}
+
 void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 	std::string animationName(animation->mName.data);
 
@@ -392,18 +406,8 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 		: 25.0f;
 	double duration = animation->mDuration;
 
-	Grindstone::Formats::Animation::V1::Header animationHeader;
-	animationHeader.animationDuration = duration;
-	animationHeader.channelCount = static_cast<uint16_t>(animation->mNumChannels);
-	animationHeader.ticksPerSecond = ticksPerSecond;
-
-	std::vector<Grindstone::Formats::Animation::V1::Channel> channels;
-	channels.resize(animation->mNumChannels);
-	std::vector<Grindstone::Formats::Animation::V1::ChannelData> channelData;
-	channels.resize(animation->mNumChannels);
-
 	std::string subassetName = "anim-" + animationName;
-	Grindstone::Uuid outUuid = metaFile.GetOrCreateDefaultSubassetUuid(subassetName, Grindstone::AssetType::Animation);
+	Grindstone::Uuid outUuid = metaFile.GetOrCreateSubassetUuid(subassetName, Grindstone::AssetType::AnimationClip);
 
 	std::filesystem::path outputPath = assetRegistry->GetCompiledAssetsPath() / outUuid.ToString();
 	std::ofstream output(outputPath, std::ios::binary);
@@ -413,24 +417,69 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 	}
 
 	//  - Output File MetaData
-	output.write("GAF", 3);
+	output.write("GAF", 4);
 
+	std::vector<Grindstone::Formats::Animation::V1::BoneChannel> channels;
+	channels.resize(animation->mNumChannels);
+	Grindstone::Formats::Animation::V1::BoneChannelData dstChannelData;
+	std::vector<char> stringBlockBuffer;
+
+	size_t positionKeyframeCount = 0;
+	size_t rotationKeyframeCount = 0;
+	size_t scaleKeyframeCount = 0;
+	size_t stringBlockBufferSize = 0;
+
+	// Reserve bone data.
 	for (unsigned int channelIndex = 0; channelIndex < animation->mNumChannels; ++channelIndex) {
-		Grindstone::Formats::Animation::V1::Channel& dstChannel = channels[channelIndex];
-		Grindstone::Formats::Animation::V1::ChannelData& dstChannelData = channelData[channelIndex];
-		auto srcChannel = animation->mChannels[channelIndex];
+		aiNodeAnim* srcChannel = animation->mChannels[channelIndex];
 		std::string channelName(srcChannel->mNodeName.data);
 		auto boneIterator = boneMapping.find(channelName);
-		bool isBone = boneIterator == boneMapping.end();
+		bool isValidBone = boneIterator != boneMapping.end();
 
-		if (isBone) {
+		if (isValidBone) {
+			positionKeyframeCount += static_cast<size_t>(srcChannel->mNumPositionKeys);
+			rotationKeyframeCount += static_cast<size_t>(srcChannel->mNumRotationKeys);
+			scaleKeyframeCount += static_cast<size_t>(srcChannel->mNumScalingKeys);
+			stringBlockBufferSize += static_cast<size_t>(srcChannel->mNodeName.length) + 1;
+		}
+	}
+
+	dstChannelData.positions.resize(positionKeyframeCount);
+	dstChannelData.rotations.resize(rotationKeyframeCount);
+	dstChannelData.scales.resize(scaleKeyframeCount);
+	stringBlockBuffer.resize(stringBlockBufferSize);
+
+	// Extract bone channel data.
+	positionKeyframeCount = 0;
+	rotationKeyframeCount = 0;
+	scaleKeyframeCount = 0;
+	stringBlockBufferSize = 0;
+	for (unsigned int channelIndex = 0; channelIndex < animation->mNumChannels; ++channelIndex) {
+		Grindstone::Formats::Animation::V1::BoneChannel& dstChannel = channels[channelIndex];
+		aiNodeAnim* srcChannel = animation->mChannels[channelIndex];
+		std::string channelName(srcChannel->mNodeName.data);
+		auto boneIterator = boneMapping.find(channelName);
+		bool isValidBone = boneIterator != boneMapping.end();
+
+		if (isValidBone) {
+			errno_t cpyRes = strcpy_s(stringBlockBuffer.data() + stringBlockBufferSize, channelName.size() + 1, channelName.data());
+			GS_ASSERT(cpyRes == 0)
+			stringBlockBufferSize += channelName.size() + 1;
+
 			dstChannel.boneIndex = boneIterator->second;
 
-			dstChannel.positionCount = srcChannel->mNumPositionKeys;
-			dstChannel.rotationCount = srcChannel->mNumRotationKeys;
-			dstChannel.scaleCount = srcChannel->mNumScalingKeys;
+			dstChannel.positionKeyOffset = positionKeyframeCount;
+			dstChannel.rotationKeyOffset = rotationKeyframeCount;
+			dstChannel.scaleKeyOffset = scaleKeyframeCount;
 
-			dstChannelData.positions.reserve(srcChannel->mNumPositionKeys);
+			dstChannel.positionCount = static_cast<uint16_t>(srcChannel->mNumPositionKeys);
+			dstChannel.rotationCount = static_cast<uint16_t>(srcChannel->mNumRotationKeys);
+			dstChannel.scaleCount = static_cast<uint16_t>(srcChannel->mNumScalingKeys);
+
+			positionKeyframeCount += static_cast<size_t>(srcChannel->mNumPositionKeys);
+			rotationKeyframeCount += static_cast<size_t>(srcChannel->mNumRotationKeys);
+			scaleKeyframeCount += static_cast<size_t>(srcChannel->mNumScalingKeys);
+
 			for (unsigned int i = 0; i < srcChannel->mNumPositionKeys; ++i) {
 				double time = srcChannel->mPositionKeys[i].mTime;
 				aiVector3D& srcValue = srcChannel->mPositionKeys[i].mValue;
@@ -438,7 +487,6 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 				dstChannelData.positions.emplace_back(time, value);
 			}
 
-			dstChannelData.rotations.reserve(srcChannel->mNumRotationKeys);
 			for (unsigned int i = 0; i < srcChannel->mNumRotationKeys; ++i) {
 				double time = srcChannel->mRotationKeys[i].mTime;
 				aiQuaternion& srcValue = srcChannel->mRotationKeys[i].mValue;
@@ -446,7 +494,6 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 				dstChannelData.rotations.emplace_back(time, value);
 			}
 
-			dstChannelData.scales.reserve(srcChannel->mNumScalingKeys);
 			for (unsigned int i = 0; i < srcChannel->mNumScalingKeys; ++i) {
 				double time = srcChannel->mScalingKeys[i].mTime;
 				aiVector3D& srcValue = srcChannel->mScalingKeys[i].mValue;
@@ -455,6 +502,39 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 			}
 		}
 	}
+
+	const size_t headerSize = sizeof(Grindstone::Formats::Animation::V1::Header);
+	const size_t boneChannelsSize = GetVectorSize(channels);
+	const size_t positionSize = GetVectorSize(dstChannelData.positions);
+	const size_t rotationSize = GetVectorSize(dstChannelData.rotations);
+	const size_t scaleSize = GetVectorSize(dstChannelData.scales);
+
+	Grindstone::Formats::Animation::V1::Header header{
+		.version = 1,
+		.animationDuration = duration,
+		.ticksPerSecond = ticksPerSecond,
+		.boneChannelCount = static_cast<uint16_t>(animation->mNumChannels),
+		.propertyChannelCount = 0,
+		.eventCount = 0,
+	};
+
+	header.boneChannelDataOffset = 4 + headerSize;
+	header.propertyChannelDataOffset = header.boneChannelDataOffset + boneChannelsSize;
+	header.positionKeyframesOffset = header.propertyChannelDataOffset + 0;
+	header.rotationKeyframesOffset = header.positionKeyframesOffset + positionSize;
+	header.scaleKeyframesOffset = header.rotationKeyframesOffset + rotationSize;
+	header.propertyKeyframesOffset = header.scaleKeyframesOffset + scaleSize;
+	header.eventsArrayOffset = header.propertyKeyframesOffset + 0;
+	header.eventsPayloadOffset = header.eventsArrayOffset + 0;
+	header.stringBlockOffset = header.eventsPayloadOffset + 0;
+	header.totalFileSize = header.stringBlockOffset + stringBlockBuffer.size();
+
+	output.write(reinterpret_cast<const char*>(&header), headerSize);
+	OutputVector(output, channels, boneChannelsSize);
+	OutputVector(output, dstChannelData.positions, positionSize);
+	OutputVector(output, dstChannelData.rotations, rotationSize);
+	OutputVector(output, dstChannelData.scales, scaleSize);
+	output.write(stringBlockBuffer.data(), stringBlockBuffer.size());
 }
 
 void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path) {
@@ -476,6 +556,8 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 	bool shouldImportScene = settings.Get("ImportScene", true);
 	bool shouldImportLights = settings.Get("ImportLights", true);
 	bool shouldImportCameras = settings.Get("ImportCameras", true);
+	bool shouldImportAnimations = settings.Get("ImportAnims", true);
+	bool shouldImportRig = settings.Get("ImportRigs", true);
 
 	if (settings.Get("FlipUVs", true)) {
 		importFlags |= aiProcess_FlipUVs;
@@ -522,9 +604,7 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 		throw std::runtime_error(importer.GetErrorString());
 	}
 
-	// Set to false, will check if true later.
-	bool shouldImportAnimations = false;
-	isSkeletalMesh = false; // scene->hasSkeletons();
+	isSkeletalMesh = scene->hasSkeletons();
 
 	outputMaterialUuids.resize(scene->mNumMaterials);
 	for (unsigned int materialIndex = 0; materialIndex < scene->mNumMaterials; ++materialIndex) {

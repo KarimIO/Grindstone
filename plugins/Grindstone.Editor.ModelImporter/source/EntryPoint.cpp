@@ -22,6 +22,8 @@ struct ModelImporterRendererState {
 	bool shouldImportScene;
 	bool shouldImportLights;
 	bool shouldImportCameras;
+	bool shouldImportAnimations;
+	bool shouldImportRigs;
 	bool shouldFlipUvs;
 	bool shouldReduceDuplicateMeshes;
 	bool shouldFlipFaces;
@@ -41,6 +43,8 @@ static void* OnSetupModelImporterRenderer(const std::filesystem::path& path) {
 	payload->shouldImportScene = settings.Get("ImportScene", true);
 	payload->shouldImportLights = settings.Get("ImportLights", true);
 	payload->shouldImportCameras = settings.Get("ImportCameras", true);
+	payload->shouldImportAnimations = settings.Get("ImportAnims", true);
+	payload->shouldImportRigs = settings.Get("ImportRigs", true);
 	payload->shouldFlipUvs = settings.Get("FlipUVs", true);
 	payload->shouldReduceDuplicateMeshes = settings.Get("ReduceDuplicateMeshes", true);
 	payload->shouldFlipFaces = settings.Get("FlipFaces", false);
@@ -62,6 +66,8 @@ static void OnRenderModelImporterRenderer(void* payload) {
 	ImGui::Checkbox("Import Scene", &state->shouldImportScene);
 	ImGui::Checkbox("Import Lights", &state->shouldImportLights);
 	ImGui::Checkbox("Import Cameras", &state->shouldImportCameras);
+	ImGui::Checkbox("Import Animations", &state->shouldImportAnimations);
+	ImGui::Checkbox("Import Skeleton Rigs", &state->shouldImportRigs);
 	ImGui::Checkbox("Flip UVs", &state->shouldFlipUvs);
 	ImGui::Checkbox("Flip Faces", &state->shouldFlipFaces);
 
@@ -76,6 +82,8 @@ static void OnRenderModelImporterRenderer(void* payload) {
 		settings.Set("ImportScene", state->shouldImportScene);
 		settings.Set("ImportLights", state->shouldImportLights);
 		settings.Set("ImportCameras", state->shouldImportCameras);
+		settings.Set("ImportAnims", state->shouldImportCameras);
+		settings.Set("ImportRigs", state->shouldImportCameras);
 		settings.Set("FlipUVs", state->shouldFlipUvs);
 		settings.Set("ReduceDuplicateMeshes", state->shouldReduceDuplicateMeshes);
 		settings.Set("FlipFaces", state->shouldFlipFaces);

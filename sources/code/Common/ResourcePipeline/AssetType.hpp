@@ -12,7 +12,7 @@ namespace Grindstone {
 		AudioClip,
 		Mesh3d,
 		Rig,
-		Animation,
+		AnimationClip,
 		Script,
 		Scene,
 		Count
