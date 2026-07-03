@@ -33,7 +33,7 @@ extern "C" {
 		mesh3dImporter = AllocatorCore::Allocate<Mesh3dImporter>(engineCore);
 		mesh3dRenderer = AllocatorCore::Allocate<Mesh3dRenderer>(engineCore);
 
-		pluginInterface->RegisterAssetType(Mesh3dAsset::GetStaticType(), "Mesh3dAsset", mesh3dImporter);
+		pluginInterface->RegisterAssetType<Mesh3dAsset>(mesh3dImporter);
 		pluginInterface->RegisterComponent<MeshComponent>();
 		pluginInterface->RegisterComponent<MeshRendererComponent>();
 		pluginInterface->RegisterAssetRenderer(mesh3dRenderer);
@@ -50,7 +50,7 @@ extern "C" {
 		pluginInterface->UnregisterComponent<MeshComponent>();
 
 		if (mesh3dImporter) {
-			pluginInterface->UnregisterAssetType(Mesh3dAsset::GetStaticType());
+			pluginInterface->UnregisterAssetType<Mesh3dAsset>();
 			AllocatorCore::Free(mesh3dImporter);
 			mesh3dImporter = nullptr;
 		}

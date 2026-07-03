@@ -89,6 +89,16 @@ namespace Grindstone {
 				componentRegistrar->UnregisterComponent<T>();
 			}
 
+			template<typename Asset>
+			void RegisterAssetType(AssetImporter* assetImporter) {
+				RegisterAssetType(Asset::GetStaticType(), Asset::GetStaticTypeName().c_str(), assetImporter);
+			}
+
+			template<typename Asset>
+			void UnregisterAssetType() {
+				UnregisterAssetType(Asset::GetStaticType());
+			}
+
 			ECS::ComponentRegistrar* componentRegistrar = nullptr;
 			ECS::SystemRegistrar* systemRegistrar = nullptr;
 		private:
