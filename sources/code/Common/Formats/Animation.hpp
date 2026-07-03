@@ -19,6 +19,9 @@ namespace Grindstone::Formats::Animation::V1 {
 		double ticksPerSecond = 0.25f;
 		uint16_t boneChannelCount = 0;
 		uint16_t propertyChannelCount = 0;
+		uint32_t positionKeyframesCount = 0;
+		uint32_t rotationKeyframesCount = 0;
+		uint32_t scaleKeyframesCount = 0;
 		uint16_t eventCount = 0;
 		uint64_t boneChannelDataOffset = 0;
 		uint64_t propertyChannelDataOffset = 0;
@@ -32,7 +35,7 @@ namespace Grindstone::Formats::Animation::V1 {
 	};
 
 	struct BoneChannel {
-		uint16_t boneIndex;
+		uint32_t boneNameStringOffset = 0;
 		uint16_t positionCount;
 		uint16_t scaleCount;
 		uint16_t rotationCount;

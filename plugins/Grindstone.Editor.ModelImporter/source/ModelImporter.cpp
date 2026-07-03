@@ -416,9 +416,6 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 		throw std::runtime_error(std::string("Failed to open ") + outputPath.string());
 	}
 
-	//  - Output File MetaData
-	output.write("GAF", 4);
-
 	std::vector<Grindstone::Formats::Animation::V1::BoneChannel> channels;
 	channels.resize(animation->mNumChannels);
 	Grindstone::Formats::Animation::V1::BoneChannelData dstChannelData;
@@ -444,9 +441,9 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 		}
 	}
 
-	dstChannelData.positions.resize(positionKeyframeCount);
-	dstChannelData.rotations.resize(rotationKeyframeCount);
-	dstChannelData.scales.resize(scaleKeyframeCount);
+	dstChannelData.positions.reserve(positionKeyframeCount);
+	dstChannelData.rotations.reserve(rotationKeyframeCount);
+	dstChannelData.scales.reserve(scaleKeyframeCount);
 	stringBlockBuffer.resize(stringBlockBufferSize);
 
 	// Extract bone channel data.
@@ -458,48 +455,44 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 		Grindstone::Formats::Animation::V1::BoneChannel& dstChannel = channels[channelIndex];
 		aiNodeAnim* srcChannel = animation->mChannels[channelIndex];
 		std::string channelName(srcChannel->mNodeName.data);
-		auto boneIterator = boneMapping.find(channelName);
-		bool isValidBone = boneIterator != boneMapping.end();
 
-		if (isValidBone) {
-			errno_t cpyRes = strcpy_s(stringBlockBuffer.data() + stringBlockBufferSize, channelName.size() + 1, channelName.data());
-			GS_ASSERT(cpyRes == 0)
-			stringBlockBufferSize += channelName.size() + 1;
+		errno_t cpyRes = strcpy_s(stringBlockBuffer.data() + stringBlockBufferSize, channelName.size() + 1, channelName.data());
+		GS_ASSERT(cpyRes == 0)
 
-			dstChannel.boneIndex = boneIterator->second;
+		dstChannel.boneNameStringOffset = static_cast<uint32_t>(stringBlockBufferSize);
+		stringBlockBufferSize += channelName.size() + 1;
 
-			dstChannel.positionKeyOffset = positionKeyframeCount;
-			dstChannel.rotationKeyOffset = rotationKeyframeCount;
-			dstChannel.scaleKeyOffset = scaleKeyframeCount;
+		dstChannel.positionKeyOffset = positionKeyframeCount;
+		dstChannel.rotationKeyOffset = rotationKeyframeCount;
+		dstChannel.scaleKeyOffset = scaleKeyframeCount;
 
-			dstChannel.positionCount = static_cast<uint16_t>(srcChannel->mNumPositionKeys);
-			dstChannel.rotationCount = static_cast<uint16_t>(srcChannel->mNumRotationKeys);
-			dstChannel.scaleCount = static_cast<uint16_t>(srcChannel->mNumScalingKeys);
+		dstChannel.positionCount = static_cast<uint16_t>(srcChannel->mNumPositionKeys);
+		dstChannel.rotationCount = static_cast<uint16_t>(srcChannel->mNumRotationKeys);
+		dstChannel.scaleCount = static_cast<uint16_t>(srcChannel->mNumScalingKeys);
 
-			positionKeyframeCount += static_cast<size_t>(srcChannel->mNumPositionKeys);
-			rotationKeyframeCount += static_cast<size_t>(srcChannel->mNumRotationKeys);
-			scaleKeyframeCount += static_cast<size_t>(srcChannel->mNumScalingKeys);
+		positionKeyframeCount += static_cast<size_t>(srcChannel->mNumPositionKeys);
+		rotationKeyframeCount += static_cast<size_t>(srcChannel->mNumRotationKeys);
+		scaleKeyframeCount += static_cast<size_t>(srcChannel->mNumScalingKeys);
 
-			for (unsigned int i = 0; i < srcChannel->mNumPositionKeys; ++i) {
-				double time = srcChannel->mPositionKeys[i].mTime;
-				aiVector3D& srcValue = srcChannel->mPositionKeys[i].mValue;
-				Grindstone::Math::Float3 value = Grindstone::Math::Float3(srcValue.x, srcValue.y, srcValue.z);
-				dstChannelData.positions.emplace_back(time, value);
-			}
+		for (unsigned int i = 0; i < srcChannel->mNumPositionKeys; ++i) {
+			double time = srcChannel->mPositionKeys[i].mTime;
+			aiVector3D& srcValue = srcChannel->mPositionKeys[i].mValue;
+			Grindstone::Math::Float3 value = Grindstone::Math::Float3(srcValue.x, srcValue.y, srcValue.z);
+			dstChannelData.positions.emplace_back(time, value);
+		}
 
-			for (unsigned int i = 0; i < srcChannel->mNumRotationKeys; ++i) {
-				double time = srcChannel->mRotationKeys[i].mTime;
-				aiQuaternion& srcValue = srcChannel->mRotationKeys[i].mValue;
-				Grindstone::Math::Quaternion value = Grindstone::Math::Quaternion(srcValue.x, srcValue.y, srcValue.z, srcValue.w);
-				dstChannelData.rotations.emplace_back(time, value);
-			}
+		for (unsigned int i = 0; i < srcChannel->mNumRotationKeys; ++i) {
+			double time = srcChannel->mRotationKeys[i].mTime;
+			aiQuaternion& srcValue = srcChannel->mRotationKeys[i].mValue;
+			Grindstone::Math::Quaternion value = Grindstone::Math::Quaternion(srcValue.x, srcValue.y, srcValue.z, srcValue.w);
+			dstChannelData.rotations.emplace_back(time, value);
+		}
 
-			for (unsigned int i = 0; i < srcChannel->mNumScalingKeys; ++i) {
-				double time = srcChannel->mScalingKeys[i].mTime;
-				aiVector3D& srcValue = srcChannel->mScalingKeys[i].mValue;
-				Grindstone::Math::Float3 value = Grindstone::Math::Float3(srcValue.x, srcValue.y, srcValue.z);
-				dstChannelData.scales.emplace_back(time, value);
-			}
+		for (unsigned int i = 0; i < srcChannel->mNumScalingKeys; ++i) {
+			double time = srcChannel->mScalingKeys[i].mTime;
+			aiVector3D& srcValue = srcChannel->mScalingKeys[i].mValue;
+			Grindstone::Math::Float3 value = Grindstone::Math::Float3(srcValue.x, srcValue.y, srcValue.z);
+			dstChannelData.scales.emplace_back(time, value);
 		}
 	}
 
@@ -515,6 +508,9 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 		.ticksPerSecond = ticksPerSecond,
 		.boneChannelCount = static_cast<uint16_t>(animation->mNumChannels),
 		.propertyChannelCount = 0,
+		.positionKeyframesCount = static_cast<uint32_t>(dstChannelData.positions.size()),
+		.rotationKeyframesCount = static_cast<uint32_t>(dstChannelData.positions.size()),
+		.scaleKeyframesCount = static_cast<uint32_t>(dstChannelData.positions.size()),
 		.eventCount = 0,
 	};
 
@@ -529,6 +525,8 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 	header.stringBlockOffset = header.eventsPayloadOffset + 0;
 	header.totalFileSize = header.stringBlockOffset + stringBlockBuffer.size();
 
+	//  - Output File MetaData
+	output.write("GAF", 4);
 	output.write(reinterpret_cast<const char*>(&header), headerSize);
 	OutputVector(output, channels, boneChannelsSize);
 	OutputVector(output, dstChannelData.positions, positionSize);

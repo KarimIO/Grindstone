@@ -7,11 +7,14 @@
 #include <EngineCore/Assets/AssetManager.hpp>
 
 #include <Grindstone.Renderables.3D/include/pch.hpp>
+#include <Grindstone.Renderables.3D/include/Assets/AnimationClipAsset.hpp>
+#include <Grindstone.Renderables.3D/include/Assets/AnimationClipImporter.hpp>
 #include <Grindstone.Renderables.3D/include/Assets/Mesh3dAsset.hpp>
 #include <Grindstone.Renderables.3D/include/Assets/Mesh3dImporter.hpp>
 #include <Grindstone.Renderables.3D/include/Assets/RigAsset.hpp>
 #include <Grindstone.Renderables.3D/include/Assets/RigImporter.hpp>
 #include <Grindstone.Renderables.3D/include/Mesh3dRenderer.hpp>
+#include <Grindstone.Renderables.3D/include/Components/AnimatorComponent.hpp>
 #include <Grindstone.Renderables.3D/include/Components/MeshComponent.hpp>
 #include <Grindstone.Renderables.3D/include/Components/MeshRendererComponent.hpp>
 
@@ -20,6 +23,7 @@ using namespace Grindstone::Memory;
 
 Mesh3dImporter* mesh3dImporter = nullptr;
 Mesh3dRenderer* mesh3dRenderer = nullptr;
+AnimationClipImporter* animationClipImporter = nullptr;
 
 extern "C" {
 	RENDERABLES_3D_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
@@ -32,10 +36,13 @@ extern "C" {
 
 		mesh3dImporter = AllocatorCore::Allocate<Mesh3dImporter>(engineCore);
 		mesh3dRenderer = AllocatorCore::Allocate<Mesh3dRenderer>(engineCore);
+		animationClipImporter = AllocatorCore::Allocate<AnimationClipImporter>();
 
 		pluginInterface->RegisterAssetType<Mesh3dAsset>(mesh3dImporter);
+		pluginInterface->RegisterAssetType<AnimationClipAsset>(animationClipImporter);
 		pluginInterface->RegisterComponent<MeshComponent>();
 		pluginInterface->RegisterComponent<MeshRendererComponent>();
+		pluginInterface->RegisterComponent<AnimatorComponent>();
 		pluginInterface->RegisterAssetRenderer(mesh3dRenderer);
 	}
 
@@ -46,8 +53,15 @@ extern "C" {
 			mesh3dRenderer = nullptr;
 		}
 
+		pluginInterface->UnregisterComponent<AnimatorComponent>();
 		pluginInterface->UnregisterComponent<MeshRendererComponent>();
 		pluginInterface->UnregisterComponent<MeshComponent>();
+
+		if (animationClipImporter) {
+			pluginInterface->UnregisterAssetType<AnimationClipAsset>();
+			AllocatorCore::Free(animationClipImporter);
+			animationClipImporter = nullptr;
+		}
 
 		if (mesh3dImporter) {
 			pluginInterface->UnregisterAssetType<Mesh3dAsset>();
