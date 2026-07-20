@@ -18,19 +18,25 @@ static bool ImportAnimationClipFile(AnimationClipAsset& anim) {
 		return false;
 	}
 
+	anim.assetLoadStatus = AssetLoadStatus::Loading;
 	char* fileContent = reinterpret_cast<char*>(result.buffer.Get());
 	uint64_t fileSize = result.buffer.GetCapacity();
 	anim.name = result.displayName;
 
-	size_t sizeOfMagic = 4;
-
+	const char* desiredMagicCode = V1::magicCode;
+	const uint32_t desiredVersion = V1::version;
+	const uint32_t sizeOfMagic = V1::magicSize;
+	
 	if (result.buffer.GetCapacity() <= sizeOfMagic + sizeof(V1::Header)) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Failed to read file '{}' because it is too small (does not fit magic + header).", result.displayName.c_str());
+		anim.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
-	if (strncmp(reinterpret_cast<const char*>(result.buffer.Get()), "GAF", sizeOfMagic)) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Failed to read file '{}' because it starts with an invalid magic code (not GAF).", result.displayName.c_str());
+	const char* actualMagic = reinterpret_cast<const char*>(result.buffer.Get());
+	if (strncmp(actualMagic, desiredMagicCode, sizeOfMagic)) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Failed to read file '{}' because it starts with an invalid magic code '{}' (not '{}').", result.displayName.c_str(), actualMagic, desiredMagicCode);
+		anim.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
@@ -38,11 +44,13 @@ static bool ImportAnimationClipFile(AnimationClipAsset& anim) {
 
 	if (result.buffer.GetCapacity() != animHeader.totalFileSize) {
 		GPRINT_ERROR_V(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Failed to read file '{}' file size {} does not match totalFileSize {} in header.", result.displayName.c_str(), result.buffer.GetCapacity(), animHeader.totalFileSize);
+		anim.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
-	if (animHeader.version != 1) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Failed to read file '{}' version in header {} does not match expected version {}.", result.displayName.c_str(), animHeader.version, 1);
+	if (animHeader.version != desiredVersion) {
+		GPRINT_ERROR_V(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Failed to read file '{}' version in header {} does not match expected version {}.", result.displayName.c_str(), animHeader.version, desiredVersion);
+		anim.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
@@ -76,6 +84,7 @@ static bool ImportAnimationClipFile(AnimationClipAsset& anim) {
 		dstChannel.interpolation = static_cast<AnimationClipAsset::KeyframeInterpolation>(srcChannel.interpolation);
 	}
 
+	anim.assetLoadStatus = AssetLoadStatus::Ready;
 	return true;
 }
 

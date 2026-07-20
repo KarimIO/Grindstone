@@ -38,13 +38,13 @@ namespace Grindstone {
 		};
 
 		using PositionKeyframe = Keyframe<Grindstone::Math::Float3>;
-		using RotationKeyframe = Keyframe<Grindstone::Math::Float3>;
-		using ScaleKeyframe = Keyframe<Grindstone::Math::Quaternion>;
+		using RotationKeyframe = Keyframe<Grindstone::Math::Quaternion>;
+		using ScaleKeyframe = Keyframe<Grindstone::Math::Float3>;
 
 		std::vector<BoneChannel> boneChannels;
 		std::vector<PositionKeyframe> positions;
-		std::vector<RotationKeyframe> scales;
-		std::vector<ScaleKeyframe> rotations;
+		std::vector<RotationKeyframe> rotations;
+		std::vector<ScaleKeyframe> scales;
 
 		double ticksPerSecond = 0.0;
 		double duration = 0.0;

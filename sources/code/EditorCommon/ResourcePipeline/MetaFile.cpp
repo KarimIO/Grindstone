@@ -344,6 +344,7 @@ bool MetaFile::IsOutdatedMetaVersion() const {
 Grindstone::Uuid MetaFile::GetOrCreateSubassetUuid(const std::string& subassetName, AssetType assetType) {
 	for (auto& subasset : subassets) {
 		if (subasset.subassetIdentifier == subassetName) {
+			subasset.assetType = assetType;
 			return subasset.uuid;
 		}
 	}

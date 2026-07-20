@@ -7,12 +7,13 @@
 namespace Grindstone {
 	struct RigAsset : public Asset {
 		struct Bone {
-			size_t parentBoneIndex;
 			Math::Matrix4 localMatrix;
 			Math::Matrix4 inverseModelMatrix;
+			uint16_t parentBoneIndex;
 		};
 
 		std::vector<Bone> bones;
+		std::map<std::string, uint16_t> boneNameToIndex;
 
 		RigAsset(Uuid uuid, std::string_view name) : Asset(uuid, name) {}
 

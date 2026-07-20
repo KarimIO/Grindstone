@@ -6,6 +6,10 @@
 #include "../Math.hpp"
 
 namespace Grindstone::Formats::Animation::V1 {
+	const uint32_t version = 1;
+	const char magicCode[5] = "GANI";
+	const uint32_t magicSize = 4;
+
 	enum class KeyframeInterpolation : uint8_t {
 		Step,
 		Linear,
@@ -13,7 +17,7 @@ namespace Grindstone::Formats::Animation::V1 {
 	};
 
 	struct Header {
-		uint32_t totalFileSize = 0;
+		uint64_t totalFileSize = 0;
 		uint32_t version = 1;
 		double animationDuration = 1.f;
 		double ticksPerSecond = 0.25f;
