@@ -104,23 +104,28 @@ void Mesh3dImporter::OnDeleteAsset(Grindstone::Mesh3dAsset& asset) {
 	Grindstone::GraphicsAPI::Buffer* positionBuffer = asset.positionBuffer;
 	Grindstone::GraphicsAPI::Buffer* normalBuffer = asset.normalBuffer;
 	Grindstone::GraphicsAPI::Buffer* tangentBuffer = asset.tangentBuffer;
-	Grindstone::GraphicsAPI::Buffer* uvBuffer = asset.uvBuffer;
+	std::array<Grindstone::GraphicsAPI::Buffer*, 8> uvBuffers = asset.uvBuffers;
 	Grindstone::GraphicsAPI::Buffer* indexBuffer = asset.indexBuffer;
-	engineCore.PushDeletion([vertexArrayObject, positionBuffer, normalBuffer, tangentBuffer, uvBuffer, indexBuffer]() {
+	engineCore.PushDeletion([vertexArrayObject, positionBuffer, normalBuffer, tangentBuffer, uvBuffers, indexBuffer]() {
 		EngineCore& engineCore = EngineCore::GetInstance();
 		GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 		graphicsCore->DeleteVertexArrayObject(vertexArrayObject);
 		graphicsCore->DeleteBuffer(positionBuffer);
 		graphicsCore->DeleteBuffer(normalBuffer);
 		graphicsCore->DeleteBuffer(tangentBuffer);
-		graphicsCore->DeleteBuffer(uvBuffer);
 		graphicsCore->DeleteBuffer(indexBuffer);
+
+		for (uint32_t i = 0; i < 8; ++i) {
+			graphicsCore->DeleteBuffer(uvBuffers[i]);
+		}
 	});
 	asset.vertexArrayObject = nullptr;
 	asset.positionBuffer = nullptr;
 	asset.normalBuffer = nullptr;
 	asset.tangentBuffer = nullptr;
-	asset.uvBuffer = nullptr;
+	for (uint32_t i = 0; i < 8; ++i) {
+		asset.uvBuffers[i] = nullptr;
+	}
 	asset.indexBuffer = nullptr;
 
 	asset.submeshes.clear();
@@ -186,11 +191,24 @@ void Mesh3dImporter::LoadMeshImportVertices(
 		sourcePtr += sizeof(float) * 3 * vertexCount;
 	}
 
-	if (header.vertexUvSetCount >= 1) {
-		auto uv0 = LoadVertexBufferVec(graphicsCore, assetName, 2, vertexCount, sourcePtr, "TexCoord0");
-		mesh.uvBuffer = uv0;
-		vertexBuffers.push_back(uv0);
+	for (uint32_t i = 0; i < header.vertexUvSetCount; ++i) {
+		std::string name = std::format("TexCoord{}", i);
+		auto uvChannel = LoadVertexBufferVec(graphicsCore, assetName, 2, vertexCount, sourcePtr, name.c_str());
+		mesh.uvBuffers[i] = uvChannel;
+		vertexBuffers.push_back(uvChannel);
 		sourcePtr += sizeof(float) * 2 * vertexCount;
+	}
+
+	if (header.numWeightPerBone > 0) {
+		auto boneIds = LoadVertexBufferVec(graphicsCore, assetName, static_cast<size_t>(header.numWeightPerBone), vertexCount, sourcePtr, "Bone IDs");
+		mesh.boneIdsBuffer = boneIds;
+		vertexBuffers.push_back(boneIds);
+		sourcePtr += sizeof(uint16_t) * header.numWeightPerBone * vertexCount;
+
+		auto boneWeights = LoadVertexBufferVec(graphicsCore, assetName, static_cast<size_t>(header.numWeightPerBone), vertexCount, sourcePtr, "Bone Weights");
+		mesh.boneWeightsBuffer = boneWeights;
+		vertexBuffers.push_back(boneWeights);
+		sourcePtr += sizeof(float) * header.numWeightPerBone * vertexCount;
 	}
 }
 
@@ -314,8 +332,9 @@ uint64_t Mesh3dImporter::GetTotalFileSize(Formats::Model::V1::Header& header) {
 
 	totalFileExpectedSize += header.vertexCount * header.vertexUvSetCount * 2 * sizeof(float);
 
-	if (header.numWeightPerBone) {
-		totalFileExpectedSize += header.vertexCount * 4 * sizeof(float);
+	if (header.numWeightPerBone > 0) {
+		totalFileExpectedSize += header.vertexCount * header.numWeightPerBone * sizeof(uint16_t);
+		totalFileExpectedSize += header.vertexCount * header.numWeightPerBone * sizeof(float);
 	}
 
 	totalFileExpectedSize += header.indexCount * sizeof(uint16_t);
@@ -331,7 +350,11 @@ Mesh3dImporter::~Mesh3dImporter() {
 		graphicsCore->DeleteBuffer(asset.second.positionBuffer);
 		graphicsCore->DeleteBuffer(asset.second.normalBuffer);
 		graphicsCore->DeleteBuffer(asset.second.tangentBuffer);
-		graphicsCore->DeleteBuffer(asset.second.uvBuffer);
+		for (size_t i = 0; i < asset.second.uvBuffers.size(); ++i) {
+			if (asset.second.uvBuffers[i] != nullptr) {
+				graphicsCore->DeleteBuffer(asset.second.uvBuffers[i]);
+			}
+		}
 		graphicsCore->DeleteBuffer(asset.second.indexBuffer);
 	}
 	assets.clear();

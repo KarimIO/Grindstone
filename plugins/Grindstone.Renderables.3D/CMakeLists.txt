@@ -5,8 +5,8 @@ set(RENDERABLES_3D_LIB ${RENDERABLES_3D_BASE}/lib)
 set(SRC ${RENDERABLES_3D_BASE}/source)
 set(INC ${RENDERABLES_3D_BASE}/include)
 
-set(RENDERABLES_3D_SOURCES ${SRC}/AnimationSystem.cpp ${SRC}/Mesh3dRenderer.cpp ${SRC}/EntryPoint.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${COMMON_DIR}/HashedString.cpp ${ENGINE_CORE_DIR}/Reflection/PrintReflectionData.cpp)
-set(RENDERABLES_3D_HEADERS ${INC}/AnimationSystem.hpp ${INC}/Mesh3dRenderer.hpp)
+set(RENDERABLES_3D_SOURCES ${SRC}/AnimationSystem.cpp ${SRC}/FrustumCulling.cpp ${SRC}/Mesh3dRenderer.cpp ${SRC}/SkeletalMeshRenderer.cpp ${SRC}/EntryPoint.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${COMMON_DIR}/HashedString.cpp ${ENGINE_CORE_DIR}/Reflection/PrintReflectionData.cpp)
+set(RENDERABLES_3D_HEADERS ${INC}/AnimationSystem.hpp ${INC}/FrustumCulling.hpp ${INC}/Mesh3dRenderer.hpp ${INC}/SkeletalMeshRenderer.hpp ${INC}/RenderTasks.hpp)
 
 file(GLOB_RECURSE RENDERABLES_3D_ASSETS_SOURCES "${SRC}/Assets/*.cpp")
 file(GLOB_RECURSE RENDERABLES_3D_ASSETS_HEADER "${INC}/Assets/*.hpp")
@@ -22,7 +22,7 @@ add_library(
 	PluginRenderables3D
 	MODULE
 	${RENDERABLES_3D_SOURCES}
-	${RENDERABLES_3D_HEADER}
+	${RENDERABLES_3D_HEADERS}
 	${RENDERABLES_3D_ASSETS_SOURCES}
 	${RENDERABLES_3D_ASSETS_HEADER}
 	${RENDERABLES_3D_COMPONENTS_SOURCES}

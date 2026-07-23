@@ -14,14 +14,17 @@
 #include <Grindstone.Renderables.3D/include/Assets/Mesh3dImporter.hpp>
 #include <Grindstone.Renderables.3D/include/Assets/RigAsset.hpp>
 #include <Grindstone.Renderables.3D/include/Assets/RigImporter.hpp>
+#include <Grindstone.Renderables.3D/include/SkeletalMeshRenderer.hpp>
 #include <Grindstone.Renderables.3D/include/Mesh3dRenderer.hpp>
 #include <Grindstone.Renderables.3D/include/Components/AnimatorComponent.hpp>
 #include <Grindstone.Renderables.3D/include/Components/MeshComponent.hpp>
+#include <Grindstone.Renderables.3D/include/Components/SkeletalMeshComponent.hpp>
 #include <Grindstone.Renderables.3D/include/Components/MeshRendererComponent.hpp>
 
 using namespace Grindstone;
 using namespace Grindstone::Memory;
 
+SkeletalMeshRenderer* skeletalMeshRenderer = nullptr;
 Mesh3dRenderer* mesh3dRenderer = nullptr;
 Mesh3dImporter* mesh3dImporter = nullptr;
 RigImporter* rigImporter = nullptr;
@@ -37,6 +40,7 @@ extern "C" {
 		EngineCore::SetInstance(*engineCore);
 
 		mesh3dImporter = AllocatorCore::Allocate<Mesh3dImporter>(engineCore);
+		skeletalMeshRenderer = AllocatorCore::Allocate<SkeletalMeshRenderer>(engineCore);
 		mesh3dRenderer = AllocatorCore::Allocate<Mesh3dRenderer>(engineCore);
 		animationClipImporter = AllocatorCore::Allocate<AnimationClipImporter>();
 		rigImporter = AllocatorCore::Allocate<RigImporter>();
@@ -44,9 +48,11 @@ extern "C" {
 		pluginInterface->RegisterAssetType<Mesh3dAsset>(mesh3dImporter);
 		pluginInterface->RegisterAssetType<RigAsset>(rigImporter);
 		pluginInterface->RegisterAssetType<AnimationClipAsset>(animationClipImporter);
+		pluginInterface->RegisterComponent<SkeletalMeshComponent>();
 		pluginInterface->RegisterComponent<MeshComponent>();
 		pluginInterface->RegisterComponent<MeshRendererComponent>();
 		pluginInterface->RegisterComponent<AnimatorComponent>();
+		pluginInterface->RegisterAssetRenderer(skeletalMeshRenderer);
 		pluginInterface->RegisterAssetRenderer(mesh3dRenderer);
 		pluginInterface->RegisterSystem("Grindstone::AnimateSkeletonSystem", Grindstone::AnimateSkeletonSystem);
 		pluginInterface->RegisterEditorSystem("Grindstone::Ed::AnimateSkeletonSystem", Grindstone::AnimateSkeletonSystem);
@@ -62,9 +68,16 @@ extern "C" {
 			mesh3dRenderer = nullptr;
 		}
 
+		if (skeletalMeshRenderer) {
+			pluginInterface->UnregisterAssetRenderer(skeletalMeshRenderer);
+			AllocatorCore::Free(skeletalMeshRenderer);
+			skeletalMeshRenderer = nullptr;
+		}
+
 		pluginInterface->UnregisterComponent<AnimatorComponent>();
 		pluginInterface->UnregisterComponent<MeshRendererComponent>();
 		pluginInterface->UnregisterComponent<MeshComponent>();
+		pluginInterface->UnregisterComponent<SkeletalMeshComponent>();
 
 		if (animationClipImporter) {
 			pluginInterface->UnregisterAssetType<AnimationClipAsset>();

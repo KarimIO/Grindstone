@@ -83,6 +83,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 	iboCi.bufferSize = sizeof(lightIndices);
 	indexBuffer = graphicsCore->CreateBuffer(iboCi);
 
+	skinning.Initialize();
 	bloom.Initialize();
 	debug.Initialize();
 	gbuffer.Initialize();
@@ -154,6 +155,7 @@ void DeferredRenderer::Render(
 
 	Grindstone::Renderer::MetaRect ssaoBlurMetaRect(Renderer::MetaSize2D::Zero(), Renderer::MetaSize2D::DivideSwapchain(2));
 
+	skinning.AddPass(renderGraphBuilder, worldContextSet);
 	Grindstone::Renderer::ShadowPassReturnData shadowOutput = shadows.AddShadowPasses(renderGraphBuilder, worldContextSet);
 	Grindstone::Renderer::GbufferData gbufferData = gbuffer.AddPass(depthImageRef, projectionMatrix, viewMatrix, renderGraphBuilder);
 	Grindstone::Renderer::RenderGraphBuilderResourceRef ssaoOutput = ssao.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData);

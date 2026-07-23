@@ -1,0 +1,15 @@
+{
+    "assetImporterVersion": 1,
+    "metaFileVersion": 1,
+    "defaultUuid": "0791fc20-ede1-471a-9fe0-47691e1dd984",
+    "subassets": [
+        {
+            "displayName": "Skinning",
+            "address": "@CORESHADERS/postProcessing/skinning",
+            "subassetIdentifier": "Skinning",
+            "uuid": "0791fc20-ede1-471a-9fe0-47691e1dd984",
+            "type": "ComputePipelineSet"
+        }
+    ],
+    "importerSettings": {}
+}

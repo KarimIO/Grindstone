@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
@@ -12,14 +11,13 @@
 #include <Grindstone.Renderables.3D/include/RenderTasks.hpp>
 #include <Grindstone.Renderables.3D/include/SortRenderTasks.hpp>
 #include <Grindstone.Renderables.3D/include/FrustumCulling.hpp>
-#include <Grindstone.Renderables.3D/include/Mesh3dRenderer.hpp>
-#include <Grindstone.Renderables.3D/include/Components/MeshComponent.hpp>
-#include <Grindstone.Renderables.3D/include/Components/MeshRendererComponent.hpp>
+#include <Grindstone.Renderables.3D/include/SkeletalMeshRenderer.hpp>
+#include <Grindstone.Renderables.3D/include/Components/SkeletalMeshComponent.hpp>
 
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
-GraphicsAPI::DescriptorSetLayout* Grindstone::Mesh3dRenderer::perDrawDescriptorSetLayout = nullptr;
+GraphicsAPI::DescriptorSetLayout* Grindstone::SkeletalMeshRenderer::perDrawDescriptorSetLayout = nullptr;
 
 struct RenderTask {
 	GraphicsAPI::DescriptorSet* materialDescriptorSet;
@@ -33,12 +31,12 @@ struct RenderTask {
 	uint32_t sortData;
 };
 
-static void AppendStaticSubmeshRenderTask(
+static void AppendSkeletalSubmeshRenderTask(
 	std::vector<RenderTask>& renderTasks,
 	const Grindstone::HashedString renderQueueHash,
 	const Mesh3dAsset::Submesh& submesh,
 	const Mesh3dAsset* meshAsset,
-	const MeshComponent& meshComponent,
+	const SkeletalMeshComponent& meshComponent,
 	const MeshRendererComponent& meshRenderComponent
 ) {
 	if (submesh.materialIndex >= meshRenderComponent.materials.size()) {
@@ -67,7 +65,7 @@ static void AppendStaticSubmeshRenderTask(
 		.materialDescriptorSet = materialAsset->materialDescriptorSet,
 		.perDrawDescriptorSet = meshRenderComponent.perDrawDescriptorSet,
 		.pipeline = pipeline,
-		.vertexArrayObject = meshAsset->vertexArrayObject,
+		.vertexArrayObject = meshComponent.skinnedVertexArrayObject,
 		.indexCount = submesh.indexCount,
 		.baseVertex = submesh.baseVertex,
 		.baseIndex = submesh.baseIndex,
@@ -77,7 +75,7 @@ static void AppendStaticSubmeshRenderTask(
 	renderTasks.emplace_back(renderTask);
 }
 
-Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
+Grindstone::SkeletalMeshRenderer::SkeletalMeshRenderer(EngineCore* engineCore) {
 	this->engineCore = engineCore;
 
 	GraphicsAPI::DescriptorSetLayout::Binding descriptorSetUniformBinding{};
@@ -94,15 +92,15 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
 
 }
 
-void Mesh3dRenderer::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) {
+void SkeletalMeshRenderer::SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet) {
 	engineDescriptorSet = descriptorSet;
 }
 
-std::string Mesh3dRenderer::GetName() const {
+std::string SkeletalMeshRenderer::GetName() const {
 	return rendererName;
 }
 
-Grindstone::Rendering::GeometryRenderStats Mesh3dRenderer::RenderQueue(
+Grindstone::Rendering::GeometryRenderStats SkeletalMeshRenderer::RenderQueue(
 	GraphicsAPI::CommandBuffer* commandBuffer,
 	const Grindstone::Rendering::RenderViewData& renderViewData,
 	entt::registry& registry,
@@ -115,13 +113,13 @@ Grindstone::Rendering::GeometryRenderStats Mesh3dRenderer::RenderQueue(
 
 	std::chrono::time_point start = std::chrono::steady_clock::now();
 
-	std::vector<RenderTask> renderTasks = Grindstone::Renderer::GenerateTaskList<MeshComponent, RenderTask>(
+	std::vector<RenderTask> renderTasks = Grindstone::Renderer::GenerateTaskList<SkeletalMeshComponent, RenderTask>(
 		renderingStats,
 		registry,
 		frustum,
 		viewMatrix,
 		renderQueueHash,
-		AppendStaticSubmeshRenderTask
+		AppendSkeletalSubmeshRenderTask
 	);
 	Grindstone::Renderer::SortRenderTasks<RenderTask>(renderTasks);
 	Grindstone::Renderer::RenderAllTasks<RenderTask>(renderingStats, engineDescriptorSet, commandBuffer, renderTasks);
@@ -133,6 +131,6 @@ Grindstone::Rendering::GeometryRenderStats Mesh3dRenderer::RenderQueue(
 	return renderingStats;
 }
 
-GraphicsAPI::DescriptorSetLayout* Mesh3dRenderer::GetPerDrawDescriptorSetLayout() {
+GraphicsAPI::DescriptorSetLayout* SkeletalMeshRenderer::GetPerDrawDescriptorSetLayout() {
 	return perDrawDescriptorSetLayout;
 }

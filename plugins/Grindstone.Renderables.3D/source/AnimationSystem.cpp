@@ -231,7 +231,7 @@ void Grindstone::AnimateSkeletonSystem(Grindstone::WorldContextSet& worldContext
 
 				Grindstone::GraphicsAPI::Buffer::CreateInfo bufferCreateInfo{
 					.debugName = "Skeletal Matrix Buffer",
-					.content = &boneMatrices,
+					.content = boneMatrices.data(),
 					.bufferSize = sizeof(glm::mat4) * boneMatrices.size(),
 					.bufferUsage =
 						GraphicsAPI::BufferUsage::TransferDst |
@@ -242,7 +242,7 @@ void Grindstone::AnimateSkeletonSystem(Grindstone::WorldContextSet& worldContext
 				animatorComponent.skeletonMatrixBuffer = graphicsCore->CreateBuffer(bufferCreateInfo);
 			}
 			else {
-				animatorComponent.skeletonMatrixBuffer->UploadData(&boneMatrices);
+				animatorComponent.skeletonMatrixBuffer->UploadData(boneMatrices.data());
 			}
 		}
 	);

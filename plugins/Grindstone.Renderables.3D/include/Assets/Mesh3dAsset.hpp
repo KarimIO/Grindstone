@@ -38,7 +38,9 @@ namespace Grindstone {
 		GraphicsAPI::Buffer* positionBuffer = nullptr;
 		GraphicsAPI::Buffer* normalBuffer = nullptr;
 		GraphicsAPI::Buffer* tangentBuffer = nullptr;
-		GraphicsAPI::Buffer* uvBuffer = nullptr;
+		GraphicsAPI::Buffer* boneWeightsBuffer = nullptr;
+		GraphicsAPI::Buffer* boneIdsBuffer = nullptr;
+		std::array<GraphicsAPI::Buffer*, 8> uvBuffers{};
 		GraphicsAPI::Buffer* indexBuffer = nullptr;
 		std::vector<Submesh> submeshes;
 

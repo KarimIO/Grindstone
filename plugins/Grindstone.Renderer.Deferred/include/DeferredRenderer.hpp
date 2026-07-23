@@ -20,6 +20,7 @@
 #include <Grindstone.Renderer.Deferred/include/Passes/ScreenSpaceReflectionsPass.hpp>
 #include <Grindstone.Renderer.Deferred/include/Passes/ShadowPass.hpp>
 #include <Grindstone.Renderer.Deferred/include/Passes/TonemapPass.hpp>
+#include <Grindstone.Renderer.Deferred/include/Passes/SkinningPass.hpp>
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -68,6 +69,7 @@ namespace Grindstone {
 
 		Grindstone::Renderer::DeferredRenderMode renderMode;
 
+		Grindstone::Renderer::SkinningPass skinning;
 		Grindstone::Renderer::ShadowPass shadows;
 		Grindstone::Renderer::GbufferPass gbuffer;
 		Grindstone::Renderer::LightingPass lighting;
