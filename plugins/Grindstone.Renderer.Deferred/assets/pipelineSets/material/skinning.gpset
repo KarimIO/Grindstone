@@ -1,0 +1,66 @@
+include "$GRINDSTONE.RENDERER.DEFERRED/pipelineSets/common/matrixTransformations.gpset"
+
+computeSet "Skinning" {
+	shaderEntrypoint: compute main
+	
+	requiresBlocks [
+		GsInvertMatrix,
+	]
+
+	shaderHlsl {
+		struct VertexCount {
+			uint vertexCount;
+		};
+		
+		ConstantBuffer<VertexCount> vertexCountBuffer : register(b0, space0);
+
+		StructuredBuffer<float4x4> boneMatrices       : register(t1, space0);
+		ByteAddressBuffer   bindPosePositions  : register(t2, space0);
+		ByteAddressBuffer   bindPoseNormals    : register(t3, space0);
+		ByteAddressBuffer   bindPoseTangents   : register(t4, space0);
+		StructuredBuffer<uint4>    bindPoseBoneIds    : register(t5, space0);
+		StructuredBuffer<float4>   bindPoseBoneWeights: register(t6, space0);
+
+		RWByteAddressBuffer skinnedPositions   : register(u7, space0);
+		RWByteAddressBuffer skinnedNormals     : register(u8, space0);
+		RWByteAddressBuffer skinnedTangents    : register(u9, space0);
+
+		[numthreads(64, 1, 1)]
+		void main(uint3 dispatchThreadID : SV_DispatchThreadID) {
+			uint vertIndex = dispatchThreadID.x;
+
+			if (vertIndex >= vertexCountBuffer.vertexCount) {
+				return;
+			}
+
+			uint floatIndex = vertIndex * 3 * sizeof(float);
+			
+			uint3 sourcePositionUint = bindPosePositions.Load3(floatIndex);
+			uint3 sourceNormalUint   = bindPoseNormals.Load3(floatIndex);
+			uint3 sourceTangentUint  = bindPoseTangents.Load3(floatIndex);
+
+			float3 sourcePosition = float3(asfloat(sourcePositionUint.x), asfloat(sourcePositionUint.y), asfloat(sourcePositionUint.z));
+			float3 sourceNormal   = float3(asfloat(sourceNormalUint.x), asfloat(sourceNormalUint.y), asfloat(sourceNormalUint.z));
+			float3 sourceTangent  = float3(asfloat(sourceTangentUint.x), asfloat(sourceTangentUint.y), asfloat(sourceTangentUint.z));
+
+			uint4  boneIds  = bindPoseBoneIds[vertIndex];
+			float4 weights  = bindPoseBoneWeights[vertIndex];
+			
+			float4x4 skinMatrix = 
+				weights.x * boneMatrices[boneIds.x] +
+				weights.y * boneMatrices[boneIds.y] +
+				weights.z * boneMatrices[boneIds.z] +
+				weights.w * boneMatrices[boneIds.w];
+			
+			float3x3 skinMatrix3x3 = (float3x3)(transpose(InvertMatrix(skinMatrix)));
+
+			float3 dstPositionFloat = mul(skinMatrix, float4(sourcePosition, 1.0f)).xyz;
+			float3 dstNormalFloat = normalize(mul(skinMatrix3x3, sourceNormal.xyz));
+			float3 dstTangentFloat = normalize(mul(skinMatrix3x3, sourceTangent.xyz));
+
+			skinnedPositions.Store3(floatIndex, asuint(dstPositionFloat));
+			skinnedNormals.Store3(floatIndex, asuint(dstNormalFloat));
+			skinnedTangents.Store3(floatIndex, asuint(dstTangentFloat));
+		}
+	}
+}

@@ -30,18 +30,18 @@ namespace Grindstone {
 			bool ImportModelFile(Mesh3dAsset& mesh);
 			void LoadMeshImportSubmeshes(
 				Mesh3dAsset& mesh,
-				Formats::Model::V1::Header& header,
+				const Formats::Model::V1::Header& header,
 				char*& sourcePtr
 			);
 			void LoadMeshImportVertices(
 				Mesh3dAsset& mesh,
-				Formats::Model::V1::Header& header,
+				const Formats::Model::V1::Header& header,
 				char*& sourcePtr,
 				std::vector<GraphicsAPI::Buffer*>& vertexBuffers
 			);
 			void LoadMeshImportIndices(
 				Mesh3dAsset& mesh,
-				Formats::Model::V1::Header& header,
+				const Formats::Model::V1::Header& header,
 				char*& sourcePtr,
 				GraphicsAPI::Buffer*& indexBuffer
 			);

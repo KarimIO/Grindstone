@@ -1,13 +1,16 @@
-#if 0
 #pragma once
 
-#include "EngineCore/Assets/AssetImporter.hpp"
-#include "Common/ResourcePipeline/Uuid.hpp"
+#include <Common/ResourcePipeline/Uuid.hpp>
+#include <EngineCore/Assets/AssetImporter.hpp>
+#include <Grindstone.Renderables.3D/include/Assets/RigAsset.hpp>
 
 namespace Grindstone {
-	class RigImporter : public AssetImporter {
+	class RigImporter : public SpecificAssetImporter<RigAsset, AssetType::Rig> {
 	public:
-		virtual void Load(Uuid uuid) override;
+		virtual ~RigImporter() override;
+
+		virtual void* LoadAsset(Uuid uuid) override;
+		virtual void QueueReloadAsset(Uuid uuid) override;
+		virtual void OnDeleteAsset(Grindstone::RigAsset& asset) override;
 	};
 }
-#endif

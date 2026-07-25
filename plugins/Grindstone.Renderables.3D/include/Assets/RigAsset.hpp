@@ -1,4 +1,3 @@
-#if 0
 #pragma once
 
 #include <vector>
@@ -8,14 +7,17 @@
 namespace Grindstone {
 	struct RigAsset : public Asset {
 		struct Bone {
-			size_t parentBoneIndex;
-			Math::Matrix4 localMatrix;
-			Math::Matrix4 inverseModelMatrix;
+			Math::Matrix4 localBindTransform;
+			Math::Matrix4 inverseBindTransform;
+			uint32_t parentBoneIndex;
 		};
 
+		Math::Matrix4 globalInverseTransform;
 		std::vector<Bone> bones;
+		std::map<std::string, uint32_t> boneNameToIndex;
 
-		DEFINE_ASSET_TYPE
+		RigAsset(Uuid uuid, std::string_view name) : Asset(uuid, name) {}
+
+		DEFINE_ASSET_TYPE("Rig", AssetType::Rig)
 	};
 }
-#endif

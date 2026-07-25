@@ -5,61 +5,66 @@
 #include <vector>
 #include "../Math.hpp"
 
-namespace Grindstone {
-	namespace Formats {
-		namespace Animation {
-			namespace V1 {
-				struct Header {
-					uint32_t totalFileSize = 0;
-					uint32_t version = 1;
-					double animationDuration = 1.f;
-					double ticksPerSecond = 0.25f;
-					uint16_t channelCount = 0;
-				};
+namespace Grindstone::Formats::Animation::V1 {
+	const uint32_t version = 1;
+	const char magicCode[5] = "GANI";
+	const uint32_t magicSize = 4;
 
-				struct Channel {
-					uint16_t boneIndex;
-					uint16_t positionCount;
-					uint16_t scaleCount;
-					uint16_t rotationCount;
-				};
+	enum class KeyframeInterpolation : uint8_t {
+		Step,
+		Linear,
+		Cubic,
+	};
 
-				struct PositionKeyframe {
-					double time;
-					Math::Float3 value;
+	struct Header {
+		uint64_t totalFileSize = 0;
+		uint32_t version = 1;
+		double animationDuration = 1.f;
+		double ticksPerSecond = 0.25f;
+		uint16_t boneChannelCount = 0;
+		uint16_t propertyChannelCount = 0;
+		uint32_t positionKeyframesCount = 0;
+		uint32_t rotationKeyframesCount = 0;
+		uint32_t scaleKeyframesCount = 0;
+		uint16_t eventCount = 0;
+		uint64_t boneChannelDataOffset = 0;
+		uint64_t propertyChannelDataOffset = 0;
+		uint64_t positionKeyframesOffset = 0;
+		uint64_t rotationKeyframesOffset = 0;
+		uint64_t scaleKeyframesOffset = 0;
+		uint64_t propertyKeyframesOffset = 0;
+		uint64_t eventsArrayOffset = 0;
+		uint64_t eventsPayloadOffset = 0;
+		uint64_t stringBlockOffset = 0;
+	};
 
-					PositionKeyframe(double time, Math::Float3 value) {
-						this->time = time;
-						this->value = value;
-					}
-				};
+	struct BoneChannel {
+		uint32_t boneNameStringOffset = 0;
+		uint16_t positionCount;
+		uint16_t scaleCount;
+		uint16_t rotationCount;
+		uint32_t positionKeyOffset = 0;
+		uint32_t rotationKeyOffset = 0;
+		uint32_t scaleKeyOffset = 0;
+		KeyframeInterpolation interpolation = KeyframeInterpolation::Linear;
+	};
 
-				struct ScaleKeyframe {
-					double time;
-					Math::Float3 value;
+	template<typename T>
+	struct Keyframe {
+		double time;
+		T value;
 
-					ScaleKeyframe(double time, Math::Float3 value) {
-						this->time = time;
-						this->value = value;
-					}
-				};
+		Keyframe() = default;
+		Keyframe(const Keyframe& other) = default;
+		Keyframe(Keyframe&& other) noexcept = default;
+		Keyframe& operator=(const Keyframe& other) = default;
+		Keyframe& operator=(Keyframe&& other) noexcept = default;
+		Keyframe(double time, T value) : time(time), value(value) {}
+	};
 
-				struct RotationKeyframe {
-					double time;
-					Math::Quaternion value;
-
-					RotationKeyframe(double time, Math::Quaternion value) {
-						this->time = time;
-						this->value = value;
-					}
-				};
-
-				struct ChannelData {
-					std::vector<PositionKeyframe> positions;
-					std::vector<ScaleKeyframe> scales;
-					std::vector<RotationKeyframe> rotations;
-				};
-			}
-		}
-	}
+	struct BoneChannelData {
+		std::vector<Keyframe<Grindstone::Math::Float3>> positions;
+		std::vector<Keyframe<Grindstone::Math::Float3>> scales;
+		std::vector<Keyframe<Grindstone::Math::Quaternion>> rotations;
+	};
 }

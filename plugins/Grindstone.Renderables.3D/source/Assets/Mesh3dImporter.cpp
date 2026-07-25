@@ -21,24 +21,21 @@ struct SourceSubmesh {
 static GraphicsAPI::Buffer* LoadVertexBufferVec(
 	GraphicsAPI::Core* graphicsCore,
 	std::string& fileName,
-	size_t vertexSize,
+	size_t perVertexSize,
 	uint64_t vertexCount,
 	void* sourcePtr,
 	const char* bufferName
 ) {
-	uint64_t size = sizeof(float) * vertexSize * vertexCount;
-	std::vector<float> vertices;
-	vertices.resize(vertexCount * vertexSize);
-	std::memcpy(vertices.data(), sourcePtr, size);
-
+	uint64_t size = perVertexSize * vertexCount;
 	std::string debugName = fileName + " " + bufferName;
 	GraphicsAPI::Buffer::CreateInfo vertexBufferCreateInfo{};
 	vertexBufferCreateInfo.debugName = debugName.c_str();
-	vertexBufferCreateInfo.content = vertices.data();
+	vertexBufferCreateInfo.content = sourcePtr;
 	vertexBufferCreateInfo.bufferUsage =
 		GraphicsAPI::BufferUsage::TransferDst |
 		GraphicsAPI::BufferUsage::TransferSrc |
-		Grindstone::GraphicsAPI::BufferUsage::Vertex;
+		Grindstone::GraphicsAPI::BufferUsage::Vertex |
+		Grindstone::GraphicsAPI::BufferUsage::Storage;
 	vertexBufferCreateInfo.bufferSize = static_cast<uint32_t>(size);
 	return graphicsCore->CreateBuffer(vertexBufferCreateInfo);
 }
@@ -104,24 +101,55 @@ void Mesh3dImporter::OnDeleteAsset(Grindstone::Mesh3dAsset& asset) {
 	Grindstone::GraphicsAPI::Buffer* positionBuffer = asset.positionBuffer;
 	Grindstone::GraphicsAPI::Buffer* normalBuffer = asset.normalBuffer;
 	Grindstone::GraphicsAPI::Buffer* tangentBuffer = asset.tangentBuffer;
-	Grindstone::GraphicsAPI::Buffer* uvBuffer = asset.uvBuffer;
+	std::array<Grindstone::GraphicsAPI::Buffer*, 8> uvBuffers = asset.uvBuffers;
 	Grindstone::GraphicsAPI::Buffer* indexBuffer = asset.indexBuffer;
-	engineCore.PushDeletion([vertexArrayObject, positionBuffer, normalBuffer, tangentBuffer, uvBuffer, indexBuffer]() {
+	Grindstone::GraphicsAPI::Buffer* boneIdsBuffer = asset.boneIdsBuffer;
+	Grindstone::GraphicsAPI::Buffer* boneWeightsBuffer = asset.boneWeightsBuffer;
+	engineCore.PushDeletion([vertexArrayObject, positionBuffer, normalBuffer, tangentBuffer, uvBuffers, indexBuffer, boneIdsBuffer, boneWeightsBuffer]() {
 		EngineCore& engineCore = EngineCore::GetInstance();
 		GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-		graphicsCore->DeleteVertexArrayObject(vertexArrayObject);
-		graphicsCore->DeleteBuffer(positionBuffer);
-		graphicsCore->DeleteBuffer(normalBuffer);
-		graphicsCore->DeleteBuffer(tangentBuffer);
-		graphicsCore->DeleteBuffer(uvBuffer);
-		graphicsCore->DeleteBuffer(indexBuffer);
+		if (vertexArrayObject != nullptr) {
+			graphicsCore->DeleteVertexArrayObject(vertexArrayObject);
+		}
+
+		if (positionBuffer != nullptr) {
+			graphicsCore->DeleteBuffer(positionBuffer);
+		}
+
+		if (normalBuffer != nullptr) {
+			graphicsCore->DeleteBuffer(normalBuffer);
+		}
+
+		if (tangentBuffer != nullptr) {
+			graphicsCore->DeleteBuffer(tangentBuffer);
+		}
+
+		if (indexBuffer != nullptr) {
+			graphicsCore->DeleteBuffer(indexBuffer);
+		}
+
+		if (boneIdsBuffer != nullptr) {
+			graphicsCore->DeleteBuffer(boneIdsBuffer);
+		}
+
+		if (boneWeightsBuffer != nullptr) {
+			graphicsCore->DeleteBuffer(boneWeightsBuffer);
+		}
+
+		for (uint32_t i = 0; i < 8; ++i) {
+			graphicsCore->DeleteBuffer(uvBuffers[i]);
+		}
 	});
 	asset.vertexArrayObject = nullptr;
 	asset.positionBuffer = nullptr;
 	asset.normalBuffer = nullptr;
 	asset.tangentBuffer = nullptr;
-	asset.uvBuffer = nullptr;
+	for (uint32_t i = 0; i < 8; ++i) {
+		asset.uvBuffers[i] = nullptr;
+	}
 	asset.indexBuffer = nullptr;
+	asset.boneIdsBuffer = nullptr;
+	asset.boneWeightsBuffer = nullptr;
 
 	asset.submeshes.clear();
 }
@@ -139,7 +167,7 @@ void Mesh3dImporter::QueueReloadAsset(Uuid uuid) {
 	ImportModelFile(meshAsset);
 }
 
-void Mesh3dImporter::LoadMeshImportSubmeshes(Mesh3dAsset& mesh, Formats::Model::V1::Header& header, char*& sourcePtr) {
+void Mesh3dImporter::LoadMeshImportSubmeshes(Mesh3dAsset& mesh, const Formats::Model::V1::Header& header, char*& sourcePtr) {
 	SourceSubmesh* sourceSubmeshes = reinterpret_cast<SourceSubmesh*>(sourcePtr);
 	mesh.submeshes.resize(header.meshCount);
 
@@ -158,45 +186,59 @@ void Mesh3dImporter::LoadMeshImportSubmeshes(Mesh3dAsset& mesh, Formats::Model::
 
 void Mesh3dImporter::LoadMeshImportVertices(
 	Mesh3dAsset& mesh,
-	Formats::Model::V1::Header& header,
+	const Formats::Model::V1::Header& header,
 	char*& sourcePtr,
 	std::vector<GraphicsAPI::Buffer*>& vertexBuffers
 ) {
 	GraphicsAPI::Core* graphicsCore = engineCore->GetGraphicsCore();
 	std::string& assetName = mesh.name;
-	auto vertexCount = header.vertexCount;
+	uint64_t vertexCount = header.vertexCount;
+	mesh.vertexCount = vertexCount;
 	if (header.hasVertexPositions) {
-		auto positions = LoadVertexBufferVec(graphicsCore, assetName, 3, vertexCount, sourcePtr, "Positions");
+		auto positions = LoadVertexBufferVec(graphicsCore, assetName, 3 * sizeof(float), vertexCount, sourcePtr, "Positions");
 		mesh.positionBuffer = positions;
 		vertexBuffers.push_back(positions);
 		sourcePtr += sizeof(float) * 3 * vertexCount;
 	}
 
 	if (header.hasVertexNormals) {
-		auto normals = LoadVertexBufferVec(graphicsCore, assetName, 3, vertexCount, sourcePtr, "Normals");
+		auto normals = LoadVertexBufferVec(graphicsCore, assetName, 3 * sizeof(float), vertexCount, sourcePtr, "Normals");
 		mesh.normalBuffer = normals;
 		vertexBuffers.push_back(normals);
 		sourcePtr += sizeof(float) * 3 * vertexCount;
 	}
 
 	if (header.hasVertexTangents) {
-		auto tangents = LoadVertexBufferVec(graphicsCore, assetName, 3, vertexCount, sourcePtr, "Tangents");
+		auto tangents = LoadVertexBufferVec(graphicsCore, assetName, 3 * sizeof(float), vertexCount, sourcePtr, "Tangents");
 		mesh.tangentBuffer = tangents;
 		vertexBuffers.push_back(tangents);
 		sourcePtr += sizeof(float) * 3 * vertexCount;
 	}
 
-	if (header.vertexUvSetCount >= 1) {
-		auto uv0 = LoadVertexBufferVec(graphicsCore, assetName, 2, vertexCount, sourcePtr, "TexCoord0");
-		mesh.uvBuffer = uv0;
-		vertexBuffers.push_back(uv0);
+	for (uint32_t i = 0; i < header.vertexUvSetCount; ++i) {
+		std::string name = std::format("TexCoord{}", i);
+		auto uvChannel = LoadVertexBufferVec(graphicsCore, assetName, 2 * sizeof(float), vertexCount, sourcePtr, name.c_str());
+		mesh.uvBuffers[i] = uvChannel;
+		vertexBuffers.push_back(uvChannel);
 		sourcePtr += sizeof(float) * 2 * vertexCount;
+	}
+
+	if (header.numWeightPerBone > 0) {
+		auto boneIds = LoadVertexBufferVec(graphicsCore, assetName, static_cast<size_t>(header.numWeightPerBone * sizeof(uint32_t)), vertexCount, sourcePtr, "Bone IDs");
+		mesh.boneIdsBuffer = boneIds;
+		vertexBuffers.push_back(boneIds);
+		sourcePtr += sizeof(uint32_t) * header.numWeightPerBone * vertexCount;
+
+		auto boneWeights = LoadVertexBufferVec(graphicsCore, assetName, static_cast<size_t>(header.numWeightPerBone * sizeof(float)), vertexCount, sourcePtr, "Bone Weights");
+		mesh.boneWeightsBuffer = boneWeights;
+		vertexBuffers.push_back(boneWeights);
+		sourcePtr += sizeof(float) * header.numWeightPerBone * vertexCount;
 	}
 }
 
 void Mesh3dImporter::LoadMeshImportIndices(
 	Mesh3dAsset& mesh,
-	Formats::Model::V1::Header& header,
+	const Formats::Model::V1::Header& header,
 	char*& sourcePtr,
 	GraphicsAPI::Buffer*& indexBuffer
 ) {
@@ -314,8 +356,9 @@ uint64_t Mesh3dImporter::GetTotalFileSize(Formats::Model::V1::Header& header) {
 
 	totalFileExpectedSize += header.vertexCount * header.vertexUvSetCount * 2 * sizeof(float);
 
-	if (header.numWeightPerBone) {
-		totalFileExpectedSize += header.vertexCount * 4 * sizeof(float);
+	if (header.numWeightPerBone > 0) {
+		totalFileExpectedSize += header.vertexCount * header.numWeightPerBone * sizeof(uint16_t);
+		totalFileExpectedSize += header.vertexCount * header.numWeightPerBone * sizeof(float);
 	}
 
 	totalFileExpectedSize += header.indexCount * sizeof(uint16_t);
@@ -331,7 +374,11 @@ Mesh3dImporter::~Mesh3dImporter() {
 		graphicsCore->DeleteBuffer(asset.second.positionBuffer);
 		graphicsCore->DeleteBuffer(asset.second.normalBuffer);
 		graphicsCore->DeleteBuffer(asset.second.tangentBuffer);
-		graphicsCore->DeleteBuffer(asset.second.uvBuffer);
+		for (size_t i = 0; i < asset.second.uvBuffers.size(); ++i) {
+			if (asset.second.uvBuffers[i] != nullptr) {
+				graphicsCore->DeleteBuffer(asset.second.uvBuffers[i]);
+			}
+		}
 		graphicsCore->DeleteBuffer(asset.second.indexBuffer);
 	}
 	assets.clear();

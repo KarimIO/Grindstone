@@ -10,7 +10,9 @@
 #include <glm/glm.hpp>
 
 #include <Common/Formats/Animation.hpp>
+#include <Common/Formats/Rig.hpp>
 #include <EditorCommon/ResourcePipeline/MetaFile.hpp>
+#include <EngineCore/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
 #include <Editor/EditorManager.hpp>
@@ -20,8 +22,20 @@
 
 using namespace Grindstone::Editor::Importers;
 
+using BoneIndex = uint32_t;
+using VertexIndex = uint16_t;
+BoneIndex invalidBoneIndex = std::numeric_limits<BoneIndex>::max();
 
-const uint16_t NUM_BONES_PER_VERTEX = 4;
+struct BoneInfo {
+	aiBone* bone = nullptr;
+	aiNode* node = nullptr;
+	BoneIndex boneIndex;
+	BoneIndex parentIndex;
+	glm::mat4 localBindTransform;
+	glm::mat4 inverseBindTransform;
+};
+
+const BoneIndex NUM_BONES_PER_VERTEX = 4;
 
 class ModelImporter {
 public:
@@ -48,41 +62,23 @@ private:
 	Grindstone::Editor::AssetRegistry* assetRegistry = nullptr;
 	std::filesystem::path path;
 	std::filesystem::path baseFolderPath;
-	std::map<std::string, glm::mat4> tempOffsetMatrices; // Save string->offset matrix so we can use it when constructing the bone data
-	std::map<std::string, unsigned int> boneMapping;
 	const aiScene* scene = nullptr;
-	bool hasExtraWeights = false;
 	bool isSkeletalMesh = false;
-
-	struct BoneData {
-		uint16_t parentIndex;
-		glm::mat4 offsetMatrix;
-		glm::mat4 inverseModelMatrix;
-
-		BoneData(uint16_t parentIndex, glm::mat4& offsetMatrix, glm::mat4& inverseMatrix) {
-			this->parentIndex = parentIndex;
-			this->offsetMatrix = offsetMatrix;
-			this->inverseModelMatrix = inverseMatrix;
-		}
-	};
 
 	struct OutputMesh {
 		std::string name;
 		Grindstone::Formats::Model::V1::BoundingData boundingData;
 		uint32_t vertexCount = 0;
-		uint16_t boneCount = 0;
 		struct VertexArray {
 			std::vector<float> position;
 			std::vector<float> normal;
 			std::vector<float> tangent;
-			std::vector<uint16_t> boneIds; // For animation
+			std::vector<BoneIndex> boneIds; // For animation
 			std::vector<float> boneWeights; // For animation
 			std::vector<std::vector<float>> texCoordArray;
 		} vertexArray;
-		std::vector<uint16_t> indices;
+		std::vector<VertexIndex> indices;
 		std::vector<Submesh> submeshes;
-		std::vector<BoneData> bones;
-		std::vector<std::string> boneNames;
 	};
 
 	struct OutputNode {
@@ -106,22 +102,20 @@ private:
 	void ProcessCamera(aiCamera* camera);
 	void ProcessNodeTree(aiNode* node, size_t parentIndex);
 	void ProcessMaterial(size_t materialIndex, aiMaterial* inputMaterial);
-	void ProcessSkeleton(aiSkeleton* skeleton);
-	void ProcessVertexBoneWeights(aiMesh* inputMesh, OutputMesh& outputMesh);
+	void ProcessVertexBoneWeights(const aiMesh* inputMesh, const std::vector<BoneInfo>& orderedSkinnedBones, const std::map<std::string, BoneIndex>& nameToBoneIndexMap, OutputMesh& outputMesh);
 	void NormalizeBoneWeights(OutputMesh& outputMesh);
-	void ProcessAnimation(aiAnimation* animation);
-	void AddBoneData(OutputMesh& outputMesh, unsigned int vertexId, unsigned int boneId, float vertexWeight);
+	void ProcessAnimation(aiAnimation* animation, const std::map<std::string, BoneIndex>& nameToBoneIndexMap);
+	void AddBoneData(OutputMesh& outputMesh, unsigned int vertexId, BoneIndex boneId, float vertexWeight);
 	void InitSubmeshes(aiMesh* inputMesh, OutputMesh& outputMesh, bool hasBones);
 	void ProcessVertices(aiMesh* inputMesh, OutputMesh& outputMesh);
 	void WritePrefab();
 	void WriteMesh(size_t index, const OutputMesh& mesh);
-	void WriteSkeleton(size_t index) const;
 };
 
-static void OutputVertexArray(std::ofstream& output, const std::vector<uint16_t>& vertexArray) {
+static void OutputVertexArray(std::ofstream& output, const std::vector<BoneIndex>& vertexArray) {
 	output.write(
 		reinterpret_cast<const char*> (vertexArray.data()),
-		vertexArray.size() * sizeof(uint16_t)
+		vertexArray.size() * sizeof(BoneIndex)
 	);
 }
 
@@ -143,13 +137,47 @@ static void PushVertex2dToVector(std::vector<float>& targetVector, const aiVecto
 	targetVector.push_back(aiVertex->y);
 }
 
-static glm::mat4 AiMatToGlm(aiMatrix4x4& matrix) {
-	return glm::mat4(
-		matrix.a1, matrix.a2, matrix.a3, matrix.a4,
-		matrix.b1, matrix.b2, matrix.b3, matrix.b4,
-		matrix.c1, matrix.c2, matrix.c3, matrix.c4,
-		matrix.d1, matrix.d2, matrix.d3, matrix.d4
-	);
+static glm::mat4 AiMatToGlm(const aiMatrix4x4& m) {
+	glm::mat4 out;
+
+	out[0][0] = m.a1;
+	out[1][0] = m.a2;
+	out[2][0] = m.a3;
+	out[3][0] = m.a4;
+
+	out[0][1] = m.b1;
+	out[1][1] = m.b2;
+	out[2][1] = m.b3;
+	out[3][1] = m.b4;
+
+	out[0][2] = m.c1;
+	out[1][2] = m.c2;
+	out[2][2] = m.c3;
+	out[3][2] = m.c4;
+
+	out[0][3] = m.d1;
+	out[1][3] = m.d2;
+	out[2][3] = m.d3;
+	out[3][3] = m.d4;
+
+	return out;
+}
+
+static glm::mat4 ComputeGlobal(aiNode* node) {
+	glm::mat4 m(1);
+
+	std::vector<aiNode*> chain;
+
+	while (node) {
+		chain.push_back(node);
+		node = node->mParent;
+	}
+
+	for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
+		m *= AiMatToGlm((*it)->mTransformation);
+	}
+
+	return m;
 }
 
 static std::filesystem::path GetTexturePath(const std::filesystem::path& baseFolderPath, aiMaterial* material, aiTextureType type) {
@@ -162,6 +190,260 @@ static std::filesystem::path GetTexturePath(const std::filesystem::path& baseFol
 	}
 
 	return "";
+}
+
+template<typename T>
+static size_t GetVectorSize(const std::vector<T>& data) {
+	return data.size() * sizeof(data[0]);
+}
+
+template<typename T>
+static void OutputVector(std::ofstream& output, const std::vector<T>& data, size_t vectorSize) {
+	output.write(reinterpret_cast<const char*>(data.data()), vectorSize);
+}
+
+static void WriteRig(
+	const std::filesystem::path& outputPath,
+	const glm::mat4& globalInverseTransform,
+	const std::vector<Grindstone::Formats::Rig::V1::Bone> bones,
+	const std::vector<char> stringBlockBuffer
+) {
+	std::ofstream output(outputPath, std::ios::binary);
+
+	if (!output.is_open()) {
+		throw std::runtime_error(std::string("Failed to open ") + outputPath.string());
+	}
+
+	const size_t headerSize = sizeof(Grindstone::Formats::Rig::V1::Header);
+	const size_t boneVecSize = GetVectorSize(bones);
+	const size_t stringBlockLength = stringBlockBuffer.size();
+
+	const Grindstone::Formats::Rig::V1::Header header{
+		.totalFileSize = static_cast<uint64_t>(4 + headerSize + boneVecSize + stringBlockLength),
+		.version = Grindstone::Formats::Animation::V1::version,
+		.bonesCount = static_cast<BoneIndex>(bones.size()),
+		.boneDataOffset = 4 + headerSize,
+		.stringBlockSize = stringBlockLength,
+		.stringBlockOffset = 4 + headerSize + boneVecSize,
+		.globalInverseTransform = globalInverseTransform
+	};
+
+	//  - Output File MetaData
+	output.write(Grindstone::Formats::Rig::V1::magicCode, Grindstone::Formats::Rig::V1::magicSize);
+	output.write(reinterpret_cast<const char*>(&header), headerSize);
+	OutputVector(output, bones, boneVecSize);
+	output.write(stringBlockBuffer.data(), stringBlockBuffer.size());
+}
+
+static void ProcessSkeletonRig(
+	Grindstone::Editor::MetaFile& metaFile,
+	const glm::mat4& globalInverseTransform,
+	const aiSkeleton* skeleton
+) {
+	Grindstone::Editor::AssetRegistry& assetRegistry = Grindstone::Editor::Manager::GetInstance().GetAssetRegistry();
+	std::string rigName(skeleton->mName.data);
+
+	size_t stringBlockLength = 0;
+
+	std::string subassetName = "rig-" + rigName;
+	Grindstone::Uuid outUuid = metaFile.GetOrCreateSubassetUuid(subassetName, Grindstone::AssetType::Rig);
+
+	std::filesystem::path outputPath = assetRegistry.GetCompiledAssetsPath() / outUuid.ToString();
+
+	std::vector<Grindstone::Formats::Rig::V1::Bone> bones;
+	std::vector<char> stringBlockBuffer;
+
+	for (unsigned int boneIterator = 0; boneIterator < skeleton->mNumBones; boneIterator++) {
+		aiSkeletonBone* bone = skeleton->mBones[boneIterator];
+		size_t stringLength = strlen(bone->mNode->mName.data);
+		stringBlockLength += stringLength + 1;
+	}
+
+	bones.reserve(skeleton->mNumBones);
+	stringBlockBuffer.resize(stringBlockLength);
+
+	size_t stringBlockBufferOffset = 0;
+	for (unsigned int boneIterator = 0; boneIterator < skeleton->mNumBones; boneIterator++) {
+		aiSkeletonBone* bone = skeleton->mBones[boneIterator];
+
+		Grindstone::Formats::Rig::V1::Bone& dstBone = bones.emplace_back();
+		dstBone.inverseBindTransform = AiMatToGlm(bone->mOffsetMatrix);
+		dstBone.localBindTransform = AiMatToGlm(bone->mNode->mTransformation);
+
+		size_t stringLengthWithNull = strlen(bone->mNode->mName.data) + 1;
+		errno_t cpyRes = strcpy_s(stringBlockBuffer.data() + stringBlockBufferOffset, stringLengthWithNull, bone->mNode->mName.data);
+		GS_ASSERT(cpyRes == 0);
+
+		stringBlockBufferOffset += stringLengthWithNull;
+	}
+
+	WriteRig(outputPath, globalInverseTransform, bones, stringBlockBuffer);
+}
+
+static void ProcessMeshRig(
+	Grindstone::Editor::MetaFile& metaFile,
+	const glm::mat4& globalInverseTransform,
+	const std::map<std::string, BoneIndex>& nameToBoneIndexMap,
+	const std::vector<BoneInfo>& orderedSkinnedBones
+) {
+	Grindstone::Editor::AssetRegistry& assetRegistry = Grindstone::Editor::Manager::GetInstance().GetAssetRegistry();
+	
+	size_t stringBlockLength = 0;
+
+	std::string subassetName = std::string("rig-") + orderedSkinnedBones[0].node->mName.C_Str();
+	Grindstone::Uuid outUuid = metaFile.GetOrCreateSubassetUuid(subassetName, Grindstone::AssetType::Rig);
+
+	std::filesystem::path outputPath = assetRegistry.GetCompiledAssetsPath() / outUuid.ToString();
+
+	std::vector<Grindstone::Formats::Rig::V1::Bone> bones;
+	std::vector<char> stringBlockBuffer;
+
+	for (const BoneInfo& boneInfo : orderedSkinnedBones) {
+		size_t stringLength = strlen(boneInfo.node->mName.C_Str());
+		stringBlockLength += stringLength + 1;
+	}
+
+	bones.reserve(orderedSkinnedBones.size());
+	stringBlockBuffer.resize(stringBlockLength);
+
+	size_t stringBlockBufferOffset = 0;
+	for (const BoneInfo& boneInfo : orderedSkinnedBones) {
+		Grindstone::Formats::Rig::V1::Bone& dstBone = bones.emplace_back();
+		dstBone.boneNameStringOffset = static_cast<uint32_t>(stringBlockBufferOffset);
+		dstBone.boneParentIndex = boneInfo.parentIndex;
+		dstBone.inverseBindTransform = boneInfo.inverseBindTransform;
+		dstBone.localBindTransform = boneInfo.localBindTransform;
+		const char* boneName = boneInfo.node->mName.C_Str();
+
+		size_t stringLengthWithNull = strlen(boneName) + 1;
+		errno_t cpyRes = strcpy_s(stringBlockBuffer.data() + stringBlockBufferOffset, stringLengthWithNull, boneName);
+		GS_ASSERT_ENGINE(cpyRes == 0);
+
+		stringBlockBufferOffset += stringLengthWithNull;
+	}
+
+	WriteRig(outputPath, globalInverseTransform, bones, stringBlockBuffer);
+}
+
+static bool AreMatricesApproxEqual(const glm::mat4& a, const glm::mat4& b, const float epsilon = 1e-4f) {
+	for (size_t i = 0; i < 4; ++i) {
+		for (size_t j = 0; j < 4; ++j) {
+			if (glm::abs(a[i][j] - b[i][j]) > epsilon) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+static void WalkBoneTree(
+	BoneIndex parentIndex,
+	aiNode* node,
+	const std::map<std::string, BoneInfo>& skinnedBones,
+	std::map<std::string, BoneIndex>& nameToBoneIndexMap,
+	std::vector<BoneInfo>& sortedNodes
+) {
+	const std::string name = node->mName.C_Str();
+	const auto srcBoneIt = skinnedBones.find(name);
+	BoneIndex boneIndex = static_cast<BoneIndex>(sortedNodes.size());
+
+	GS_ASSERT(!nameToBoneIndexMap.contains(name));
+
+	glm::mat4 localBind = AiMatToGlm(node->mTransformation);
+	glm::mat4 globalBind = ComputeGlobal(node);
+	glm::mat4 inverseGlobalBind = glm::inverse(globalBind);
+
+	nameToBoneIndexMap[name] = boneIndex;
+
+	if (srcBoneIt != skinnedBones.end()) {
+		const BoneInfo& srcBoneInfo = srcBoneIt->second;
+		BoneInfo& dstBoneInfo = sortedNodes.emplace_back(srcBoneInfo);
+		dstBoneInfo.boneIndex = boneIndex;
+		dstBoneInfo.parentIndex = static_cast<BoneIndex>(parentIndex);
+		GS_ASSERT(AreMatricesApproxEqual(dstBoneInfo.inverseBindTransform * globalBind, glm::mat4(1.0f)));
+		GS_ASSERT(AreMatricesApproxEqual(globalBind * dstBoneInfo.inverseBindTransform, glm::mat4(1.0f)));
+		GS_ASSERT(AreMatricesApproxEqual(AiMatToGlm(dstBoneInfo.bone->mOffsetMatrix) * globalBind, glm::mat4(1.0f)));
+	}
+	else {
+		BoneInfo& dstBoneInfo = sortedNodes.emplace_back();
+		dstBoneInfo.boneIndex = boneIndex;
+		dstBoneInfo.parentIndex = static_cast<BoneIndex>(parentIndex);
+		dstBoneInfo.node = node;
+		dstBoneInfo.localBindTransform = localBind;
+		dstBoneInfo.inverseBindTransform = inverseGlobalBind;
+	}
+
+	for (unsigned int childIndex = 0; childIndex < node->mNumChildren; ++childIndex) {
+		aiNode* childNode = node->mChildren[childIndex];
+		WalkBoneTree(boneIndex, childNode, skinnedBones, nameToBoneIndexMap, sortedNodes);
+	}
+
+	if (parentIndex != invalidBoneIndex) {
+		GS_ASSERT(sortedNodes[parentIndex].node == node->mParent);
+	}
+}
+
+// This function finds the parent bone for each bone in the skinnedBones map
+// and sets the parentIndex accordingly. It also returns the name of the root node.
+static std::pair<std::map<std::string, BoneIndex>, std::vector<BoneInfo>> SortBones(aiNode* sceneRoot, std::map<std::string, BoneInfo>& skinnedBones) {
+	// Get root node
+	/*
+	aiNode* skeletonRoot = nullptr;
+	for (auto& pair : skinnedBones) {
+		BoneInfo& boneInfo = pair.second;
+		aiNode* lastBoneNode = boneInfo.node;
+		aiNode* currentNode = boneInfo.node->mParent;
+		while ((currentNode != nullptr)) {
+			if (skinnedBones.count(currentNode->mName.data) > 0) {
+				lastBoneNode = currentNode;
+			}
+
+			currentNode = currentNode->mParent;
+		}
+
+		if (lastBoneNode != nullptr) {
+			GS_ASSERT_ENGINE_WITH_MESSAGE(skeletonRoot == lastBoneNode || skeletonRoot == nullptr, "There should be exactly one root bone in the skeleton.");
+			skeletonRoot = lastBoneNode;
+		}
+	}
+	*/
+
+	std::vector<BoneInfo> sortedBones;
+	std::map<std::string, BoneIndex> nameToBoneIndexMap;
+ 	WalkBoneTree(invalidBoneIndex, sceneRoot, skinnedBones, nameToBoneIndexMap, sortedBones);
+
+	GS_ASSERT(sortedBones[0].parentIndex == invalidBoneIndex);
+	for (size_t i = 1; i < sortedBones.size(); ++i) {
+		BoneIndex parent = sortedBones[i].parentIndex;
+		GS_ASSERT(parent < i);
+	}
+
+	return { nameToBoneIndexMap, sortedBones };
+}
+
+static void JoinMeshBones(const aiMesh* mesh, std::map<std::string, BoneInfo>& skinnedBones) {
+	for (unsigned int boneIndex = 0; boneIndex < mesh->mNumBones; ++boneIndex) {
+		aiBone* bone = mesh->mBones[boneIndex];
+		const char* name = bone->mName.data;
+		GS_ASSERT(strcmp(bone->mName.C_Str(), bone->mNode->mName.C_Str()) == 0);
+
+		if (skinnedBones.find(name) == skinnedBones.end()) {
+			BoneIndex boneIndex = static_cast<BoneIndex>(skinnedBones.size());
+
+			skinnedBones[name] = BoneInfo{
+				.bone = bone,
+				.node = bone->mNode,
+				.boneIndex = boneIndex,
+				.parentIndex = 0,
+				.localBindTransform = AiMatToGlm(bone->mNode->mTransformation),
+				.inverseBindTransform = AiMatToGlm(bone->mOffsetMatrix)
+			};
+		}
+		else {
+			GS_ASSERT(skinnedBones[name].node == bone->mNode);
+		}
+	}
 }
 
 void ModelImporter::ProcessMaterial(size_t materialIndex, aiMaterial* inputMaterial) {
@@ -217,7 +499,7 @@ void ModelImporter::InitSubmeshes(aiMesh* inputMesh, OutputMesh& outputMesh, boo
 	outputSubmesh.materialIndex = inputMesh->mMaterialIndex;
 	outputMesh.vertexCount = inputMesh->mNumVertices;
 
-	size_t vertexCountSizeT = vertexCount;
+	size_t vertexCountSizeT = static_cast<size_t>(vertexCount);
 	outputMesh.vertexArray.position.reserve(vertexCountSizeT * 3);
 	outputMesh.vertexArray.normal.reserve(vertexCountSizeT * 3);
 	outputMesh.vertexArray.tangent.reserve(vertexCountSizeT * 3);
@@ -263,16 +545,6 @@ void ModelImporter::ProcessVertices(aiMesh* inputMesh, OutputMesh& outputMesh) {
 	}
 }
 
-// Make a list of used bones so we can remove unnecessary bones, and get offset Matrix
-void ModelImporter::ProcessSkeleton(aiSkeleton* skeleton) {
-	for (unsigned int boneIterator = 0; boneIterator < skeleton->mNumBones; boneIterator++) {
-		aiSkeletonBone* bone = skeleton->mBones[boneIterator];
-		std::string boneName(bone->mNode->mName.data);
-
-		tempOffsetMatrices[boneName] = AiMatToGlm(bone->mOffsetMatrix);
-	}
-}
-
 void ModelImporter::ProcessNodeTree(aiNode* inputNode, size_t parentIndex) {
 	size_t nodeIndex = outputNodes.size();
 
@@ -302,42 +574,55 @@ void ModelImporter::ProcessNodeTree(aiNode* inputNode, size_t parentIndex) {
 	}
 }
 
-void ModelImporter::ProcessVertexBoneWeights(aiMesh* inputMesh, OutputMesh& outputMesh) {
-	for (unsigned int boneIterator = 0; boneIterator < inputMesh->mNumBones; boneIterator++) {
-		aiBone* bone = inputMesh->mBones[boneIterator];
-		std::string boneName(bone->mName.data);
-		unsigned int boneId = boneMapping[boneName];
+void ModelImporter::ProcessVertexBoneWeights(const aiMesh* inputMesh, const std::vector<BoneInfo>& orderedSkinnedBones, const std::map<std::string, BoneIndex>& nameToBoneIndexMap, OutputMesh& outputMesh) {
+	outputMesh.vertexArray.boneIds.assign(outputMesh.vertexArray.boneIds.size(), 0);
+	outputMesh.vertexArray.boneWeights.assign(outputMesh.vertexArray.boneWeights.size(), 0.0f);
 
-		for (unsigned int weightIterator = 0; weightIterator < bone->mNumWeights; weightIterator++) {
-			auto& weight = bone->mWeights[weightIterator];
+	for (size_t boneIndex = 0; boneIndex < orderedSkinnedBones.size(); ++boneIndex) {
+		const BoneInfo& bone = orderedSkinnedBones[boneIndex];
+		const aiBone* assimpBone = bone.bone;
+		if (assimpBone != nullptr) {
+			for (unsigned int weightIterator = 0; weightIterator < assimpBone->mNumWeights; weightIterator++) {
+				const aiVertexWeight& weight = assimpBone->mWeights[weightIterator];
 
-			auto vertexId = weight.mVertexId;
-			float vertexWeight = weight.mWeight;
-			AddBoneData(outputMesh, vertexId, boneId, vertexWeight);
+				unsigned int vertexId = weight.mVertexId;
+				float vertexWeight = weight.mWeight;
+				AddBoneData(outputMesh, vertexId, boneIndex, vertexWeight);
+			}
 		}
 	}
 
-	if (hasExtraWeights) {
-		NormalizeBoneWeights(outputMesh);
+	NormalizeBoneWeights(outputMesh);
+
+	for (size_t i = 0; i < outputMesh.vertexArray.boneIds.size(); ++i) {
+		GS_ASSERT(outputMesh.vertexArray.boneIds[i] < orderedSkinnedBones.size());
 	}
 }
 
 void ModelImporter::NormalizeBoneWeights(OutputMesh& outputMesh) {
-	for (size_t i = 0; i < outputMesh.vertexArray.boneWeights.size(); i += NUM_BONES_PER_VERTEX) {
-		float w0 = outputMesh.vertexArray.boneWeights[i];
-		float w1 = outputMesh.vertexArray.boneWeights[i + 1];
-		float w2 = outputMesh.vertexArray.boneWeights[i + 2];
-		float w3 = outputMesh.vertexArray.boneWeights[i + 3];
-		float total = w0 + w1 + w2 + w3;
+	std::vector<float>& weights = outputMesh.vertexArray.boneWeights;
+	for (size_t i = 0; i < weights.size(); i += NUM_BONES_PER_VERTEX) {
+		float total = 0.0f;
+		for (size_t j = 0; j < NUM_BONES_PER_VERTEX; ++j) {
+			total += weights[i + j];
+		}
 
-		outputMesh.vertexArray.boneWeights[i] = w0 / total;
-		outputMesh.vertexArray.boneWeights[i + 1] = w1 / total;
-		outputMesh.vertexArray.boneWeights[i + 2] = w2 / total;
-		outputMesh.vertexArray.boneWeights[i + 3] = w3 / total;
+		if (total > 0.0f) {
+			for (size_t j = 0; j < NUM_BONES_PER_VERTEX; ++j) {
+				weights[i + j] /= total;
+			}
+		}
+
+		// Recompute for the sake of assert
+		total = 0.0f;
+		for (size_t j = 0; j < NUM_BONES_PER_VERTEX; ++j) {
+			total += weights[i + j];
+		}
+		GS_ASSERT(fabs(total - 1.0f) < 1e-3f || total == 0.0f);
 	}
 }
 
-void ModelImporter::AddBoneData(OutputMesh& outputMesh, unsigned int vertexId, unsigned int boneId, float vertexWeight) {
+void ModelImporter::AddBoneData(OutputMesh& outputMesh, unsigned int vertexId, BoneIndex boneId, float vertexWeight) {
 	unsigned int baseIndex = vertexId * NUM_BONES_PER_VERTEX;
 	unsigned int lastIndex = baseIndex + NUM_BONES_PER_VERTEX;
 	for (unsigned int i = baseIndex; i < lastIndex; i++) {
@@ -349,7 +634,6 @@ void ModelImporter::AddBoneData(OutputMesh& outputMesh, unsigned int vertexId, u
 	}
 
 	// Too many boneweights - replace the smallest one
-	hasExtraWeights = true;
 	unsigned int lowestIndex = baseIndex;
 	float lowestWeight = outputMesh.vertexArray.boneWeights[lowestIndex];
 	for (unsigned int i = baseIndex; i < lastIndex; i++) {
@@ -384,7 +668,7 @@ void ModelImporter::ProcessCamera(aiCamera* camera) {
 	}
 }
 
-void ModelImporter::ProcessAnimation(aiAnimation* animation) {
+void ModelImporter::ProcessAnimation(aiAnimation* animation, const std::map<std::string, BoneIndex>& nameToBoneIndexMap) {
 	std::string animationName(animation->mName.data);
 
 	double ticksPerSecond = animation->mTicksPerSecond != 0
@@ -392,18 +676,8 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 		: 25.0f;
 	double duration = animation->mDuration;
 
-	Grindstone::Formats::Animation::V1::Header animationHeader;
-	animationHeader.animationDuration = duration;
-	animationHeader.channelCount = static_cast<uint16_t>(animation->mNumChannels);
-	animationHeader.ticksPerSecond = ticksPerSecond;
-
-	std::vector<Grindstone::Formats::Animation::V1::Channel> channels;
-	channels.resize(animation->mNumChannels);
-	std::vector<Grindstone::Formats::Animation::V1::ChannelData> channelData;
-	channels.resize(animation->mNumChannels);
-
 	std::string subassetName = "anim-" + animationName;
-	Grindstone::Uuid outUuid = metaFile.GetOrCreateDefaultSubassetUuid(subassetName, Grindstone::AssetType::Animation);
+	Grindstone::Uuid outUuid = metaFile.GetOrCreateSubassetUuid(subassetName, Grindstone::AssetType::AnimationClip);
 
 	std::filesystem::path outputPath = assetRegistry->GetCompiledAssetsPath() / outUuid.ToString();
 	std::ofstream output(outputPath, std::ios::binary);
@@ -412,49 +686,136 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation) {
 		throw std::runtime_error(std::string("Failed to open ") + outputPath.string());
 	}
 
-	//  - Output File MetaData
-	output.write("GAF", 3);
+	std::vector<Grindstone::Formats::Animation::V1::BoneChannel> channels;
+	Grindstone::Formats::Animation::V1::BoneChannelData dstChannelData;
+	std::vector<char> stringBlockBuffer;
 
+	size_t positionKeyframeCount = 0;
+	size_t rotationKeyframeCount = 0;
+	size_t scaleKeyframeCount = 0;
+	size_t stringBlockBufferSize = 0;
+
+	std::vector<aiNodeAnim*> validChannels;
+
+	// Reserve bone data.
 	for (unsigned int channelIndex = 0; channelIndex < animation->mNumChannels; ++channelIndex) {
-		Grindstone::Formats::Animation::V1::Channel& dstChannel = channels[channelIndex];
-		Grindstone::Formats::Animation::V1::ChannelData& dstChannelData = channelData[channelIndex];
-		auto srcChannel = animation->mChannels[channelIndex];
+		aiNodeAnim* srcChannel = animation->mChannels[channelIndex];
 		std::string channelName(srcChannel->mNodeName.data);
-		auto boneIterator = boneMapping.find(channelName);
-		bool isBone = boneIterator == boneMapping.end();
+		bool isValidBone = nameToBoneIndexMap.contains(channelName);
 
-		if (isBone) {
-			dstChannel.boneIndex = boneIterator->second;
-
-			dstChannel.positionCount = srcChannel->mNumPositionKeys;
-			dstChannel.rotationCount = srcChannel->mNumRotationKeys;
-			dstChannel.scaleCount = srcChannel->mNumScalingKeys;
-
-			dstChannelData.positions.reserve(srcChannel->mNumPositionKeys);
-			for (unsigned int i = 0; i < srcChannel->mNumPositionKeys; ++i) {
-				double time = srcChannel->mPositionKeys[i].mTime;
-				aiVector3D& srcValue = srcChannel->mPositionKeys[i].mValue;
-				Grindstone::Math::Float3 value = Grindstone::Math::Float3(srcValue.x, srcValue.y, srcValue.z);
-				dstChannelData.positions.emplace_back(time, value);
-			}
-
-			dstChannelData.rotations.reserve(srcChannel->mNumRotationKeys);
-			for (unsigned int i = 0; i < srcChannel->mNumRotationKeys; ++i) {
-				double time = srcChannel->mRotationKeys[i].mTime;
-				aiQuaternion& srcValue = srcChannel->mRotationKeys[i].mValue;
-				Grindstone::Math::Quaternion value = Grindstone::Math::Quaternion(srcValue.x, srcValue.y, srcValue.z, srcValue.w);
-				dstChannelData.rotations.emplace_back(time, value);
-			}
-
-			dstChannelData.scales.reserve(srcChannel->mNumScalingKeys);
-			for (unsigned int i = 0; i < srcChannel->mNumScalingKeys; ++i) {
-				double time = srcChannel->mScalingKeys[i].mTime;
-				aiVector3D& srcValue = srcChannel->mScalingKeys[i].mValue;
-				Grindstone::Math::Float3 value = Grindstone::Math::Float3(srcValue.x, srcValue.y, srcValue.z);
-				dstChannelData.scales.emplace_back(time, value);
-			}
+		if (isValidBone) {
+			positionKeyframeCount += static_cast<size_t>(srcChannel->mNumPositionKeys);
+			rotationKeyframeCount += static_cast<size_t>(srcChannel->mNumRotationKeys);
+			scaleKeyframeCount += static_cast<size_t>(srcChannel->mNumScalingKeys);
+			stringBlockBufferSize += static_cast<size_t>(srcChannel->mNodeName.length) + 1;
+			validChannels.push_back(srcChannel);
 		}
 	}
+
+	dstChannelData.positions.reserve(positionKeyframeCount);
+	dstChannelData.rotations.reserve(rotationKeyframeCount);
+	dstChannelData.scales.reserve(scaleKeyframeCount);
+	stringBlockBuffer.resize(stringBlockBufferSize);
+	channels.resize(validChannels.size());
+
+	// Extract bone channel data.
+	positionKeyframeCount = 0;
+	rotationKeyframeCount = 0;
+	scaleKeyframeCount = 0;
+	stringBlockBufferSize = 0;
+	for (unsigned int channelIndex = 0; channelIndex < validChannels.size(); ++channelIndex) {
+		Grindstone::Formats::Animation::V1::BoneChannel& dstChannel = channels[channelIndex];
+		aiNodeAnim* srcChannel = validChannels[channelIndex];
+		std::string channelName(srcChannel->mNodeName.data);
+
+		errno_t cpyRes = strcpy_s(stringBlockBuffer.data() + stringBlockBufferSize, channelName.size() + 1, channelName.data());
+		GS_ASSERT(cpyRes == 0)
+
+		dstChannel.boneNameStringOffset = static_cast<uint32_t>(stringBlockBufferSize);
+		stringBlockBufferSize += channelName.size() + 1;
+
+		dstChannel.positionKeyOffset = positionKeyframeCount;
+		dstChannel.rotationKeyOffset = rotationKeyframeCount;
+		dstChannel.scaleKeyOffset = scaleKeyframeCount;
+
+		dstChannel.positionCount = static_cast<uint16_t>(srcChannel->mNumPositionKeys);
+		dstChannel.rotationCount = static_cast<uint16_t>(srcChannel->mNumRotationKeys);
+		dstChannel.scaleCount = static_cast<uint16_t>(srcChannel->mNumScalingKeys);
+
+		positionKeyframeCount += static_cast<size_t>(srcChannel->mNumPositionKeys);
+		rotationKeyframeCount += static_cast<size_t>(srcChannel->mNumRotationKeys);
+		scaleKeyframeCount += static_cast<size_t>(srcChannel->mNumScalingKeys);
+
+		for (unsigned int i = 0; i < srcChannel->mNumPositionKeys; ++i) {
+			double time = srcChannel->mPositionKeys[i].mTime;
+			aiVector3D& srcValue = srcChannel->mPositionKeys[i].mValue;
+			Grindstone::Math::Float3 value = Grindstone::Math::Float3(srcValue.x, srcValue.y, srcValue.z);
+			dstChannelData.positions.emplace_back(time, value);
+		}
+
+		for (unsigned int i = 0; i < srcChannel->mNumRotationKeys; ++i) {
+			double time = srcChannel->mRotationKeys[i].mTime;
+			aiQuaternion& srcValue = srcChannel->mRotationKeys[i].mValue;
+			Grindstone::Math::Quaternion value = Grindstone::Math::Quaternion(srcValue.w, srcValue.x, srcValue.y, srcValue.z);
+			dstChannelData.rotations.emplace_back(time, value);
+		}
+
+		for (unsigned int i = 0; i < srcChannel->mNumScalingKeys; ++i) {
+			double time = srcChannel->mScalingKeys[i].mTime;
+			aiVector3D& srcValue = srcChannel->mScalingKeys[i].mValue;
+			Grindstone::Math::Float3 value = Grindstone::Math::Float3(srcValue.x, srcValue.y, srcValue.z);
+			dstChannelData.scales.emplace_back(time, value);
+		}
+	}
+
+	const size_t headerSize = sizeof(Grindstone::Formats::Animation::V1::Header);
+	const size_t boneChannelsSize = GetVectorSize(channels);
+	const size_t positionSize = GetVectorSize(dstChannelData.positions);
+	const size_t rotationSize = GetVectorSize(dstChannelData.rotations);
+	const size_t scaleSize = GetVectorSize(dstChannelData.scales);
+
+	Grindstone::Formats::Animation::V1::Header header{
+		.version = Grindstone::Formats::Animation::V1::version,
+		.animationDuration = duration,
+		.ticksPerSecond = ticksPerSecond,
+		.boneChannelCount = static_cast<uint16_t>(channels.size()),
+		.propertyChannelCount = 0,
+		.positionKeyframesCount = static_cast<uint32_t>(dstChannelData.positions.size()),
+		.rotationKeyframesCount = static_cast<uint32_t>(dstChannelData.rotations.size()),
+		.scaleKeyframesCount = static_cast<uint32_t>(dstChannelData.scales.size()),
+		.eventCount = 0,
+	};
+
+	header.boneChannelDataOffset = Grindstone::Formats::Animation::V1::magicSize + headerSize;
+	header.propertyChannelDataOffset = header.boneChannelDataOffset + boneChannelsSize;
+	header.positionKeyframesOffset = header.propertyChannelDataOffset + 0;
+	header.rotationKeyframesOffset = header.positionKeyframesOffset + positionSize;
+	header.scaleKeyframesOffset = header.rotationKeyframesOffset + rotationSize;
+	header.propertyKeyframesOffset = header.scaleKeyframesOffset + scaleSize;
+	header.eventsArrayOffset = header.propertyKeyframesOffset + 0;
+	header.eventsPayloadOffset = header.eventsArrayOffset + 0;
+	header.stringBlockOffset = header.eventsPayloadOffset + 0;
+	header.totalFileSize = header.stringBlockOffset + stringBlockBuffer.size();
+
+	//  - Output File MetaData
+	output.write(Grindstone::Formats::Animation::V1::magicCode, Grindstone::Formats::Animation::V1::magicSize);
+	output.write(reinterpret_cast<const char*>(&header), headerSize);
+	OutputVector(output, channels, boneChannelsSize);
+	OutputVector(output, dstChannelData.positions, positionSize);
+	OutputVector(output, dstChannelData.rotations, rotationSize);
+	OutputVector(output, dstChannelData.scales, scaleSize);
+	output.write(stringBlockBuffer.data(), stringBlockBuffer.size());
+}
+
+static void PrintMatrix(const glm::mat4& skin) {
+	for (int x = 0; x < 4; ++x) {
+		for (int y = 0; y < 4; ++y) {
+			std::cout << skin[x][y] << ", ";
+		}
+
+		std::cout << '\n';
+	}
+	std::cout << '\n';
 }
 
 void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path) {
@@ -476,6 +837,8 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 	bool shouldImportScene = settings.Get("ImportScene", true);
 	bool shouldImportLights = settings.Get("ImportLights", true);
 	bool shouldImportCameras = settings.Get("ImportCameras", true);
+	bool shouldImportAnimations = settings.Get("ImportAnims", true);
+	bool shouldImportRig = settings.Get("ImportRigs", true);
 
 	if (settings.Get("FlipUVs", true)) {
 		importFlags |= aiProcess_FlipUVs;
@@ -494,7 +857,7 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 	}
 
 	if (settings.Get("OptimizeScene", true)) {
-		importFlags |= aiProcess_OptimizeGraph;
+		// importFlags |= aiProcess_OptimizeGraph;
 	}
 
 	if (settings.Get("SplitLargeMeshes", false)) {
@@ -510,8 +873,10 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 		scale = 1.0;
 	}
 
+	importFlags |= aiProcess_PopulateArmatureData;
 	importFlags |= aiProcess_GlobalScale;
 	importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, static_cast<ai_real>(scale));
+	importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
 
 	scene = importer.ReadFile(
 		path.string(),
@@ -519,12 +884,11 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 	);
 
 	if (!scene) {
-		throw std::runtime_error(importer.GetErrorString());
+		GPRINT_ERROR_V(Grindstone::LogSource::EditorImporter, "Model Importer: Unable to load scene from '{}'.", importer.GetErrorString());
+		return;
 	}
 
-	// Set to false, will check if true later.
-	bool shouldImportAnimations = false;
-	isSkeletalMesh = false; // scene->hasSkeletons();
+	glm::mat4 globalInverseTransform = glm::inverse(AiMatToGlm(scene->mRootNode->mTransformation));
 
 	outputMaterialUuids.resize(scene->mNumMaterials);
 	for (unsigned int materialIndex = 0; materialIndex < scene->mNumMaterials; ++materialIndex) {
@@ -532,10 +896,36 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 		ProcessMaterial(materialIndex, material);
 	}
 
-	for (unsigned int skeletonIndex = 0; skeletonIndex < scene->mNumSkeletons; ++skeletonIndex) {
-		aiSkeleton* skeleton = scene->mSkeletons[skeletonIndex];
-		ProcessSkeleton(skeleton);
+	std::map<std::string, BoneIndex> nameToBoneIndexMap;
+	std::vector<BoneInfo> orderedSkinnedBones;
+	if (shouldImportRig) {
+		for (unsigned int skeletonIndex = 0; skeletonIndex < scene->mNumSkeletons; ++skeletonIndex) {
+			aiSkeleton* skeleton = scene->mSkeletons[skeletonIndex];
+			ProcessSkeletonRig(metaFile, globalInverseTransform, skeleton);
+		}
+
+		std::map<std::string, BoneInfo> skinnedBones;
+		for (unsigned int meshIndex = 0; meshIndex < scene->mNumMeshes; ++meshIndex) {
+			aiMesh* inputMesh = scene->mMeshes[meshIndex];
+			JoinMeshBones(inputMesh, skinnedBones);
+		}
+
+		for (auto& [name, bone] : skinnedBones) {
+			glm::mat4 assimpGlobal = ComputeGlobal(bone.node);
+			glm::mat4 expectedInverse = glm::inverse(assimpGlobal);
+			GS_ASSERT(AreMatricesApproxEqual(expectedInverse, bone.inverseBindTransform));
+		}
+
+		if (!skinnedBones.empty()) {
+			auto [nameToBoneIndexMapTmp, orderedSkinnedBonesTmp] = SortBones(scene->mRootNode, skinnedBones);
+			nameToBoneIndexMap = nameToBoneIndexMapTmp;
+			orderedSkinnedBones = orderedSkinnedBonesTmp;
+
+			ProcessMeshRig(metaFile, globalInverseTransform, nameToBoneIndexMap, orderedSkinnedBones);
+		}
 	}
+
+	isSkeletalMesh = !nameToBoneIndexMap.empty();
 
 	ProcessNodeTree(scene->mRootNode, SIZE_MAX);
 	outputMeshUuids.resize(scene->mNumMeshes);
@@ -555,7 +945,7 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 
 		InitSubmeshes(inputMesh, outputMesh, isSkeletalMesh);
 		ProcessVertices(inputMesh, outputMesh);
-		ProcessVertexBoneWeights(inputMesh, outputMesh);
+		ProcessVertexBoneWeights(inputMesh, orderedSkinnedBones, nameToBoneIndexMap, outputMesh);
 	}
 
 	if (shouldImportLights) {
@@ -575,7 +965,7 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 	if (shouldImportAnimations) {
 		for (unsigned int i = 0; i < scene->mNumAnimations; ++i) {
 			aiAnimation* animation = scene->mAnimations[i];
-			ProcessAnimation(animation);
+			ProcessAnimation(animation, nameToBoneIndexMap);
 		}
 	}
 
@@ -600,7 +990,7 @@ inline static void WriteComponentHeader(std::ofstream& output, const char* name)
 inline static std::ofstream& WriteComponentKey(std::ofstream& output, const char* key) {
 	output << "\t\t\t\t\t\t\"" << key << "\": ";
 	return output;
-}
+} 
 
 inline static void WriteComponentFooter(std::ofstream& output, bool isBeforeLast) {
 	output << (isBeforeLast
@@ -762,7 +1152,7 @@ void ModelImporter::WriteMesh(size_t index, const OutputMesh& mesh) {
 	auto meshCount = mesh.submeshes.size();
 
 	Grindstone::Formats::Model::V1::Header outHeader;
-	outHeader.totalFileSize = static_cast<uint32_t>(
+	outHeader.totalFileSize = static_cast<uint64_t>(
 		3 +
 		sizeof(outHeader) +
 		sizeof(Grindstone::Formats::Model::V1::BoundingData) +
@@ -771,21 +1161,21 @@ void ModelImporter::WriteMesh(size_t index, const OutputMesh& mesh) {
 		mesh.vertexArray.normal.size() * sizeof(float) +
 		mesh.vertexArray.tangent.size() * sizeof(float) +
 		mesh.vertexArray.texCoordArray[0].size() * sizeof(float) +
-		mesh.indices.size() * sizeof(uint16_t)
+		mesh.indices.size() * sizeof(VertexIndex)
 	);
 
 	outHeader.hasVertexPositions = true;
 	outHeader.hasVertexNormals = true;
 	outHeader.hasVertexTangents = true;
 	outHeader.vertexUvSetCount = 1;
-	outHeader.numWeightPerBone = isSkeletalMesh ? 4 : 0;
+	outHeader.numWeightPerBone = isSkeletalMesh ? NUM_BONES_PER_VERTEX : 0;
 	outHeader.vertexCount = static_cast<uint64_t>(mesh.vertexCount);
 	outHeader.indexCount = static_cast<uint64_t>(mesh.indices.size());
 	outHeader.meshCount = static_cast<uint32_t>(meshCount);
 
 	if (isSkeletalMesh) {
 		outHeader.totalFileSize += static_cast<uint32_t>(
-			mesh.vertexArray.boneIds.size() * sizeof(uint16_t) +
+			mesh.vertexArray.boneIds.size() * sizeof(BoneIndex) +
 			mesh.vertexArray.boneWeights.size() * sizeof(float)
 		);
 	}
@@ -817,19 +1207,11 @@ void ModelImporter::WriteMesh(size_t index, const OutputMesh& mesh) {
 	}
 
 	// - Output Indices
-	output.write(reinterpret_cast<const char*>(mesh.indices.data()), mesh.indices.size() * sizeof(uint16_t));
+	output.write(reinterpret_cast<const char*>(mesh.indices.data()), mesh.indices.size() * sizeof(VertexIndex));
 	
-	// - Output Bone Names
-	for (auto& name : mesh.boneNames) {
-		output.write(name.data(), name.size() + 1); // size + 1 to include null terminated character
-	}
-
 	output.close();
 
 	assetManager->QueueReloadAsset(Grindstone::AssetType::Mesh3d, outUuid);
-}
-
-void ModelImporter::WriteSkeleton(size_t index) const {
 }
 
 void Grindstone::Editor::Importers::ImportModel(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& path) {

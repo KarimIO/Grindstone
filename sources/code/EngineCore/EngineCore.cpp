@@ -377,7 +377,7 @@ void EngineCore::CalculateDeltaTime() {
 	const auto elapsedNsSinceLastFrame = std::chrono::duration_cast<std::chrono::nanoseconds>(elapsedTimeSinceLastFrame).count();
 	deltaTime = static_cast<double>(elapsedNsSinceLastFrame) * 0.000000001;
 
-	const auto elapsedTimeSinceFirstTime = now - lastFrameTime;
+	const auto elapsedTimeSinceFirstTime = now - firstFrameTime;
 	const auto elapsedNsSinceFirstTime = std::chrono::duration_cast<std::chrono::nanoseconds>(elapsedTimeSinceFirstTime).count();
 	currentTime = static_cast<double>(elapsedNsSinceFirstTime) * 0.000000001;
 
