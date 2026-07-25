@@ -8,7 +8,7 @@
 using namespace Grindstone::Editor::Importers;
 
 static void ImportTextureAndMakeOutputStr(Grindstone::Editor::AssetRegistry& assetRegistry, std::string textureName, std::filesystem::path& inputTexturePath, std::vector<std::string>& arr) {
-	if (inputTexturePath == "") {
+	if (inputTexturePath == "" || !std::filesystem::exists(inputTexturePath)) {
 		return;
 	}
 

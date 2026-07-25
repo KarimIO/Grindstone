@@ -41,6 +41,7 @@ namespace Grindstone {
 		GraphicsAPI::Buffer* boneWeightsBuffer = nullptr;
 		GraphicsAPI::Buffer* boneIdsBuffer = nullptr;
 		std::array<GraphicsAPI::Buffer*, 8> uvBuffers{};
+		uint32_t vertexCount = 0;
 		GraphicsAPI::Buffer* indexBuffer = nullptr;
 		std::vector<Submesh> submeshes;
 

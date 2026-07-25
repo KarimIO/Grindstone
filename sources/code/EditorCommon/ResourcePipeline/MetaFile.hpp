@@ -13,6 +13,7 @@ namespace Grindstone::Editor {
 	class MetaFile {
 	public:
 		struct Subasset {
+			bool isUpdated = false;
 			std::string displayName;
 			std::string subassetIdentifier;
 			std::string address;

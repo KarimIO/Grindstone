@@ -112,7 +112,7 @@ void Grindstone::Renderer::SkinningPass::AddPass(
 			EngineCore& engineCore = EngineCore::GetInstance();
 			GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
-			uint32_t vertexCount = meshAsset->positionBuffer->GetSize() / (sizeof(float) * 4);
+			uint32_t vertexCount = meshAsset->vertexCount;
 			if (skeletalMeshComp.vertexCountBuffer == nullptr) {
 				std::string vertexCountBufferName = std::vformat("Skinning VertexCount Buffer '{}'", std::make_format_args(tagComp.tag));
 				GraphicsAPI::Buffer::CreateInfo vertexCountBufferCreateInfo{
@@ -126,9 +126,6 @@ void Grindstone::Renderer::SkinningPass::AddPass(
 				};
 				skeletalMeshComp.vertexCountBuffer = graphicsCore->CreateBuffer(vertexCountBufferCreateInfo);
 			}
-			else {
-				skeletalMeshComp.vertexCountBuffer->UploadData(&vertexCount);
-			}
 
 			if (skeletalMeshComp.vertexPositionBuffer == nullptr) {
 				std::string vertexPositionBufferName = std::vformat("Skinned Vertex Pos Buffer '{}'", std::make_format_args(tagComp.tag));
@@ -136,7 +133,7 @@ void Grindstone::Renderer::SkinningPass::AddPass(
 					.debugName = vertexPositionBufferName.c_str(),
 					.content = nullptr,
 					.bufferSize = meshAsset->positionBuffer->GetSize(),
-					.bufferUsage = GraphicsAPI::BufferUsage::Uniform |
+					.bufferUsage = GraphicsAPI::BufferUsage::Vertex |
 						GraphicsAPI::BufferUsage::Storage |
 						GraphicsAPI::BufferUsage::TransferSrc |
 						GraphicsAPI::BufferUsage::TransferDst,
@@ -258,7 +255,7 @@ void Grindstone::Renderer::SkinningPass::AddPass(
 					GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
 					cmd->BindComputeDescriptorSet(pipelineLayout, &skeletalMeshComp.skinningDescriptorSet, 0u, 1u);
 					cmd->BindComputePipeline(skinningPipeline);
-					cmd->DispatchCompute(std::ceil(vertexCount / 64), 1, 1);
+					cmd->DispatchCompute((vertexCount + 63) / 64, 1, 1);
 				}
 			);
 		}

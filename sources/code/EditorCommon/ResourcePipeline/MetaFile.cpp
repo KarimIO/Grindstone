@@ -151,7 +151,7 @@ void MetaFile::Save(uint32_t currentImporterVersion) {
 				documentWriter.Key("subassets");
 				documentWriter.StartArray();
 
-				if (defaultSubasset.subassetIdentifier != "") {
+				if (defaultSubasset.subassetIdentifier != "" && defaultSubasset.isUpdated) {
 					documentWriter.StartObject();
 					documentWriter.Key("displayName");
 					documentWriter.String(defaultSubasset.displayName.c_str());
@@ -167,18 +167,20 @@ void MetaFile::Save(uint32_t currentImporterVersion) {
 				}
 
 				for (auto& subasset : subassets) {
-					documentWriter.StartObject();
-					documentWriter.Key("displayName");
-					documentWriter.String(subasset.displayName.c_str());
-					documentWriter.Key("address");
-					documentWriter.String(subasset.address.c_str());
-					documentWriter.Key("subassetIdentifier");
-					documentWriter.String(subasset.subassetIdentifier.c_str());
-					documentWriter.Key("uuid");
-					documentWriter.String(subasset.uuid.ToString().c_str());
-					documentWriter.Key("type");
-					documentWriter.String(GetAssetTypeToString(subasset.assetType));
-					documentWriter.EndObject();
+					if (subasset.isUpdated) {
+						documentWriter.StartObject();
+						documentWriter.Key("displayName");
+						documentWriter.String(subasset.displayName.c_str());
+						documentWriter.Key("address");
+						documentWriter.String(subasset.address.c_str());
+						documentWriter.Key("subassetIdentifier");
+						documentWriter.String(subasset.subassetIdentifier.c_str());
+						documentWriter.Key("uuid");
+						documentWriter.String(subasset.uuid.ToString().c_str());
+						documentWriter.Key("type");
+						documentWriter.String(GetAssetTypeToString(subasset.assetType));
+						documentWriter.EndObject();
+					}
 				}
 				documentWriter.EndArray();
 			}
@@ -282,6 +284,7 @@ Grindstone::Uuid MetaFile::GetOrCreateDefaultSubassetUuid(const std::string& sub
 			isDirty = true;
 		}
 
+		defaultSubasset.isUpdated = true;
 		return defaultSubasset.uuid;
 	}
 
@@ -293,6 +296,7 @@ Grindstone::Uuid MetaFile::GetOrCreateDefaultSubassetUuid(const std::string& sub
 
 		subassets.erase((subassets.begin() + (outSubasset - subassets.data())));
 
+		defaultSubasset.isUpdated = true;
 		return defaultSubasset.uuid;
 	}
 
@@ -310,6 +314,7 @@ Grindstone::Uuid MetaFile::GetOrCreateDefaultSubassetUuid(const std::string& sub
 		defaultSubasset.subassetIdentifier = subassetName;
 	}
 
+	defaultSubasset.isUpdated = true;
 	return defaultSubasset.uuid;
 }
 
@@ -345,13 +350,15 @@ Grindstone::Uuid MetaFile::GetOrCreateSubassetUuid(const std::string& subassetNa
 	for (auto& subasset : subassets) {
 		if (subasset.subassetIdentifier == subassetName) {
 			subasset.assetType = assetType;
+			subasset.isUpdated = true;
 			return subasset.uuid;
 		}
 	}
 
 	Uuid uuid = Uuid::CreateRandom();
-	subassets.emplace_back(subassetName, subassetName, "", uuid, assetType);
+	auto& subasset = subassets.emplace_back(subassetName, subassetName, "", uuid, assetType);
 	isDirty = true;
+	subasset.isUpdated = true;
 	return uuid;
 }
 

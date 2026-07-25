@@ -17,12 +17,13 @@ namespace Grindstone::Formats::Rig::V1 {
 		uint64_t boneDataOffset = 0;
 		uint64_t stringBlockSize = 0;
 		uint64_t stringBlockOffset = 0;
+		Math::Matrix4 globalInverseTransform;
 	};
 
 	struct Bone {
 		uint32_t boneNameStringOffset = 0;
 		uint32_t boneParentIndex;
-		Math::Matrix4 localMatrix;
-		Math::Matrix4 inverseBindMatrix;
+		Math::Matrix4 localBindTransform;
+		Math::Matrix4 inverseBindTransform;
 	};
 }

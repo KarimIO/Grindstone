@@ -1,6 +1,7 @@
 #include <Common/Containers/Span.hpp>
 #include <Common/Graphics/Buffer.hpp>
 #include <EngineCore/Logger.hpp>
+#include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
 
 #include <Grindstone.Renderables.3D/include/AnimationSystem.hpp>
 #include <Grindstone.Renderables.3D/include/Components/AnimatorComponent.hpp>
@@ -11,18 +12,26 @@ using namespace Grindstone::Containers;
 using AnimationTime = double;
 using AnimationWeight = float;
 
-const uint16_t invalidBoneIndex = std::numeric_limits<uint16_t>::max();
+const uint32_t invalidBoneIndex = std::numeric_limits<uint32_t>::max();
 
 [[nodiscard]] static AnimationWeight GetKeyframeWeight(AnimationTime lastTimeStamp, AnimationTime nextTimeStamp, AnimationTime animationTime) {
 	AnimationTime midWayLength = animationTime - lastTimeStamp;
 	AnimationTime framesDiff = nextTimeStamp - lastTimeStamp;
 	AnimationTime scaleFactor = midWayLength / framesDiff;
-	return static_cast<AnimationWeight>(scaleFactor);
+	return glm::clamp(static_cast<AnimationWeight>(scaleFactor), 0.0f, 1.0f);
 }
 
 template<typename T>
 [[nodiscard]] static size_t GetKeyframeIndexByTime(const Span<const AnimationClipAsset::Keyframe<T>> keyframes, AnimationTime animationTime) {
-	// Assumes keyframes.GetSize() > 1
+	GS_ASSERT(keyframes.GetSize() > 0);
+
+	if (keyframes.GetSize() == 1) {
+		return 0;
+	}
+
+	if (animationTime <= keyframes[0].time) {
+		return 0;
+	}
 
 	for (size_t index = 0; index < keyframes.GetSize() - 1; ++index) {
 		if (animationTime < keyframes[index + 1].time) {
@@ -38,8 +47,8 @@ template<typename T>
 }
 
 [[nodiscard]] static glm::mat4 InterpolateStepPosition(
-	const AnimationClipAsset::KeyframeInterpolation interpolation,
 	const Span<const AnimationClipAsset::PositionKeyframe> keyframes,
+	uint32_t boneIndex,
 	AnimationTime animationTime
 ) {
 	if (keyframes.GetSize() == 1) {
@@ -48,12 +57,16 @@ template<typename T>
 
 	size_t lastKeyframeIndex = GetKeyframeIndexByTime(keyframes, animationTime);
 	glm::vec3 finalPosition = keyframes[lastKeyframeIndex].value;
+
+	if (boneIndex == 2) {
+		// std::cout << "P: " << lastKeyframeIndex << "(" << finalPosition.x << ", " << finalPosition.y << ", " << finalPosition.z << "); ";
+	}
 	return glm::translate(glm::mat4(1.0f), finalPosition);
 }
 
 [[nodiscard]] static glm::mat4 InterpolateStepRotation(
-	const AnimationClipAsset::KeyframeInterpolation interpolation,
 	const Span<const AnimationClipAsset::RotationKeyframe> keyframes,
+	uint32_t boneIndex,
 	AnimationTime animationTime
 ) {
 	if (keyframes.GetSize() == 1) {
@@ -65,12 +78,15 @@ template<typename T>
 	size_t lastKeyframeIndex = GetKeyframeIndexByTime(keyframes, animationTime);
 	glm::quat finalRotation = keyframes[lastKeyframeIndex].value;
 	finalRotation = glm::normalize(finalRotation);
+	if (boneIndex == 2) {
+		// std::cout << "R: " << lastKeyframeIndex << "(" << finalRotation.x << ", " << finalRotation.y << ", " << finalRotation.z << ", " << finalRotation.w << "); ";
+	}
 	return glm::toMat4(finalRotation);
 }
 
 [[nodiscard]] static glm::mat4 InterpolateStepScaling(
-	const AnimationClipAsset::KeyframeInterpolation interpolation,
 	const Span<const AnimationClipAsset::ScaleKeyframe> keyframes,
+	uint32_t boneIndex,
 	AnimationTime animationTime
 ) {
 	if (keyframes.GetSize() == 1) {
@@ -79,11 +95,14 @@ template<typename T>
 
 	size_t lastKeyframeIndex = GetKeyframeIndexByTime(keyframes, animationTime);
 	glm::vec3 finalScale = keyframes[lastKeyframeIndex].value;
+
+	if (boneIndex == 2) {
+		// std::cout << "S: " << lastKeyframeIndex << "(" << finalScale.x << ", " << finalScale.y << ", " << finalScale.z << ")";
+	}
 	return glm::scale(glm::mat4(1.0f), finalScale);
 }
 
 [[nodiscard]] static glm::mat4 InterpolateLinearPosition(
-	const AnimationClipAsset::KeyframeInterpolation interpolation,
 	const Span<const AnimationClipAsset::PositionKeyframe> keyframes,
 	AnimationTime animationTime
 ) {
@@ -99,7 +118,6 @@ template<typename T>
 }
 
 [[nodiscard]] static glm::mat4 InterpolateLinearRotation(
-	const AnimationClipAsset::KeyframeInterpolation interpolation,
 	const Span<const AnimationClipAsset::RotationKeyframe> keyframes,
 	AnimationTime animationTime
 ) {
@@ -117,7 +135,6 @@ template<typename T>
 }
 
 [[nodiscard]] static glm::mat4 InterpolateLinearScaling(
-	const AnimationClipAsset::KeyframeInterpolation interpolation,
 	const Span<const AnimationClipAsset::ScaleKeyframe> keyframes,
 	AnimationTime animationTime
 ) {
@@ -134,6 +151,7 @@ template<typename T>
 
 [[nodiscard]] static glm::mat4 InterpolateBoneLocalTransform(
 	const AnimationClipAsset::KeyframeInterpolation interpolation,
+	uint32_t boneIndex,
 	const Span<const AnimationClipAsset::PositionKeyframe> positionKeyframes,
 	const Span<const AnimationClipAsset::RotationKeyframe> rotationKeyframes,
 	const Span<const AnimationClipAsset::ScaleKeyframe> scaleframes,
@@ -141,15 +159,21 @@ template<typename T>
 ) {
 	switch (interpolation) {
 	case AnimationClipAsset::KeyframeInterpolation::Step: {
-		glm::mat4 translation = InterpolateStepPosition(interpolation, positionKeyframes, animationTime);
-		glm::mat4 rotation = InterpolateStepRotation(interpolation, rotationKeyframes, animationTime);
-		glm::mat4 scale = InterpolateStepScaling(interpolation, scaleframes, animationTime);
+		if (boneIndex == 2) {
+			// std::cout << animationTime << " - ";
+		}
+		glm::mat4 translation = InterpolateStepPosition(positionKeyframes, boneIndex, animationTime);
+		glm::mat4 rotation = InterpolateStepRotation(rotationKeyframes, boneIndex, animationTime);
+		glm::mat4 scale = InterpolateStepScaling(scaleframes, boneIndex, animationTime);
+		if (boneIndex == 2) {
+			// std::cout << "\n";
+		}
 		return translation * rotation * scale;
 	}
 	case AnimationClipAsset::KeyframeInterpolation::Linear: {
-		glm::mat4 translation = InterpolateLinearPosition(interpolation, positionKeyframes, animationTime);
-		glm::mat4 rotation = InterpolateLinearRotation(interpolation, rotationKeyframes, animationTime);
-		glm::mat4 scale = InterpolateLinearScaling(interpolation, scaleframes, animationTime);
+		glm::mat4 translation = InterpolateLinearPosition(positionKeyframes, animationTime);
+		glm::mat4 rotation = InterpolateLinearRotation(rotationKeyframes, animationTime);
+		glm::mat4 scale = InterpolateLinearScaling(scaleframes, animationTime);
 		return translation * rotation * scale;
 	}
 	default:
@@ -158,14 +182,37 @@ template<typename T>
 	};
 }
 
+static bool AreMatricesApproxEqual(const glm::mat4& a, const glm::mat4& b, const float epsilon = 1e-4f) {
+	for (size_t i = 0; i < 4; ++i) {
+		for (size_t j = 0; j < 4; ++j) {
+			if (glm::abs(a[i][j] - b[i][j]) > epsilon) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+static void PrintMatrix(const glm::mat4& skin) {
+	for (int x = 0; x < 4; ++x) {
+		for (int y = 0; y < 4; ++y) {
+			std::cout << skin[x][y] << ", ";
+		}
+
+		std::cout << '\n';
+	}
+	std::cout << '\n';
+}
+
 void Grindstone::AnimateSkeletonSystem(Grindstone::WorldContextSet& worldContextSet) {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 	const double currentTime = engineCore.GetTimeSinceLaunch();
 
 	entt::registry& registry = worldContextSet.GetEntityRegistry();
-	auto view = registry.view<Grindstone::AnimatorComponent>();
+	auto view = registry.view<Grindstone::TagComponent, Grindstone::AnimatorComponent>();
 	view.each(
-		[currentTime, &engineCore](Grindstone::AnimatorComponent& animatorComponent) {
+		[currentTime](Grindstone::TagComponent& tagComponent, Grindstone::AnimatorComponent& animatorComponent) {
 			AssetReference<AnimationClipAsset> animationRef = animatorComponent.animation;
 			AssetReference<RigAsset> rigAssetRef = animatorComponent.rig;
 			if (!rigAssetRef.IsValid() || !animationRef.IsValid()) {
@@ -173,22 +220,33 @@ void Grindstone::AnimateSkeletonSystem(Grindstone::WorldContextSet& worldContext
 			}
 
 			const RigAsset* rig = rigAssetRef.Get();
-			const AnimationClipAsset* animation = animationRef.Get();
+			AnimationClipAsset* animation = animationRef.Get();
 
 			if (rig == nullptr || animation == nullptr) {
 				return;
 			}
 
+			// Ensure all channels are sorted so that parent nodes are first
+			std::sort(animation->boneChannels.begin(), animation->boneChannels.end(),
+				[rig](const AnimationClipAsset::BoneChannel& a, const AnimationClipAsset::BoneChannel& b) -> bool {
+					auto itA = rig->boneNameToIndex.find(a.boneName);
+					auto itB = rig->boneNameToIndex.find(b.boneName);
+					return itA->second < itB->second;
+				}
+			);
+
 			std::vector<glm::mat4> boneMatrices;
 			boneMatrices.reserve(rig->bones.size());
 
 			for (const RigAsset::Bone& bone : rig->bones) {
-				boneMatrices.push_back(bone.localMatrix);
+				boneMatrices.push_back(bone.localBindTransform);
 			}
 
 			GS_ASSERT_ENGINE(rig->bones.size() == rig->boneNameToIndex.size());
+			float ticks = animation->ticksPerSecond * currentTime;
+			const AnimationTime animationTime = static_cast<AnimationTime>(fmod(ticks, animation->duration));
 
-			// This requires channels to be in order where all parent nodes are before their children.
+			uint32_t lastBoneIndex = 0;
 			for (const AnimationClipAsset::BoneChannel& channel : animation->boneChannels) {
 				auto boneIt = rig->boneNameToIndex.find(channel.boneName);
 				if (boneIt == rig->boneNameToIndex.end()) {
@@ -198,7 +256,9 @@ void Grindstone::AnimateSkeletonSystem(Grindstone::WorldContextSet& worldContext
 				}
 
 				size_t boneIndex = boneIt->second;
+				GS_ASSERT_ENGINE_WITH_MESSAGE(boneIndex >= lastBoneIndex, "Animation channels are not in parent-before-child order for this rig.");
 				GS_ASSERT_ENGINE_WITH_MESSAGE(boneIndex < rig->bones.size(), "Bone index is out of bounds for RigAsset bones vector.");
+				lastBoneIndex = boneIndex;
 
 				const RigAsset::Bone& bone = rig->bones[boneIndex];
 
@@ -213,25 +273,39 @@ void Grindstone::AnimateSkeletonSystem(Grindstone::WorldContextSet& worldContext
 				// This is not supported yet because Assimp does not support tangent data.
 				GS_ASSERT_ENGINE(channel.interpolation != AnimationClipAsset::KeyframeInterpolation::Cubic);
 
-				const AnimationTime animationTime = static_cast<AnimationTime>(fmod(currentTime, animation->duration));
-				const glm::mat4 interpolatedMatrix = InterpolateBoneLocalTransform(channel.interpolation, positionSpan, rotationSpan, scaleSpan, animationTime);
+				// TODO: Consider pos, rot, scale count == 0
+				const glm::mat4 interpolatedMatrix = InterpolateBoneLocalTransform(AnimationClipAsset::KeyframeInterpolation::Step, boneIndex, positionSpan, rotationSpan, scaleSpan, animationTime);
+				boneMatrices[boneIndex] = interpolatedMatrix;
+			}
 
-				if (bone.parentBoneIndex == invalidBoneIndex) {
-					boneMatrices[boneIndex] = interpolatedMatrix * boneMatrices[boneIndex];
+			// Move local pose to global space
+			for (size_t i = 0; i < rig->bones.size(); ++i) {
+				const RigAsset::Bone& bone = rig->bones[i];
+
+				if (bone.parentBoneIndex != invalidBoneIndex) {
+					const glm::mat4& parentGlobalMatrix = boneMatrices[bone.parentBoneIndex];
+					const glm::mat4& localMatrix = boneMatrices[i];
+					boneMatrices[i] = parentGlobalMatrix * localMatrix;
 				}
-				else {
-					const glm::mat4& parentMatrix = boneMatrices[bone.parentBoneIndex];
-					boneMatrices[boneIndex] = parentMatrix * interpolatedMatrix * boneMatrices[boneIndex];
-				}
+			}
+
+			size_t equalMatrices = 0;
+			size_t unequalMatrices = 0;
+			for (size_t i = 0; i < rig->bones.size(); ++i) {
+				auto it = std::find_if(rig->boneNameToIndex.begin(), rig->boneNameToIndex.end(), [i](const std::pair<std::string, uint32_t>& a) { return a.second == i; });
+				auto chanIt = std::find_if(animation->boneChannels.begin(), animation->boneChannels.end(), [it](const AnimationClipAsset::BoneChannel& a) { return a.boneName == it->first; });
+				bool isAnimated = chanIt != animation->boneChannels.end();
+				boneMatrices[i] = boneMatrices[i] * rig->bones[i].inverseBindTransform;
 			}
 
 			if (animatorComponent.skeletonMatrixBuffer == nullptr) {
 				Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 				Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+				std::string matrixBufferName = std::format("Skinning Matrix Buffer '{}'", tagComponent.tag);
 
 				Grindstone::GraphicsAPI::Buffer::CreateInfo bufferCreateInfo{
-					.debugName = "Skeletal Matrix Buffer",
-					.content = boneMatrices.data(),
+					.debugName = matrixBufferName.c_str(),
+					.content = boneMatrices.data(), 
 					.bufferSize = sizeof(glm::mat4) * boneMatrices.size(),
 					.bufferUsage =
 						GraphicsAPI::BufferUsage::TransferDst |

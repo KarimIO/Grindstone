@@ -71,10 +71,11 @@ static bool ImportRigFile(RigAsset& rig) {
 		boneMap[boneName] = i;
 
 		dstBone.parentBoneIndex = srcBone.boneParentIndex;
-		dstBone.localMatrix = srcBone.localMatrix;
-		dstBone.inverseModelMatrix = srcBone.inverseBindMatrix;
+		dstBone.localBindTransform = srcBone.localBindTransform;
+		dstBone.inverseBindTransform = srcBone.inverseBindTransform;
 	}
 
+	rig.globalInverseTransform = rigHeader.globalInverseTransform;
 	rig.assetLoadStatus = AssetLoadStatus::Ready;
 	return true;
 }

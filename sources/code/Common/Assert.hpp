@@ -12,7 +12,7 @@
 
 #ifdef GS_ENABLE_ASSERTS
 	#define GS_ASSERT_LOG(text, ...) \
-		std::wcout << TEXT(__FILE__) << TEXT("(" << __LINE__ << "): ") << TEXT("Assertion Failed") << std::endl; \
+		std::wcout << TEXT(__FILE__) << TEXT("(" << __LINE__ << "): ") << TEXT("Assertion Failed: ") << TEXT(#text) << std::endl; \
 		MessageBox( \
 			NULL, \
 			TEXT(#text), \
