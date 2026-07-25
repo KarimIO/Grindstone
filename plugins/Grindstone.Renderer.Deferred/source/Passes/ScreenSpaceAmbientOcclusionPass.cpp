@@ -183,6 +183,7 @@ Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Renderer::Screen
 			Grindstone::Math::IntRect2D viewportArea,
 			const Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+			GraphicsRenderGraphPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& pass,
 			Grindstone::Renderer::RenderGraphBuilderResourceRef& data
 		) {
 			GraphicsAPI::CommandBuffer* commandBuffer = cxt.commandBuffer;

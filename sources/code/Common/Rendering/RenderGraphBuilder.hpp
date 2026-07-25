@@ -19,7 +19,7 @@ namespace Grindstone::Renderer {
 			ExecutionCallback executionCallback
 		) {
 			static_assert(std::is_invocable_r_v<ReturnType, SetupCallback, Grindstone::Renderer::GraphicsRenderGraphBuilderPass<ReturnType>&>, "Rendergraph setup callback must match expected signature.");
-			static_assert(std::is_invocable_r_v<void, ExecutionCallback, Grindstone::Math::IntRect2D, const Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, ReturnType&>, "Rendergraph execution callback must match expected signature.");
+			static_assert(std::is_invocable_r_v<void, ExecutionCallback, Grindstone::Math::IntRect2D, const Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, Grindstone::Renderer::GraphicsRenderGraphPass<ReturnType>&, ReturnType&>, "Rendergraph execution callback must match expected signature.");
 			uint32_t passIndex = static_cast<uint32_t>(passes.size());
 			auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<GraphicsRenderGraphBuilderPass<ReturnType>>());
 			auto pass = static_cast<GraphicsRenderGraphBuilderPass<ReturnType>*>(uniquePtr.Get());
@@ -40,7 +40,7 @@ namespace Grindstone::Renderer {
 			ExecutionCallback executionCallback
 		) {
 			static_assert(std::is_invocable_r_v<ReturnType, SetupCallback, Grindstone::Renderer::ComputeRenderGraphBuilderPass<ReturnType>&>, "Rendergraph setup callback must match expected signature.");
-			static_assert(std::is_invocable_r_v<void, ExecutionCallback, Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, ReturnType&>, "Rendergraph execution callback must match expected signature.");
+			static_assert(std::is_invocable_r_v<void, ExecutionCallback, Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, Grindstone::Renderer::ComputeRenderGraphPass<ReturnType>&, ReturnType&>, "Rendergraph execution callback must match expected signature.");
 
 			uint32_t passIndex = static_cast<uint32_t>(passes.size());
 			auto& uniquePtr = passes.emplace_back(Grindstone::Memory::AllocatorCore::AllocateUnique<ComputeRenderGraphBuilderPass<ReturnType>>());

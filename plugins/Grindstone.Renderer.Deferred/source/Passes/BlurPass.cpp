@@ -47,6 +47,7 @@ Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Renderer::BlurPa
 			Grindstone::Math::IntRect2D renderingArea,
 			const Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+			GraphicsRenderGraphPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& pass,
 			Grindstone::Renderer::RenderGraphBuilderResourceRef& data
 		) {
 				Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
@@ -66,6 +67,7 @@ Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Renderer::BlurPa
 				}
 
 				cmd->BindGraphicsPipeline(blurPipelineSet);
+				pass.BindGlobalAndPassDescriptorSets(cxt);
 				cmd->DrawIndices(0, 6, 0, 1, 0);
 		}
 	);

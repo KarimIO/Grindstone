@@ -548,6 +548,7 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 			Grindstone::Math::IntRect2D rect,
 			const Grindstone::Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+			const Grindstone::Renderer::GraphicsRenderGraphPass<Renderer::RenderGraphBuilderResourceRef>& pass,
 			Renderer::RenderGraphBuilderResourceRef& outputRef
 		) {
 			Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
@@ -577,6 +578,7 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 			Grindstone::Math::IntRect2D rect,
 			const Grindstone::Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+			Renderer::GraphicsRenderGraphPass<Renderer::RenderGraphBuilderResourceRef>& pass,
 			Renderer::RenderGraphBuilderResourceRef& outputRef
 		) {
 			Grindstone::EngineCore& engineCore = EngineCore::GetInstance();

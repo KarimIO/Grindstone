@@ -31,6 +31,7 @@ Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(Ren
 			Grindstone::Math::IntRect2D viewportArea,
 			const Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+			GraphicsRenderGraphPass<Grindstone::Renderer::GbufferData>& pass,
 			Grindstone::Renderer::GbufferData& data
 		) {
 			Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
@@ -45,6 +46,7 @@ Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(Ren
 			};
 
 			// TODO: Get Rendering Stats
+			pass.BindGlobalAndPassDescriptorSets(cxt);
 			engineCore.assetRendererManager->RenderQueue(cmd, renderViewData, cxtSet->GetEntityRegistry(), geometryOpaqueRenderPassKey);
 		}
 	);

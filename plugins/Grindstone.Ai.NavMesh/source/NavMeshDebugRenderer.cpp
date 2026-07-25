@@ -109,6 +109,7 @@ Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Ai::NavMeshDebug
 			Grindstone::Math::IntRect2D rect,
 			const Grindstone::Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+			Renderer::GraphicsRenderGraphPass<Renderer::RenderGraphBuilderResourceRef>& pass,
 			Renderer::RenderGraphBuilderResourceRef& outputRef
 		) {
 			Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
@@ -130,7 +131,7 @@ Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Ai::NavMeshDebug
 				Grindstone::GraphicsAPI::GraphicsPipeline* navMeshPipeline = pipelineAsset->GetPassPipelineByName(callPrim, &vertexLayout);
 				if (navMeshPipeline != nullptr) {
 					commandBuffer->BindGraphicsPipeline(navMeshPipeline);
-
+					pass.BindGlobalAndPassDescriptorSets(cxt);
 					commandBuffer->DrawVertices(
 						drawCall.vertexCount,
 						0, // firstInstance

@@ -62,7 +62,7 @@ namespace Grindstone::Renderer {
 	template<typename ReturnType>
 	class GraphicsRenderGraphBuilderPass : public GraphicsRenderGraphBuilderPassBase {
 	public:
-		using ExecutionCallbackFn = std::function<void(Grindstone::Math::IntRect2D, Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, ReturnType&)>;
+		using ExecutionCallbackFn = std::function<void(Grindstone::Math::IntRect2D, Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, GraphicsRenderGraphPass<ReturnType>&, ReturnType&)>;
 
 		void SetRenderingArea(
 			MetaRect renderingArea
@@ -104,7 +104,7 @@ namespace Grindstone::Renderer {
 	template<typename ReturnType>
 	class ComputeRenderGraphBuilderPass : public ComputeRenderGraphBuilderPassBase {
 	public:
-		using ExecutionCallbackFn = std::function<void(Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources& frameResources, ReturnType&)>;
+		using ExecutionCallbackFn = std::function<void(Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources& frameResources, ComputeRenderGraphPass<ReturnType>&, ReturnType&)>;
 
 		void SetExecutionCallback(ExecutionCallbackFn callback) {
 			executionCallback = callback;

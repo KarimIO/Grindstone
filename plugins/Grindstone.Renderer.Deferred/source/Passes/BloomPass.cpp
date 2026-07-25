@@ -170,6 +170,7 @@ static RenderGraphBuilderResourceRef BloomOperation(
 		[size, descriptorSet, bloomPipeline, pipelineLayout](
 			RenderGraphContext& cxt,
 			const RenderGraphFrameResources& frameResources,
+			ComputeRenderGraphPass<RenderGraphBuilderResourceRef>& pass,
 			RenderGraphBuilderResourceRef& ref
 		) {
 			Grindstone::GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
@@ -179,6 +180,7 @@ static RenderGraphBuilderResourceRef BloomOperation(
 			uint32_t groupCountY = (size.y + WORKGROUP_SIZE - 1) / WORKGROUP_SIZE;
 
 			cmd->BindComputePipeline(bloomPipeline);
+			pass.BindGlobalAndPassDescriptorSets(cxt);
 			cmd->BindComputeDescriptorSet(pipelineLayout, &descriptorSet, 2u, 1u);
 			cmd->DispatchCompute(groupCountX, groupCountY, 1u);
 		}

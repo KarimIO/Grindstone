@@ -307,20 +307,6 @@ void Grindstone::Renderer::PipelineRenderGraphPass::RealizeResources(
 	pipelineLayout = context.graphicsCore->GetOrCreatePipelineLayoutFromCache(pipelineLayoutCreateInfo);
 }
 
-void Grindstone::Renderer::ComputeRenderGraphPassBase::PrepareComputePass(Grindstone::Renderer::RenderGraphContext& context) {
-	SubmitBarriers(context);
-
-	std::vector<GraphicsAPI::DescriptorSet*> descriptorSets = {
-		context.globalDescriptorSet
-	};
-
-	if (passDescriptorSet != nullptr) {
-		descriptorSets.emplace_back(passDescriptorSet);
-	}
-
-	context.commandBuffer->BindComputeDescriptorSet(pipelineLayout, descriptorSets.data(), 0, descriptorSets.size());
-}
-
 Grindstone::Math::IntRect2D Grindstone::Renderer::GraphicsRenderGraphPassBase::PrepareGraphicsPass(
 	Grindstone::Renderer::RenderGraphContext& context,
 	Grindstone::Renderer::RenderGraphFrameResources& frameResources
@@ -371,16 +357,6 @@ Grindstone::Math::IntRect2D Grindstone::Renderer::GraphicsRenderGraphPassBase::P
 		depthAttachment.has_value() ? &depthAttachment.value() : nullptr
 	);
 
-	std::vector<GraphicsAPI::DescriptorSet*> descriptorSets = {
-		context.globalDescriptorSet
-	};
-
-	if (passDescriptorSet != nullptr) {
-		descriptorSets.emplace_back(passDescriptorSet);
-	}
-
-	context.commandBuffer->BindGraphicsDescriptorSet(pipelineLayout, descriptorSets.data(), 0, descriptorSets.size());
-
 	context.commandBuffer->SetViewport(
 		static_cast<float>(renderingArea.offset.x),
 		static_cast<float>(renderingArea.offset.y),
@@ -399,6 +375,50 @@ Grindstone::Math::IntRect2D Grindstone::Renderer::GraphicsRenderGraphPassBase::P
 
 void Grindstone::Renderer::GraphicsRenderGraphPassBase::EndGraphicsPass(Grindstone::Renderer::RenderGraphContext& context) {
 	context.commandBuffer->EndRendering();
+}
+
+void Grindstone::Renderer::GraphicsRenderGraphPassBase::BindGlobalDescriptorSet(const Grindstone::Renderer::RenderGraphContext& context) {
+	context.commandBuffer->BindGraphicsDescriptorSet(pipelineLayout, &context.globalDescriptorSet, 0, 1u);
+}
+
+void Grindstone::Renderer::GraphicsRenderGraphPassBase::BindPassDescriptorSet(const Grindstone::Renderer::RenderGraphContext& context) {
+	if (passDescriptorSet != nullptr) {
+		context.commandBuffer->BindGraphicsDescriptorSet(pipelineLayout, &passDescriptorSet, 1u, 1u);
+	}
+}
+
+void Grindstone::Renderer::GraphicsRenderGraphPassBase::BindGlobalAndPassDescriptorSets(const Grindstone::Renderer::RenderGraphContext& context) {
+	std::vector<GraphicsAPI::DescriptorSet*> descriptorSets = {
+		context.globalDescriptorSet
+	};
+
+	if (passDescriptorSet != nullptr) {
+		descriptorSets.emplace_back(passDescriptorSet);
+	}
+
+	context.commandBuffer->BindGraphicsDescriptorSet(pipelineLayout, descriptorSets.data(), 0, descriptorSets.size());
+}
+
+void Grindstone::Renderer::ComputeRenderGraphPassBase::BindGlobalDescriptorSet(const Grindstone::Renderer::RenderGraphContext& context) {
+	context.commandBuffer->BindComputeDescriptorSet(pipelineLayout, &context.globalDescriptorSet, 0, 1u);
+}
+
+void Grindstone::Renderer::ComputeRenderGraphPassBase::BindPassDescriptorSet(const Grindstone::Renderer::RenderGraphContext& context) {
+	if (passDescriptorSet != nullptr) {
+		context.commandBuffer->BindComputeDescriptorSet(pipelineLayout, &passDescriptorSet, 1u, 1u);
+	}
+}
+
+void Grindstone::Renderer::ComputeRenderGraphPassBase::BindGlobalAndPassDescriptorSets(const Grindstone::Renderer::RenderGraphContext& context) {
+	std::vector<GraphicsAPI::DescriptorSet*> descriptorSets = {
+		context.globalDescriptorSet
+	};
+
+	if (passDescriptorSet != nullptr) {
+		descriptorSets.emplace_back(passDescriptorSet);
+	}
+
+	context.commandBuffer->BindComputeDescriptorSet(pipelineLayout, descriptorSets.data(), 0, descriptorSets.size());
 }
 
 void Grindstone::Renderer::TransferRenderGraphPass::RealizeResources(

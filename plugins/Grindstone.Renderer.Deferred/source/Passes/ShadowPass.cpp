@@ -149,8 +149,10 @@ static Grindstone::Renderer::RenderGraphBuilderResourceRef AddSpotShadowPass(
 			Grindstone::Math::IntRect2D viewportArea,
 			const Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+			Grindstone::Renderer::GraphicsRenderGraphPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& pass,
 			Grindstone::Renderer::RenderGraphBuilderResourceRef& data
 		) {
+			pass.BindGlobalAndPassDescriptorSets(cxt);
 			RenderSpotLightComponent(
 				viewportArea,
 				cxt.commandBuffer,
@@ -187,8 +189,10 @@ static Grindstone::Renderer::RenderGraphBuilderResourceRef AddDirectionalShadowP
 			Grindstone::Math::IntRect2D viewportArea,
 			const Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+			Grindstone::Renderer::GraphicsRenderGraphPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& pass,
 			Grindstone::Renderer::RenderGraphBuilderResourceRef& data
 		) {
+			pass.BindGlobalAndPassDescriptorSets(cxt);
 			RenderDirectionalLightComponent(
 				viewportArea,
 				cxt.commandBuffer,

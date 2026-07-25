@@ -94,6 +94,7 @@ Grindstone::Renderer::TonemapPassReturnData Grindstone::Renderer::TonemapPass::A
 			Grindstone::Math::IntRect2D renderingArea,
 			const Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+			Grindstone::Renderer::GraphicsRenderGraphPass<Grindstone::Renderer::TonemapPassReturnData>& pass,
 			Grindstone::Renderer::TonemapPassReturnData& data
 		) {
 			Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
@@ -114,13 +115,14 @@ Grindstone::Renderer::TonemapPassReturnData Grindstone::Renderer::TonemapPass::A
 
 			tonemapSettingsUniformBuffer[swapchainIndex]->UploadData(&settings);
 
+			std::vector<Grindstone::GraphicsAPI::DescriptorSet*> descriptorSets{
+				cxt.globalDescriptorSet,
+				pass.passDescriptorSet,
+				tonemapSettingsDescriptorSet[swapchainIndex]
+			};
+
 			cmd->BindGraphicsPipeline(tonemapPipeline);
-			cmd->BindGraphicsDescriptorSet(
-				tonemapPipelineLayout,
-				&tonemapSettingsDescriptorSet[swapchainIndex],
-				2u, // Offset
-				1u // Count
-			);
+			cmd->BindGraphicsDescriptorSet(tonemapPipelineLayout, descriptorSets.data(), 0u, static_cast<uint32_t>(descriptorSets.size()));
 			cmd->DrawIndices(0, 6, 0, 1, 0);
 		}
 	);

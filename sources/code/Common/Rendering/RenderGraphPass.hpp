@@ -64,6 +64,9 @@ namespace Grindstone::Renderer {
 
 		Grindstone::Renderer::MetaRect metaRenderingArea;
 
+		void BindGlobalDescriptorSet(const Grindstone::Renderer::RenderGraphContext& context);
+		void BindPassDescriptorSet(const Grindstone::Renderer::RenderGraphContext& context);
+		void BindGlobalAndPassDescriptorSets(const Grindstone::Renderer::RenderGraphContext& context);
 		virtual Grindstone::Math::IntRect2D PrepareGraphicsPass(
 			Grindstone::Renderer::RenderGraphContext& context,
 			Grindstone::Renderer::RenderGraphFrameResources& frameResources
@@ -75,7 +78,7 @@ namespace Grindstone::Renderer {
 	template<typename ReturnType>
 	class GraphicsRenderGraphPass : public GraphicsRenderGraphPassBase {
 	public:
-		using ExecutionCallbackFn = std::function<void(Grindstone::Math::IntRect2D, Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, ReturnType&)>;
+		using ExecutionCallbackFn = std::function<void(Grindstone::Math::IntRect2D, Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, GraphicsRenderGraphPass&, ReturnType&)>;
 		ExecutionCallbackFn executionCallback;
 		ReturnType returnData;
 
@@ -86,7 +89,7 @@ namespace Grindstone::Renderer {
 			GS_ASSERT_ENGINE_WITH_MESSAGE(executionCallback != nullptr, "Execution callback for rendergraph pass %s is not set.", name.c_str());
 
 			Grindstone::Math::IntRect2D renderingArea = PrepareGraphicsPass(context, frameResources);
-			executionCallback(renderingArea, context, frameResources, returnData);
+			executionCallback(renderingArea, context, frameResources, *this, returnData);
 			EndGraphicsPass(context);
 		}
 
@@ -95,16 +98,16 @@ namespace Grindstone::Renderer {
 	class ComputeRenderGraphPassBase : public PipelineRenderGraphPass {
 	public:
 
-	protected:
-
-		void PrepareComputePass(Grindstone::Renderer::RenderGraphContext& context);
+		void BindGlobalDescriptorSet(const Grindstone::Renderer::RenderGraphContext& context);
+		void BindPassDescriptorSet(const Grindstone::Renderer::RenderGraphContext& context);
+		void BindGlobalAndPassDescriptorSets(const Grindstone::Renderer::RenderGraphContext& context);
 
 	};
 
 	template<typename ReturnType>
 	class ComputeRenderGraphPass : public ComputeRenderGraphPassBase {
 	public:
-		using ExecutionCallbackFn = std::function<void(Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, ReturnType&)>;
+		using ExecutionCallbackFn = std::function<void(Grindstone::Renderer::RenderGraphContext&, const Grindstone::Renderer::RenderGraphFrameResources&, ComputeRenderGraphPass&, ReturnType&)>;
 		ExecutionCallbackFn executionCallback;
 		ReturnType returnData;
 
@@ -115,8 +118,8 @@ namespace Grindstone::Renderer {
 			GS_ASSERT_ENGINE_WITH_MESSAGE(executionCallback != nullptr, "Execution callback for rendergraph pass %s is not set.", name.c_str());
 
 			context.commandBuffer->BeginDebugLabelSection(name.c_str());
-			PrepareComputePass(context);
-			executionCallback(context, frameResources, returnData);
+			SubmitBarriers(context);
+			executionCallback(context, frameResources, *this, returnData);
 			context.commandBuffer->EndDebugLabelSection();
 		}
 

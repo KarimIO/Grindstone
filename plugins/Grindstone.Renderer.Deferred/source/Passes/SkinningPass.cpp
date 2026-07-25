@@ -250,6 +250,7 @@ void Grindstone::Renderer::SkinningPass::AddPass(
 				[vertexCount, &skeletalMeshComp, skinningPipeline, pipelineLayout](
 					RenderGraphContext& cxt,
 					const RenderGraphFrameResources& frameResources,
+					Grindstone::Renderer::ComputeRenderGraphPass<RenderGraphBuilderResourceRef>& pass,
 					RenderGraphBuilderResourceRef& ref
 				) {
 					GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;

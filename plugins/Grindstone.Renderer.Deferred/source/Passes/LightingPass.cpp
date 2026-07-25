@@ -172,6 +172,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 			Grindstone::Math::IntRect2D viewportArea,
 			const Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+			GraphicsRenderGraphPass<Grindstone::Renderer::LightingPassReturnData>& pass,
 			LightingPassReturnData& lightingImageRef
 		) {
 			GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
@@ -211,6 +212,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 				if (pointLightPipeline != nullptr) {
 					cmd->BeginDebugLabelSection("Point Lighting", nullptr);
 					cmd->BindGraphicsPipeline(pointLightPipeline);
+					pass.BindGlobalAndPassDescriptorSets(cxt);
 
 					auto view = registry.view<const entt::entity, PointLightComponent>();
 					view.each(
@@ -244,6 +246,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 				if (spotLightPipeline != nullptr) {
 					cmd->BeginDebugLabelSection("Spot Lighting", nullptr);
 					cmd->BindGraphicsPipeline(spotLightPipeline);
+					pass.BindGlobalAndPassDescriptorSets(cxt);
 
 					auto view = registry.view<const entt::entity, SpotLightComponent>();
 					view.each(
@@ -283,6 +286,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 				if (directionalLightPipeline != nullptr) {
 					cmd->BeginDebugLabelSection("Directional Lighting", nullptr);
 					cmd->BindGraphicsPipeline(directionalLightPipeline);
+					pass.BindGlobalAndPassDescriptorSets(cxt);
 
 					auto view = registry.view<const entt::entity, const TransformComponent, DirectionalLightComponent>();
 					view.each(
