@@ -38,7 +38,7 @@ static std::filesystem::path ResolvePath(Grindstone::Editor::AssetRegistry& asse
 
 void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::AssetRegistry& assetRegistry, Grindstone::Assets::AssetManager& assetManager, const std::filesystem::path& filePath) {
 	CompilationOptions options;
-	options.isDebug = true;
+	options.isDebug = false;
 	options.target = CompilationOptions::Target::Vulkan;
 
 	WriteCallback writeCallback = [&assetRegistry, &assetManager] (const std::filesystem::path& path, const std::vector<PipelineOutput>& pipelines) {
