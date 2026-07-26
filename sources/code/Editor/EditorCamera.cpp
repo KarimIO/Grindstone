@@ -68,7 +68,6 @@ void EditorCamera::SetupRenderPasses() {
 	gizmoRenderPass = core->CreateRenderPass(gizmoRenderPassCreateInfo);
 	renderPassRegistry->RegisterRenderpass(gizmoRenderPassHashedString, gizmoRenderPass);
 
-
 	GraphicsAPI::Format mousePickColorImageFormat = GraphicsAPI::Format::R32_UINT;
 	GraphicsAPI::RenderPass::AttachmentInfo mousePickAttachmentInfo = { mousePickColorImageFormat, true };
 
@@ -76,7 +75,7 @@ void EditorCamera::SetupRenderPasses() {
 	mousePickRenderPassCreateInfo.debugName = "MousePick RenderPass";
 	mousePickRenderPassCreateInfo.colorAttachmentCount = 1u;
 	mousePickRenderPassCreateInfo.colorAttachments = &mousePickAttachmentInfo;
-	mousePickRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::Invalid;
+	mousePickRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
 	mousePickRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 	mousePickRenderPass = core->CreateRenderPass(mousePickRenderPassCreateInfo);
 	renderPassRegistry->RegisterRenderpass(mousePickRenderQueue, mousePickRenderPass);
@@ -110,21 +109,6 @@ EditorCamera::EditorCamera() {
 		GraphicsAPI::ImageUsageFlags::DepthStencil;
 
 	{
-		GraphicsAPI::Format mousePickColorImageFormat = GraphicsAPI::Format::R32_UINT;
-
-		GraphicsAPI::Image::CreateInfo mousePickRenderTargetCreateInfo{};
-		mousePickRenderTargetCreateInfo.width = 1;
-		mousePickRenderTargetCreateInfo.height = 1;
-		mousePickRenderTargetCreateInfo.format = mousePickColorImageFormat;
-		mousePickRenderTargetCreateInfo.imageUsage = GraphicsAPI::ImageUsageFlags::Sampled | GraphicsAPI::ImageUsageFlags::RenderTarget;
-
-		GraphicsAPI::Framebuffer::CreateInfo mousePickFramebufferCreateInfo{};
-		mousePickFramebufferCreateInfo.renderTargetCount = 1;
-		mousePickFramebufferCreateInfo.depthTarget = nullptr;
-		mousePickFramebufferCreateInfo.renderPass = mousePickRenderPass;
-		mousePickFramebufferCreateInfo.width = 1;
-		mousePickFramebufferCreateInfo.height = 1;
-
 		Grindstone::GraphicsAPI::Buffer::CreateInfo mousePickBufferMatrixCreateInfo{};
 		mousePickBufferMatrixCreateInfo.bufferSize = sizeof(MousePickMatrixBuffer);
 		mousePickBufferMatrixCreateInfo.bufferUsage =
@@ -158,21 +142,14 @@ EditorCamera::EditorCamera() {
 		mousePickDescriptorSetCreateInfo.layout = mousePickDescriptorSetLayout;
 
 		for (int i = 0; i < 3; ++i) {
-			std::string mousePickRenderTargetName = std::vformat("MousePick Color Image [{}]", std::make_format_args(i));
-			std::string mousePickFramebuferName = std::vformat("MousePick Framebuffer [{}]", std::make_format_args(i));
 			std::string mousePickMatrixBufferName = std::vformat("Mouse Pick Uniform Buffer [{}]", std::make_format_args(i));
 			std::string mousePickResponseBufferName = std::vformat("Mouse Pick SSBO [{}]", std::make_format_args(i));
 			std::string mousePickDescriptorSetName = std::vformat("Mouse Pick Descriptor Set [{}]", std::make_format_args(i));
 
-			mousePickRenderTargetCreateInfo.debugName = mousePickRenderTargetName.c_str();
-			mousePickFramebufferCreateInfo.debugName = mousePickFramebuferName.c_str();
 			mousePickBufferMatrixCreateInfo.debugName = mousePickMatrixBufferName.c_str();
 			mousePickBufferResponseCreateInfo.debugName = mousePickResponseBufferName.c_str();
 			mousePickDescriptorSetCreateInfo.debugName = mousePickDescriptorSetName.c_str();
 
-			mousePickRenderTarget[i] = core->CreateImage(mousePickRenderTargetCreateInfo);
-			mousePickFramebufferCreateInfo.renderTargets = &mousePickRenderTarget[i];
-			mousePickFramebuffer[i] = core->CreateFramebuffer(mousePickFramebufferCreateInfo);
 			mousePickMatrixBuffer[i] = core->CreateBuffer(mousePickBufferMatrixCreateInfo);
 			mousePickResponseBuffer[i] = core->CreateBuffer(mousePickBufferResponseCreateInfo);
 
@@ -312,63 +289,16 @@ void Grindstone::Editor::EditorCamera::RegisterGizmoPass(
 	gizmoRenderCallbacks.emplace_back(callback);
 }
 
-void Grindstone::Editor::EditorCamera::CaptureMousePick(GraphicsAPI::CommandBuffer* commandBuffer, int x, int y) {
+void Grindstone::Editor::EditorCamera::CaptureMousePick(int x, int y) {
 	y = height - y;
 
 	if (x < 0 || y < 0 || x > static_cast<int>(width) || y > static_cast<int>(height)) {
 		return;
 	}
 
-	Editor::Manager& editorManager = Editor::Manager::GetInstance();
-	EngineCore& engineCore = editorManager.GetEngineCore();
-	entt::registry& registry = engineCore.GetEntityRegistry();
-	Grindstone::AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
-	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-	GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-	uint32_t frameIndex = wgb->GetCurrentImageIndex();
-
-	GraphicsAPI::ClearColor clearColor(UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX);
-	GraphicsAPI::ClearDepthStencil clearDepthStencil{};
-	clearDepthStencil.depth = 1.0f;
-	clearDepthStencil.stencil = 0;
-
-	Grindstone::GraphicsAPI::RenderAttachment mousePickAttachment{
-		.image =		mousePickRenderTarget[frameIndex],
-		.imageLayout =	Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
-		.clearValue =	clearColor
-	};
-
-	commandBuffer->BeginRendering(
-		"Mouse Pick",
-		Math::IntRect2D(0, 0, width, height),
-		&mousePickAttachment,
-		1u,
-		nullptr
-	);
-
-	MousePickResponseBuffer mousePickResponseInitialBuffer{};
-	mousePickResponseInitialBuffer.depth = 1.0f;
-	mousePickResponseInitialBuffer.entityId = static_cast<uint32_t>(entt::null);
-	mousePickResponseBuffer[frameIndex]->UploadData(&mousePickResponseInitialBuffer);
-
-	MousePickMatrixBuffer matrixBuffer{};
-	matrixBuffer.projectionMatrix = projection;
-	matrixBuffer.viewMatrix = view;
-	mousePickMatrixBuffer[frameIndex]->UploadData(&matrixBuffer);
-
-	commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
-	commandBuffer->SetScissor(x, y, 1, 1);
-
-	Grindstone::Rendering::RenderViewData viewData{
-		.projectionMatrix = projection,
-		.viewMatrix = view,
-		.renderArea = Math::IntRect2D(0, 0, width, height)
-	};
-
-	assetRendererManager->SetEngineDescriptorSet(mousePickDescriptorSet[frameIndex]);
-	assetRendererManager->RenderQueue(commandBuffer, viewData, registry, mousePickRenderQueue);
-
-	commandBuffer->EndRendering();
+	captureThisFrame = true;
+	captureX = x;
+	captureY = y;
 }
 
 uint32_t EditorCamera::GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandBuffer) {
@@ -648,6 +578,86 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		}
 	);
 
+	if (captureThisFrame) {
+		captureThisFrame = false;
+
+		renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
+			"Mouse Pick",
+			Renderer::MetaRect::Swapchain(),
+			[depthImageRef](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
+				Renderer::ImageDescription resource{
+					.name = "Mouse Pick Color Attachment",
+					.size = Renderer::MetaSize2D::Viewport(),
+					.samples = 1,
+					.mipLevels = 1,
+					.depth = 1,
+					.arrayLayers = 1,
+					.format = GraphicsAPI::Format::R32_UINT,
+					.imageDimensions = GraphicsAPI::ImageDimension::Dimension2D,
+					.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly,
+					.imageUsage = GraphicsAPI::ImageUsageFlags::Sampled | GraphicsAPI::ImageUsageFlags::RenderTarget
+				};
+
+				Renderer::ImageDescription depthResourceDesc{
+					.name = "Mouse Pick Depth Attachment",
+					.size = Renderer::MetaSize2D::Viewport(),
+					.samples = 1,
+					.mipLevels = 1,
+					.depth = 1,
+					.arrayLayers = 1,
+					.format = GraphicsAPI::Format::D32_SFLOAT,
+					.imageDimensions = GraphicsAPI::ImageDimension::Dimension2D,
+					.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly,
+					.imageUsage = GraphicsAPI::ImageUsageFlags::Sampled | GraphicsAPI::ImageUsageFlags::DepthStencil
+				};
+
+				GraphicsAPI::ClearColor clearColor(UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX);
+				GraphicsAPI::ClearDepthStencil clearDepthStencil{};
+				clearDepthStencil.depth = 1.0f;
+				clearDepthStencil.stencil = 0;
+
+				Renderer::RenderGraphBuilderResourceRef outputRef = pass.WriteColorAttachment(resource, GraphicsAPI::LoadOp::Clear, clearColor);
+				pass.WriteDepthStencilAttachment(depthResourceDesc, GraphicsAPI::LoadOp::Clear, clearDepthStencil);
+				return outputRef;
+			},
+			[this, adjustedPerspectiveMatrix, imageIndex](
+				Grindstone::Math::IntRect2D rect,
+				const Grindstone::Renderer::RenderGraphContext& cxt,
+				const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+				Renderer::RenderGraphBuilderResourceRef& outputRef
+			) {
+				Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
+				Grindstone::AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
+				Grindstone::Editor::Manager& editorManager = Editor::Manager::GetInstance();
+				Grindstone::GraphicsAPI::CommandBuffer* commandBuffer = cxt.commandBuffer;
+				Grindstone::GraphicsAPI::Core* graphicsCore = cxt.graphicsCore;
+				entt::registry& registry = cxt.worldContextSet->GetEntityRegistry();
+
+				MousePickResponseBuffer mousePickResponseInitialBuffer{};
+				mousePickResponseInitialBuffer.depth = 1.0f;
+				mousePickResponseInitialBuffer.entityId = static_cast<uint32_t>(entt::null);
+				mousePickResponseBuffer[imageIndex]->UploadData(&mousePickResponseInitialBuffer);
+
+				MousePickMatrixBuffer matrixBuffer{};
+				matrixBuffer.projectionMatrix = projection;
+				matrixBuffer.viewMatrix = view;
+				mousePickMatrixBuffer[imageIndex]->UploadData(&matrixBuffer);
+
+				commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
+				commandBuffer->SetScissor(captureX, captureY, 1, 1);
+
+				Grindstone::Rendering::RenderViewData viewData{
+					.projectionMatrix = projection,
+					.viewMatrix = view,
+					.renderArea = Math::IntRect2D(0, 0, width, height)
+				};
+
+				assetRendererManager->SetEngineDescriptorSet(mousePickDescriptorSet[imageIndex]);
+				assetRendererManager->RenderQueue(commandBuffer, viewData, registry, mousePickRenderQueue);
+			}
+		);
+	}
+
 	for (auto& callback : gizmoRenderCallbacks) {
 		gizmoImageRef = callback(renderGraphBuilder, gizmoImageRef, depthImageRef);
 	}
@@ -890,11 +900,6 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 
 	if (renderer) {
 		renderer->Resize(width, height);
-	}
-
-	for (int i = 0; i < 3; ++i) {
-		mousePickRenderTarget[i]->Resize(width, height);
-		mousePickFramebuffer[i]->Resize(width, height);
 	}
 
 	UpdateProjectionMatrix();

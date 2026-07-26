@@ -258,7 +258,7 @@ void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 	}
 
 	if (isHovering) {
-		camera->CaptureMousePick(commandBuffer, hoverX, hoverY);
+		camera->CaptureMousePick(hoverX, hoverY);
 	}
 }
 

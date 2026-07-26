@@ -42,7 +42,7 @@ namespace Grindstone {
 			EditorCamera();
 			~EditorCamera();
 			void RegisterGizmoPass(std::function<Grindstone::Renderer::RenderGraphBuilderResourceRef(Grindstone::Renderer::RenderGraphBuilder&, Grindstone::Renderer::RenderGraphBuilderResourceRef, Grindstone::Renderer::RenderGraphBuilderResourceRef)> callback);
-			void CaptureMousePick(GraphicsAPI::CommandBuffer* commandBuffer, int x, int y);
+			void CaptureMousePick(int x, int y);
 			uint32_t GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandBuffer);
 			uint64_t GetRenderOutput();
 			void Render(GraphicsAPI::CommandBuffer* commandBuffer);
@@ -67,6 +67,9 @@ namespace Grindstone {
 			bool isBoundingSphereGizmoEnabled = false;
 			bool isBoundingBoxGizmoEnabled = false;
 			bool isColliderGizmoEnabled = true;
+			bool captureThisFrame = false;
+			int captureX = 0;
+			int captureY = 0;
 		private:
 			GraphicsAPI::Buffer* gpuGlobalUniformBufferObject = nullptr;
 
