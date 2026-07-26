@@ -179,6 +179,7 @@ Grindstone::GraphicsAPI::CommandBuffer* ImguiRendererVulkan::GetCommandBuffer() 
 bool ImguiRendererVulkan::PreRender() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
 	Grindstone::GraphicsAPI::WindowGraphicsBinding* window = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	
 	if (!window->AcquireNextImage()) {
 		WaitForResizeAndRecreateSwapchain();
 		return false;
@@ -216,7 +217,7 @@ void ImguiRendererVulkan::PrepareImguiRendering() {
 
 	Grindstone::Math::IntRect2D viewport(0, 0, framebuffer->GetWidth(), framebuffer->GetHeight());
 
-	Grindstone::GraphicsAPI::Image* image = static_cast<GraphicsAPI::Vulkan::WindowGraphicsBinding*>(window)->GetSwapchainImage(window->GetCurrentImageIndex());
+	Grindstone::GraphicsAPI::Image* image = static_cast<GraphicsAPI::Vulkan::WindowGraphicsBinding*>(window)->GetCurrentSwapchainImage();
 
 	GraphicsAPI::ImageBarrier outputImageBarrier{
 		.image = image,
@@ -269,7 +270,8 @@ void ImguiRendererVulkan::PostRender() {
 	ImGui::RenderPlatformWindowsDefault();
 	currentCommandBuffer->EndRendering();
 
-	Grindstone::GraphicsAPI::Image* image = static_cast<GraphicsAPI::Vulkan::WindowGraphicsBinding*>(window)->GetSwapchainImage(window->GetCurrentImageIndex());
+	uint32_t swapchainImageIndex = window->GetCurrentSwapchainIndex();
+	Grindstone::GraphicsAPI::Image* image = static_cast<GraphicsAPI::Vulkan::WindowGraphicsBinding*>(window)->GetCurrentSwapchainImage();
 
 	GraphicsAPI::ImageBarrier presentImageBarrier{
 		.image = image,

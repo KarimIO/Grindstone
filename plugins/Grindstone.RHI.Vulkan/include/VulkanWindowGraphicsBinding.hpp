@@ -52,14 +52,17 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void SubmitCommandBufferNoSynchronization(GraphicsAPI::CommandBuffer* buffer) override;
 		virtual void SubmitCommandBufferForCurrentFrame(GraphicsAPI::CommandBuffer* buffer) override;
 		virtual bool PresentSwapchain() override;
-		virtual Grindstone::GraphicsAPI::RenderPass* GetRenderPass() override;
-		virtual Grindstone::GraphicsAPI::Framebuffer* GetCurrentFramebuffer() override;
-		virtual uint32_t GetCurrentImageIndex() override;
-		virtual uint32_t GetMaxFramesInFlight() override;
+		virtual Grindstone::GraphicsAPI::RenderPass* GetRenderPass() const override;
+		virtual Grindstone::GraphicsAPI::Framebuffer* GetCurrentFramebuffer() const override;
+		virtual uint32_t GetCurrentSwapchainIndex() const override;
+		virtual uint32_t GetCurrentImageIndex() const override;
+		virtual uint32_t GetCurrentFrame() const override;
+		virtual uint32_t GetMaxFramesInFlight() const override;
 		virtual void ImmediateSetContext() override;
 		virtual void ImmediateSwapBuffers() override;
 		virtual void Resize(uint32_t width, uint32_t height) override;
-		GraphicsAPI::Image* GetSwapchainImage(uint32_t index) const { return imageSets[index].swapChainTarget; }
+		virtual GraphicsAPI::Image* GetCurrentSwapchainImage() const override { return imageSets[currentSwapchainImageIndex].swapChainTarget; }
+		virtual GraphicsAPI::Image* GetSwapchainImage(uint32_t index) const override { return imageSets[index].swapChainTarget; }
 		virtual GraphicsAPI::Format GetSwapchainFormat() const override { return swapchainFormat; }
 		VkFormat GetSwapchainVulkanFormat() const { return swapchainVulkanFormat; }
 	private:
@@ -86,6 +89,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		std::vector<VkSemaphore> renderFinishedSemaphores;
 		std::vector<VkFence> inFlightFences;
 		uint32_t currentFrame = 0;
+		uint32_t currentFrameIndex = 0;
 		uint32_t maxFramesInFlight = 0;
 		uint32_t currentSwapchainImageIndex = 0;
 	};

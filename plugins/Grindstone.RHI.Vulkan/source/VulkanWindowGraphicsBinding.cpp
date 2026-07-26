@@ -373,14 +373,14 @@ void Vulkan::WindowGraphicsBinding::CreateImageSets() {
 void Vulkan::WindowGraphicsBinding::WaitForRenderingFence() {
 	Vulkan::Core& vkCore = Vulkan::Core::Get();
 	VkDevice device = vkCore.GetDevice();
-	vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+	vkWaitForFences(device, 1, &inFlightFences[currentFrameIndex], VK_TRUE, UINT64_MAX);
 }
 
 bool Vulkan::WindowGraphicsBinding::AcquireNextImage() {
 	Vulkan::Core& vkCore = Vulkan::Core::Get();
 	VkDevice device = vkCore.GetDevice();
 
-	VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &currentSwapchainImageIndex);
+	VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrameIndex], VK_NULL_HANDLE, &currentSwapchainImageIndex);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 		RecreateSwapchain();
 		return false;
@@ -390,12 +390,8 @@ bool Vulkan::WindowGraphicsBinding::AcquireNextImage() {
 		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to acquire swap chain image! ({})!", VkResultToString(result));
 	}
 
-	Vulkan::ImageSet& imageSet = imageSets[currentFrame];
-	if (imageSet.fence != VK_NULL_HANDLE) {
-		vkWaitForFences(device, 1, &imageSet.fence, VK_TRUE, UINT64_MAX);
-	}
+	vkResetFences(device, 1, &inFlightFences[currentFrameIndex]);
 
-	vkResetFences(device, 1, &inFlightFences[currentFrame]);
 	return true;
 }
 
@@ -444,24 +440,34 @@ void Vulkan::WindowGraphicsBinding::SubmitCommandBufferNoSynchronization(Graphic
 	VkDevice device = vkCore.GetDevice();
 	VkQueue graphicsQueue = vkCore.graphicsQueue;
 
-	VkSubmitInfo submitInfo = {};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
 	VkCommandBuffer vkCommandBuffer = static_cast<Vulkan::CommandBuffer*>(buffer)->GetCommandBuffer();
 
 	VkFence fence;
 	VkFenceCreateInfo fenceInfo = { VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
 	vkCreateFence(device, &fenceInfo, nullptr, &fence);
 
-	submitInfo.waitSemaphoreCount = 0u;
-	submitInfo.pWaitSemaphores = nullptr;
-	submitInfo.pWaitDstStageMask = nullptr;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &vkCommandBuffer;
-	submitInfo.signalSemaphoreCount = 0u;
-	submitInfo.pSignalSemaphores = nullptr;
+	const VkCommandBufferSubmitInfo commandBufferInfo{
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+		.pNext = nullptr,
+		.commandBuffer = vkCommandBuffer,
+		.deviceMask = 0
+	};
 
-	VkResult result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, fence);
+	VkSubmitInfo2 submitInfo = {
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+		.pNext = nullptr,
+		.flags = 0,
+		.waitSemaphoreInfoCount = 0,
+		.pWaitSemaphoreInfos = nullptr,
+		.commandBufferInfoCount = 1u,
+		.pCommandBufferInfos = &commandBufferInfo,
+		.signalSemaphoreInfoCount = 0,
+		.pSignalSemaphoreInfos = nullptr
+	};
+
+	vkResetFences(device, 1, &inFlightFences[currentFrameIndex]);
+
+	VkResult result = vkQueueSubmit2(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrameIndex]);
 	if (result != VK_SUCCESS) {
 		WaitForAftermathCrash();
 		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to submit draw command buffer ({})!", VkResultToString(result));
@@ -476,24 +482,47 @@ void Vulkan::WindowGraphicsBinding::SubmitCommandBufferForCurrentFrame(GraphicsA
 	VkDevice device = vkCore.GetDevice();
 	VkQueue graphicsQueue = vkCore.graphicsQueue;
 
-	VkSubmitInfo submitInfo = {};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
 	VkCommandBuffer vkCommandBuffer = static_cast<Vulkan::CommandBuffer*>(buffer)->GetCommandBuffer();
 
-	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = &imageAvailableSemaphores[currentFrame];
-	submitInfo.pWaitDstStageMask = waitStages;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &vkCommandBuffer;
+	const VkSemaphoreSubmitInfo waitSemaphoreInfo{
+		.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+		.pNext = nullptr,
+		.semaphore = imageAvailableSemaphores[currentFrameIndex],
+		.value = 1,
+		.stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR,
+		.deviceIndex = 0
+	};
 
-	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = &renderFinishedSemaphores[currentFrame];
+	const VkCommandBufferSubmitInfo commandBufferInfo{
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+		.pNext = nullptr,
+		.commandBuffer = vkCommandBuffer,
+		.deviceMask = 0,
+	};
 
-	vkResetFences(device, 1, &inFlightFences[currentFrame]);
+	const VkSemaphoreSubmitInfo signalSemaphoreInfo{
+		.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+		.pNext = nullptr,
+		.semaphore = renderFinishedSemaphores[currentSwapchainImageIndex],
+		.value = 1,
+		.stageMask = VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT,
+		.deviceIndex = 0
+	};
 
-	VkResult result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]);
+	VkSubmitInfo2 submitInfo = {
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+		.pNext = nullptr,
+		.flags = 0,
+		.waitSemaphoreInfoCount = 1,
+		.pWaitSemaphoreInfos = &waitSemaphoreInfo,
+		.commandBufferInfoCount = 1,
+		.pCommandBufferInfos = &commandBufferInfo,
+		.signalSemaphoreInfoCount = 1,
+		.pSignalSemaphoreInfos = &signalSemaphoreInfo
+	};
+
+	VkResult result = vkQueueSubmit2(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrameIndex]);
 	if (result != VK_SUCCESS) {
 		WaitForAftermathCrash();
 		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to submit draw command buffer ({})!", VkResultToString(result));
@@ -504,18 +533,16 @@ bool Vulkan::WindowGraphicsBinding::PresentSwapchain() {
 	Vulkan::Core& vkCore = Vulkan::Core::Get();
 	VkQueue presentQueue = vkCore.presentQueue;
 
-	VkSwapchainKHR swapChains[] { swapChain };
 	VkPresentInfoKHR presentInfo {
 		.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
 		.waitSemaphoreCount = 1,
-		.pWaitSemaphores = &renderFinishedSemaphores[currentFrame],
+		.pWaitSemaphores = &renderFinishedSemaphores[currentSwapchainImageIndex],
 		.swapchainCount = 1,
-		.pSwapchains = swapChains,
+		.pSwapchains = &swapChain,
 		.pImageIndices = &currentSwapchainImageIndex
 	};
 
 	VkResult result = vkQueuePresentKHR(presentQueue, &presentInfo);
-
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || isSwapchainDirty) {
 		RecreateSwapchain();
 		isSwapchainDirty = false;
@@ -526,7 +553,7 @@ bool Vulkan::WindowGraphicsBinding::PresentSwapchain() {
 		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to present queue ({})!", VkResultToString(result));
 	}
 
-	currentFrame = (currentFrame + 1) % maxFramesInFlight;
+	currentFrameIndex = (currentFrameIndex + 1) % maxFramesInFlight;
 
 	return true;
 }
@@ -645,19 +672,27 @@ void Vulkan::WindowGraphicsBinding::CreateRenderPass() {
 	}
 }
 
-Base::RenderPass* Vulkan::WindowGraphicsBinding::GetRenderPass() {
+Base::RenderPass* Vulkan::WindowGraphicsBinding::GetRenderPass() const {
 	return renderPass;
 }
 
-Base::Framebuffer* Vulkan::WindowGraphicsBinding::GetCurrentFramebuffer() {
-	return imageSets[currentFrame].framebuffer;
+Base::Framebuffer* Vulkan::WindowGraphicsBinding::GetCurrentFramebuffer() const {
+	return imageSets[currentFrameIndex].framebuffer;
 }
 
-uint32_t Vulkan::WindowGraphicsBinding::GetCurrentImageIndex() {
+uint32_t Vulkan::WindowGraphicsBinding::GetCurrentSwapchainIndex() const {
+	return currentSwapchainImageIndex;
+}
+
+uint32_t Vulkan::WindowGraphicsBinding::GetCurrentImageIndex() const {
+	return currentFrameIndex;
+}
+
+uint32_t Vulkan::WindowGraphicsBinding::GetCurrentFrame() const {
 	return currentFrame;
 }
 
-uint32_t Vulkan::WindowGraphicsBinding::GetMaxFramesInFlight() {
+uint32_t Vulkan::WindowGraphicsBinding::GetMaxFramesInFlight() const {
 	return maxFramesInFlight;
 }
 
