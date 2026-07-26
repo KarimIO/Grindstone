@@ -33,6 +33,7 @@ namespace Grindstone {
 				uint32_t height = 1;
 				uint16_t renderMode = 0;
 
+				bool hasRenderedThisFrame = false;
 				int startDragX = 0;
 				int startDragY = 0;
 			};

@@ -214,6 +214,7 @@ bool ViewportPanel::HandleSelection() {
 
 void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 	if (!isShowingPanel || width < 4 || height < 4) {
+		hasRenderedThisFrame = false;
 		return;
 	}
 
@@ -228,6 +229,8 @@ void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 	else {
 		camera->RenderPlayModeCamera(commandBuffer);
 	}
+
+	hasRenderedThisFrame = true;
 
 	if (isHoveringLastFrame) {
 		entt::entity entityId = static_cast<entt::entity>(camera->GetMousePickedEntity(commandBuffer));
@@ -325,7 +328,9 @@ void ViewportPanel::Render() {
 
 		PlayMode playMode = Editor::Manager::GetInstance().GetPlayMode();
 		bool isEditorMode = playMode == PlayMode::Editor;
-		DisplayCameraToPanel();
+		if (hasRenderedThisFrame) {
+			DisplayCameraToPanel();
+		}
 		DisplayOptions();
 
 		if (isEditorMode) {
