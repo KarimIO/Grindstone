@@ -6,7 +6,7 @@
 namespace Grindstone::GraphicsAPI::Vulkan {
 	class Image : public Grindstone::GraphicsAPI::Image {
 	public:
-		Image(VkImage image, VkFormat format, uint32_t swapchainIndex);
+		Image(VkImage image, VkFormat format, const char* debugName);
 		Image(const CreateInfo& createInfo);
 		void Create();
 		virtual ~Image();

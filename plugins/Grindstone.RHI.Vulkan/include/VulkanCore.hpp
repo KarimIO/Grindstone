@@ -44,7 +44,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual VkInstance GetInstance();
 		virtual VkDevice GetDevice();
 		virtual VkPhysicalDevice GetPhysicalDevice();
-		virtual VkCommandBuffer BeginSingleTimeCommands();
+		virtual VkCommandBuffer BeginSingleTimeCommands(const char* debugName);
 		virtual uint32_t GetGraphicsFamily();
 		virtual void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
 		VkCommandPool GetGraphicsCommandPool() const;

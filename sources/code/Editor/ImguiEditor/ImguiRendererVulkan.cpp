@@ -133,12 +133,12 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 
 	commandBuffers.resize(wgb->GetMaxFramesInFlight());
 	for (size_t i = 0; i < commandBuffers.size(); ++i) {
-		std::string debugName = "Imgui Command Buffer " + std::to_string(i);
+		std::string debugName = "Editor Command Buffer " + std::to_string(i);
 		commandBufferCreateInfo.debugName = debugName.c_str();
 		commandBuffers[i] = graphicsCore->CreateCommandBuffer(commandBufferCreateInfo);
 	}
 
-	VkCommandBuffer commandBuffer = vulkanCore->BeginSingleTimeCommands();
+	VkCommandBuffer commandBuffer = vulkanCore->BeginSingleTimeCommands("Imgui::CreateFontsTexture");
 	ImGui_ImplVulkan_CreateFontsTexture();
 	vulkanCore->EndSingleTimeCommands(commandBuffer);
 

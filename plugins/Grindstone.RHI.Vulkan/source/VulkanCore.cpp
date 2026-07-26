@@ -774,8 +774,8 @@ VkPhysicalDevice Vulkan::Core::GetPhysicalDevice() {
 	return physicalDevice;
 }
 
-VkCommandBuffer Vulkan::Core::BeginSingleTimeCommands() {
-	return Vulkan::BeginSingleTimeCommands();
+VkCommandBuffer Vulkan::Core::BeginSingleTimeCommands(const char* debugName) {
+	return Vulkan::BeginSingleTimeCommands(debugName);
 }
 
 uint32_t Vulkan::Core::GetGraphicsFamily() {

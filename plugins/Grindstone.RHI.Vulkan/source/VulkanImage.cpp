@@ -10,15 +10,16 @@
 
 namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
-Vulkan::Image::Image(VkImage image, VkFormat format, uint32_t swapchainIndex) :
+Vulkan::Image::Image(VkImage image, VkFormat format, const char* debugName) :
 	GraphicsAPI::Image(1, 1, 1, 1, 1, 1, ImageDimension::Dimension2D, Format::Invalid, ImageUsageFlags::Sampled, MemoryUsage::GPUOnly),
-	imageName(std::string("Image View ") + std::to_string(swapchainIndex)),
+	imageName(debugName),
 	aspect(VK_IMAGE_ASPECT_COLOR_BIT),
 	imageViewType(VkImageViewType::VK_IMAGE_VIEW_TYPE_2D) {
 	UpdateNativeImage(image, imageView, format);
 	imageView = CreateImageView(image, imageViewType, vkFormat, aspect, mipLevels, arrayLayers);
 
-	std::string imageViewDebugName = std::string("Image View ") + std::to_string(swapchainIndex);
+	Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_IMAGE, image, imageName.c_str());
+	std::string imageViewDebugName = std::format("{} View", imageName);
 	Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, imageView, imageViewDebugName.c_str());
 }
 
@@ -43,7 +44,7 @@ Vulkan::Image::Image(const CreateInfo& createInfo) :
 		UploadData(createInfo.initialData, createInfo.initialDataSize);
 
 		if (imageUsage.Test(ImageUsageFlags::GenerateMipmaps) && (aspect & VK_IMAGE_ASPECT_COLOR_BIT)) {
-			VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+			VkCommandBuffer commandBuffer = BeginSingleTimeCommands("Generate Mipmaps Command Buffer");
 			GenerateMipmaps(commandBuffer, image);
 			EndSingleTimeCommands(commandBuffer);
 		}
@@ -52,7 +53,6 @@ Vulkan::Image::Image(const CreateInfo& createInfo) :
 	if (imageUsage.Test(ImageUsageFlags::Sampled)) {
 		TransitionImageLayout(
 			image,
-			vkFormat,
 			aspect,
 			hasInitialData
 				? VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
@@ -329,7 +329,6 @@ void Vulkan::Image::CreateImage() {
 	if (imageUsage.Test(ImageUsageFlags::Storage)) {
 		TransitionImageLayout(
 			image,
-			vkFormat,
 			aspect,
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_GENERAL,
@@ -360,7 +359,6 @@ void Vulkan::Image::UploadData(const char* data, uint64_t dataSize) {
 
 	TransitionImageLayout(
 		image,
-		vkFormat,
 		aspect,
 		VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -372,7 +370,8 @@ void Vulkan::Image::UploadData(const char* data, uint64_t dataSize) {
 	uint64_t blockSize = GetCompressedFormatBlockSize(format);
 	uint64_t pixelSize = GetFormatBytesPerPixel(format);
 
-	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+	std::string cmdBufferDebugName = std::format("{} Upload Command Buffer", imageName.c_str());
+	VkCommandBuffer commandBuffer = BeginSingleTimeCommands(cmdBufferDebugName.c_str());
 	uint64_t offset = 0;
 
 	std::vector<VkBufferImageCopy> regions;
@@ -449,7 +448,8 @@ void Vulkan::Image::UploadDataRegions(void* buffer, size_t bufferSize, ImageRegi
 	memcpy(mappedData, buffer, static_cast<size_t>(bufferSize));
 	vkUnmapMemory(device, stagingBufferMemory);
 
-	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+	std::string cmdBufferDebugName = std::format("{} Upload Regions Command Buffer", imageName.c_str());
+	VkCommandBuffer commandBuffer = BeginSingleTimeCommands(cmdBufferDebugName.c_str());
 
 	VkImageMemoryBarrier preCopyBarrier = {
 		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -587,11 +587,11 @@ Grindstone::Buffer Vulkan::Image::ReadbackMemory() {
 		stagingBufferMemory
 	);
 
-	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+	std::string cmdBufferDebugName = std::format("{} Readback Command Buffer", imageName.c_str());
+	VkCommandBuffer commandBuffer = BeginSingleTimeCommands(cmdBufferDebugName.c_str());
 
 	TransitionImageLayout(
 		image,
-		vkFormat,
 		aspect,
 		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,

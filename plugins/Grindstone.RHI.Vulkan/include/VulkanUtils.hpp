@@ -22,11 +22,11 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		VkImageCreateFlags flags
 	);
 	void CreateBuffer(const char* debugName, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-	VkCommandBuffer BeginSingleTimeCommands();
+	VkCommandBuffer BeginSingleTimeCommands(const char* debugName);
 	void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
 	VkShaderStageFlags TranslateShaderStageBits(ShaderStageBit shaderStageBits);
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-	void TransitionImageLayout(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t layerCount);
+	void TransitionImageLayout(VkImage image, VkImageAspectFlags aspectFlags, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t layerCount);
 	void CopyBufferToImage(
 		VkBuffer buffer,
 		VkImage image,
