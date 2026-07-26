@@ -57,10 +57,6 @@ template<typename T>
 
 	size_t lastKeyframeIndex = GetKeyframeIndexByTime(keyframes, animationTime);
 	glm::vec3 finalPosition = keyframes[lastKeyframeIndex].value;
-
-	if (boneIndex == 2) {
-		// std::cout << "P: " << lastKeyframeIndex << "(" << finalPosition.x << ", " << finalPosition.y << ", " << finalPosition.z << "); ";
-	}
 	return glm::translate(glm::mat4(1.0f), finalPosition);
 }
 
@@ -78,9 +74,6 @@ template<typename T>
 	size_t lastKeyframeIndex = GetKeyframeIndexByTime(keyframes, animationTime);
 	glm::quat finalRotation = keyframes[lastKeyframeIndex].value;
 	finalRotation = glm::normalize(finalRotation);
-	if (boneIndex == 2) {
-		// std::cout << "R: " << lastKeyframeIndex << "(" << finalRotation.x << ", " << finalRotation.y << ", " << finalRotation.z << ", " << finalRotation.w << "); ";
-	}
 	return glm::toMat4(finalRotation);
 }
 
@@ -96,9 +89,6 @@ template<typename T>
 	size_t lastKeyframeIndex = GetKeyframeIndexByTime(keyframes, animationTime);
 	glm::vec3 finalScale = keyframes[lastKeyframeIndex].value;
 
-	if (boneIndex == 2) {
-		// std::cout << "S: " << lastKeyframeIndex << "(" << finalScale.x << ", " << finalScale.y << ", " << finalScale.z << ")";
-	}
 	return glm::scale(glm::mat4(1.0f), finalScale);
 }
 
@@ -159,15 +149,9 @@ template<typename T>
 ) {
 	switch (interpolation) {
 	case AnimationClipAsset::KeyframeInterpolation::Step: {
-		if (boneIndex == 2) {
-			// std::cout << animationTime << " - ";
-		}
 		glm::mat4 translation = InterpolateStepPosition(positionKeyframes, boneIndex, animationTime);
 		glm::mat4 rotation = InterpolateStepRotation(rotationKeyframes, boneIndex, animationTime);
 		glm::mat4 scale = InterpolateStepScaling(scaleframes, boneIndex, animationTime);
-		if (boneIndex == 2) {
-			// std::cout << "\n";
-		}
 		return translation * rotation * scale;
 	}
 	case AnimationClipAsset::KeyframeInterpolation::Linear: {
@@ -180,29 +164,6 @@ template<typename T>
 		GS_ASSERT_LOG("Invalid interpolation type.");
 		return glm::mat4(1.0f);
 	};
-}
-
-static bool AreMatricesApproxEqual(const glm::mat4& a, const glm::mat4& b, const float epsilon = 1e-4f) {
-	for (size_t i = 0; i < 4; ++i) {
-		for (size_t j = 0; j < 4; ++j) {
-			if (glm::abs(a[i][j] - b[i][j]) > epsilon) {
-				return false;
-			}
-		}
-	}
-
-	return true;
-}
-
-static void PrintMatrix(const glm::mat4& skin) {
-	for (int x = 0; x < 4; ++x) {
-		for (int y = 0; y < 4; ++y) {
-			std::cout << skin[x][y] << ", ";
-		}
-
-		std::cout << '\n';
-	}
-	std::cout << '\n';
 }
 
 void Grindstone::AnimateSkeletonSystem(Grindstone::WorldContextSet& worldContextSet) {
@@ -274,7 +235,7 @@ void Grindstone::AnimateSkeletonSystem(Grindstone::WorldContextSet& worldContext
 				GS_ASSERT_ENGINE(channel.interpolation != AnimationClipAsset::KeyframeInterpolation::Cubic);
 
 				// TODO: Consider pos, rot, scale count == 0
-				const glm::mat4 interpolatedMatrix = InterpolateBoneLocalTransform(AnimationClipAsset::KeyframeInterpolation::Step, boneIndex, positionSpan, rotationSpan, scaleSpan, animationTime);
+				const glm::mat4 interpolatedMatrix = InterpolateBoneLocalTransform(channel.interpolation, boneIndex, positionSpan, rotationSpan, scaleSpan, animationTime);
 				boneMatrices[boneIndex] = interpolatedMatrix;
 			}
 
