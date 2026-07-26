@@ -211,14 +211,16 @@ void Vulkan::WindowGraphicsBinding::SubmitWindowObjects(WindowBindingDataNative&
 		ImageSet& imageSet = imageSets[i];
 
 		if (imageSet.framebuffer == nullptr) {
-			imageSet.framebuffer = Memory::AllocatorCore::Allocate<Vulkan::Framebuffer>(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height, "Swapchain Framebuffer");
+			std::string debugName = std::format("Swapchain Framebuffer {}", i);
+			imageSet.framebuffer = Memory::AllocatorCore::Allocate<Vulkan::Framebuffer>(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height, debugName.c_str());
 		}
 		else {
 			static_cast<Framebuffer*>(imageSet.framebuffer)->UpdateNativeFramebuffer(this->renderPass, native.framebuffer, windowBindingData.width, windowBindingData.height);
 		}
 
 		if (imageSet.swapChainTarget == nullptr) {
-			imageSet.swapChainTarget = Memory::AllocatorCore::Allocate<Vulkan::Image>(native.image, swapchainVulkanFormat, i);
+			std::string debugName = std::format("Swapchain Image {}", i);
+			imageSet.swapChainTarget = Memory::AllocatorCore::Allocate<Vulkan::Image>(native.image, swapchainVulkanFormat, debugName.c_str());
 		}
 		else {
 			static_cast<Vulkan::Image*>(imageSet.swapChainTarget)->UpdateNativeImage(native.image, native.imageView, swapchainVulkanFormat);
@@ -338,12 +340,10 @@ void Vulkan::WindowGraphicsBinding::CreateImageSets() {
 	for (uint32_t i = 0; i < imageCount; ++i) {
 
 		std::string imageDebugName = std::string("Swapchain Image ") + std::to_string(i);
-		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_IMAGE_VIEW, swapChainImages[i], imageDebugName.c_str());
-
 		Vulkan::Image* rt = Memory::AllocatorCore::Allocate<Vulkan::Image>(
 			swapChainImages[i],
 			swapchainVulkanFormat,
-			i
+			imageDebugName.c_str()
 		);
 
 		VkImageView attachments[] = { rt->GetImageView() };

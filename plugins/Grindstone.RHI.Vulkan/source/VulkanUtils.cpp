@@ -140,7 +140,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		vkBindBufferMemory(device, buffer, bufferMemory, 0);
 	}
 
-	VkCommandBuffer BeginSingleTimeCommands() {
+	VkCommandBuffer BeginSingleTimeCommands(const char* debugName) {
 		VkDevice device = Vulkan::Core::Get().GetDevice();
 		VkCommandBufferAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -150,6 +150,13 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 
 		VkCommandBuffer commandBuffer;
 		vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+		if (debugName != nullptr) {
+			Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_COMMAND_BUFFER, commandBuffer, debugName);
+		}
+		else {
+			GPRINT_FATAL(LogSource::GraphicsAPI, "Unnamed Command Buffer!");
+		}
 
 		VkCommandBufferBeginInfo beginInfo = {};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -216,7 +223,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 	}
 
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
-		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+		VkCommandBuffer commandBuffer = BeginSingleTimeCommands("CopyBuffer Command Buffer");
 
 		VkBufferCopy copyRegion = {};
 		copyRegion.size = size;
@@ -225,8 +232,8 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		EndSingleTimeCommands(commandBuffer);
 	}
 
-	void TransitionImageLayout(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t layerCount) {
-		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+	void TransitionImageLayout(VkImage image, VkImageAspectFlags aspectFlags, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t layerCount) {
+		VkCommandBuffer commandBuffer = BeginSingleTimeCommands("Transition Image Layout Command Buffer");
 
 		VkImageMemoryBarrier barrier = {};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -313,7 +320,7 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		[[maybe_unused]] uint32_t mipLevels,
 		uint32_t arrayLayers
 	) {
-		VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+		VkCommandBuffer commandBuffer = BeginSingleTimeCommands("CopyBufferToImage Command Buffer");
 
 		VkBufferImageCopy region = {};
 		region.bufferOffset = 0;
