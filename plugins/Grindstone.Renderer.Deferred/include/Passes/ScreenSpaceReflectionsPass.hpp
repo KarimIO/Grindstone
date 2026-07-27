@@ -1,18 +1,36 @@
 #pragma once
 
-#include <Common/Rendering/RenderGraph.hpp>
+#include <Common/Rendering/RenderGraphBuilder.hpp>
 #include <EngineCore/Assets/AssetReference.hpp>
 #include <EngineCore/Assets/PipelineSet/ComputePipelineAsset.hpp>
+
+#include "GbufferPass.hpp"
 
 namespace Grindstone::Renderer {
 	class ScreenSpaceReflectionsPass {
 	public:
 		bool Initialize();
-		void AddPass(Grindstone::Renderer::RenderGraph& renderGraph);
+		Renderer::RenderGraphBuilderResourceRef AddPass(
+			Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
+			Renderer::RenderGraphBuilderResourceRef inputRef,
+			Renderer::RenderGraphBuilderResourceRef ambientOcclusionRef,
+			Grindstone::Renderer::GbufferData& gbufferData
+		);
 
 	private:
+		bool FindEnvironmentMap(
+			const entt::registry& registry,
+			const Grindstone::AssetReference<Grindstone::TextureAsset> brdfLut,
+			Grindstone::GraphicsAPI::DescriptorSet* reflectionDescriptorSet,
+			Grindstone::GraphicsAPI::Image*& currentEnvironmentMapImage
+		);
+
 		Grindstone::AssetReference<Grindstone::ComputePipelineAsset> ssrPipelineSet;
-		std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> descriptorSets;
-		Grindstone::GraphicsAPI::DescriptorSetLayout* ssrDescriptorSetLayout = nullptr;
+		Grindstone::GraphicsAPI::Sampler* screenSampler = nullptr;
+
+		Grindstone::AssetReference<Grindstone::TextureAsset> brdfLut;
+		Grindstone::GraphicsAPI::Image* currentEnvironmentMapImage = nullptr;
+		Grindstone::GraphicsAPI::DescriptorSetLayout* reflectionDescriptorSetLayout = nullptr;
+		Grindstone::GraphicsAPI::DescriptorSet* reflectionDescriptorSet = nullptr;
 	};
 }

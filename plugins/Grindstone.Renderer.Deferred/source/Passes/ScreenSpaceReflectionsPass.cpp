@@ -1,115 +1,180 @@
-#include <EngineCore/Assets/AssetManager.hpp>
-
 #include <Common/Graphics/DescriptorSet.hpp>
 #include <Common/Graphics/Core.hpp>
+#include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/CoreComponents/EnvironmentMap/EnvironmentMapComponent.hpp>
+
+#include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
 #include <Grindstone.Renderer.Deferred/include/Passes/ScreenSpaceReflectionsPass.hpp>
+
+Grindstone::Renderer::ImageDescription resourceDesc{
+	.name = "Screen-Space Reflections Target",
+	.size = Grindstone::Renderer::MetaSize2D::Viewport(),
+	.samples = 1,
+	.mipLevels = 1,
+	.depth = 1,
+	.arrayLayers = 1,
+	.format = litHdrFormat,
+	.imageDimensions = Grindstone::GraphicsAPI::ImageDimension::Dimension2D,
+	.memoryUsage = Grindstone::GraphicsAPI::MemoryUsage::GPUOnly,
+	.imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::Storage | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled
+};
+
+bool Grindstone::Renderer::ScreenSpaceReflectionsPass::FindEnvironmentMap(
+	const entt::registry& registry,
+	const Grindstone::AssetReference<Grindstone::TextureAsset> brdfLut,
+	Grindstone::GraphicsAPI::DescriptorSet* reflectionDescriptorSet,
+	Grindstone::GraphicsAPI::Image*& currentEnvironmentMapImage
+) {
+	auto view = registry.view<const Grindstone::EnvironmentMapComponent>();
+
+	bool hasEnvMap = false;
+	view.each(
+		[&hasEnvMap, &currentEnvironmentMapImage, reflectionDescriptorSet](const Grindstone::EnvironmentMapComponent& environmentMapComponent) {
+			// Valid env map found - ignore the rest.
+			if (hasEnvMap) {
+				return;
+			}
+
+			const Grindstone::TextureAsset* texAsset = environmentMapComponent.specularTexture.Get();
+			// Invalid env map - keep searching.
+			if (texAsset == nullptr || texAsset->image == nullptr) {
+				return;
+			}
+
+			hasEnvMap = true;
+			Grindstone::GraphicsAPI::Image* image = texAsset->image;
+			if (currentEnvironmentMapImage == image) {
+				// We found the correct env map and we're already using it - just send it forward to render.
+				return;
+			}
+
+			// We found the correct env map and it is different from the current one - change it and then render.
+			Grindstone::GraphicsAPI::DescriptorSet::Binding binding = Grindstone::GraphicsAPI::DescriptorSet::Binding::SampledImage(image);
+			reflectionDescriptorSet->ChangeBindings(&binding, 1u /* count */, 1u /* offset */);
+			currentEnvironmentMapImage = image;
+		}
+	);
+
+	return hasEnvMap;
+}
 
 bool Grindstone::Renderer::ScreenSpaceReflectionsPass::Initialize() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 	ssrPipelineSet = engineCore.assetManager->GetAssetReferenceByAddress<ComputePipelineAsset>("@CORESHADERS/postProcessing/screenSpaceReflections");
+	brdfLut = engineCore.assetManager->GetAssetReferenceByAddress<TextureAsset>("@CORESHADERS/textures/ibl_brdf_lut");
 
 	auto graphicsCore = EngineCore::GetInstance().GetGraphicsCore();
 
-	GraphicsAPI::DescriptorSetLayout::Binding sourceBinding{};
-	sourceBinding.count = 1;
-	sourceBinding.type = GraphicsAPI::BindingType::SampledImage;
-	sourceBinding.stages = GraphicsAPI::ShaderStageBit::Compute;
+	{
+		Grindstone::GraphicsAPI::Sampler::CreateInfo screenSamplerCreateInfo{
+			.debugName = "Screen Sampler",
+			.options = {
+				.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat,
+				.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat,
+				.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat,
+				.minFilter = GraphicsAPI::TextureFilter::Linear,
+				.magFilter = GraphicsAPI::TextureFilter::Linear,
+				.anistropy = 0
+			}
+		};
 
-	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 7> ssrLayoutBindings{};
-	for (size_t i = 0; i < ssrLayoutBindings.size(); ++i) {
-		ssrLayoutBindings[i] = sourceBinding;
-		ssrLayoutBindings[i].bindingId = static_cast<uint32_t>(i);
+		screenSampler = graphicsCore->GetOrCreateSampler(screenSamplerCreateInfo);
 	}
 
-	ssrLayoutBindings[0].type = GraphicsAPI::BindingType::UniformBuffer;
-	ssrLayoutBindings[1].type = GraphicsAPI::BindingType::Sampler;
-	ssrLayoutBindings[2].type = GraphicsAPI::BindingType::StorageImage;
+	{
+		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 2> ambientOcclusionInputLayoutBinding{
+			GraphicsAPI::DescriptorSetLayout::Binding{
+				.bindingId = 0,
+				.count = 1,
+				.type = GraphicsAPI::BindingType::SampledImage,
+				.stages = GraphicsAPI::ShaderStageBit::Compute
+			},
+			GraphicsAPI::DescriptorSetLayout::Binding{
 
-	GraphicsAPI::DescriptorSetLayout::CreateInfo ssrDescriptorSetLayoutCreateInfo{};
-	ssrDescriptorSetLayoutCreateInfo.debugName = "SSR Descriptor Set Layout";
-	ssrDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ssrLayoutBindings.size());
-	ssrDescriptorSetLayoutCreateInfo.bindings = ssrLayoutBindings.data();
-	ssrDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(ssrDescriptorSetLayoutCreateInfo);
+				.bindingId = 1,
+				.count = 1,
+				.type = GraphicsAPI::BindingType::SampledImage,
+				.stages = GraphicsAPI::ShaderStageBit::Compute
+			}
+		};
 
+		GraphicsAPI::DescriptorSetLayout::CreateInfo ambientOcclusionInputLayoutCreateInfo{};
+		ambientOcclusionInputLayoutCreateInfo.debugName = "Reflection Descriptor Set Layout";
+		ambientOcclusionInputLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ambientOcclusionInputLayoutBinding.size());
+		ambientOcclusionInputLayoutCreateInfo.bindings = ambientOcclusionInputLayoutBinding.data();
+		reflectionDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ambientOcclusionInputLayoutCreateInfo);
+	}
+
+	{
+		Grindstone::TextureAsset* brdfLutTextureAsset = brdfLut.Get();
+		std::array<GraphicsAPI::DescriptorSet::Binding, 2> aoInputBinding = {
+			GraphicsAPI::DescriptorSet::Binding::SampledImage(brdfLutTextureAsset != nullptr ? brdfLutTextureAsset->image : nullptr),
+			GraphicsAPI::DescriptorSet::Binding::SampledImage(nullptr)
+		};
+
+		GraphicsAPI::DescriptorSet::CreateInfo aoInputCreateInfo{};
+		aoInputCreateInfo.debugName = "Reflection Descriptor Set";
+		aoInputCreateInfo.layout = reflectionDescriptorSetLayout;
+		aoInputCreateInfo.bindingCount = static_cast<uint32_t>(aoInputBinding.size());
+		aoInputCreateInfo.bindings = aoInputBinding.data();
+		reflectionDescriptorSet = graphicsCore->CreateDescriptorSet(aoInputCreateInfo);
+	}
+	
 	return true;
 }
 
-void Grindstone::Renderer::ScreenSpaceReflectionsPass::AddPass(Grindstone::Renderer::RenderGraph& renderGraph) {
+Grindstone::Renderer::RenderGraphBuilderResourceRef Grindstone::Renderer::ScreenSpaceReflectionsPass::AddPass(
+	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
+	Renderer::RenderGraphBuilderResourceRef inputRef,
+	Renderer::RenderGraphBuilderResourceRef ambientOcclusionRef,
+	Grindstone::Renderer::GbufferData& gbufferData
+) {
 	Grindstone::ComputePipelineAsset* ssrPipelineAsset = ssrPipelineSet.Get();
 	if (ssrPipelineAsset == nullptr) {
-		return;
+		return inputRef;
 	}
 
 	Grindstone::GraphicsAPI::ComputePipeline* ssrPipeline = ssrPipelineAsset->GetPipeline();
-	if (ssrPipeline == nullptr) {
-		return;
+	Grindstone::GraphicsAPI::PipelineLayout* ssrPipelineLayout = ssrPipelineAsset->GetPipelineLayout();
+	if (ssrPipeline == nullptr || ssrPipelineLayout == nullptr) {
+		return inputRef;
 	}
 
-	/*
-	struct GbufferData {
-		Renderer::RenderGraphResource albedo;
-		Renderer::RenderGraphResource normal;
-		Renderer::RenderGraphResource specularRoughness;
-		Renderer::RenderGraphResource depth;
-	};
+	return renderGraphBuilder.CreateComputePass<RenderGraphBuilderResourceRef>(
+		"Screen-Space Reflections",
+		[this, inputRef, &gbufferData, ambientOcclusionRef](ComputeRenderGraphBuilderPass<RenderGraphBuilderResourceRef>& pass) -> RenderGraphBuilderResourceRef {
+			pass.ReadExternalSampler(screenSampler);
+			auto outputRef = pass.WriteStorageImage(resourceDesc);
+			pass.ReadSampledImage(inputRef);
+			pass.ReadSampledImage(gbufferData.depthRef);
+			pass.ReadSampledImage(gbufferData.normalRef);
+			pass.ReadSampledImage(gbufferData.specularRoughnessRef);
+			pass.ReadSampledImage(ambientOcclusionRef);
 
-	Grindstone::Renderer::RenderGraphPass& gbufferPass = renderGraph.AddCallbackPass<GbufferData>(
-		"Screen Space Reflections Pass",
-		[&](Renderer::RenderGraph::Builder& builder, GbufferData& data) {
-			gbufferPass.AddOutputImage(attachmentNameAlbedo, attachmentAlbedo);
-			gbufferPass.AddOutputImage(attachmentNameNormal, attachmentNormal);
-			gbufferPass.AddOutputImage(attachmentNameSpecularRoughness, attachmentSpecularRoughness);
-			gbufferPass.AddOutputImage(attachmentNameDepthStencil, attachmentDepthStencil);
+			return outputRef;
 		},
-		[&, registry = &registry](const GbufferData& data, Renderer::RenderGraphResource& resources) {
-			currentCommandBuffer->BeginDebugLabelSection("Screen Space Reflections Pass", nullptr);
-			currentCommandBuffer->BindComputePipeline(ssrPipeline);
+		[ssrPipeline, ssrPipelineLayout, this](
+			RenderGraphContext& cxt,
+			const RenderGraphFrameResources& frameResources,
+			RenderGraphBuilderResourceRef& ref
+		) {
+			FindEnvironmentMap(cxt.worldContextSet->GetEntityRegistry(), brdfLut, reflectionDescriptorSet, currentEnvironmentMapImage);
+			Grindstone::GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
 
-			{
-				GraphicsAPI::ImageBarrier barrier{
-					.image = imageSet.ssrRenderTarget,
-					.oldLayout = GraphicsAPI::ImageLayout::Undefined,
-					.newLayout = GraphicsAPI::ImageLayout::General,
-					.srcAccess = GraphicsAPI::AccessFlags::None,
-					.dstAccess = GraphicsAPI::AccessFlags::ShaderWrite,
-					.imageAspect = GraphicsAPI::ImageAspectBits::Color,
-					.baseMipLevel = 0,
-					.levelCount = 1,
-					.baseArrayLayer = 0,
-					.layerCount = 1
-				};
+			constexpr uint32_t WORKGROUP_SIZE = 4;
+			uint32_t groupCountX = (cxt.swapchainSize.x + WORKGROUP_SIZE - 1) / WORKGROUP_SIZE;
+			uint32_t groupCountY = (cxt.swapchainSize.y + WORKGROUP_SIZE - 1 + WORKGROUP_SIZE - 1) / WORKGROUP_SIZE;
 
-				currentCommandBuffer->PipelineBarrier(
-					GraphicsAPI::PipelineStageBit::TopOfPipe,
-					GraphicsAPI::PipelineStageBit::ComputeShader,
-					nullptr, 0,
-					&barrier, 1
-				);
+			cmd->BindComputePipeline(ssrPipeline);
 
-				std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> ssrDescriptors = {
-					imageSet.engineDescriptorSet,
-					imageSet.gbufferDescriptorSet,
-					imageSet.ssrDescriptorSet
-				};
+			cmd->BindComputeDescriptorSet(
+				ssrPipelineLayout,
+				&reflectionDescriptorSet,
+				2u, // Offset
+				1u // Count
+			);
 
-				currentCommandBuffer->BindComputeDescriptorSet(ssrPipeline, &imageSet.ssrDescriptorSet, 2u, 1u);
-				currentCommandBuffer->DispatchCompute(renderArea.GetWidth(), renderArea.GetHeight(), 1);
-
-				barrier.image = imageSet.ssrRenderTarget;
-				barrier.oldLayout = GraphicsAPI::ImageLayout::General;
-				barrier.newLayout = GraphicsAPI::ImageLayout::ShaderRead;
-				barrier.srcAccess = GraphicsAPI::AccessFlags::ShaderWrite;
-				barrier.dstAccess = GraphicsAPI::AccessFlags::ShaderRead;
-
-				currentCommandBuffer->PipelineBarrier(
-					GraphicsAPI::PipelineStageBit::ComputeShader,
-					GraphicsAPI::PipelineStageBit::ComputeShader,
-					nullptr, 0,
-					&barrier, 1
-				);
-			}
-			currentCommandBuffer->EndDebugLabelSection();
+			cmd->DispatchCompute(groupCountX, groupCountY, 1u);
 		}
 	);
-	*/
 }

@@ -20,55 +20,16 @@ static void PerformImageBasedLighting(
 	GraphicsPipelineAsset* imageBasedLightingAsset,
 	Grindstone::GraphicsAPI::Image*& currentEnvironmentMapImage
 ) {
-	if (imageBasedLightingAsset != nullptr) {
-		GraphicsAPI::PipelineLayout* imageBasedLightingPipelineLayout = imageBasedLightingAsset->GetFirstPassPipelineLayout();
-		GraphicsAPI::GraphicsPipeline* imageBasedLightingPipeline = imageBasedLightingAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
-		if (imageBasedLightingPipeline != nullptr) {
-			cmd->BeginDebugLabelSection("Image Based Lighting", nullptr);
-			cmd->BindGraphicsPipeline(imageBasedLightingPipeline);
+	if (imageBasedLightingAsset == nullptr) {
+		return;
+	}
 
-			auto view = registry.view<const EnvironmentMapComponent>();
-
-			bool hasEnvMap = false;
-			view.each(
-				[&hasEnvMap, &currentEnvironmentMapImage, &ambientOcclusionDescriptorSet](const EnvironmentMapComponent& environmentMapComponent) {
-					// Valid env map found - ignore the rest.
-					if (hasEnvMap) {
-						return;
-					}
-
-					const TextureAsset* texAsset = environmentMapComponent.specularTexture.Get();
-					// Invalid env map - keep searching.
-					if (texAsset == nullptr || texAsset->image == nullptr) {
-						return;
-					}
-
-					hasEnvMap = true;
-					GraphicsAPI::Image* image = texAsset->image;
-					if (currentEnvironmentMapImage == image) {
-						// We found the correct env map and we're already using it - just send it forward to render.
-						return;
-					}
-
-					// We found the correct env map and it is different from the current one - change it and then render.
-					GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::SampledImage(image);
-					ambientOcclusionDescriptorSet->ChangeBindings(&binding, 1u /* count */, 1u /* offset */);
-					currentEnvironmentMapImage = image;
-				}
-			);
-
-			if (hasEnvMap) {
-				cmd->BindGraphicsDescriptorSet(
-					imageBasedLightingPipelineLayout,
-					&ambientOcclusionDescriptorSet,
-					2u, // Offset
-					1u // Count
-				);
-				cmd->DrawIndices(0, 6, 0, 1, 0);
-			}
-
-			cmd->EndDebugLabelSection();
-		}
+	GraphicsAPI::GraphicsPipeline* imageBasedLightingPipeline = imageBasedLightingAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
+	if (imageBasedLightingPipeline != nullptr) {
+		cmd->BeginDebugLabelSection("Image Based Lighting", nullptr);
+		cmd->BindGraphicsPipeline(imageBasedLightingPipeline);
+		cmd->DrawIndices(0, 6, 0, 1, 0);
+		cmd->EndDebugLabelSection();
 	}
 }
 
@@ -78,7 +39,7 @@ bool Renderer::LightingPass::Initialize() {
 	Assets::AssetManager* assetManager = engineCore.assetManager;
 
 	{
-		imageBasedLightingPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/ibl");
+		imageBasedLightingPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/ambientIbl");
 		pointLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/point");
 		spotLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/spot");
 		directionalLightPipelineSet = assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/lighting/directional");
@@ -102,41 +63,30 @@ bool Renderer::LightingPass::Initialize() {
 	}
 
 	{
-		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 2> ambientOcclusionInputLayoutBinding{
-			GraphicsAPI::DescriptorSetLayout::Binding{
-				.bindingId = 0,
-				.count = 1,
-				.type = GraphicsAPI::BindingType::SampledImage,
-				.stages = GraphicsAPI::ShaderStageBit::Fragment
-			},
-			GraphicsAPI::DescriptorSetLayout::Binding{
-
-				.bindingId = 1,
-				.count = 1,
-				.type = GraphicsAPI::BindingType::SampledImage,
-				.stages = GraphicsAPI::ShaderStageBit::Fragment
-			}
+		GraphicsAPI::DescriptorSetLayout::Binding ambientOcclusionInputLayoutBinding{
+			.bindingId = 0,
+			.count = 1,
+			.type = GraphicsAPI::BindingType::SampledImage,
+			.stages = GraphicsAPI::ShaderStageBit::Fragment
 		};
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo ambientOcclusionInputLayoutCreateInfo{};
 		ambientOcclusionInputLayoutCreateInfo.debugName = "Ambient Occlusion Descriptor Set Layout";
-		ambientOcclusionInputLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ambientOcclusionInputLayoutBinding.size());
-		ambientOcclusionInputLayoutCreateInfo.bindings = ambientOcclusionInputLayoutBinding.data();
+		ambientOcclusionInputLayoutCreateInfo.bindingCount = 1u;
+		ambientOcclusionInputLayoutCreateInfo.bindings = &ambientOcclusionInputLayoutBinding;
 		ambientOcclusionDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ambientOcclusionInputLayoutCreateInfo);
 	}
 
 	{
 		Grindstone::TextureAsset* brdfLutTextureAsset = brdfLut.Get();
-		std::array<GraphicsAPI::DescriptorSet::Binding, 2> aoInputBinding = {
-			GraphicsAPI::DescriptorSet::Binding::SampledImage(brdfLutTextureAsset != nullptr ? brdfLutTextureAsset->image : nullptr),
-			GraphicsAPI::DescriptorSet::Binding::SampledImage(nullptr)
-		};
+		GraphicsAPI::DescriptorSet::Binding aoInputBinding =
+			GraphicsAPI::DescriptorSet::Binding::SampledImage(brdfLutTextureAsset != nullptr ? brdfLutTextureAsset->image : nullptr);
 
 		GraphicsAPI::DescriptorSet::CreateInfo aoInputCreateInfo{};
 		aoInputCreateInfo.debugName = "Ambient Occlusion Descriptor Set";
 		aoInputCreateInfo.layout = ambientOcclusionDescriptorSetLayout;
-		aoInputCreateInfo.bindingCount = static_cast<uint32_t>(aoInputBinding.size());
-		aoInputCreateInfo.bindings = aoInputBinding.data();
+		aoInputCreateInfo.bindingCount = 1u;
+		aoInputCreateInfo.bindings = &aoInputBinding;
 		ambientOcclusionDescriptorSet = graphicsCore->CreateDescriptorSet(aoInputCreateInfo);
 	}
 

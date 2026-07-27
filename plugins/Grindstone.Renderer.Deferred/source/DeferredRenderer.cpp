@@ -83,6 +83,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 	iboCi.bufferSize = sizeof(lightIndices);
 	indexBuffer = graphicsCore->CreateBuffer(iboCi);
 
+	ssr.Initialize();
 	skinning.Initialize();
 	bloom.Initialize();
 	debug.Initialize();
@@ -162,18 +163,18 @@ void DeferredRenderer::Render(
 	// TODO: Move this into the ssao pass, maybe? Specify a Two-Pass Separable Blur
 	Grindstone::Renderer::RenderGraphBuilderResourceRef ssaoBlurredOutput = blur.AddPass(renderGraphBuilder, ssaoBlurMetaRect, attachmentAmbientOcclusionBlur, ssaoOutput);
 	Grindstone::Renderer::LightingPassReturnData lightingData = lighting.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData, shadowOutput.shadowOutputRef, ssaoBlurredOutput);
-	// auto ssrOutput = ssr.AddPass(renderGraph, lightingOutput);
+	Grindstone::Renderer::RenderGraphBuilderResourceRef ssrOutput = ssr.AddPass(renderGraphBuilder, lightingData.lightingOutputRef, ssaoBlurredOutput, gbufferData);
 	// auto dofOutput = dof.AddPass(renderGraph, ssrOutput);
 
 	Grindstone::Renderer::RenderGraphBuilderResourceRef bloomOutput = bloom.AddBloomChain(
 		imageIndex,
 		Grindstone::Math::Uint2(renderArea.extent.x, renderArea.extent.y),
 		renderGraphBuilder,
-		lightingData.lightingOutputRef
+		ssrOutput
 	);
 	
 	if (renderMode == Grindstone::Renderer::DeferredRenderMode::Default) {
-		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, lightingData.lightingOutputRef, bloomOutput, colorImageRef);
+		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, ssrOutput, bloomOutput, colorImageRef);
 	}
 	else {
 		debug.AddPass(renderMode, projectionMatrix, vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData, ssaoBlurredOutput, colorImageRef);
