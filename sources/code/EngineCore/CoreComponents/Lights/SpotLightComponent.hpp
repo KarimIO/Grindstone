@@ -20,12 +20,11 @@ namespace Grindstone {
 	struct SpotLightComponent {
 		struct UniformStruct {
 			Math::Matrix4 shadowMatrix;
-			Math::Float3 color;
-			float attenuationRadius;
 			Math::Float3 position;
-			float intensity;
+			float attenuationRadius;
 			Math::Float3 direction;
 			float innerAngle;
+			Math::Float3 color;
 			float outerAngle;
 			Math::Rect2D shadowRenderArea;
 		};
@@ -34,11 +33,11 @@ namespace Grindstone {
 		static void Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity);
 
 		Math::Matrix4 shadowMatrix;
-		Math::Float3 color;
-		float attenuationRadius = 0.0f;
-		float intensity = 0.0f;
-		float innerAngle = 0.0f;
-		float outerAngle = 0.0f;
+		Math::Float3 color = Math::Float3(1.0f, 0.8f, 0.6f);
+		float attenuationRadius = 16.0f;
+		float intensity = 16.0f;
+		float innerAngle = 45.0f;
+		float outerAngle = 90.0f;
 		Math::Rect2D shadowRenderArea;
 
 		GraphicsAPI::Buffer* uniformBufferObject = nullptr;

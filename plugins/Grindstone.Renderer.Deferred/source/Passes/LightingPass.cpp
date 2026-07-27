@@ -201,15 +201,14 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 							const ECS::Entity entity(entityHandle, scene);
 
 							SpotLightComponent::UniformStruct lightStruct{
-								bias * spotLightComponent.shadowMatrix,
-								spotLightComponent.color,
-								spotLightComponent.attenuationRadius,
-								entity.GetWorldPosition(),
-								spotLightComponent.intensity,
-								entity.GetWorldForward(),
-								glm::cos(glm::radians(spotLightComponent.innerAngle)),
-								glm::cos(glm::radians(spotLightComponent.outerAngle)),
-								spotLightComponent.shadowRenderArea
+								.shadowMatrix = bias * spotLightComponent.shadowMatrix,
+								.position = entity.GetWorldPosition(),
+								.attenuationRadius = spotLightComponent.attenuationRadius,
+								.direction = entity.GetWorldForward(),
+								.innerAngle = glm::cos(glm::radians(spotLightComponent.innerAngle)),
+								.color = spotLightComponent.color * spotLightComponent.intensity,
+								.outerAngle = glm::cos(glm::radians(spotLightComponent.outerAngle)),
+								.shadowRenderArea = spotLightComponent.shadowRenderArea
 							};
 							spotLightComponent.uniformBufferObject->UploadData(&lightStruct);
 
@@ -240,12 +239,12 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 							const ECS::Entity entity(entityHandle, scene);
 
 							DirectionalLightComponent::UniformStruct lightStruct{
-								bias * directionalLightComponent.shadowMatrix,
-								directionalLightComponent.color,
-								directionalLightComponent.sourceRadius,
-								entity.GetWorldForward(),
-								directionalLightComponent.intensity,
-								directionalLightComponent.shadowRenderArea
+								.shadowMatrix = bias * directionalLightComponent.shadowMatrix,
+								.color = directionalLightComponent.color,
+								.sourceRadius = directionalLightComponent.sourceRadius,
+								.direction = entity.GetWorldForward(),
+								.intensity = directionalLightComponent.intensity,
+								.shadowRenderArea = directionalLightComponent.shadowRenderArea
 							};
 
 							directionalLightComponent.uniformBufferObject->UploadData(&lightStruct);

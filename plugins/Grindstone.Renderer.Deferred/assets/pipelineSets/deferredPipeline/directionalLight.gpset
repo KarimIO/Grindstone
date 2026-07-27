@@ -76,6 +76,7 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 					float roughness = gbufferSpecularRoughnessValue.a;
 
 					float3 lightPow = light.color * light.intensity;
+					float3 lightDirection = light.direction;
 
 					float3 litValues = LightDirCalc(
 						albedo,
@@ -83,12 +84,13 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 						specular,
 						roughness,
 						normal,
-						light.direction,
+						lightDirection,
 						lightPow,
 						rendererUbo.eyePos
 					);
 
-					float nl = dot(light.direction, normal);
+					float NdotL = saturate(dot(normal, -lightDirection));
+					float bias = max(0.0005, 0.005 * (1.0 - NdotL));
 					float4 lightSpacePos = mul(light.shadowMatrix, float4(position, 1));
 					float3 projCoords = lightSpacePos.xyz / lightSpacePos.w;
 					float pixelDepth = projCoords.z;
@@ -96,21 +98,21 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 					float2 resolution;
 					float levels;
 					shadowMap.GetDimensions(0, resolution.x, resolution.y, levels);
-					float2 texelSize = 1.0f / resolution;
+					float2 texelSize = 1.0f / (resolution * light.shadowRenderArea.zw);
 					static const float pcfKernelSize = 1.0f;
 					float shadow = 0.0f;
 
 					for (int i = 0; i < 16; ++i) {
-						float randomAngle = ShadowRandom(float4(floor(position.xyz * 1000.0f), i));
-						float2 rotation = float2(cos(randomAngle) * 0.5f + 0.5f, sin(randomAngle) * 0.5f + 0.5f);
+						float randomAngle = ShadowRandom(float4(floor(input.scaledFragmentTexCoord.xy * 1000), 0, i));
+						float2 rotation = float2(cos(randomAngle), sin(randomAngle));
 						float2 offset = float2(
 							rotation.x * poissonDisk[i].x - rotation.y * poissonDisk[i].y,
 							rotation.y * poissonDisk[i].x + rotation.x * poissonDisk[i].y
 						);
 
 						float2 shadowUv = (projCoords.xy * light.shadowRenderArea.zw) + light.shadowRenderArea.xy;
-						float pcfDepth = shadowMap.Sample(gbufferSampler, shadowUv + offset * texelSize * 0.0f).r;
-						bool isInLight = pcfDepth + 0.05f >= pixelDepth;
+						float pcfDepth = shadowMap.Sample(gbufferSampler, shadowUv + offset * texelSize).r;
+						bool isInLight = pcfDepth + bias >= pixelDepth;
 						shadow += isInLight ? 1.0f : 0.0f;
 					}
 
