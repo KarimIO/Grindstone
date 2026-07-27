@@ -98,7 +98,7 @@ void TextureImporter::QueueReloadAsset(Uuid uuid) {
 		EngineCore& engineCore = EngineCore::GetInstance();
 		GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 		graphicsCore->DeleteImage(image);
-		graphicsCore->DeleteSampler(defaultSampler);
+		// TODO: Maybe decrement sampler usage
 	});
 	textureIterator->second.image = nullptr;
 	textureIterator->second.defaultSampler = nullptr;
@@ -114,7 +114,7 @@ void TextureImporter::OnDeleteAsset(TextureAsset& asset) {
 		EngineCore& engineCore = EngineCore::GetInstance();
 		GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 		graphicsCore->DeleteImage(image);
-		graphicsCore->DeleteSampler(sampler);
+		// TODO: Maybe decrement sampler usage
 	});
 	asset.image  = nullptr;
 	asset.defaultSampler = nullptr;
@@ -128,7 +128,7 @@ TextureImporter::~TextureImporter() {
 		Grindstone::GraphicsAPI::Image* image = asset.second.image;
 		Grindstone::GraphicsAPI::Sampler* sampler = asset.second.defaultSampler;
 		graphicsCore->DeleteImage(image);
-		graphicsCore->DeleteSampler(sampler);
+		// TODO: Maybe decrement sampler usage
 	}
 	assets.clear();
 
@@ -136,7 +136,7 @@ TextureImporter::~TextureImporter() {
 		Grindstone::GraphicsAPI::Image* image = asset.second.image;
 		Grindstone::GraphicsAPI::Sampler* sampler = asset.second.defaultSampler;
 		graphicsCore->DeleteImage(image);
-		graphicsCore->DeleteSampler(sampler);
+		// TODO: Maybe decrement sampler usage
 	}
 	texturesByAddress.clear();
 }
