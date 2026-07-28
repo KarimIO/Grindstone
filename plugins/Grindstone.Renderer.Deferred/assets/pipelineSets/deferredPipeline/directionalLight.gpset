@@ -17,13 +17,17 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 			]
 
 			shaderHlsl {
-				struct LightUbo {
+				struct ShadowData {
 					float4x4 shadowMatrix;
-					float3 color;
-					float sourceRadius;
-					float3 direction;
-					float intensity;
 					float4 shadowRenderArea;
+				};
+
+				struct LightUbo {
+					ShadowData shadowData[8];
+					float4 shadowCascadeDistances[2]; // Each component is one distance, x2 for eight distances.
+					float3 color;
+					uint cascadeCount;
+					float3 direction;
 				};
 
 				ConstantBuffer<LightUbo> light : register(b0, space2);
@@ -65,6 +69,18 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 					return float3(NL * BSDFValue * lightColor.xyz);
 				}
 
+				uint GetLightCascade(float depthValue, uint cascadeCount) {
+					for (uint i = 0; i < cascadeCount; ++i) {
+						float4 cascadeQuad = light.shadowCascadeDistances[i / 4];
+						float shadowCascadeDistance = ((float[4])cascadeQuad.rgba)[i % 4];
+						if (depthValue < shadowCascadeDistance) {
+							return i;
+						}
+					}
+
+					return cascadeCount;
+				}
+
 				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
 					float4 gbufferSpecularRoughnessValue = gbufferSpecularRoughness.Sample(gbufferSampler, input.scaledFragmentTexCoord);
 
@@ -74,8 +90,7 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 					float3 normal = gbufferNormals.Sample(gbufferSampler, input.scaledFragmentTexCoord).rgb;
 					float3 specular = gbufferSpecularRoughnessValue.rgb;
 					float roughness = gbufferSpecularRoughnessValue.a;
-
-					float3 lightPow = light.color * light.intensity;
+					
 					float3 lightDirection = light.direction;
 
 					float3 litValues = LightDirCalc(
@@ -85,20 +100,45 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 						roughness,
 						normal,
 						lightDirection,
-						lightPow,
+						light.color,
 						rendererUbo.eyePos
 					);
 
+					float4 fragPosViewSpace = mul(rendererUbo.viewMatrix, float4(position, 1.0));
+					float depthValue = abs(fragPosViewSpace.z);
+
+					static const float3 debugCascadeColors[9] = {
+						float3(0,0,1),
+						float3(0,1,0),
+						float3(0,1,1),
+						float3(1,0,0),
+						float3(1,0,1),
+						float3(1,1,0),
+						float3(1,1,1),
+						float3(0.5,0.5,1),
+						float3(0,0,0)
+					};
+					
+					uint layer = GetLightCascade(depthValue, light.cascadeCount);
+					if (layer == light.cascadeCount) {
+						return float4(litValues, 1);
+					}
+
+					float3 debugCascadeColor = debugCascadeColors[layer];
+					ShadowData shadowData = light.shadowData[layer];
+
 					float NdotL = saturate(dot(normal, -lightDirection));
 					float bias = max(0.0005, 0.005 * (1.0 - NdotL));
-					float4 lightSpacePos = mul(light.shadowMatrix, float4(position, 1));
+					float4 lightSpacePos = mul(shadowData.shadowMatrix, float4(position, 1));
 					float3 projCoords = lightSpacePos.xyz / lightSpacePos.w;
 					float pixelDepth = projCoords.z;
 
+#define PCF
+#ifdef PCF
 					float2 resolution;
 					float levels;
 					shadowMap.GetDimensions(0, resolution.x, resolution.y, levels);
-					float2 texelSize = 1.0f / (resolution * light.shadowRenderArea.zw);
+					float2 texelSize = 1.0f / (resolution * shadowData.shadowRenderArea.zw);
 					static const float pcfKernelSize = 1.0f;
 					float shadow = 0.0f;
 
@@ -110,18 +150,24 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 							rotation.y * poissonDisk[i].x + rotation.x * poissonDisk[i].y
 						);
 
-						float2 shadowUv = (projCoords.xy * light.shadowRenderArea.zw) + light.shadowRenderArea.xy;
+						float2 shadowUv = (projCoords.xy * shadowData.shadowRenderArea.zw) + shadowData.shadowRenderArea.xy;
 						float pcfDepth = shadowMap.Sample(gbufferSampler, shadowUv + offset * texelSize).r;
 						bool isInLight = pcfDepth + bias >= pixelDepth;
 						shadow += isInLight ? 1.0f : 0.0f;
 					}
 
 					shadow = shadow / 16;
+#else
+					float2 shadowUv = (projCoords.xy * shadowData.shadowRenderArea.zw) + shadowData.shadowRenderArea.xy;
+					float pcfDepth = shadowMap.Sample(gbufferSampler, shadowUv).r;
+					bool isInLight = pcfDepth + bias >= pixelDepth;
+					float shadow = isInLight ? 1.0f : 0.0f;
+#endif
 
-					bool isInMap = projCoords.z >= 0 && projCoords.z <= 1;
+					bool isInMap = all(projCoords >= 0) && all(projCoords <= 1);
 					float isInLightMap = (isInMap) ? shadow : 0.0f;
 
-					return float4(float3(isInLightMap, isInLightMap, isInLightMap) * litValues, 1);
+					return float4(isInLightMap * litValues, 1);
 				}
 			}
 		}
