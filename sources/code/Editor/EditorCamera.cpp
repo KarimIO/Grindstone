@@ -7,6 +7,8 @@
 #include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
+#include <EngineCore/CoreComponents/Lights/PointLightComponent.hpp>
+#include <EngineCore/CoreComponents/Lights/SpotLightComponent.hpp>
 #include <EngineCore/Rendering/RenderGraphContextSet.hpp>
 #include <EngineCore/Rendering/RenderPassRegistry.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
@@ -14,7 +16,7 @@
 #include <EngineCore/Logger.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanDescriptorSet.hpp>
 #include <Grindstone.Physics.Jolt/include/Components/ColliderComponent.hpp>
-#include <Grindstone.Renderables.3D//include/Components/MeshComponent.hpp>
+#include <Grindstone.Renderables.3D/include/Components/MeshComponent.hpp>
 
 #include "EditorCamera.hpp"
 #include "EditorManager.hpp"
@@ -466,6 +468,8 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		depthImageRef
 	);
 
+	auto pushStats = [this](const Rendering::GeometryRenderStats& stats) { renderer->PushRenderingStats(stats); };
+
 	Renderer::RenderGraphBuilderResourceRef gridImageRef = renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
 		"Grid Pass",
 		Renderer::MetaRect::Swapchain(),
@@ -527,6 +531,8 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 				Physics::PlaneColliderComponent* plane = nullptr;
 				Physics::SphereColliderComponent* sphere = nullptr;
 				Grindstone::MeshComponent* mesh = nullptr;
+				Grindstone::PointLightComponent* pointLight = nullptr;
+				Grindstone::SpotLightComponent* spotLight = nullptr;
 
 				for (const ECS::Entity& selectedEntity : editorManager.GetSelection().selectedEntities) {
 					if (
@@ -547,6 +553,18 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 						if (isBoundingBoxGizmoEnabled) {
 							gizmoRenderer.SubmitCubeGizmo(matrix, boxSize, boundingBoxColor);
 						}
+					}
+
+					if (selectedEntity.TryGetComponent<Grindstone::PointLightComponent>(pointLight)) {
+						TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+						Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+						gizmoRenderer.SubmitSphereGizmo(matrix, pointLight->attenuationRadius, glm::vec4(pointLight->color, 1));
+					}
+
+					if (selectedEntity.TryGetComponent<Grindstone::SpotLightComponent>(spotLight)) {
+						TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+						Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+						gizmoRenderer.SubmitSphereGizmo(matrix, spotLight->attenuationRadius, glm::vec4(spotLight->color, 1));
 					}
 
 					if (isColliderGizmoEnabled) {
@@ -620,7 +638,7 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 				pass.WriteDepthStencilAttachment(depthResourceDesc, GraphicsAPI::LoadOp::Clear, clearDepthStencil);
 				return outputRef;
 			},
-			[this, adjustedPerspectiveMatrix, imageIndex](
+			[this, adjustedPerspectiveMatrix, pushStats, imageIndex](
 				Grindstone::Math::IntRect2D rect,
 				const Grindstone::Renderer::RenderGraphContext& cxt,
 				const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
@@ -653,7 +671,7 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 				};
 
 				assetRendererManager->SetEngineDescriptorSet(mousePickDescriptorSet[imageIndex]);
-				assetRendererManager->RenderQueue(commandBuffer, viewData, registry, mousePickRenderQueue);
+				pushStats(assetRendererManager->RenderQueue("Editor Mouse Pick", commandBuffer, viewData, registry, mousePickRenderQueue));
 			}
 		);
 	}

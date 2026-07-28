@@ -1,6 +1,9 @@
 #pragma once
 
+#include <functional>
+
 #include <Common/Rendering/RenderGraph.hpp>
+#include <Common/Rendering/GeometryRenderingStats.hpp>
 #include <EngineCore/Assets/AssetReference.hpp>
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 
@@ -15,7 +18,8 @@ namespace Grindstone::Renderer {
 		bool Initialize();
 		ShadowPassReturnData AddShadowPasses(
 			Grindstone::Renderer::RenderGraphBuilder& renderGraph,
-			Grindstone::WorldContextSet& worldContextSet
+			Grindstone::WorldContextSet& worldContextSet,
+			std::function<void(const Grindstone::Rendering::GeometryRenderStats&)> pushRenderingStatsCallback
 		);
 
 	protected:

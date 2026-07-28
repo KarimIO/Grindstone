@@ -4,6 +4,7 @@
 
 namespace Grindstone::Rendering {
 	struct GeometryRenderStats {
+		std::string debugName;
 		Grindstone::HashedString renderQueue;
 
 		uint32_t drawCalls = 0;

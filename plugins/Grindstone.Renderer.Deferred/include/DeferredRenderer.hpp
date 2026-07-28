@@ -54,6 +54,7 @@ namespace Grindstone {
 		virtual const RenderMode* GetRenderModes() const override;
 		virtual void SetRenderMode(uint16_t mode) override;
 		virtual std::vector<Grindstone::Rendering::GeometryRenderStats> GetRenderingStats() override;
+		virtual void PushRenderingStats(const Grindstone::Rendering::GeometryRenderStats& stats) override;
 
 	private:
 
@@ -61,6 +62,7 @@ namespace Grindstone {
 		uint32_t framebufferHeight = 0u;
 		Grindstone::Math::IntRect2D renderArea;
 
+		std::vector<Grindstone::Rendering::GeometryRenderStats> renderStats;
 		Grindstone::AssetReference<Grindstone::TextureAsset> brdfLut;
 
 		GraphicsAPI::Buffer* vertexBuffer;

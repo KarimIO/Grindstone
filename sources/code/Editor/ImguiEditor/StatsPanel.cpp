@@ -86,8 +86,32 @@ void RenderAsset(Grindstone::Assets::AssetManager* assetManager, const char* tit
 static void RenderRenderQueueTable(const char* name, Grindstone::BaseRenderer* renderer) {
 	if (ImGui::TreeNode(name)) {
 		std::vector<Grindstone::Rendering::GeometryRenderStats> renderingStats = renderer->GetRenderingStats();
+
+		Grindstone::Rendering::GeometryRenderStats combinedRenderingStats;
 		for (auto& renderingQueueStat : renderingStats) {
-			Grindstone::String renderQueueName = renderingQueueStat.renderQueue.ToString();
+			combinedRenderingStats.drawCalls += renderingQueueStat.drawCalls;
+			combinedRenderingStats.triangles += renderingQueueStat.triangles;
+			combinedRenderingStats.vertices += renderingQueueStat.vertices;
+			combinedRenderingStats.objectsCulled += renderingQueueStat.objectsCulled;
+			combinedRenderingStats.objectsRendered += renderingQueueStat.objectsRendered;
+			combinedRenderingStats.pipelineBinds += renderingQueueStat.pipelineBinds;
+			combinedRenderingStats.materialBinds += renderingQueueStat.materialBinds;
+			combinedRenderingStats.gpuTimeMs += renderingQueueStat.gpuTimeMs;
+			combinedRenderingStats.cpuTimeMs += renderingQueueStat.cpuTimeMs;
+		}
+
+		ImGui::Text("Draw Calls: %u", combinedRenderingStats.drawCalls);
+		ImGui::Text("Triangles: %u", combinedRenderingStats.triangles);
+		ImGui::Text("Vertices: %u", combinedRenderingStats.vertices);
+		ImGui::Text("Objects Culled: %u", combinedRenderingStats.objectsCulled);
+		ImGui::Text("Objects Rendered: %u", combinedRenderingStats.objectsRendered);
+		ImGui::Text("Pipeline Binds: %u", combinedRenderingStats.pipelineBinds);
+		ImGui::Text("Material Binds: %u", combinedRenderingStats.materialBinds);
+		ImGui::Text("GPU Time (ms) %f", combinedRenderingStats.gpuTimeMs);
+		ImGui::Text("CPU Time (ms): %f", combinedRenderingStats.cpuTimeMs);
+
+		for (auto& renderingQueueStat : renderingStats) {
+			Grindstone::String renderQueueName = renderingQueueStat.debugName;
 			if (ImGui::TreeNode(renderQueueName.c_str())) {
 				ImGui::Text("Draw Calls: %u", renderingQueueStat.drawCalls);
 				ImGui::Text("Triangles: %u", renderingQueueStat.triangles);

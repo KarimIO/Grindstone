@@ -8,7 +8,13 @@ bool Grindstone::Renderer::GbufferPass::Initialize() {
 	return true;
 }
 
-Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(RenderGraphBuilderResourceRef depthImageRef, glm::mat4& projectionMatrix, glm::mat4 viewMatrix, Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder) {
+Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(
+	RenderGraphBuilderResourceRef depthImageRef,
+	glm::mat4& projectionMatrix,
+	glm::mat4 viewMatrix,
+	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
+	std::function<void(const Grindstone::Rendering::GeometryRenderStats&)> pushRenderingStatsCallback
+) {
 	using namespace Grindstone::GraphicsAPI;
 
 	return renderGraphBuilder.CreateGraphicsPass<Grindstone::Renderer::GbufferData>(
@@ -27,7 +33,7 @@ Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(Ren
 				.depthRef = depthRef,
 			};
 		},
-		[projectionMatrix, viewMatrix](
+		[projectionMatrix, viewMatrix, pushRenderingStatsCallback](
 			Grindstone::Math::IntRect2D viewportArea,
 			const Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
@@ -44,8 +50,8 @@ Grindstone::Renderer::GbufferData Grindstone::Renderer::GbufferPass::AddPass(Ren
 				.renderArea = viewportArea
 			};
 
-			// TODO: Get Rendering Stats
-			engineCore.assetRendererManager->RenderQueue(cmd, renderViewData, cxtSet->GetEntityRegistry(), geometryOpaqueRenderPassKey);
+			const Grindstone::Rendering::GeometryRenderStats stats = engineCore.assetRendererManager->RenderQueue("Gbuffer Geometry Opaque", cmd, renderViewData, cxtSet->GetEntityRegistry(), geometryOpaqueRenderPassKey);
+			pushRenderingStatsCallback(stats);
 		}
 	);
 }
