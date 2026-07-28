@@ -3,6 +3,7 @@
 #include "EngineCore/Reflection/ComponentReflection.hpp"
 #include "EngineCore/ECS/Entity.hpp"
 #include "Common/Math.hpp"
+#include "Common/Rect.hpp"
 
 namespace Grindstone {
 	class WorldContextSet;
@@ -17,35 +18,34 @@ namespace Grindstone {
 	}
 
 	struct PointLightComponent {
+		struct ShadowData {
+			Grindstone::Math::Matrix4 shadowMatrix;
+			Grindstone::Math::Rect2D shadowRenderArea;
+		};
+
 		struct UniformStruct {
-			glm::vec3 lightColor = glm::vec3(3, 0.8, 0.4);
-			float lightAttenuationRadius = 40.0f;
+			ShadowData shadowData[6];
 			glm::vec3 lightPosition = glm::vec3(1, 2, 1);
-			float lightIntensity = 40.0f;
-			// float shadowResolution;
+			float lightAttenuationRadius = 40.0f;
+			glm::vec3 lightColor = glm::vec3(3, 0.8, 0.4);
+			float dummy;
 		};
 
 		static void Construct(Grindstone::WorldContextSet& cxtSet, entt::entity);
 		static void Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity);
 
-		Math::Float3 color;
-		float attenuationRadius;
-		float intensity;
+		ShadowData shadowData[6];
+		Math::Float3 color = Math::Float3(1.0f, 0.8f, 0.6f);
+		float attenuationRadius = 16.0f;
+		float intensity = 16.0f;
 
 		GraphicsAPI::Buffer* uniformBufferObject = nullptr;
 		GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
 		GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
 
-		/* TODO: Re-add this when you come back to point light shadows
-		float shadowResolution;
-		GraphicsAPI::RenderPass* renderPass = nullptr;
-		GraphicsAPI::Framebuffer* framebuffer = nullptr;
-		GraphicsAPI::DepthStencilTarget* depthTarget = nullptr;
-
-		GraphicsAPI::UniformBuffer* shadowMapUniformBufferObject = nullptr;
-		GraphicsAPI::DescriptorSet* shadowMapDescriptorSet = nullptr;
+		GraphicsAPI::Buffer* shadowMapUniformBufferObjects[6];
+		GraphicsAPI::DescriptorSet* shadowMapDescriptorSets[6];
 		GraphicsAPI::DescriptorSetLayout* shadowMapDescriptorSetLayout = nullptr;
-		*/
 
 		REFLECT("PointLight")
 	};

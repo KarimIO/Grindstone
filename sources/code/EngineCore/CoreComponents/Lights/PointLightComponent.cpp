@@ -25,115 +25,71 @@ void Grindstone::PointLightComponent::Construct(Grindstone::WorldContextSet& cxt
 
 	PointLightComponent& pointLightComponent = cxtSet.GetEntityRegistry().get<PointLightComponent>(entity);
 
-	/* TODO: Re-add this when you come back to point light shadows
-	uint32_t shadowResolution = static_cast<uint32_t>(pointLightComponent.shadowResolution);
-
-	RenderPass::CreateInfo renderPassCreateInfo{};
-	renderPassCreateInfo.width = shadowResolution;
-	renderPassCreateInfo.height = shadowResolution;
-	renderPassCreateInfo.colorFormats = nullptr;
-	renderPassCreateInfo.colorFormatCount = 0;
-	renderPassCreateInfo.depthFormat = DepthFormat::D32;
-	pointLightComponent.renderPass = graphicsCore->CreateRenderPass(renderPassCreateInfo);
-
-	DepthStencilTarget::CreateInfo shadowMapDepthImageCreateInfo(renderPassCreateInfo.depthFormat, shadowResolution, shadowResolution, true, true, true, "Point Shadow Map Depth Image");
-	pointLightComponent.depthTarget = graphicsCore->CreateDepthStencilTarget(shadowMapDepthImageCreateInfo);
-
-	Framebuffer::CreateInfo shadowMapCreateInfo{};
-	shadowMapCreateInfo.debugName = "Pointlight Shadow Framebuffer";
-	shadowMapCreateInfo.renderPass = pointLightComponent.renderPass;
-	shadowMapCreateInfo.renderTargetLists = nullptr;
-	shadowMapCreateInfo.numRenderTargetLists = 0;
-	shadowMapCreateInfo.depthTarget = pointLightComponent.depthTarget;
-	shadowMapCreateInfo.isCubemap = true;
-	pointLightComponent.framebuffer = graphicsCore->CreateFramebuffer(shadowMapCreateInfo);
-	*/
-
 	{
-		PointLightComponent::UniformStruct lightInfoStruct{};
+		PointLightComponent::UniformStruct lightStruct{};
 		GraphicsAPI::Buffer::CreateInfo lightUniformBufferObjectCi{};
+		lightUniformBufferObjectCi.content = &lightStruct;
 		lightUniformBufferObjectCi.debugName = "LightUbo";
-		lightUniformBufferObjectCi.content = &lightInfoStruct;
-		lightUniformBufferObjectCi.bufferUsage = BufferUsage::Uniform;
-		lightUniformBufferObjectCi.memoryUsage = MemoryUsage::CPUToGPU;
+		lightUniformBufferObjectCi.bufferUsage = GraphicsAPI::BufferUsage::Uniform;
+		lightUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU;
 		lightUniformBufferObjectCi.bufferSize = sizeof(PointLightComponent::UniformStruct);
 		pointLightComponent.uniformBufferObject = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
+
+		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 1> lightLayoutBindings{};
+		lightLayoutBindings[0].bindingId = 0;
+		lightLayoutBindings[0].count = 1;
+		lightLayoutBindings[0].type = GraphicsAPI::BindingType::UniformBuffer;
+		lightLayoutBindings[0].stages = GraphicsAPI::ShaderStageBit::Fragment;
+
+		GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
+		descriptorSetLayoutCreateInfo.debugName = "Pointlight Descriptor Set Layout";
+		descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightLayoutBindings.size());
+		descriptorSetLayoutCreateInfo.bindings = lightLayoutBindings.data();
+		pointLightComponent.descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
+
+		std::array<GraphicsAPI::DescriptorSet::Binding, 1> lightBindings{
+			GraphicsAPI::DescriptorSet::Binding::UniformBuffer(pointLightComponent.uniformBufferObject)
+		};
+
+		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
+		descriptorSetCreateInfo.debugName = "Pointlight Descriptor Set";
+		descriptorSetCreateInfo.layout = pointLightComponent.descriptorSetLayout;
+		descriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(lightBindings.size());
+		descriptorSetCreateInfo.bindings = lightBindings.data();
+		pointLightComponent.descriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 
 	{
-		std::array<DescriptorSetLayout::Binding, 1> lightBindings{};
-		lightBindings[0].bindingId = 0;
-		lightBindings[0].count = 1;
-		lightBindings[0].type = BindingType::UniformBuffer;
-		lightBindings[0].stages = ShaderStageBit::Fragment;
-
-		/* TODO: Re-add this when you come back to point light shadows
-		lightBindings[1].bindingId = 1;
-		lightBindings[1].count = 1;
-		lightBindings[1].type = BindingType::DepthTexture;
-		lightBindings[1].stages = ShaderStageBit::Fragment;
-		*/
-
-		DescriptorSetLayout::CreateInfo pointLightDescriptorSetLayoutCreateInfo{};
-		pointLightDescriptorSetLayoutCreateInfo.debugName = "Light UBO Descriptor Set Layout";
-		pointLightDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightBindings.size());
-		pointLightDescriptorSetLayoutCreateInfo.bindings = lightBindings.data();
-		pointLightComponent.descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(pointLightDescriptorSetLayoutCreateInfo);
-	}
-
-	{
-		std::array<DescriptorSet::Binding, 1> lightBindings;
-		lightBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(pointLightComponent.uniformBufferObject);
-
-		/* TODO: Re-add this when you come back to point light shadows
-		lightBindings[1].bindingIndex = 1;
-		lightBindings[1].count = 1;
-		lightBindings[1].bindingType = BindingType::DepthTexture;
-		lightBindings[1].itemPtr = pointLightComponent.depthTarget;
-		*/
-
-		DescriptorSet::CreateInfo pointLightDescriptorSetCreateInfo{};
-		pointLightDescriptorSetCreateInfo.debugName = "Light UBO Descriptor Set";
-		pointLightDescriptorSetCreateInfo.layout = pointLightComponent.descriptorSetLayout;
-		pointLightDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(lightBindings.size());
-		pointLightDescriptorSetCreateInfo.bindings = lightBindings.data();
-		pointLightComponent.descriptorSet = graphicsCore->CreateDescriptorSet(pointLightDescriptorSetCreateInfo);
-	}
-
-	/* TODO: Re-add this when you come back to point light shadows
-	{
-		UniformBuffer::CreateInfo lightUniformBufferObjectCi{};
-		lightUniformBufferObjectCi.debugName = "Point Shadow Map";
-		lightUniformBufferObjectCi.isDynamic = true;
-		lightUniformBufferObjectCi.size = sizeof(glm::mat4);
-		pointLightComponent.shadowMapUniformBufferObject = graphicsCore->CreateUniformBuffer(lightUniformBufferObjectCi);
-
-		DescriptorSetLayout::Binding lightUboBindingLayout{};
+		GraphicsAPI::DescriptorSetLayout::Binding lightUboBindingLayout{};
 		lightUboBindingLayout.bindingId = 0;
 		lightUboBindingLayout.count = 1;
-		lightUboBindingLayout.type = BindingType::UniformBuffer;
-		lightUboBindingLayout.stages = ShaderStageBit::Vertex;
+		lightUboBindingLayout.type = GraphicsAPI::BindingType::UniformBuffer;
+		lightUboBindingLayout.stages = GraphicsAPI::ShaderStageBit::Vertex;
 
-		DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
+		GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
 		descriptorSetLayoutCreateInfo.debugName = "Pointlight Shadow Descriptor Set Layout";
 		descriptorSetLayoutCreateInfo.bindingCount = 1;
 		descriptorSetLayoutCreateInfo.bindings = &lightUboBindingLayout;
 		pointLightComponent.shadowMapDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
-		DescriptorSet::Binding lightUboBinding{};
-		lightUboBinding.bindingIndex = 0;
-		lightUboBinding.count = 1;
-		lightUboBinding.bindingType = BindingType::UniformBuffer;
-		lightUboBinding.itemPtr = pointLightComponent.shadowMapUniformBufferObject;
+		for (size_t i = 0; i < 6; ++i) {
+			GraphicsAPI::Buffer::CreateInfo lightUniformBufferObjectCi{};
+			lightUniformBufferObjectCi.debugName = "Point Shadow Map";
+			lightUniformBufferObjectCi.bufferUsage = GraphicsAPI::BufferUsage::Uniform;
+			lightUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU;
+			lightUniformBufferObjectCi.bufferSize = sizeof(glm::mat4);
+			pointLightComponent.shadowMapUniformBufferObjects[i] = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
 
-		DescriptorSet::CreateInfo descriptorSetCreateInfo{};
-		descriptorSetCreateInfo.debugName = "Pointlight Shadow Descriptor Set";
-		descriptorSetCreateInfo.layout = pointLightComponent.shadowMapDescriptorSetLayout;
-		descriptorSetCreateInfo.bindingCount = 1;
-		descriptorSetCreateInfo.bindings = &lightUboBinding;
-		pointLightComponent.shadowMapDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+			GraphicsAPI::DescriptorSet::Binding lightUboBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(pointLightComponent.shadowMapUniformBufferObjects[i]);
+
+			GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
+			descriptorSetCreateInfo.debugName = "Pointlight Shadow Descriptor Set";
+			descriptorSetCreateInfo.layout = pointLightComponent.shadowMapDescriptorSetLayout;
+			descriptorSetCreateInfo.bindingCount = 1;
+			descriptorSetCreateInfo.bindings = &lightUboBinding;
+			pointLightComponent.shadowMapDescriptorSets[i] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+		}
 	}
-	*/
 }
 
 void Grindstone::PointLightComponent::Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {

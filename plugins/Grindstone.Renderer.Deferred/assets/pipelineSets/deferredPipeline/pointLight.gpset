@@ -9,6 +9,7 @@ pipelineSet "Point Light" inherits "DeferredLighting" {
 			requiresBlocks [
 				GsRendererUniform,
 				CommonConstants,
+				poissonDisk,
 				BSDF,
 				LightGbufferUniforms,
 				DiffuseDisney,
@@ -16,11 +17,15 @@ pipelineSet "Point Light" inherits "DeferredLighting" {
 			]
 
 			shaderHlsl {
+				struct ShadowData {
+					float4x4 shadowMatrix;
+					float4 shadowRenderArea;
+				};
+
 				struct LightUbo {
+					ShadowData shadowData[6];
+					float4 positionAttenuationRadius; // Position in RGB, Position in A
 					float3 color;
-					float attenuationRadius;
-					float3 position;
-					float intensity;
 				};
 
 				ConstantBuffer<LightUbo> light : register(b0, space2);
@@ -71,6 +76,18 @@ pipelineSet "Point Light" inherits "DeferredLighting" {
 					return float3(NL * BSDFValue * lightModifier);
 				}
 
+				int GetCubeFace(float3 dir) {
+					float3 a = abs(dir);
+
+					if (a.x >= a.y && a.x >= a.z)
+						return dir.x > 0.0 ? 0 : 1;
+
+					if (a.y >= a.z)
+						return dir.y > 0.0 ? 2 : 3;
+
+					return dir.z > 0.0 ? 4 : 5;
+				}
+
 				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
 					float4 gbufferSpecularRoughnessValue = gbufferSpecularRoughness.Sample(gbufferSampler, input.scaledFragmentTexCoord);
 
@@ -81,16 +98,55 @@ pipelineSet "Point Light" inherits "DeferredLighting" {
 					float3 specular = gbufferSpecularRoughnessValue.rgb;
 					float roughness = gbufferSpecularRoughnessValue.a;
 
-					/*float near = 0.1;
-					float far = 100;
-					float projectionA = far / (far - near);
-					float projectionB = (-far * near) / (far - near);
-					float3 position = fragmentViewRay * depth;*/
+					float3 lightColor = light.color;
+					float3 lightPosition = light.positionAttenuationRadius.xyz;
+					float lightAttenuationRadius = light.positionAttenuationRadius.a;
 
-					float3 lightPow = light.color * light.intensity;
-					float3 litValues = LightPointCalc(albedo, position, specular, roughness, normal, light.position, light.attenuationRadius, lightPow, rendererUbo.eyePos);
+					float3 litValues = LightPointCalc(albedo, position, specular, roughness, normal, lightPosition, lightAttenuationRadius, lightColor, rendererUbo.eyePos);
 
-					return float4(litValues, 1);
+					float3 lightDirection = normalize(position - lightPosition);
+					int cubeFaceIndex = GetCubeFace(lightDirection);
+					float4x4 shadowMatrix = light.shadowData[cubeFaceIndex].shadowMatrix;
+					float4 shadowRenderArea = light.shadowData[cubeFaceIndex].shadowRenderArea;
+
+					float NdotL = saturate(dot(normal, -lightDirection));
+					float bias = max(0.0005, 0.005 * (1.0 - NdotL));
+					float4 lightSpacePos = mul(shadowMatrix, float4(position, 1));
+					float3 projCoords = lightSpacePos.xyz / lightSpacePos.w;
+					projCoords.xy = projCoords.xy * 0.5 + 0.5;
+					float pixelDepth = projCoords.z;
+
+					#ifdef PCF
+					float2 resolution;
+					uint levels;
+					shadowMap.GetDimensions(0, resolution.x, resolution.y, levels);
+					float2 texelSize = 1.0f / (resolution * shadowRenderArea.zw);
+					static const float pcfKernelSize = 1.0f;
+					float shadow = 0.0f;
+
+					for (int i = 0; i < 16; ++i) {
+						float randomAngle = ShadowRandom(float4(floor(input.scaledFragmentTexCoord.xy * 1000), 0, i));
+						float2 rotation = float2(cos(randomAngle), sin(randomAngle));
+						float2 offset = float2(
+							rotation.x * poissonDisk[i].x - rotation.y * poissonDisk[i].y,
+							rotation.y * poissonDisk[i].x + rotation.x * poissonDisk[i].y
+						);
+
+						float2 shadowUv = (projCoords.xy * shadowRenderArea.zw) + shadowRenderArea.xy;
+						float pcfDepth = shadowMap.Sample(gbufferSampler, shadowUv + offset * texelSize * pcfKernelSize).r;
+						bool isInLight = pcfDepth + bias >= pixelDepth;
+						shadow += isInLight ? 1.0f : 0.0f;
+					}
+
+					shadow = shadow / 16.0f;
+					#else
+					float2 shadowUv = (projCoords.xy * shadowRenderArea.zw) + shadowRenderArea.xy;
+					float shadowDepth = shadowMap.Sample(gbufferSampler, shadowUv).r;
+					bool isInLight = shadowDepth + bias >= pixelDepth;
+					float shadow = isInLight ? 1.0f : 0.0f;
+					#endif
+
+					return float4(shadow * litValues, 1);
 				}
 			}
 		}
