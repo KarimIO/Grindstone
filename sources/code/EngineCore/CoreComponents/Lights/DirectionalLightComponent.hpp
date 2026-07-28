@@ -17,30 +17,35 @@ namespace Grindstone {
 	}
 
 	struct DirectionalLightComponent {
+		static constexpr size_t MAX_CASCADE_COUNT = 8;
+		struct ShadowData {
+			Grindstone::Math::Matrix4 shadowMatrix;
+			Grindstone::Math::Rect2D shadowRenderArea;
+		};
+
 		struct UniformStruct {
-			Math::Matrix4 shadowMatrix;
+			ShadowData shadowData[MAX_CASCADE_COUNT];
+			float cascadeDistances[MAX_CASCADE_COUNT];
 			Math::Float3 color;
-			float sourceRadius;
+			uint32_t cascadeCount;
 			Math::Float3 direction;
-			float intensity;
-			Math::Rect2D shadowRenderArea;
 		};
 
 		static void Construct(Grindstone::WorldContextSet& cxtSet, entt::entity);
 		static void Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity);
 
-		Math::Matrix4 shadowMatrix;
+		ShadowData shadowData[8];
+		float cascadeDistances[8];
+		uint32_t cascadeCount;
 		Math::Float3 color;
-		float sourceRadius = 0.0f;
 		float intensity = 0.0f;
-		Math::Rect2D shadowRenderArea;
 
 		GraphicsAPI::Buffer* uniformBufferObject = nullptr;
 		GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
 		GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
 
-		GraphicsAPI::Buffer* shadowMapUniformBufferObject = nullptr;
-		GraphicsAPI::DescriptorSet* shadowMapDescriptorSet = nullptr;
+		GraphicsAPI::Buffer* shadowMapUniformBufferObjects[MAX_CASCADE_COUNT];
+		GraphicsAPI::DescriptorSet* shadowMapDescriptorSets[MAX_CASCADE_COUNT];
 		GraphicsAPI::DescriptorSetLayout* shadowMapDescriptorSetLayout = nullptr;
 
 		REFLECT("DirectionalLight")

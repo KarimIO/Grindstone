@@ -123,148 +123,151 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 			const Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
 			LightingPassReturnData& lightingImageRef
-		) {
-			GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
-			EngineCore& engineCore = EngineCore::GetInstance();
-			entt::registry& registry = cxt.worldContextSet->GetEntityRegistry();
-			GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+			) {
+				GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
+				EngineCore& engineCore = EngineCore::GetInstance();
+				entt::registry& registry = cxt.worldContextSet->GetEntityRegistry();
+				GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
-			// TODO: We should be able to get transforms below without a scene.
-			Grindstone::SceneManagement::SceneManager* sceneManager = engineCore.GetSceneManager();
-			Grindstone::SceneManagement::Scene* scene = sceneManager->scenes.begin()->second;
+				// TODO: We should be able to get transforms below without a scene.
+				Grindstone::SceneManagement::SceneManager* sceneManager = engineCore.GetSceneManager();
+				Grindstone::SceneManagement::Scene* scene = sceneManager->scenes.begin()->second;
 
-			cmd->BindVertexBuffers(&vertexBuffer, 1);
-			cmd->BindIndexBuffer(indexBuffer);
+				cmd->BindVertexBuffers(&vertexBuffer, 1);
+				cmd->BindIndexBuffer(indexBuffer);
 
-			const glm::mat4 bias = glm::mat4(
-				0.5f, 0.0f, 0.0f, 0.0f,
-				0.0f, 0.5f, 0.0f, 0.0f,
-				0.0f, 0.0f, 1.0f, 0.0f,
-				0.5f, 0.5f, 0.0f, 1.0f
-			);
-
-			GraphicsPipelineAsset* imageBasedLightingAsset = imageBasedLightingPipelineSet.Get();
-			if (imageBasedLightingAsset != nullptr) {
-				PerformImageBasedLighting(
-					registry,
-					cmd,
-					ambientOcclusionDescriptorSet,
-					imageBasedLightingPipelineSet.Get(),
-					currentEnvironmentMapImage
+				const glm::mat4 bias = glm::mat4(
+					0.5f, 0.0f, 0.0f, 0.0f,
+					0.0f, 0.5f, 0.0f, 0.0f,
+					0.0f, 0.0f, 1.0f, 0.0f,
+					0.5f, 0.5f, 0.0f, 1.0f
 				);
-			}
 
-			GraphicsPipelineAsset* pointLightAsset = pointLightPipelineSet.Get();
-			if (pointLightAsset != nullptr) {
-				GraphicsAPI::PipelineLayout* pointLightPipelineLayout = pointLightAsset->GetFirstPassPipelineLayout();
-				GraphicsAPI::GraphicsPipeline* pointLightPipeline = pointLightAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
-				if (pointLightPipeline != nullptr) {
-					cmd->BeginDebugLabelSection("Point Lighting", nullptr);
-					cmd->BindGraphicsPipeline(pointLightPipeline);
+				GraphicsPipelineAsset* imageBasedLightingAsset = imageBasedLightingPipelineSet.Get();
+				if (imageBasedLightingAsset != nullptr) {
+					PerformImageBasedLighting(
+						registry,
+						cmd,
+						ambientOcclusionDescriptorSet,
+						imageBasedLightingPipelineSet.Get(),
+						currentEnvironmentMapImage
+					);
+				}
 
-					auto view = registry.view<const entt::entity, PointLightComponent>();
-					view.each(
-						[&](const entt::entity entityHandle, PointLightComponent& pointLightComponent) {
-							const ECS::Entity entity(entityHandle, scene);
-							PointLightComponent::UniformStruct lightStruct{
-								.lightPosition = entity.GetWorldPosition(),
-								.lightAttenuationRadius = pointLightComponent.attenuationRadius,
-								.lightColor = pointLightComponent.color * pointLightComponent.intensity
-							};
+				GraphicsPipelineAsset* pointLightAsset = pointLightPipelineSet.Get();
+				if (pointLightAsset != nullptr) {
+					GraphicsAPI::PipelineLayout* pointLightPipelineLayout = pointLightAsset->GetFirstPassPipelineLayout();
+					GraphicsAPI::GraphicsPipeline* pointLightPipeline = pointLightAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
+					if (pointLightPipeline != nullptr) {
+						cmd->BeginDebugLabelSection("Point Lighting", nullptr);
+						cmd->BindGraphicsPipeline(pointLightPipeline);
 
-							for (size_t i = 0; i < 6; ++i) {
-								lightStruct.shadowData[i].shadowMatrix = pointLightComponent.shadowData[i].shadowMatrix;
-								lightStruct.shadowData[i].shadowRenderArea = pointLightComponent.shadowData[i].shadowRenderArea;
+						auto view = registry.view<const entt::entity, PointLightComponent>();
+						view.each(
+							[&](const entt::entity entityHandle, PointLightComponent& pointLightComponent) {
+								const ECS::Entity entity(entityHandle, scene);
+								PointLightComponent::UniformStruct lightStruct{
+									.lightPosition = entity.GetWorldPosition(),
+									.lightAttenuationRadius = pointLightComponent.attenuationRadius,
+									.lightColor = pointLightComponent.color * pointLightComponent.intensity
+								};
+
+								for (size_t i = 0; i < 6; ++i) {
+									lightStruct.shadowData[i].shadowMatrix = pointLightComponent.shadowData[i].shadowMatrix;
+									lightStruct.shadowData[i].shadowRenderArea = pointLightComponent.shadowData[i].shadowRenderArea;
+								}
+
+								pointLightComponent.uniformBufferObject->UploadData(&lightStruct);
+								cmd->BindGraphicsDescriptorSet(
+									pointLightPipelineLayout,
+									&pointLightComponent.descriptorSet,
+									2u, // Offset
+									1u // Count
+								);
+								cmd->DrawIndices(0, 6, 0, 1, 0);
 							}
-
-							pointLightComponent.uniformBufferObject->UploadData(&lightStruct);
-							cmd->BindGraphicsDescriptorSet(
-								pointLightPipelineLayout,
-								&pointLightComponent.descriptorSet,
-								2u, // Offset
-								1u // Count
-							);
-							cmd->DrawIndices(0, 6, 0, 1, 0);
-						}
-					);
-					cmd->EndDebugLabelSection();
+						);
+						cmd->EndDebugLabelSection();
+					}
 				}
-			}
 
-			GraphicsPipelineAsset* spotLightAsset = spotLightPipelineSet.Get();
-			if (spotLightAsset != nullptr) {
-				GraphicsAPI::PipelineLayout* spotLightPipelineLayout = spotLightAsset->GetFirstPassPipelineLayout();
-				GraphicsAPI::GraphicsPipeline* spotLightPipeline = spotLightAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
-				if (spotLightPipeline != nullptr) {
-					cmd->BeginDebugLabelSection("Spot Lighting", nullptr);
-					cmd->BindGraphicsPipeline(spotLightPipeline);
+				GraphicsPipelineAsset* spotLightAsset = spotLightPipelineSet.Get();
+				if (spotLightAsset != nullptr) {
+					GraphicsAPI::PipelineLayout* spotLightPipelineLayout = spotLightAsset->GetFirstPassPipelineLayout();
+					GraphicsAPI::GraphicsPipeline* spotLightPipeline = spotLightAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
+					if (spotLightPipeline != nullptr) {
+						cmd->BeginDebugLabelSection("Spot Lighting", nullptr);
+						cmd->BindGraphicsPipeline(spotLightPipeline);
 
-					auto view = registry.view<const entt::entity, SpotLightComponent>();
-					view.each(
-						[&](const entt::entity entityHandle, SpotLightComponent& spotLightComponent) {
-							const ECS::Entity entity(entityHandle, scene);
+						auto view = registry.view<const entt::entity, SpotLightComponent>();
+						view.each(
+							[&](const entt::entity entityHandle, SpotLightComponent& spotLightComponent) {
+								const ECS::Entity entity(entityHandle, scene);
 
-							const SpotLightComponent::UniformStruct lightStruct{
-								.shadowMatrix = bias * spotLightComponent.shadowMatrix,
-								.position = entity.GetWorldPosition(),
-								.attenuationRadius = spotLightComponent.attenuationRadius,
-								.direction = entity.GetWorldForward(),
-								.innerAngle = glm::cos(glm::radians(spotLightComponent.innerAngle)),
-								.color = spotLightComponent.color * spotLightComponent.intensity,
-								.outerAngle = glm::cos(glm::radians(spotLightComponent.outerAngle)),
-								.shadowRenderArea = spotLightComponent.shadowRenderArea
-							};
-							spotLightComponent.uniformBufferObject->UploadData(&lightStruct);
+								const SpotLightComponent::UniformStruct lightStruct{
+									.shadowMatrix = bias * spotLightComponent.shadowMatrix,
+									.position = entity.GetWorldPosition(),
+									.attenuationRadius = spotLightComponent.attenuationRadius,
+									.direction = entity.GetWorldForward(),
+									.innerAngle = glm::cos(glm::radians(spotLightComponent.innerAngle)),
+									.color = spotLightComponent.color * spotLightComponent.intensity,
+									.outerAngle = glm::cos(glm::radians(spotLightComponent.outerAngle)),
+									.shadowRenderArea = spotLightComponent.shadowRenderArea
+								};
+								spotLightComponent.uniformBufferObject->UploadData(&lightStruct);
 
-							cmd->BindGraphicsDescriptorSet(
-								spotLightPipelineLayout,
-								&spotLightComponent.descriptorSet,
-								2u, // Offset
-								1u // Count
-							);
-							cmd->DrawIndices(0, 6, 0, 1, 0);
-						}
-					);
-					cmd->EndDebugLabelSection();
+								cmd->BindGraphicsDescriptorSet(
+									spotLightPipelineLayout,
+									&spotLightComponent.descriptorSet,
+									2u, // Offset
+									1u // Count
+								);
+								cmd->DrawIndices(0, 6, 0, 1, 0);
+							}
+						);
+						cmd->EndDebugLabelSection();
+					}
 				}
-			}
 
-			GraphicsPipelineAsset* directionalLightAsset = directionalLightPipelineSet.Get();
-			if (directionalLightAsset != nullptr) {
-				GraphicsAPI::PipelineLayout* directionalLightPipelineLayout = directionalLightAsset->GetFirstPassPipelineLayout();
-				GraphicsAPI::GraphicsPipeline* directionalLightPipeline = directionalLightAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
-				if (directionalLightPipeline != nullptr) {
-					cmd->BeginDebugLabelSection("Directional Lighting", nullptr);
-					cmd->BindGraphicsPipeline(directionalLightPipeline);
+				GraphicsPipelineAsset* directionalLightAsset = directionalLightPipelineSet.Get();
+				if (directionalLightAsset != nullptr) {
+					GraphicsAPI::PipelineLayout* directionalLightPipelineLayout = directionalLightAsset->GetFirstPassPipelineLayout();
+					GraphicsAPI::GraphicsPipeline* directionalLightPipeline = directionalLightAsset->GetFirstPassPipeline(&vertexLightPositionLayout);
+					if (directionalLightPipeline != nullptr) {
+						cmd->BeginDebugLabelSection("Directional Lighting", nullptr);
+						cmd->BindGraphicsPipeline(directionalLightPipeline);
 
-					auto view = registry.view<const entt::entity, const TransformComponent, DirectionalLightComponent>();
-					view.each(
-						[&](const entt::entity entityHandle, const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
-							const ECS::Entity entity(entityHandle, scene);
+						auto view = registry.view<const entt::entity, const TransformComponent, DirectionalLightComponent>();
+						view.each(
+							[&](const entt::entity entityHandle, const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
+								const ECS::Entity entity(entityHandle, scene);
 
-							DirectionalLightComponent::UniformStruct lightStruct{
-								.shadowMatrix = bias * directionalLightComponent.shadowMatrix,
-								.color = directionalLightComponent.color,
-								.sourceRadius = directionalLightComponent.sourceRadius,
-								.direction = entity.GetWorldForward(),
-								.intensity = directionalLightComponent.intensity,
-								.shadowRenderArea = directionalLightComponent.shadowRenderArea
-							};
+								DirectionalLightComponent::UniformStruct lightStruct{
+									.color = directionalLightComponent.color * directionalLightComponent.intensity,
+									.cascadeCount = directionalLightComponent.cascadeCount,
+									.direction = entity.GetWorldForward(),
+								};
 
-							directionalLightComponent.uniformBufferObject->UploadData(&lightStruct);
+								for (size_t i = 0; i < 8; ++i) {
+									lightStruct.cascadeDistances[i] = directionalLightComponent.cascadeDistances[i];
+									lightStruct.shadowData[i].shadowMatrix = bias * directionalLightComponent.shadowData[i].shadowMatrix;
+									lightStruct.shadowData[i].shadowRenderArea = directionalLightComponent.shadowData[i].shadowRenderArea;
+								}
 
-							cmd->BindGraphicsDescriptorSet(
-								directionalLightPipelineLayout,
-								&directionalLightComponent.descriptorSet,
-								2u, // Offset
-								1u // Count
-							);
-							cmd->DrawIndices(0, 6, 0, 1, 0);
-						}
-					);
-					cmd->EndDebugLabelSection();
+								directionalLightComponent.uniformBufferObject->UploadData(&lightStruct);
+
+								cmd->BindGraphicsDescriptorSet(
+									directionalLightPipelineLayout,
+									&directionalLightComponent.descriptorSet,
+									2u, // Offset
+									1u // Count
+								);
+								cmd->DrawIndices(0, 6, 0, 1, 0);
+							}
+						);
+						cmd->EndDebugLabelSection();
+					}
 				}
-			}
 		}
 	);
 }

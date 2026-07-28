@@ -94,7 +94,7 @@ static void RenderSpotLightComponent(
 	const std::string& passName,
 	Grindstone::Math::IntRect2D renderArea,
 	Grindstone::GraphicsAPI::CommandBuffer* cmd,
-	Grindstone::WorldContextSet* cxtSet, 
+	Grindstone::WorldContextSet* cxtSet,
 	const ECS::Entity entity,
 	Grindstone::SpotLightComponent& spotLightComponent,
 	std::function<void(const Grindstone::Rendering::GeometryRenderStats&)> pushRenderingStatsCallback
@@ -133,6 +133,112 @@ static void RenderSpotLightComponent(
 	pushRenderingStatsCallback(RenderShadowMap(passName, cxtSet, renderViewData, engineCore, cmd));
 }
 
+static std::array<glm::vec4, 8> GetFrustumCornersWorldSpace(const glm::mat4& proj, const glm::mat4& view) {
+	const auto inv = glm::inverse(proj * view);
+
+	std::array<glm::vec4, 8> frustumCorners{};
+	for (uint32_t x = 0; x < 2; ++x) {
+		for (uint32_t y = 0; y < 2; ++y) {
+			for (uint32_t z = 0; z < 2; ++z) {
+				const glm::vec4 pt = inv * glm::vec4(2.0f * x - 1.0f, 2.0f * y - 1.0f, static_cast<float>(z), 1.0f);
+
+				uint32_t index = z * 4 + y * 2 + x;
+				frustumCorners[index] = (pt / pt.w);
+			}
+		}
+	}
+
+	return frustumCorners;
+}
+
+static std::tuple<glm::mat4, glm::mat4> GenerateCascadeMatrixFromCorners(
+	const std::array<glm::vec4, 8>& cascadeFrustumCorners,
+	const glm::vec3 cameraFrustumCenter,
+	const glm::vec3 lightDir
+) {
+	glm::vec3 up = glm::vec3(0, 1, 0);
+
+	if (abs(glm::dot(up, lightDir)) > 0.99f) {
+		up = glm::vec3(0, 0, 1);
+	}
+
+	const glm::mat4 lightView = glm::lookAt(
+		cameraFrustumCenter - lightDir,
+		cameraFrustumCenter,
+		up
+	);
+
+	float minX = std::numeric_limits<float>::max();
+	float maxX = std::numeric_limits<float>::lowest();
+	float minY = std::numeric_limits<float>::max();
+	float maxY = std::numeric_limits<float>::lowest();
+	float minZ = std::numeric_limits<float>::max();
+	float maxZ = std::numeric_limits<float>::lowest();
+	for (const glm::vec3& corner : cascadeFrustumCorners) {
+		const glm::vec4 viewSpaceCorner = lightView * glm::vec4(corner, 1.0f);
+
+		minX = std::min(minX, viewSpaceCorner.x);
+		maxX = std::max(maxX, viewSpaceCorner.x);
+		minY = std::min(minY, viewSpaceCorner.y);
+		maxY = std::max(maxY, viewSpaceCorner.y);
+		minZ = std::min(minZ, viewSpaceCorner.z);
+		maxZ = std::max(maxZ, viewSpaceCorner.z);
+	}
+
+	float cascadeMaxDist = maxZ;
+
+	constexpr float zMult = 100.0f;
+	if (minZ < 0) {
+		minZ *= zMult;
+	}
+	else {
+		minZ /= zMult;
+	}
+	if (maxZ < 0) {
+		maxZ /= zMult;
+	}
+	else {
+		maxZ *= zMult;
+	}
+
+	glm::mat4 lightProjection = glm::ortho(minX, maxX, minY, maxY, minZ, maxZ);
+	Grindstone::EngineCore::GetInstance().GetGraphicsCore()->AdjustPerspective(&lightProjection[0][0]);
+
+	return { lightProjection, lightView };
+}
+
+static std::array<glm::vec4, 8> GetCascadeFrustumCorners(const std::array<glm::vec4, 8>& cameraFrustumCorners, float cascadeNearFactor, float cascadeFarFactor) {
+	const std::array<glm::vec4, 8> transformedCorners{
+		glm::mix(cameraFrustumCorners[0], cameraFrustumCorners[4], cascadeNearFactor),
+		glm::mix(cameraFrustumCorners[1], cameraFrustumCorners[5], cascadeNearFactor),
+		glm::mix(cameraFrustumCorners[2], cameraFrustumCorners[6], cascadeNearFactor),
+		glm::mix(cameraFrustumCorners[3], cameraFrustumCorners[7], cascadeNearFactor),
+		glm::mix(cameraFrustumCorners[0], cameraFrustumCorners[4], cascadeFarFactor),
+		glm::mix(cameraFrustumCorners[1], cameraFrustumCorners[5], cascadeFarFactor),
+		glm::mix(cameraFrustumCorners[2], cameraFrustumCorners[6], cascadeFarFactor),
+		glm::mix(cameraFrustumCorners[3], cameraFrustumCorners[7], cascadeFarFactor)
+	};
+
+	return transformedCorners;
+}
+
+static std::tuple<glm::mat4, glm::mat4> GenerateCascadeProjectionViewMatrix(
+	const std::array<glm::vec4, 8>& cameraFrustumCorners,
+	const glm::vec3 lightDirection,
+	const float cascadeNearFactor,
+	const float cascadeFarFactor
+) {
+	const std::array<glm::vec4, 8> cascadeFrustumCorners = GetCascadeFrustumCorners(cameraFrustumCorners, cascadeNearFactor, cascadeFarFactor);
+
+	glm::vec3 cameraFrustumCenter = glm::vec3(0, 0, 0);
+	for (const glm::vec4& v : cascadeFrustumCorners) {
+		cameraFrustumCenter += glm::vec3(v);
+	}
+	cameraFrustumCenter /= cascadeFrustumCorners.size();
+
+	return GenerateCascadeMatrixFromCorners(cascadeFrustumCorners, cameraFrustumCenter, lightDirection);
+}
+
 static void RenderDirectionalLightComponent(
 	const std::string& passName,
 	Grindstone::Math::IntRect2D renderArea,
@@ -140,46 +246,28 @@ static void RenderDirectionalLightComponent(
 	Grindstone::WorldContextSet* cxtSet,
 	const ECS::Entity entity,
 	Grindstone::DirectionalLightComponent& directionalLightComponent,
-	std::function<void(const Grindstone::Rendering::GeometryRenderStats&)> pushRenderingStatsCallback
+	std::function<void(const Grindstone::Rendering::GeometryRenderStats&)> pushRenderingStatsCallback,
+	const glm::mat4& lightProjectionMatrix,
+	const glm::mat4& lightViewMatrix,
+	uint32_t cascadeIndex
 ) {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-	float aspectRatio = 1.0f;
-	float nearDist = 0.1f;
 
-	const glm::vec3 forwardVector = entity.GetWorldForward();
-	const glm::vec3 pos = entity.GetWorldPosition();
-
-	const float shadowHalfSize = 10.0f;
-	glm::mat4 projectionMatrix = glm::ortho<float>(-shadowHalfSize, shadowHalfSize, -shadowHalfSize, shadowHalfSize, 0, 160.0f);
-	graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
-
-	Math::Float3 forward = entity.GetWorldForward();
-
-	// TODO: Calculate bounds of camera frustum and use it here.
-	glm::vec3 lightPos = forward * -100.0f;
-	const glm::mat4 viewMatrix = glm::lookAt(
-		lightPos,
-		glm::vec3(0, 0, 0),
-		entity.GetWorldUp()
-	);
-
-	graphicsCore->AdjustPerspective(&projectionMatrix[0][0]);
-
-	directionalLightComponent.shadowMatrix = projectionMatrix * viewMatrix;
-	directionalLightComponent.shadowMapUniformBufferObject->UploadData(&directionalLightComponent.shadowMatrix);
+	directionalLightComponent.shadowData[cascadeIndex].shadowMatrix = lightProjectionMatrix * lightViewMatrix;
+	directionalLightComponent.shadowMapUniformBufferObjects[cascadeIndex]->UploadData(&directionalLightComponent.shadowData[cascadeIndex].shadowMatrix);
 	float shadowAtlasResolutionF = static_cast<float>(shadowAtlasResolution);
-	directionalLightComponent.shadowRenderArea = Math::Rect2D(
+	directionalLightComponent.shadowData[cascadeIndex].shadowRenderArea = Math::Rect2D(
 		static_cast<float>(renderArea.offset.x) / shadowAtlasResolutionF,
 		static_cast<float>(renderArea.offset.y) / shadowAtlasResolutionF,
 		static_cast<float>(renderArea.extent.x) / shadowAtlasResolutionF,
 		static_cast<float>(renderArea.extent.y) / shadowAtlasResolutionF
 	);
-	engineCore.assetRendererManager->SetEngineDescriptorSet(directionalLightComponent.shadowMapDescriptorSet);
+	engineCore.assetRendererManager->SetEngineDescriptorSet(directionalLightComponent.shadowMapDescriptorSets[cascadeIndex]);
 
 	Grindstone::Rendering::RenderViewData renderViewData{
-		.projectionMatrix = projectionMatrix,
-		.viewMatrix = viewMatrix,
+		.projectionMatrix = lightProjectionMatrix,
+		.viewMatrix = lightViewMatrix,
 		.renderArea = renderArea
 	};
 
@@ -213,16 +301,16 @@ static Grindstone::Renderer::RenderGraphBuilderResourceRef AddSpotShadowPass(
 			const Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
 			Grindstone::Renderer::RenderGraphBuilderResourceRef& data
-		) {
-			RenderSpotLightComponent(
-				passName,
-				viewportArea,
-				cxt.commandBuffer,
-				cxt.worldContextSet,
-				entity,
-				spotLightComponent,
-				pushRenderingStatsCallback
-			);
+			) {
+				RenderSpotLightComponent(
+					passName,
+					viewportArea,
+					cxt.commandBuffer,
+					cxt.worldContextSet,
+					entity,
+					spotLightComponent,
+					pushRenderingStatsCallback
+				);
 		}
 	);
 }
@@ -255,17 +343,17 @@ static Grindstone::Renderer::RenderGraphBuilderResourceRef AddPointShadowPass(
 			const Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
 			Grindstone::Renderer::RenderGraphBuilderResourceRef& data
-		) {
-			RenderPointLightComponent(
-				passName,
-				viewportArea,
-				cxt.commandBuffer,
-				cxt.worldContextSet,
-				entity,
-				pointLightComponent,
-				pushRenderingStatsCallback,
-				faceIndex
-			);
+			) {
+				RenderPointLightComponent(
+					passName,
+					viewportArea,
+					cxt.commandBuffer,
+					cxt.worldContextSet,
+					entity,
+					pointLightComponent,
+					pushRenderingStatsCallback,
+					faceIndex
+				);
 		}
 	);
 }
@@ -277,9 +365,12 @@ static Grindstone::Renderer::RenderGraphBuilderResourceRef AddDirectionalShadowP
 	Grindstone::Renderer::MetaRect renderingArea,
 	ECS::Entity entity,
 	Grindstone::DirectionalLightComponent& directionalLight,
-	std::function<void(const Grindstone::Rendering::GeometryRenderStats&)> pushRenderingStatsCallback
+	std::function<void(const Grindstone::Rendering::GeometryRenderStats&)> pushRenderingStatsCallback,
+	const glm::mat4& lightProjectionMatrix,
+	const glm::mat4& lightViewMatrix,
+	uint32_t cascadeIndex
 ) {
-	std::string passName = std::format("'{}' Shadow Pass Directional", entityName.c_str());
+	std::string passName = std::format("'{}' Shadow Pass Directional Cascade {}", entityName.c_str(), cascadeIndex);
 	return renderGraph.CreateGraphicsPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>(
 		passName.c_str(),
 		renderingArea,
@@ -292,23 +383,31 @@ static Grindstone::Renderer::RenderGraphBuilderResourceRef AddDirectionalShadowP
 
 			return ref;
 		},
-		[entity, &directionalLight, pushRenderingStatsCallback, passName](
+		[entity, &directionalLight, lightProjectionMatrix, lightViewMatrix, pushRenderingStatsCallback, cascadeIndex, passName](
 			Grindstone::Math::IntRect2D viewportArea,
 			const Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
 			Grindstone::Renderer::RenderGraphBuilderResourceRef& data
-		) {
-			RenderDirectionalLightComponent(
-				passName,
-				viewportArea,
-				cxt.commandBuffer,
-				cxt.worldContextSet,
-				entity,
-				directionalLight,
-				pushRenderingStatsCallback
-			);
+			) {
+				RenderDirectionalLightComponent(
+					passName,
+					viewportArea,
+					cxt.commandBuffer,
+					cxt.worldContextSet,
+					entity,
+					directionalLight,
+					pushRenderingStatsCallback,
+					lightProjectionMatrix,
+					lightViewMatrix,
+					cascadeIndex
+				);
 		}
 	);
+}
+
+static float GetCascadePlane(const uint32_t cascadeIndex, const uint32_t cascadeCount) {
+	const float factor = static_cast<float>(cascadeIndex) / (cascadeCount + 1);
+	return factor * factor;
 }
 
 bool Grindstone::Renderer::ShadowPass::Initialize() {
@@ -316,6 +415,8 @@ bool Grindstone::Renderer::ShadowPass::Initialize() {
 }
 
 Grindstone::Renderer::ShadowPassReturnData Grindstone::Renderer::ShadowPass::AddShadowPasses(
+	const glm::mat4& cameraProjectionMatrix,
+	const glm::mat4& cameraViewMatrix,
 	Grindstone::Renderer::RenderGraphBuilder& renderGraph,
 	Grindstone::WorldContextSet& worldContextSet,
 	std::function<void(const Grindstone::Rendering::GeometryRenderStats&)> pushRenderingStatsCallback
@@ -341,7 +442,7 @@ Grindstone::Renderer::ShadowPassReturnData Grindstone::Renderer::ShadowPass::Add
 
 	directionalLightView.each(
 		[&totalShadowMapCount](const entt::entity entityHandle, Grindstone::TagComponent&, const Grindstone::DirectionalLightComponent& directionalLightComponent) {
-			++totalShadowMapCount;
+			totalShadowMapCount += directionalLightComponent.cascadeCount;
 		}
 	);
 
@@ -369,19 +470,51 @@ Grindstone::Renderer::ShadowPassReturnData Grindstone::Renderer::ShadowPass::Add
 		}
 	);
 
+	const std::array<glm::vec4, 8> cameraFrustumCorners = GetFrustumCornersWorldSpace(cameraProjectionMatrix, cameraViewMatrix);
+
+	float projection_43 = cameraProjectionMatrix[3][2];
+	float projection_33 = cameraProjectionMatrix[2][2];
+	float nearDistance = projection_43 / (projection_33 - 1.0f);
+	float farDistance = projection_43 / (projection_33 + 1.0f);
+
 	directionalLightView.each(
-		[this, &renderGraph, &shadowAtlasRef, scene, pushRenderingStatsCallback](const entt::entity entityHandle, const Grindstone::TagComponent& tag, DirectionalLightComponent& directionalLightComponent) {
-			const ECS::Entity entity = ECS::Entity(entityHandle, scene);
-			Grindstone::Math::IntRect2D renderArea;
-			if (GetAtlasRenderArea(renderArea)) {
-				Grindstone::Renderer::MetaRect metaRect = MetaRect::Pixels(
-					static_cast<uint32_t>(renderArea.offset.x),
-					static_cast<uint32_t>(renderArea.offset.y),
-					renderArea.extent.x,
-					renderArea.extent.y
-				);
-				shadowAtlasRef = AddDirectionalShadowPass(renderGraph, tag.tag, shadowAtlasRef, metaRect, entity, directionalLightComponent, pushRenderingStatsCallback);
-			}
+		[this, &renderGraph, &shadowAtlasRef, &cameraFrustumCorners, scene, pushRenderingStatsCallback, nearDistance, farDistance](
+			const entt::entity entityHandle,
+			const Grindstone::TagComponent& tag,
+			DirectionalLightComponent& directionalLightComponent
+			) {
+				const ECS::Entity entity = ECS::Entity(entityHandle, scene);
+				uint32_t cascadeCount = glm::clamp(directionalLightComponent.cascadeCount, 0u, 8u);
+				Grindstone::Math::IntRect2D renderArea;
+
+				float cascadeDistances[9]{};
+				for (size_t cascadeIndex = 0; cascadeIndex <= cascadeCount + 1; ++cascadeIndex) {
+					cascadeDistances[cascadeIndex] = GetCascadePlane(cascadeIndex, cascadeCount);
+				}
+
+				for (size_t cascadeIndex = 0; cascadeIndex < cascadeCount; ++cascadeIndex) {
+					if (GetAtlasRenderArea(renderArea)) {
+						Grindstone::Renderer::MetaRect metaRect = MetaRect::Pixels(
+							static_cast<uint32_t>(renderArea.offset.x),
+							static_cast<uint32_t>(renderArea.offset.y),
+							renderArea.extent.x,
+							renderArea.extent.y
+						);
+
+						const Math::Float3 lightDirection = entity.GetWorldForward();
+						const auto [lightProjectionMatrix, lightViewMatrix] = GenerateCascadeProjectionViewMatrix(
+							cameraFrustumCorners,
+							lightDirection,
+							cascadeDistances[cascadeIndex + 0],
+							cascadeDistances[cascadeIndex + 1]
+						);
+
+						float cascadeDistance = glm::mix(nearDistance, farDistance, cascadeDistances[cascadeIndex + 1]);
+						directionalLightComponent.cascadeDistances[cascadeIndex] = cascadeDistance;
+
+						shadowAtlasRef = AddDirectionalShadowPass(renderGraph, tag.tag, shadowAtlasRef, metaRect, entity, directionalLightComponent, pushRenderingStatsCallback, lightProjectionMatrix, lightViewMatrix, cascadeIndex);
+					}
+				}
 		}
 	);
 
