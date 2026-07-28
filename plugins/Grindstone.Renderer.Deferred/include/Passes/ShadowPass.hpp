@@ -17,6 +17,8 @@ namespace Grindstone::Renderer {
 	public:
 		bool Initialize();
 		ShadowPassReturnData AddShadowPasses(
+			const glm::mat4& cameraProjectionMatrix,
+			const glm::mat4& cameraViewMatrix,
 			Grindstone::Renderer::RenderGraphBuilder& renderGraph,
 			Grindstone::WorldContextSet& worldContextSet,
 			std::function<void(const Grindstone::Rendering::GeometryRenderStats&)> pushRenderingStatsCallback
