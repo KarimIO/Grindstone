@@ -166,14 +166,18 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 					view.each(
 						[&](const entt::entity entityHandle, PointLightComponent& pointLightComponent) {
 							const ECS::Entity entity(entityHandle, scene);
-							PointLightComponent::UniformStruct lightmapStruct{
-								pointLightComponent.color,
-								pointLightComponent.attenuationRadius,
-								entity.GetWorldPosition(),
-								pointLightComponent.intensity
+							PointLightComponent::UniformStruct lightStruct{
+								.lightPosition = entity.GetWorldPosition(),
+								.lightAttenuationRadius = pointLightComponent.attenuationRadius,
+								.lightColor = pointLightComponent.color * pointLightComponent.intensity
 							};
 
-							pointLightComponent.uniformBufferObject->UploadData(&lightmapStruct);
+							for (size_t i = 0; i < 6; ++i) {
+								lightStruct.shadowData[i].shadowMatrix = pointLightComponent.shadowData[i].shadowMatrix;
+								lightStruct.shadowData[i].shadowRenderArea = pointLightComponent.shadowData[i].shadowRenderArea;
+							}
+
+							pointLightComponent.uniformBufferObject->UploadData(&lightStruct);
 							cmd->BindGraphicsDescriptorSet(
 								pointLightPipelineLayout,
 								&pointLightComponent.descriptorSet,
@@ -200,7 +204,7 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 						[&](const entt::entity entityHandle, SpotLightComponent& spotLightComponent) {
 							const ECS::Entity entity(entityHandle, scene);
 
-							SpotLightComponent::UniformStruct lightStruct{
+							const SpotLightComponent::UniformStruct lightStruct{
 								.shadowMatrix = bias * spotLightComponent.shadowMatrix,
 								.position = entity.GetWorldPosition(),
 								.attenuationRadius = spotLightComponent.attenuationRadius,
