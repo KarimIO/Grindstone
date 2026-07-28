@@ -123,7 +123,9 @@ computeSet "Screen-Space Reflections" {
 		float3 EvaluateEnvironmentMap(float2 texCoords, float depth, float3 eyeDir, float3 normalWorldSpace, float perceptualRoughness) {
 			const float3 reflectRayWorld = reflect(-eyeDir, normalWorldSpace);
 			static const float MAX_REFLECTION_LOD = 4.0;
-			const float3 prefilteredEnvMapColor = environmentMap.SampleLevel(defaultSampler, reflectRayWorld, perceptualRoughness * MAX_REFLECTION_LOD).rgb;
+			uint width, height, mipLevelCount;
+			environmentMap.GetDimensions(0, width, height, mipLevelCount);
+			const float3 prefilteredEnvMapColor = environmentMap.SampleLevel(defaultSampler, reflectRayWorld, perceptualRoughness * mipLevelCount).rgb;
 
 			return prefilteredEnvMapColor;
 		}
@@ -166,14 +168,13 @@ computeSet "Screen-Space Reflections" {
 			const float depth = gbufferDepth.Sample(defaultSampler, texCoords).r;
 			const float3 positionWorldSpace = ComputeWorldSpacePosition(rendererUbo.inverseProjectionMatrix, rendererUbo.inverseViewMatrix, texCoords, depth);
 			const float3 eyeDir = normalize(rendererUbo.eyePos.xyz - positionWorldSpace);
-			const float3 normalWorldSpace = gbufferNormal.Sample(defaultSampler, texCoords).rgb;
+			const float3 normalWorldSpace = normalize(gbufferNormal.Sample(defaultSampler, texCoords).rgb);
 			const float4 specRough = gbufferSpecularRoughness.SampleLevel(defaultSampler, texCoords, 0);
 			const float3 specular = specRough.rgb;
 			const float roughness = specRough.a * specRough.a;
-			const float perceptualRoughness = roughness * roughness;
 
-			const float3 environmentMapReflection = EvaluateEnvironmentMap(texCoords, depth, eyeDir, normalWorldSpace, perceptualRoughness);
-			const float4 ssrReflection = EvaluateSSR(texCoords, depth, perceptualRoughness, mipCount);
+			const float3 environmentMapReflection = EvaluateEnvironmentMap(texCoords, depth, eyeDir, normalWorldSpace, roughness);
+			const float4 ssrReflection = EvaluateSSR(texCoords, depth, roughness, mipCount);
 			const float3 specularBRDF = CalculateSpecularBRDF(specular, roughness, eyeDir, normalWorldSpace);
 			const float ambientOcclusion = ambientOcclusionImage.Sample(defaultSampler, texCoords).r;
 
