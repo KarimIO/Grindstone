@@ -21,6 +21,7 @@ namespace Grindstone {
 		virtual void RemoveAssetRenderer(BaseAssetRenderer* assetRenderer);
 		virtual void SetEngineDescriptorSet(GraphicsAPI::DescriptorSet* descriptorSet);
 		virtual Grindstone::Rendering::GeometryRenderStats RenderQueue(
+			const std::string& passName,
 			GraphicsAPI::CommandBuffer* commandBuffer,
 			const Grindstone::Rendering::RenderViewData& viewData,
 			entt::registry& registry,

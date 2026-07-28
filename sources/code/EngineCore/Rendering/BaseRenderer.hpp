@@ -42,6 +42,7 @@ namespace Grindstone {
 		virtual const RenderMode* GetRenderModes() const = 0;
 		virtual void SetRenderMode(uint16_t mode) = 0;
 		virtual std::vector<Grindstone::Rendering::GeometryRenderStats> GetRenderingStats() = 0;
+		virtual void PushRenderingStats(const Grindstone::Rendering::GeometryRenderStats& stats) = 0;
 	};
 
 	class BaseRendererFactory {
