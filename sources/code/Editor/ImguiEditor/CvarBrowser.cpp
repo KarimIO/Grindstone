@@ -41,12 +41,36 @@ static void RenderFieldValue(Grindstone::CvarSystem* cvarSystem, Grindstone::Cva
 	switch (p->type) {
 	case Grindstone::CvarType::Float:
 		ImGui::PushID(p->name.c_str());
-		ImGui::InputDouble("", cvarSystem->GetFloatCvar(p->arrayIndex), 0, 0, "%.3f");
+		if (dragFlag) {
+			float value = *cvarSystem->GetFloatCvar(p->arrayIndex);
+			// TODO: Store a min/max for range.
+			if (ImGui::SliderFloat("", &value, 0.0f, 1.0f)) {
+				cvarSystem->SetFloatCvar(p->arrayIndex, static_cast<double>(value));
+			}
+		}
+		else {
+			ImGui::InputDouble("", cvarSystem->GetFloatCvar(p->arrayIndex), 0, 0, "%.3f");
+		}
 		ImGui::PopID();
 		break;
 	case Grindstone::CvarType::Integer:
 		ImGui::PushID(p->name.c_str());
-		ImGui::InputInt("", cvarSystem->GetIntCvar(p->arrayIndex));
+		if (checkboxFlag) {
+			bool v = *cvarSystem->GetIntCvar(p->arrayIndex);
+			if (ImGui::Checkbox("", &v)) {
+				cvarSystem->SetIntCvar(p->arrayIndex, v ? 1 : 0);
+			}
+		}
+		else if (dragFlag) {
+			int value = *cvarSystem->GetIntCvar(p->arrayIndex);
+			// TODO: Store a min/max for range.
+			if (ImGui::SliderInt("", &value, 0, 256)) {
+				cvarSystem->SetIntCvar(p->arrayIndex, static_cast<double>(value));
+			}
+		}
+		else {
+			ImGui::InputInt("", cvarSystem->GetIntCvar(p->arrayIndex));
+		}
 		ImGui::PopID();
 		break;
 	case Grindstone::CvarType::String:

@@ -295,6 +295,7 @@ CvarParameter* CvarSystemImpl::CreateFloatCvar(const char* name, const char* des
 		return nullptr;
 	}
 
+	param->flags = flags;
 	param->type = CvarType::Float;
 
 	GetCvarArray<double>()->Add(defaultValue, currentValue, param);
@@ -309,6 +310,7 @@ CvarParameter* CvarSystemImpl::CreateIntCvar(const char* name, const char* descr
 		return nullptr;
 	}
 
+	param->flags = flags;
 	param->type = CvarType::Integer;
 
 	GetCvarArray<int32_t>()->Add(defaultValue, currentValue, param);
@@ -323,6 +325,7 @@ CvarParameter* CvarSystemImpl::CreateStringCvar(const char* name, const char* de
 		return nullptr;
 	}
 
+	param->flags = flags;
 	param->type = CvarType::String;
 
 	GetCvarArray<std::string>()->Add(defaultValue, currentValue, param);
@@ -337,6 +340,7 @@ CvarParameter* CvarSystemImpl::CreateBooleanCvar(const char* name, const char* d
 		return nullptr;
 	}
 
+	param->flags = static_cast<CvarFlags>(static_cast<uint16_t>(flags) | static_cast<uint16_t>(CvarFlags::Boolean));
 	param->type = CvarType::Integer;
 
 	GetCvarArray<int32_t>()->Add(defaultValue, currentValue, param);
