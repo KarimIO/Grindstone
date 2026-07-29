@@ -243,15 +243,17 @@ Grindstone::Renderer::LightingPassReturnData Renderer::LightingPass::AddPass(
 								const ECS::Entity entity(entityHandle, scene);
 
 								DirectionalLightComponent::UniformStruct lightStruct{
+									.cameraViewMatrix = directionalLightComponent.debugCameraViewMatrix,
 									.color = directionalLightComponent.color * directionalLightComponent.intensity,
 									.cascadeCount = directionalLightComponent.cascadeCount,
 									.direction = entity.GetWorldForward(),
+									.eyePosForShadowing = directionalLightComponent.eyePosForShadowing,
 								};
 
 								for (size_t i = 0; i < 8; ++i) {
 									lightStruct.cascadeDistances[i] = directionalLightComponent.cascadeDistances[i];
-									lightStruct.shadowData[i].shadowMatrix = bias * directionalLightComponent.shadowData[i].shadowMatrix;
-									lightStruct.shadowData[i].shadowRenderArea = directionalLightComponent.shadowData[i].shadowRenderArea;
+									lightStruct.shadowData[i].shadowMatrix = directionalLightComponent.shadowProjViewMatrix[i];
+									lightStruct.shadowData[i].shadowRenderArea = directionalLightComponent.shadowRenderArea[i];
 								}
 
 								directionalLightComponent.uniformBufferObject->UploadData(&lightStruct);

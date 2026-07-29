@@ -17,6 +17,7 @@ namespace Grindstone::Renderer {
 	public:
 		bool Initialize();
 		ShadowPassReturnData AddShadowPasses(
+			const glm::vec3& eyePos,
 			const glm::mat4& cameraProjectionMatrix,
 			const glm::mat4& cameraViewMatrix,
 			Grindstone::Renderer::RenderGraphBuilder& renderGraph,
