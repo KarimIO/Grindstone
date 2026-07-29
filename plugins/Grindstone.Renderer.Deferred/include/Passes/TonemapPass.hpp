@@ -36,8 +36,7 @@ namespace Grindstone::Renderer {
 			Grindstone::Renderer::RenderGraphBuilder& renderGraph,
 			PostProcessSettings settings,
 			Renderer::RenderGraphBuilderResourceRef lightingImageRef,
-			Renderer::RenderGraphBuilderResourceRef bloomImageRef,
-			Renderer::RenderGraphBuilderResourceRef outputImageRef
+			Renderer::RenderGraphBuilderResourceRef bloomImageRef
 		);
 
 	private:

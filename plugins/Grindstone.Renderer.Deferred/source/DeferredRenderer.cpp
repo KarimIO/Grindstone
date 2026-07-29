@@ -83,6 +83,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 	iboCi.bufferSize = sizeof(lightIndices);
 	indexBuffer = graphicsCore->CreateBuffer(iboCi);
 
+	smaa.Initialize();
 	ssr.Initialize();
 	skinning.Initialize();
 	bloom.Initialize();
@@ -176,7 +177,8 @@ void DeferredRenderer::Render(
 	);
 	
 	if (renderMode == Grindstone::Renderer::DeferredRenderMode::Default) {
-		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, ssrOutput, bloomOutput, colorImageRef);
+		Grindstone::Renderer::TonemapPassReturnData data = tonemap.AddPass(renderGraphBuilder, {}, ssrOutput, bloomOutput);
+		Grindstone::Renderer::RenderGraphBuilderResourceRef smaaOutput = smaa.AddPass(renderGraphBuilder, data.postProcessOutput, colorImageRef);
 	}
 	else {
 		debug.AddPass(renderMode, projectionMatrix, vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData, ssaoBlurredOutput, colorImageRef);

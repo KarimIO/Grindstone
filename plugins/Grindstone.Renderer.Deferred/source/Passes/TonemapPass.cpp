@@ -53,19 +53,21 @@ bool Grindstone::Renderer::TonemapPass::Initialize() {
 		tonemapSettingsDescriptorSet[i] = graphicsCore->CreateDescriptorSet(postProcessingDescriptorSetsCreateInfo);
 	}
 
-	Grindstone::GraphicsAPI::Sampler::CreateInfo screenSamplerCreateInfo{
-	screenSamplerCreateInfo.debugName = "Screen Sampler",
-	screenSamplerCreateInfo.options = {
-			.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat,
-			.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat,
-			.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat,
-			.minFilter = GraphicsAPI::TextureFilter::Linear,
-			.magFilter = GraphicsAPI::TextureFilter::Linear,
-			.anistropy = 0
-		}
-	};
+	{
+		Grindstone::GraphicsAPI::Sampler::CreateInfo screenSamplerCreateInfo{
+		screenSamplerCreateInfo.debugName = "Screen Sampler",
+		screenSamplerCreateInfo.options = {
+				.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat,
+				.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat,
+				.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat,
+				.minFilter = GraphicsAPI::TextureFilter::Linear,
+				.magFilter = GraphicsAPI::TextureFilter::Linear,
+				.anistropy = 0
+			}
+		};
 
-	screenSampler = engineCore.GetGraphicsCore()->GetOrCreateSampler(screenSamplerCreateInfo);
+		screenSampler = engineCore.GetGraphicsCore()->GetOrCreateSampler(screenSamplerCreateInfo);
+	}
 
 	return true;
 }
@@ -74,17 +76,16 @@ Grindstone::Renderer::TonemapPassReturnData Grindstone::Renderer::TonemapPass::A
 	Grindstone::Renderer::RenderGraphBuilder& renderGraph,
 	PostProcessSettings settings,
 	Renderer::RenderGraphBuilderResourceRef lightingImageRef,
-	Renderer::RenderGraphBuilderResourceRef bloomImageRef,
-	Renderer::RenderGraphBuilderResourceRef outputImageRef
+	Renderer::RenderGraphBuilderResourceRef bloomImageRef
 ) {
 	return renderGraph.CreateGraphicsPass<Grindstone::Renderer::TonemapPassReturnData>(
 		"Tonemapping",
 		MetaRect::Swapchain(),
-		[this, lightingImageRef, bloomImageRef, outputImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::TonemapPassReturnData>& renderPass) {
+		[this, lightingImageRef, bloomImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::TonemapPassReturnData>& renderPass) {
 			renderPass.ReadExternalSampler(screenSampler);
 			renderPass.ReadSampledImage(lightingImageRef);
 			renderPass.ReadSampledImage(bloomImageRef);
-			Renderer::RenderGraphBuilderResourceRef output = renderPass.WriteColorAttachment(outputImageRef, GraphicsAPI::LoadOp::DontCare, GraphicsAPI::ClearColor{});
+			Renderer::RenderGraphBuilderResourceRef output = renderPass.WriteColorAttachment(attachmentOutput, GraphicsAPI::LoadOp::DontCare, GraphicsAPI::ClearColor{});
 
 			return Grindstone::Renderer::TonemapPassReturnData{
 				.postProcessOutput = output
