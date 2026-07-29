@@ -68,7 +68,7 @@ namespace Grindstone {
 
 		virtual void SetFloatCvar(size_t arrayIndex, double value) = 0;
 		virtual void SetIntCvar(size_t arrayIndex, int32_t value) = 0;
-		virtual void SetStringCvar(size_t arrayIndex, const char* value) = 0;
+		virtual void SetStringCvar(size_t arrayIndex,  const char* value) = 0;
 
 		virtual CvarParameter* CreateFloatCvar(const char* name, const char* description, double defaultValue, double currentValue, CvarFlags flags = CvarFlags::None) = 0;
 		virtual CvarParameter* CreateIntCvar(const char* name, const char* description, int32_t defaultValue, int32_t currentValue, CvarFlags flags = CvarFlags::None) = 0;

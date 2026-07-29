@@ -25,9 +25,12 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 				struct LightUbo {
 					ShadowData shadowData[8];
 					float4 shadowCascadeDistances[2]; // Each component is one distance, x2 for eight distances.
+					float4x4 cameraViewMatrix;
 					float3 color;
 					uint cascadeCount;
 					float3 direction;
+					float dummy;
+					float3 eyePosForShadowing; // This is different so that we can freeze/debug the view.
 				};
 
 				ConstantBuffer<LightUbo> light : register(b0, space2);
@@ -69,11 +72,38 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 					return float3(NL * BSDFValue * lightColor.xyz);
 				}
 
-				uint GetLightCascade(float depthValue, uint cascadeCount) {
+				float GetCascadeDistance(uint i) {
+					if (i < 4) {
+						return light.shadowCascadeDistances[0][i];
+					}
+					
+					return light.shadowCascadeDistances[1][i - 4];
+				}
+
+				uint GetLightCascadeByDepth(float3 position, float depthValue, uint cascadeCount) {
 					for (uint i = 0; i < cascadeCount; ++i) {
 						float4 cascadeQuad = light.shadowCascadeDistances[i / 4];
-						float shadowCascadeDistance = ((float[4])cascadeQuad.rgba)[i % 4];
-						if (depthValue < shadowCascadeDistance) {
+						float shadowCascadeDistance = GetCascadeDistance(i);
+						if (depthValue <= shadowCascadeDistance) {
+							return i;
+						}
+					}
+					
+					return cascadeCount;
+				}
+
+				uint GetLightCascadeByClosest(float3 position, uint cascadeCount) {
+					for (uint i = 0; i < cascadeCount; ++i) {
+						float4 clip = mul(light.shadowData[i].shadowMatrix, float4(position, 1));
+						float3 proj = clip.xyz / clip.w;
+						proj.xy = proj.xy * 0.5 + 0.5;
+
+						bool inside =
+							proj.x >= 0 && proj.x <= 1 &&
+							proj.y >= 0 && proj.y <= 1 &&
+							proj.z >= 0 && proj.z <= 1;
+
+						if (inside) {
 							return i;
 						}
 					}
@@ -101,11 +131,8 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 						normal,
 						lightDirection,
 						light.color,
-						rendererUbo.eyePos
+						light.eyePosForShadowing
 					);
-
-					float4 fragPosViewSpace = mul(rendererUbo.viewMatrix, float4(position, 1.0));
-					float depthValue = abs(fragPosViewSpace.z);
 
 					static const float3 debugCascadeColors[9] = {
 						float3(0,0,1),
@@ -119,7 +146,7 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 						float3(0,0,0)
 					};
 					
-					uint layer = GetLightCascade(depthValue, light.cascadeCount);
+					uint layer = GetLightCascadeByClosest(position, light.cascadeCount);
 					if (layer == light.cascadeCount) {
 						return float4(litValues, 1);
 					}
@@ -129,8 +156,10 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 
 					float NdotL = saturate(dot(normal, -lightDirection));
 					float bias = max(0.0005, 0.005 * (1.0 - NdotL));
+					bias *= 1 / (GetCascadeDistance(layer) * 0.5f);
 					float4 lightSpacePos = mul(shadowData.shadowMatrix, float4(position, 1));
 					float3 projCoords = lightSpacePos.xyz / lightSpacePos.w;
+					projCoords.xy = projCoords.xy * 0.5f + 0.5f;
 					float pixelDepth = projCoords.z;
 
 #define PCF
@@ -151,6 +180,7 @@ pipelineSet "Directional Light" inherits "DeferredLighting" {
 						);
 
 						float2 shadowUv = (projCoords.xy * shadowData.shadowRenderArea.zw) + shadowData.shadowRenderArea.xy;
+						shadowUv = clamp(shadowUv, shadowData.shadowRenderArea.xy + texelSize * 2.0f, shadowData.shadowRenderArea.xy + shadowData.shadowRenderArea.zw - texelSize * 2.0f);
 						float pcfDepth = shadowMap.Sample(gbufferSampler, shadowUv + offset * texelSize).r;
 						bool isInLight = pcfDepth + bias >= pixelDepth;
 						shadow += isInLight ? 1.0f : 0.0f;

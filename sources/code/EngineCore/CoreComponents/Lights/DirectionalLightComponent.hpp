@@ -26,19 +26,29 @@ namespace Grindstone {
 		struct UniformStruct {
 			ShadowData shadowData[MAX_CASCADE_COUNT];
 			float cascadeDistances[MAX_CASCADE_COUNT];
+			Grindstone::Math::Matrix4 cameraViewMatrix;
 			Math::Float3 color;
 			uint32_t cascadeCount;
 			Math::Float3 direction;
+			float padding0; // padded for shaders.
+			Math::Float3 eyePosForShadowing;
 		};
 
 		static void Construct(Grindstone::WorldContextSet& cxtSet, entt::entity);
 		static void Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity);
 
-		ShadowData shadowData[8];
+		glm::vec3 eyePosForShadowing;
+		Grindstone::Math::Matrix4 debugCameraProjectionMatrix;
+		Grindstone::Math::Matrix4 debugCameraViewMatrix;
+		Grindstone::Math::Matrix4 debugShadowProjectionMatrix[8];
+		Grindstone::Math::Matrix4 shadowProjectionMatrix[8];
+		Grindstone::Math::Matrix4 shadowViewMatrix[8];
+		Grindstone::Math::Matrix4 shadowProjViewMatrix[8];
+		Grindstone::Math::Rect2D shadowRenderArea[8];
 		float cascadeDistances[8];
-		uint32_t cascadeCount;
-		Math::Float3 color;
-		float intensity = 0.0f;
+		uint32_t cascadeCount = 4;
+		Math::Float3 color = Math::Float3(1.0f, 1.0f, 1.0f);
+		float intensity = 100.0f;
 
 		GraphicsAPI::Buffer* uniformBufferObject = nullptr;
 		GraphicsAPI::DescriptorSet* descriptorSet = nullptr;

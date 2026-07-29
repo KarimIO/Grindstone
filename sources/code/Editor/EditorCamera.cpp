@@ -1,6 +1,7 @@
 #include <Common/Display/DisplayManager.hpp>
 #include <Common/Graphics/Framebuffer.hpp>
 #include <Common/Graphics/Core.hpp>
+#include <Common/Console/Cvars.hpp>
 #include <Common/Window/WindowManager.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
@@ -9,6 +10,7 @@
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 #include <EngineCore/CoreComponents/Lights/PointLightComponent.hpp>
 #include <EngineCore/CoreComponents/Lights/SpotLightComponent.hpp>
+#include <EngineCore/CoreComponents/Lights/DirectionalLightComponent.hpp>
 #include <EngineCore/Rendering/RenderGraphContextSet.hpp>
 #include <EngineCore/Rendering/RenderPassRegistry.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
@@ -272,6 +274,14 @@ EditorCamera::EditorCamera() {
 		globalDescriptorSet[i] = graphicsCore->CreateDescriptorSet(globalDescriptorSetsCreateInfo);
 	}
 
+	// Static so that we only create one CVAR, not one per camera/RenderPass.
+	static bool isCsmIndexCvarCreated = false;
+	if (!isCsmIndexCvarCreated) {
+		isCsmIndexCvarCreated = true;
+		Grindstone::CvarSystem* cvarSystem = Grindstone::CvarSystem::GetInstance();
+		cvarSystem->CreateIntCvar("render.lights.csmInspectIndex", "When selecting a DirectionalLight in the Editor, what cascade should we show (0 = all).", 0, 0);
+	}
+
 	UpdateViewMatrix();
 }
 
@@ -533,6 +543,7 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 				Grindstone::MeshComponent* mesh = nullptr;
 				Grindstone::PointLightComponent* pointLight = nullptr;
 				Grindstone::SpotLightComponent* spotLight = nullptr;
+				Grindstone::DirectionalLightComponent* directionalLight = nullptr;
 
 				for (const ECS::Entity& selectedEntity : editorManager.GetSelection().selectedEntities) {
 					if (
@@ -565,6 +576,43 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 						TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
 						Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
 						gizmoRenderer.SubmitSphereGizmo(matrix, spotLight->attenuationRadius, glm::vec4(spotLight->color, 1));
+					}
+
+					if (selectedEntity.TryGetComponent<Grindstone::DirectionalLightComponent>(directionalLight)) {
+						static std::array<glm::vec4, DirectionalLightComponent::MAX_CASCADE_COUNT> lightCascadeColors{
+							glm::vec4(0, 0, 1, 1),
+							glm::vec4(0, 1, 0, 1),
+							glm::vec4(0, 1, 1, 1),
+							glm::vec4(1, 0, 0, 1),
+							glm::vec4(1, 0, 1, 1),
+							glm::vec4(1, 1, 0, 1),
+							glm::vec4(1, 1, 1, 1),
+							glm::vec4(0.5, 0.5, 1, 1),
+						};
+
+						float projection_43 = directionalLight->debugCameraProjectionMatrix[3][2];
+						float projection_33 = directionalLight->debugCameraProjectionMatrix[2][2];
+						float nearDistance = projection_43 / (projection_33 - 1.0f);
+						float fov = -2.0 * atan(1.0 / directionalLight->debugCameraProjectionMatrix[1][1]);
+						float aspect = -directionalLight->debugCameraProjectionMatrix[1][1] / directionalLight->debugCameraProjectionMatrix[0][0];
+
+						glm::mat4 slice = glm::translate(glm::mat4(1), glm::vec3(0.0f, 0.0f, 0.5f));
+
+						Grindstone::CvarSystem* cvarSystem = Grindstone::CvarSystem::GetInstance();
+						int32_t csmInspectIndex = *cvarSystem->GetIntCvar(cvarSystem->GetCvar("render.lights.csmInspectIndex"_hash)->arrayIndex);
+						for (uint32_t i = 0; i < directionalLight->cascadeCount; ++i) {
+							if (i + 1 == csmInspectIndex || csmInspectIndex == 0) {
+								Math::Matrix4 shadowCascadeMatrix = glm::inverse(directionalLight->debugShadowProjectionMatrix[i] * directionalLight->shadowViewMatrix[i]);
+								gizmoRenderer.SubmitCubeGizmo(shadowCascadeMatrix, glm::vec3(1.0f, 1.0f, 1.0f), lightCascadeColors[i]);
+
+								float nearDist = i == 0 ? nearDistance : directionalLight->cascadeDistances[i - 1];
+								float farDist = directionalLight->cascadeDistances[i];
+
+								glm::mat4 cascadeProjView = glm::perspective(fov, aspect, nearDist, farDist);
+								Math::Matrix4 cameraCascadeMatrix = glm::inverse(cascadeProjView * directionalLight->debugCameraViewMatrix) * slice;
+								gizmoRenderer.SubmitCubeGizmo(cameraCascadeMatrix, glm::vec3(1.0f, 1.0f, 1.0f), lightCascadeColors[i]);
+							}
+						}
 					}
 
 					if (isColliderGizmoEnabled) {

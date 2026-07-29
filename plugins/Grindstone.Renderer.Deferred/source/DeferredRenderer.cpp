@@ -91,6 +91,7 @@ DeferredRenderer::DeferredRenderer(GraphicsAPI::RenderPass* targetRenderPass) {
 	gbuffer.Initialize();
 	blur.Initialize();
 	ssao.Initialize();
+	shadows.Initialize();
 	lighting.Initialize();
 	tonemap.Initialize();
 }
@@ -160,7 +161,7 @@ void DeferredRenderer::Render(
 	renderStats.clear();
 
 	skinning.AddPass(renderGraphBuilder, worldContextSet);
-	Grindstone::Renderer::ShadowPassReturnData shadowOutput = shadows.AddShadowPasses(projectionMatrix, viewMatrix, renderGraphBuilder, worldContextSet, [this](auto& a) { PushRenderingStats(a); });
+	Grindstone::Renderer::ShadowPassReturnData shadowOutput = shadows.AddShadowPasses(eyePos, projectionMatrix, viewMatrix, renderGraphBuilder, worldContextSet, [this](auto& a) { PushRenderingStats(a); });
 	Grindstone::Renderer::GbufferData gbufferData = gbuffer.AddPass(depthImageRef, projectionMatrix, viewMatrix, renderGraphBuilder, [this](auto& a) { PushRenderingStats(a); });
 	Grindstone::Renderer::RenderGraphBuilderResourceRef ssaoOutput = ssao.AddPass(vertexBuffer, indexBuffer, renderGraphBuilder, gbufferData);
 	// TODO: Move this into the ssao pass, maybe? Specify a Two-Pass Separable Blur

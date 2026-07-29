@@ -1,5 +1,6 @@
 #include <Grindstone.Renderer.Deferred/include/pch.hpp>
 
+#include <Common/Console/Cvars.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <EngineCore/EngineCore.hpp>
 
@@ -14,6 +15,7 @@ extern "C" {
 		Grindstone::HashedString::SetHashMap(pluginInterface->GetHashedStringMap());
 		Grindstone::Logger::SetLoggerState(pluginInterface->GetLoggerState());
 		Grindstone::Memory::AllocatorCore::SetAllocatorState(pluginInterface->GetAllocatorState());
+		Grindstone::CvarSystem::SetInstance(pluginInterface->GetCvarSystem());
 
 		Grindstone::EngineCore* engineCore = pluginInterface->GetEngineCore();
 		EngineCore::SetInstance(*engineCore);
