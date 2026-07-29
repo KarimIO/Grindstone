@@ -1,0 +1,15 @@
+{
+    "assetImporterVersion": 1,
+    "metaFileVersion": 1,
+    "defaultUuid": "ad30cacf-cf35-460a-91b5-35c54121d624",
+    "subassets": [
+        {
+            "displayName": "SMAA",
+            "address": "@CORESHADERS/postProcessing/smaa",
+            "subassetIdentifier": "SMAA",
+            "uuid": "ad30cacf-cf35-460a-91b5-35c54121d624",
+            "type": "GraphicsPipelineSet"
+        }
+    ],
+    "importerSettings": {}
+}

@@ -1,0 +1,15 @@
+{
+    "assetImporterVersion": 1,
+    "metaFileVersion": 1,
+    "defaultUuid": "690dcf67-e2a1-4796-a12c-e8d937320014",
+    "subassets": [
+        {
+            "displayName": "smaaArea",
+            "address": "@CORESHADERS/textures/smaa/area",
+            "subassetIdentifier": "smaaArea",
+            "uuid": "690dcf67-e2a1-4796-a12c-e8d937320014",
+            "type": "Texture"
+        }
+    ],
+    "importerSettings": {}
+}

@@ -9,6 +9,7 @@
 #include <EngineCore/Assets/AssetReference.hpp>
 #include <EngineCore/Rendering/BaseRenderer.hpp>
 
+#include <Grindstone.Renderer.Deferred/include/Passes/SmaaPass.hpp>
 #include <Grindstone.Renderer.Deferred/include/Passes/BloomPass.hpp>
 #include <Grindstone.Renderer.Deferred/include/Passes/BlurPass.hpp>
 #include <Grindstone.Renderer.Deferred/include/Passes/DebugPass.hpp>
@@ -76,6 +77,7 @@ namespace Grindstone {
 		Grindstone::Renderer::GbufferPass gbuffer;
 		Grindstone::Renderer::LightingPass lighting;
 		Grindstone::Renderer::ScreenSpaceReflectionsPass ssr;
+		Grindstone::Renderer::SmaaPass smaa;
 		Grindstone::Renderer::ScreenSpaceAmbientOcclusionPass ssao;
 		Grindstone::Renderer::BlurPass blur;
 		Grindstone::Renderer::DepthOfFieldPass dof;

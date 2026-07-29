@@ -1,0 +1,15 @@
+{
+    "assetImporterVersion": 1,
+    "metaFileVersion": 1,
+    "defaultUuid": "c7e84c4f-b49b-4f62-ac85-0f08b134149f",
+    "subassets": [
+        {
+            "displayName": "smaaSearch",
+            "address": "@CORESHADERS/textures/smaa/search",
+            "subassetIdentifier": "smaaSearch",
+            "uuid": "c7e84c4f-b49b-4f62-ac85-0f08b134149f",
+            "type": "Texture"
+        }
+    ],
+    "importerSettings": {}
+}
