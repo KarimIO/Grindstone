@@ -17,6 +17,7 @@ namespace Grindstone {
 	}
 
 	struct DirectionalLightComponent {
+		static constexpr size_t FRAME_COUNT = 3;
 		static constexpr size_t MAX_CASCADE_COUNT = 8;
 		struct ShadowData {
 			Grindstone::Math::Matrix4 shadowMatrix;
@@ -50,12 +51,12 @@ namespace Grindstone {
 		Math::Float3 color = Math::Float3(1.0f, 1.0f, 1.0f);
 		float intensity = 100.0f;
 
-		GraphicsAPI::Buffer* uniformBufferObject = nullptr;
-		GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
+		GraphicsAPI::Buffer* uniformBufferObject[FRAME_COUNT];
+		GraphicsAPI::DescriptorSet* descriptorSet[FRAME_COUNT];
 		GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
 
-		GraphicsAPI::Buffer* shadowMapUniformBufferObjects[MAX_CASCADE_COUNT];
-		GraphicsAPI::DescriptorSet* shadowMapDescriptorSets[MAX_CASCADE_COUNT];
+		GraphicsAPI::Buffer* shadowMapUniformBufferObjects[FRAME_COUNT][MAX_CASCADE_COUNT];
+		GraphicsAPI::DescriptorSet* shadowMapDescriptorSets[FRAME_COUNT][MAX_CASCADE_COUNT];
 		GraphicsAPI::DescriptorSetLayout* shadowMapDescriptorSetLayout = nullptr;
 
 		REFLECT("DirectionalLight")

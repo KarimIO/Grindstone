@@ -26,12 +26,10 @@ void Grindstone::DirectionalLightComponent::Construct(Grindstone::WorldContextSe
 	{
 		DirectionalLightComponent::UniformStruct lightStruct{};
 		GraphicsAPI::Buffer::CreateInfo lightUniformBufferObjectCi{};
-		lightUniformBufferObjectCi.debugName = "LightUbo";
 		lightUniformBufferObjectCi.content = &lightStruct;
 		lightUniformBufferObjectCi.bufferUsage = GraphicsAPI::BufferUsage::Uniform;
 		lightUniformBufferObjectCi.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU;
 		lightUniformBufferObjectCi.bufferSize = sizeof(DirectionalLightComponent::UniformStruct);
-		directionalLightComponent.uniformBufferObject = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
 
 		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 1> lightLayoutBindings{};
 		lightLayoutBindings[0].bindingId = 0;
@@ -46,17 +44,21 @@ void Grindstone::DirectionalLightComponent::Construct(Grindstone::WorldContextSe
 		};
 		directionalLightComponent.descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
-		std::array<GraphicsAPI::DescriptorSet::Binding, 1> lightBindings{
-			GraphicsAPI::DescriptorSet::Binding::UniformBuffer( directionalLightComponent.uniformBufferObject )
-		};
 
 		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{
 			.debugName = "Directional Light Descriptor Set",
 			.layout = directionalLightComponent.descriptorSetLayout,
-			.bindings = lightBindings.data(),
-			.bindingCount = static_cast<uint32_t>(lightBindings.size()),
+			.bindingCount = 1u,
 		};
-		directionalLightComponent.descriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+
+		for (size_t i = 0; i < FRAME_COUNT; ++i) {
+			std::string debugName = std::format("Directional Light UBO [{}]", i);
+			lightUniformBufferObjectCi.debugName = debugName.c_str();
+			directionalLightComponent.uniformBufferObject[i] = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
+			GraphicsAPI::DescriptorSet::Binding lightBindings = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(directionalLightComponent.uniformBufferObject[i]);
+			descriptorSetCreateInfo.bindings = &lightBindings;
+			directionalLightComponent.descriptorSet[i] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+		}
 	}
 
 	{
@@ -66,10 +68,12 @@ void Grindstone::DirectionalLightComponent::Construct(Grindstone::WorldContextSe
 			.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU,
 		};
 
-		for (size_t i = 0; i < MAX_CASCADE_COUNT; ++i) {
-			std::string debugName = std::format("Directional Light Shadow Map {}", i);
-			lightUniformBufferObjectCi.debugName = debugName.c_str();
-			directionalLightComponent.shadowMapUniformBufferObjects[i] = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
+		for (size_t i = 0; i < FRAME_COUNT; ++i) {
+			for (size_t j = 0; j < MAX_CASCADE_COUNT; ++j) {
+				std::string debugName = std::format("Directional Light Shadow Map {}[{}]", i, j);
+				lightUniformBufferObjectCi.debugName = debugName.c_str();
+				directionalLightComponent.shadowMapUniformBufferObjects[i][j] = graphicsCore->CreateBuffer(lightUniformBufferObjectCi);
+			}
 		}
 
 		GraphicsAPI::DescriptorSetLayout::Binding lightUboBindingLayout{
@@ -90,13 +94,15 @@ void Grindstone::DirectionalLightComponent::Construct(Grindstone::WorldContextSe
 			.layout = directionalLightComponent.shadowMapDescriptorSetLayout,
 			.bindingCount = 1
 		};
-		for (size_t i = 0; i < MAX_CASCADE_COUNT; ++i) {
-			GraphicsAPI::DescriptorSet::Binding lightUboBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(directionalLightComponent.shadowMapUniformBufferObjects[i]);
 
-			std::string debugName = std::format("Directional Light Shadow Descriptor Set Cascade {}", i);
-			descriptorSetCreateInfo.bindings = &lightUboBinding;
-			descriptorSetCreateInfo.debugName = debugName.c_str();
-			directionalLightComponent.shadowMapDescriptorSets[i] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+		for (size_t i = 0; i < FRAME_COUNT; ++i) {
+			for (size_t j = 0; j < MAX_CASCADE_COUNT; ++j) {
+				GraphicsAPI::DescriptorSet::Binding lightUboBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(directionalLightComponent.shadowMapUniformBufferObjects[i][j]);
+				std::string debugName = std::format("Directional Light Shadow Descriptor Set Cascade {}[{}]", i, j);
+				descriptorSetCreateInfo.bindings = &lightUboBinding;
+				descriptorSetCreateInfo.debugName = debugName.c_str();
+				directionalLightComponent.shadowMapDescriptorSets[i][j] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
+			}
 		}
 	}
 }
@@ -109,24 +115,31 @@ void Grindstone::DirectionalLightComponent::Destroy(Grindstone::WorldContextSet&
 			EngineCore& engineCore = EngineCore::GetInstance();
 			GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
-			for (size_t i = 0; i < MAX_CASCADE_COUNT; ++i) {
-				graphicsCore->DeleteDescriptorSet(directionalLightComponent.shadowMapDescriptorSets[i]);
-				graphicsCore->DeleteBuffer(directionalLightComponent.shadowMapUniformBufferObjects[i]);
+			for (size_t i = 0; i < FRAME_COUNT; ++i) {
+				for (size_t j = 0; j < MAX_CASCADE_COUNT; ++j) {
+					graphicsCore->DeleteDescriptorSet(directionalLightComponent.shadowMapDescriptorSets[i][j]);
+					graphicsCore->DeleteBuffer(directionalLightComponent.shadowMapUniformBufferObjects[i][j]);
+				}
+
+				graphicsCore->DeleteDescriptorSet(directionalLightComponent.descriptorSet[i]);
+				graphicsCore->DeleteBuffer(directionalLightComponent.uniformBufferObject[i]);
 			}
 
 			graphicsCore->DeleteDescriptorSetLayout(directionalLightComponent.shadowMapDescriptorSetLayout);
-			graphicsCore->DeleteDescriptorSet(directionalLightComponent.descriptorSet);
 			graphicsCore->DeleteDescriptorSetLayout(directionalLightComponent.descriptorSetLayout);
-			graphicsCore->DeleteBuffer(directionalLightComponent.uniformBufferObject);
 		}
 	);
 
-	for (size_t i = 0; i < MAX_CASCADE_COUNT; ++i) {
-		directionalLightComponent.shadowMapDescriptorSets[i] = nullptr;
-		directionalLightComponent.shadowMapUniformBufferObjects[i] = nullptr;
+	for (size_t i = 0; i < FRAME_COUNT; ++i) {
+		for (size_t j = 0; j < MAX_CASCADE_COUNT; ++j) {
+			directionalLightComponent.shadowMapDescriptorSets[i][j] = nullptr;
+			directionalLightComponent.shadowMapUniformBufferObjects[i][j] = nullptr;
+		}
+
+		directionalLightComponent.descriptorSet[i] = nullptr;
+		directionalLightComponent.uniformBufferObject[i] = nullptr;
 	}
+
 	directionalLightComponent.shadowMapDescriptorSetLayout = nullptr;
-	directionalLightComponent.descriptorSet = nullptr;
 	directionalLightComponent.descriptorSetLayout = nullptr;
-	directionalLightComponent.uniformBufferObject = nullptr;
 }
