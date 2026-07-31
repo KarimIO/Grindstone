@@ -465,9 +465,7 @@ void Vulkan::WindowGraphicsBinding::SubmitCommandBufferNoSynchronization(Graphic
 		.pSignalSemaphoreInfos = nullptr
 	};
 
-	vkResetFences(device, 1, &inFlightFences[currentFrameIndex]);
-
-	VkResult result = vkQueueSubmit2(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrameIndex]);
+	VkResult result = vkQueueSubmit2(graphicsQueue, 1, &submitInfo, fence);
 	if (result != VK_SUCCESS) {
 		WaitForAftermathCrash();
 		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to submit draw command buffer ({})!", VkResultToString(result));
