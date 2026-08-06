@@ -1,8 +1,9 @@
-# Custom Asset Runtime Integration Guide
+Custom Asset Runtime Integration Guide {#CustomAssetRuntimeGuide}
+============
 
-Although Grindstone supports many types of assets already, you may want to extend the system to support a new type of plugin or a custom format for your game.
+Although %Grindstone supports many types of assets already, you may want to extend the system to support a new type of plugin or a custom format for your game.
 
-> ⚠️ This is one of two tutorials related to asset loading. This is only about the runtime side of the asset - not importing the asset. You will not be able to use an asset unless you import the asset. Read more about that in the [Custom Asset Editor Import Guide](CustomAssetEditorGuide.md)
+\note This is one of two tutorials related to asset loading. This is only about the runtime side of the asset - not importing the asset. You will not be able to use an asset unless you import the asset. Read more about that in the [Custom Asset Editor Import Guide](@ref CustomAssetEditorGuide)
 
 ## Step 1: Create a Custom Asset Type
 

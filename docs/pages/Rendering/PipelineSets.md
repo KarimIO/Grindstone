@@ -1,9 +1,9 @@
-
-# Shader Pipeline System Documentation
+Pipeline Sets {#PipelineSets}
+============
 
 ## Overview
 
-This pipeline system provides a declarative syntax for defining rendering pipelines and compute workloads for the Grindstone Game Engine. It supports modular reusability, inheritance, and specialization, allowing technical designers and engineers to author flexible and maintainable shader and pipeline definitions.
+This pipeline system provides a declarative syntax for defining rendering pipelines and compute workloads for the %Grindstone Game Engine. It supports modular reusability, inheritance, and specialization, allowing technical designers and engineers to author flexible and maintainable shader and pipeline definitions.
 
 ## File Types
 
@@ -24,8 +24,8 @@ Used to include other pipeline set files, which may define reusable blocks, shar
 
 ### `pipelineSet` and `computeSet`
 
-- `pipelineSet "<Name>"` defines a graphics pipeline.
-- `computeSet "<Name>"` defines a compute pipeline.
+- `pipelineSet "<Name>"` defines a [graphics pipeline set](@ref Grindstone::GraphicsPipelineAsset).
+- `computeSet "<Name>"` defines a [compute pipeline](@ref Grindstone::ComputePipelineAsset).
 
 ---
 
@@ -45,7 +45,7 @@ Currently there is no selection mechanic but in the future, a configuration will
 
 ### `pass`
 
-Defined within a configuration (graphics only). Represents a rendering pass, with all shader data and render state configuration. If a pass exists outside of a configuration, it will not be used except for inheritance.
+A [pass](@ref Grindstone::GraphicsPipelineAsset::Pass) is defined within a configuration (graphics only). Represents a rendering pass, with all shader data and render state configuration. If a pass exists outside of a configuration, it will not be used except for inheritance.
 
 ---
 
@@ -80,7 +80,7 @@ Shader stages include:
  - `mesh`
  - `compute`
 
-**NOTE**: DirectX shader stage names are not used in Grindstone except within the DirectX Render Hardware Interface.
+\note DirectX shader stage names are not used in %Grindstone except within the DirectX Render Hardware Interface.
 
 ---
 
@@ -227,8 +227,8 @@ Defines how two pixels drawn on top of each other are blended together. You eith
 
 | Blend Factor              | Description                                                                              |
 | ------------------------- | ---------------------------------------------------------------------------------------- |
-| **Zero**                  | Always 0.0 — the color contributes nothing.                                              |
-| **One**                   | Always 1.0 — the color is used as-is.                                                    |
+| **Zero**                  | Always 0.0 - the color contributes nothing.                                              |
+| **One**                   | Always 1.0 - the color is used as-is.                                                    |
 | **SrcColor**              | Multiplies by the source color: `source.rgb` or `source.rgba`.                           |
 | **OneMinusSrcColor**      | Multiplies by (1 - source color): `1 - source.rgb` or `1 - source.rgba`.                 |
 | **DstColor**              | Multiplies by the destination color: `dest.rgb`.                                         |
@@ -288,7 +288,7 @@ requiresBlocks [
 
 ### `shaderHlsl`
 
-Embedded HLSL source. This block supports vertex, fragment, or compute code, depending on the pipeline type. Technical designers are not expected to modify this unless they are writing or modifying shaders. Learn about how to use HLSL for Grindstone here: [Vulkan.org - HLSL in Vulkan](https://docs.vulkan.org/guide/latest/hlsl.html#_hlsl).
+Embedded HLSL source. This block supports vertex, fragment, or compute code, depending on the pipeline type. Technical designers are not expected to modify this unless they are writing or modifying shaders. Learn about how to use HLSL for %Grindstone here: [Vulkan.org - HLSL in Vulkan](https://docs.vulkan.org/guide/latest/hlsl.html#_hlsl).
 
 ```plaintext
 shaderHlsl {

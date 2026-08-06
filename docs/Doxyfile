@@ -367,7 +367,7 @@ MARKDOWN_SUPPORT       = YES
 # Minimum value: 0, maximum value: 99, default value: 6.
 # This tag requires that the tag MARKDOWN_SUPPORT is set to YES.
 
-TOC_INCLUDE_HEADINGS   = 6
+TOC_INCLUDE_HEADINGS   = 0
 
 # The MARKDOWN_ID_STYLE tag can be used to specify the algorithm used to
 # generate identifiers for the Markdown headings. Note: Every identifier is
@@ -966,8 +966,8 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = ../sources \
-	../LICENSE.md \
-	.
+	../plugins/ \
+    .
 
 # This tag can be used to specify the character encoding of the source files
 # that Doxygen parses. Internally Doxygen uses the UTF-8 encoding. Doxygen uses
@@ -1436,7 +1436,8 @@ HTML_EXTRA_STYLESHEET  = ./css/doxygen-awesome.css \
 # files will be copied as-is; there are no commands or markers available.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_FILES       = ./js/doxygen-awesome-darkmode-toggle.js \
+HTML_EXTRA_FILES       = ./js/jquery.js \
+	./js/doxygen-awesome-darkmode-toggle.js \
 	./js/doxygen-awesome-fragment-copy-button.js \
 	./js/doxygen-awesome-interactive-toc.js \
 	./js/doxygen-awesome-paragraph-link.js \
@@ -2931,3 +2932,10 @@ MSCGEN_TOOL            =
 # command).
 
 MSCFILE_DIRS           =
+
+# If the HIDE_UNDOC_NAMESPACES tag is set to YES, Doxygen will hide all
+# undocumented namespaces that are normally visible in the namespace hierarchy.
+# If set to NO, these namespaces will be included in the various overviews.
+# This option has no effect if EXTRACT_ALL is enabled.
+
+HIDE_UNDOC_NAMESPACES  = NO

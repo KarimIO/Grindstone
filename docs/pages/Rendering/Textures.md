@@ -1,19 +1,19 @@
+Textures {#Textures}
+============
 
-# Textures
-
-Textures are image data used to add detail and realism to 3D models and surfaces in your game. In **Grindstone**, **TextureAssets** allow developers and artists to bring surfaces to life — whether it's the diffuse color of a wall, the detail of a normal map, or the panoramic view of a skybox.
+Textures are image data used to add detail and realism to 3D models and surfaces in your game. In **%Grindstone**, **TextureAssets** allow developers and artists to bring surfaces to life - whether it's the diffuse color of a wall, the detail of a normal map, or the panoramic view of a skybox.
 
 ---
 
 ## What Is a Texture Asset?
 
-A **TextureAsset** in Grindstone is an imported image, usually used to drive material appearance. It’s referenced in material samplers or directly used in shaders to provide surface-level data. Textures influence not just color, but also lighting, surface detail, and more.
+A **TextureAsset** in %Grindstone is an imported image, usually used to drive material appearance. It’s referenced in material samplers or directly used in shaders to provide surface-level data. Textures influence not just color, but also lighting, surface detail, and more.
 
 ---
 
 ## Supported Image Formats
 
-Grindstone supports importing the following image file formats:
+%Grindstone supports importing the following image file formats:
 
 - `.bmp`
 - `.jpg` / `.jpeg`
@@ -28,7 +28,7 @@ Each of these formats will be converted internally for optimal GPU use. Whether 
 
 ## Texture Compression
 
-To reduce memory usage and improve performance, Grindstone automatically compresses textures using GPU-friendly formats:
+To reduce memory usage and improve performance, %Grindstone automatically compresses textures using GPU-friendly formats:
 
 - **BC1**: for images with no alpha channel (RGB)
 - **BC3**: for images with alpha (RGBA)
@@ -48,7 +48,7 @@ This makes textures scale cleanly at all distances without additional setup.
 
 ## Cubemap Detection
 
-Grindstone automatically detects **cubemap textures** during import. If the texture’s aspect ratio is exactly **3:4**, it will be flagged as a cubemap (a panoramic layout, often used to render skies).
+%Grindstone automatically detects **cubemap textures** during import. If the texture’s aspect ratio is exactly **3:4**, it will be flagged as a cubemap (a panoramic layout, often used to render skies).
 
 This detection removes the need for manual tagging and ensures the texture is ready for cubemap rendering out-of-the-box.
 
@@ -56,13 +56,13 @@ This detection removes the need for manual tagging and ensures the texture is re
 
 ## Using Textures in Materials
 
-Once imported, TextureAssets can be assigned to samplers inside **Materials**. The material’s shader (via `GraphicsPipelineSet`) defines which textures are expected — such as `albedoTexture`, `normalTexture`, or `metallicMap` — and the editor allows you to drag and drop the corresponding texture assets.
+Once imported, TextureAssets can be assigned to samplers inside **Materials**. The material’s shader (via `GraphicsPipelineSet`) defines which textures are expected - such as `albedoTexture`, `normalTexture`, or `metallicMap` - and the editor allows you to drag and drop the corresponding texture assets.
 
 ---
 
 ## Implementation Details
 
-Under the hood, all texture assets in Grindstone are **converted and stored as DDS files**. DDS (DirectDraw Surface) is a GPU-optimized format that supports mipmaps, cube maps, and all required compression modes.
+Under the hood, all texture assets in %Grindstone are **converted and stored as DDS files**. DDS (DirectDraw Surface) is a GPU-optimized format that supports mipmaps, cube maps, and all required compression modes.
 
 This provides fast loading and reliable rendering behavior across platforms.
 
@@ -73,7 +73,7 @@ This provides fast loading and reliable rendering behavior across platforms.
 Several upcoming features are planned to give developers more control over texture importing:
 
 - **Custom Sampler Settings**: Define wrap mode (Repeat, Clamp, Border), filtering, and LOD bias per texture.
-- **Manual Compression Selection**: Choose compression formats based on usage (e.g., BC5 for normal maps, BC1 for roughness/specular).
+- **Manual Compression Selection**: Choose compression formats based on usage (e.g.: BC5 for normal maps, BC1 for roughness/specular).
 - **Mipmap Generation Toggle**: Option to disable mipmaps for UI or special cases.
 - **Texture Type Selection**: Explicitly set texture type during import:
   - 1D
@@ -84,6 +84,6 @@ Several upcoming features are planned to give developers more control over textu
   - 3D Array
   - Cubemap
 
-These additions will help fine-tune performance, visual quality, and storage size — particularly for larger or more complex projects.
+These additions will help fine-tune performance, visual quality, and storage size - particularly for larger or more complex projects.
 
 Other improvements include faster importing, especially of HDR images.

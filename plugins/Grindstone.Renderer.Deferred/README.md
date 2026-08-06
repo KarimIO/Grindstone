@@ -1,3 +1,5 @@
+@page Plugin_Grindstone_Renderer_Deferred Deferred Renderer
+
 # Deferred Renderer
 
 This plugin is developed by the Grindstone Foundation. It is a high level system built on top of the Render Hardware Interface.

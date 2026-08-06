@@ -1,3 +1,5 @@
+@page Plugin_Grindstone_Physics_Bullet Bullet Physics System
+
 # Physics System (Bullet)
 
 This plugin is developed by the Grindstone Foundation. It's designed to physically simulate objects moving in 3d space.

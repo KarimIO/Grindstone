@@ -1,3 +1,5 @@
+@page Plugin_Grindstone_Ai_NavMesh Navigation Meshes
+
 # Navigation Meshes
 
 This plugin is developed by the Grindstone Foundation. It's designed to allow navigation through a 3d enironment using Navigation Meshes. This system

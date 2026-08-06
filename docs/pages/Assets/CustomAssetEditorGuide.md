@@ -1,16 +1,17 @@
-# Custom Asset Editor Import Guide
+Custom Asset Editor Import Guide {#CustomAssetEditorGuide}
+============
 
-Although Grindstone supports many types of assets already, you may want to extend the system to support a new type of plugin or a custom format for your game.
+Although %Grindstone supports many types of assets already, you may want to extend the system to support a new type of plugin or a custom format for your game.
 
-> ⚠️ This is one of two tutorials related to asset loading. This is only about importing the source asset that the user may create. You will not be able to use the asset ingame unless you follow the other guide. Read more about that in the [Custom Asset Runtime Integration Guide](CustomAssetRuntimeGuide.md)
+\note This is one of two tutorials related to asset loading. This is only about importing the source asset that the user may create. You will not be able to use the asset ingame unless you follow the other guide. Read more about that in the [Custom Asset Runtime Integration Guide](@ref CustomAssetRuntimeGuide)
 
 ## Step 1: Create an asset importer function
 
 This function will take the path of a file, and output any number of assets. Usually this involves parsing it, but the simplest importre may simply copy the file.
 
 The list of assets will be included in a meta file, so for each asset, you must call one of the following functions, depending if the asset is the "main" asset, or another asset.
- - `GetOrCreateDefaultSubassetUuid(const std::string& subassetName, AssetType assetType)`
- - `GetOrCreateSubassetUuid(const std::string& subassetName, AssetType assetType)`
+ - `GetOrCreateDefaultSubassetUuid(const std::string& subassetName, AssetType)`
+ - `GetOrCreateSubassetUuid(const std::string& subassetName, AssetType)`
 
 ```cpp
 #include <Common/ResourcePipeline/MetaFile.hpp>
@@ -33,7 +34,7 @@ void ImportCustomAsset(Grindstone::Editor::AssetRegistry& assetRegistry, Grindst
 ## Step 2: Register the Asset Importer
 
 In your plugin `EntryPoint` file, register the asset importer and unregister on release.
- - `RegisterAssetImporter(const char* extension, Grindstone::Editor::ImporterFactory importerFactory, Grindstone::Editor::ImporterVersion importerVersion)`
+ - `RegisterAssetImporter(const char* extension, Grindstone::Editor::ImporterFactory, Grindstone::Editor::ImporterVersion)`
  - `DeregisterAssetImporter(const char* extension)`
 
 ```cpp

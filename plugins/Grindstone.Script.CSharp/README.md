@@ -1,3 +1,5 @@
+@page Plugin_Grindstone_Script_CSharp C# Scripting support
+
 # C# Scripting support
 
 This plugin is developed by the Grindstone Foundation. It's designed to allow developers to extend gameplay using C#, a simpler language to C++.
@@ -20,6 +22,7 @@ This is a system that runs script update loops only for editors.
 
 Here is an example script that utilizes input features and the OnUpdate loop to create a moving player.
 
+```csharp
 using Grindstone.Math;
 using System;
 
@@ -104,4 +107,4 @@ public class Player : Grindstone.SmartComponent
     }
     #endregion
 }
-
+```

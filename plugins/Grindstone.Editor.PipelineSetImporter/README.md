@@ -1,3 +1,5 @@
+@page Plugin_Grindstone_Editor_PipelineSetImporter Editor PipelineSet Importer
+
 # Editor PipelineSet Importer
 
 This plugin is developed by the Grindstone Foundation. It's designed to allow import pipelinesets which are groups of shaders. It can render materials in a variety of configurations (depending on hardware specifications, distance to objects, etc) and settings (such as regular rendering, shadows, etc).

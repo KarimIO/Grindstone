@@ -252,12 +252,22 @@ void PluginsWindow::Open() {
 	LoadPluginsManifest();
 }
 
+static std::string ProcessReadme(std::string source) {
+	size_t titleOffset = source.find("\n# ");
+
+	if (titleOffset == -1) {
+		return source;
+	}
+
+	return source.substr(titleOffset + 1);
+}
+
 void PluginsWindow::SelectPlugin(size_t newSelectedIndex) {
 	currentSelectedPlugin = newSelectedIndex;
 	pluginSelectionState = PluginSelectionState::Ready;
 	const std::string& pluginName = pluginCacheList[newSelectedIndex].metaData.name;
 	std::filesystem::path pathToReadme = pluginCacheList[newSelectedIndex].metaData.pluginResolvedPath / "README.md";
-	currentPluginData.readmeData = Utils::LoadFileText(pathToReadme.string().c_str());
+	currentPluginData.readmeData = ProcessReadme(Utils::LoadFileText(pathToReadme.string().c_str()));
 }
 
 void PluginsWindow::LoadPluginsManifest() {

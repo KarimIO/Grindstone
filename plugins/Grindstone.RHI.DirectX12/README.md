@@ -1,3 +1,5 @@
+@page Plugin_Grindstone_RHI_DirectX12 DirectX12 Render Hardware Interface
+
 # DirectX12 Render Hardware Interface
 
 This plugin is developed by the Grindstone Foundation. It's designed to allow the application to render computer graphics using the DirectX12 API.

@@ -1,6 +1,7 @@
-# DeferredRenderer  
+Deferred Renderer {#DeferredRenderer}
+============
 
-The **DeferredRenderer** is the default rendering technique used in the Grindstone Engine. It is designed for flexibility and efficiency, particularly in scenes with many dynamic lights.
+The **DeferredRenderer** is the default rendering technique used in the %Grindstone Engine. It is designed for flexibility and efficiency, particularly in scenes with many dynamic lights.
 
 ---
 
@@ -54,7 +55,7 @@ The renderer writes material and surface data to several textures, known as atta
 - **Normals** – stores surface normal directions in view space
 - **Depth** – stores pixel depth (also used to reconstruct world positions)
 
-These are written using calls to `assetRendererManager->RenderQueue(commandBuffer, registry, "GeometryOpaque")`, which asks each registered `AssetRenderer` (such as `Mesh3dRenderer`) to render all opaque objects.
+These are written using calls to `assetRendererManager->RenderQueue(commandBuffer, registry, "GeometryOpaque")`, which asks each registered [AssetRenderer](@ref Grindstone::AssetRenderer) (such as [Mesh3dRenderer](@ref Grindstone::Mesh3dRenderer)) to render all opaque objects.
 
 ### Lighting Pass
 
@@ -79,7 +80,7 @@ assetRendererManager->RenderQueue(commandBuffer, registry, "GeometryTransparent"
 Following the lighting stage, the `DeferredRenderer` runs a post-processing pipeline, which includes:
 
 - **Screen Space Ambient Occlusion (SSAO)** - This calculates how much the ambient lighting will be able to reach certain areas, where less lighting can reach corners and areas with high detail.
-- **Screen Space Reflections (SSR) (Work In Progress)** - Reflect rays on the geometry as it has been already rendered, to be able to render reflections. This only works if the reflection results in a position that is on the screen.
+- **Screen Space Reflections (SSR)** - Reflect rays on the geometry as it has been already rendered, to be able to render reflections. This only works if the reflection results in a position that is on the screen, otherwise it falls back to the nearest available cubemap.
 - **Depth of Field (DOF) (Work In Progress)** - Breaks the geometry into slices - near, far, and mid-distance, where near and far places may be blurred differently.
 - **Bloom** - Takes extremely bright pixels and blurs them.
 - **Composite** - This does many operations in one go:
@@ -98,6 +99,5 @@ The final image, as with any Renderer, is redirected to one of two places - the 
 
 ## Future Work
 
-- **Screen Space Reflections** for higher fidelity reflections
-- **Depth of Field** for blurring very close or very far geometry, like a real lens does
+- **Depth of Field** for blurring very close or very far geometry, like a real lens does.
 - **Improved light culling** using meshes (spheres for point lights, and cones for spot lights), and tiled or clustered light culling. This reduces the pixels which are lit for each light.

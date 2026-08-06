@@ -5,36 +5,135 @@ html {
 	--primary-light-color: #af88d1;
 
 	/* page base colors */
-	--side-nav-background:  #f3f3f3;
-	--page-background-color: #f3f3f3;
+	--side-nav-background:  #f0f0f0;
+	--side-nav-foreground: #1a1a1b;
+	--page-background-color: #f9f9f9;
 	--page-foreground-color: #111;
 	--page-secondary-foreground-color: #444;
+
+	--blockquote-background: #f1efed;
+	--fragment-keyword: #bd6f41;
+	--fragment-keywordtype: #bd6f41;
+	--fragment-link: #55178f;
+	--fragment-background: #f1efed;
+	--fragment-foreground: #2d2b33;
+
+	--grindstone-logo-filter: brightness(20%);
+}
+
+.big-space {
+	margin-bottom: 4rem;
+}
+
+.grindstone-logo {
+	filter: var(--grindstone-logo-filter);
+}
+
+.guide-2grid {
+	display: grid;
+	margin: 2rem 0;
+	grid-template-columns: 1fr 1fr;
+	gap: 2rem;
+}
+
+.guide-section {
+	display: flex;
+	height: 12rem;
+	padding: 2rem;
+	flex-grow: 1;
+	flex-shrink: 1;
+	border-radius: 0.6rem;
+	border: 1px solid rgba(0, 0, 0, 0.16);
+	pointer-events: none;
+	transition: 0.3s ease border-color;
+	color: #666;
+	flex-direction: column;
+	justify-content: end;
+}
+
+.guide-section:hover {
+	border-color: rgba(0, 0, 0, 0.7);
+}
+
+.guide-section a {
+	font-size: 2rem;
+	font-weight: 600;
+	margin: 0;
+	pointer-events: all;
+}
+
+.guide-section p {
+	text-align: justify;
+	font-size: 1.1rem;
+	line-height: 150%;
 }
 
 @media (prefers-color-scheme: dark) {
 	html:not(.light-mode) {
 		/* primary theme color. This will affect the entire websites color scheme: links, arrows, labels, ... */
-		--primary-color: #933be6;
-		--primary-dark-color: #612a96;
-		--primary-light-color: #701fbb;
+		--primary-color: #a059e2;
+		--primary-dark-color: #8b41cf;
+		--primary-light-color: #b780eb;
 
 		/* page base colors */
 		--side-nav-background:  #141318;
-		--page-background-color: #141318;
+		--side-nav-foreground: #f3f3f3;
+		--page-background-color: #09090b;
 		--page-foreground-color: #eee;
 		--page-secondary-foreground-color: #999;
+		
+		--blockquote-background: #141318;
+		--fragment-keyword: #bd6f41;
+		--fragment-keywordtype: #bd6f41;
+		--fragment-link: #a059e2;
+		--fragment-background: #141318;
+		--fragment-foreground: #dbe4eb;
+	}
+	
+	html:not(.light-mode) .grindstone-logo {
+		--grindstone-logo-filter: none;
+	}
+	
+	html:not(.light-mode) .guide-section {
+		border-color: #fff2;
+		color: #999;
+	}
+
+	html:not(.light-mode) .guide-section:hover {
+		border-color: #eeeeee;
 	}
 }
 
 html.dark-mode  {
 	/* primary theme color. This will affect the entire websites color scheme: links, arrows, labels, ... */
-	--primary-color: #933be6;
-	--primary-dark-color: #612a96;
-	--primary-light-color: #701fbb;
+	--primary-color: #a059e2;
+	--primary-dark-color: #8b41cf;
+	--primary-light-color: #b780eb;
 
 	/* page base colors */
 	--side-nav-background:  #141318;
-	--page-background-color: #141318;
+	--side-nav-foreground: #f3f3f3;
+	--page-background-color: #09090b;
 	--page-foreground-color: #eee;
 	--page-secondary-foreground-color: #999;
+	
+	--blockquote-background: #141318;
+	--fragment-keyword: #bd6f41;
+	--fragment-keywordtype: #bd6f41;
+	--fragment-link: #a059e2;
+	--fragment-background: #141318;
+	--fragment-foreground: #dbe4eb;
+}
+
+html.dark-mode .grindstone-logo {
+	--grindstone-logo-filter: none;
+}
+
+html.dark-mode .guide-section {
+	border-color: #fff2;
+	color: #999;
+}
+
+html.dark-mode .guide-section:hover {
+	border-color: #eeeeee;
 }

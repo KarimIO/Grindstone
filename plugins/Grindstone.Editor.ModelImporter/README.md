@@ -1,3 +1,5 @@
+@page Plugin_Grindstone_Editor_ModelImporter Editor PipelineSet Importer
+
 # Editor Model Importer
 
 This plugin is developed by the Grindstone Foundation. It's designed to allow import of model assets.

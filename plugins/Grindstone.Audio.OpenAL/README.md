@@ -1,3 +1,5 @@
+@page Plugin_Grindstone_Audio_OpenAL OpenAL Audio System
+
 # OpenAL Audio System
 
 This plugin is developed by the Grindstone Foundation. It's designed to allow audio files to be imported ingame.

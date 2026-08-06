@@ -1,3 +1,5 @@
+@page Plugin_Grindstone_Editor_MaterialImporter Editor Material Importer
+
 # Editor Material Importer
 
 This plugin is developed by the Grindstone Foundation. It's designed to allow material files to be imported ingame, and adds a material editor as well.

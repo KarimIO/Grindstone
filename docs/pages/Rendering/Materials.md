@@ -1,24 +1,25 @@
-# Materials
+Materials {#Materials}
+============
 
-When you admire the worn paint on a metal door or the shimmer of water in a game, you're seeing the result of carefully crafted **materials**. In **Grindstone**, materials control how surfaces appear under lighting and effects by linking together shaders, textures, and property values. This system allows both technical and creative users to define the look of everything from gritty terrain to sci-fi armor.
+When you admire the worn paint on a metal door or the shimmer of water in a game, you're seeing the result of carefully crafted **materials**. In **%Grindstone**, materials control how surfaces appear under lighting and effects by linking together shaders, textures, and property values. This system allows both technical and creative users to define the look of everything from gritty terrain to sci-fi armor.
 
 ---
 
 ## The Role of Materials
 
-Materials don't define *shape* — that’s what meshes do — but they define *how light interacts with surfaces*. This includes everything from basic colors and texture maps to more advanced features like transparency, normal mapping, or emissive glow.
+Materials don't define *shape* - that’s what meshes do - but they define *how light interacts with surfaces*. This includes everything from basic colors and texture maps to more advanced features like transparency, normal mapping, or emissive glow.
 
-In Grindstone, materials are flexible, asset-driven objects that can be previewed, edited, and reused throughout your scenes.
+In %Grindstone, materials are flexible, asset-driven objects that can be previewed, edited, and reused throughout your scenes.
 
 ---
 
-## Anatomy of a Material in Grindstone
+## Anatomy of a Material in %Grindstone
 
 Each material is composed of three primary elements:
 
 ### 1. Shader Reference (GraphicsPipelineSet)
 
-Each material points to a **GraphicsPipelineSet**, Grindstone's version of a shader configuration. This defines:
+Each material points to a **GraphicsPipelineSet**, %Grindstone's version of a shader configuration. This defines:
 
 - Which GPU shaders to use
 - Render settings (blending, culling, depth testing, etc.)
@@ -41,14 +42,14 @@ Each parameter is defined by the GraphicsPipelineSet, and supports various types
 
 Resources are external assets such as:
 
-- **Textures** – e.g., diffuse, normal, roughness maps
+- **Textures** – e.g.: diffuse, normal, roughness maps
 - **Samplers** – specifying how textures are filtered, repeated, or clamped
 
 These provide surface detail and variation, turning a flat red color into cracked paint or rough stone.
 
 ---
 
-## Editing Materials in the Grindstone Editor
+## Editing Materials in the %Grindstone Editor
 
 Materials are fully editable in the **Inspector Panel** once selected in the **Asset Browser**. The interface provides:
 
@@ -73,7 +74,7 @@ Materials are applied through a combination of components:
 - **MeshComponent**: references the mesh asset
 - **MeshRendererComponent**: assigns an **array of materials** to be used when rendering the mesh
 
-Each submesh in the model has a **material index**, which selects the appropriate material from the array. This allows you to apply different materials to different parts of the same mesh — for example, wood for the handle, steel for the blade.
+Each submesh in the model has a **material index**, which selects the appropriate material from the array. This allows you to apply different materials to different parts of the same mesh - for example, wood for the handle, steel for the blade.
 
 ---
 
@@ -105,7 +106,7 @@ Once imported, you can replace or customize the material as needed.
 
 ## Validation and Error Handling
 
-While Grindstone currently imports all materials, **future versions will validate shader compatibility and usage**. If a material fails to import (e.g., due to a missing shader), it will appear in the **AssetWarnings** panel, and:
+While %Grindstone currently imports all materials, **future versions will validate shader compatibility and usage**. If a material fails to import (e.g.: due to a missing shader), it will appear in the **AssetWarnings** panel, and:
 
 - The last known working version of the material will be used if available
 - A fallback material will be substituted if not
@@ -116,15 +117,15 @@ This helps keep projects stable while alerting developers to issues needing atte
 
 ## Best Practices
 
-- **Use PascalCase for material names** (e.g., `SteelPlate`, `AlienSkin`)
-- **Avoid duplicating similar materials** — reusing shared assets helps performance and maintainability
+- **Use PascalCase for material names** (e.g.: `SteelPlate`, `AlienSkin`)
+- **Avoid duplicating similar materials**. Reusing shared assets helps performance and maintainability
 - **Clean up unused materials**. While they won’t be included in final builds, they can still slow down the editor and clutter your workspace.
 
 ---
 
-## JSON-Based Storage (For Developers)
+## JSON-Based Storage (Technical Implementation)
 
-Although not exposed to artists, materials in Grindstone are stored as JSON files. This allows them to be:
+Although not exposed to artists, materials in %Grindstone are stored as JSON files. This allows them to be:
 
 - Easily serialized
 - Version controlled

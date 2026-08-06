@@ -1,3 +1,5 @@
+@page Plugin_Grindstone_Editor_TextureImporter Editor Texture Importer
+
 # Editor Texture Importer
 
 This plugin is developed by the Grindstone Foundation. It's designed to allow texture files to be imported ingame, and adds a texture editor as well.

@@ -1,3 +1,5 @@
+@page Plugin_Grindstone_Renderables_3D 3D Mesh Assets and Components
+
 # 3D Mesh Assets and Components
 
 This plugin is developed by the Grindstone Foundation. It's designed to allow support meshes and mesh rendering.

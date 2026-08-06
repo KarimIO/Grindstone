@@ -1,11 +1,11 @@
+Meshes {#Meshes}
+============
 
-# Meshes
+\warning This article is a stub, you can help by expanding it.
 
-> ⚠️ This article is a stub, you can help by expanding it.
+Meshes in computer graphics are three-dimensional points in space that are connected into a group of shapes, which define the shape of an object. In %Grindstone, triangles are stored in [MeshAsset](@ref Grindstone::Mesh3dAsset)s.
 
-Meshes in computer graphics are three-dimensional points in space that are connected into a group of shapes, which define the shape of an object. In Grindstone, triangles are stored in `MeshAsset`s.
-
-Meshes can be used in a scene with `MeshComponent`s, but will not show a visible result without `MeshRendererComponents`s, which reference [Materials](Materials.md).
+Meshes can be used in a scene with [MeshComponent](@ref Grindstone::MeshComponent)s, but will not show a visible result without [MeshRendererComponent](@ref Grindstone::MeshRendererComponent)s, which reference [Materials](@ref Materials).
 
 ## Technical Details
 
