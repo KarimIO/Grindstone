@@ -7,6 +7,7 @@
 
 #include <Common/HashedString.hpp>
 #include <Common/Rect.hpp>
+#include <Common/Rendering/RenderViewData.hpp>
 
 #include "TransientResourceManager.hpp"
 
@@ -23,6 +24,7 @@ namespace Grindstone {
 	namespace Renderer {
 		struct RenderGraphContext {
 			Grindstone::GraphicsAPI::Core* graphicsCore = nullptr;
+			Grindstone::Rendering::RenderViewData cameraViewData;
 			Grindstone::Renderer::TransientResourceManager* transientResourceManager = nullptr;
 			Grindstone::GraphicsAPI::DescriptorSetLayout* globalDescriptorSetLayout = nullptr;
 			Grindstone::GraphicsAPI::DescriptorSet* globalDescriptorSet = nullptr;

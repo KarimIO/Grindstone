@@ -14,7 +14,6 @@
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <Editor/EditorCamera.hpp>
 #include <Editor/EditorManager.hpp>
-#include <EngineCore/Rendering/BaseRenderer.hpp>
 
 #include "ViewportPanel.hpp"
 
@@ -277,6 +276,8 @@ void ViewportPanel::DisplayCameraToPanel() {
 }
 
 void ViewportPanel::DisplayOptions() {
+	/*
+	* TODO: Re-Introduce DisplayOptions
 	BaseRenderer* renderer = camera->GetRenderer();
 
 	if (renderer == nullptr) {
@@ -315,6 +316,7 @@ void ViewportPanel::DisplayOptions() {
 		}
 		ImGui::EndCombo();
 	}
+	*/
 }
 
 void ViewportPanel::Render() {

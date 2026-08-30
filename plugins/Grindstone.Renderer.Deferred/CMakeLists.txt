@@ -5,21 +5,21 @@ set(RENDERER_DEFERRED_LIB ${RENDERER_DEFERRED_BASE}/lib)
 set(SRC ${RENDERER_DEFERRED_BASE}/source)
 set(INC ${RENDERER_DEFERRED_BASE}/include)
 
-set(RENDERER_DEFERRED_SOURCES ${SRC}/DeferredRendererFactory.cpp ${SRC}/DeferredRenderer.cpp ${SRC}/EntryPoint.cpp)
-set(RENDERER_DEFERRED_HEADERS ${INC}/DeferredRendererFactory.hpp ${INC}/DeferredRenderer.hpp ${INC}/DeferredRendererCommon.hpp)
+set(RENDERER_DEFERRED_SOURCES ${SRC}/DeferredRendererRenderPasses.cpp ${SRC}/EntryPoint.cpp)
+set(RENDERER_DEFERRED_HEADERS ${INC}/DeferredRendererRenderPasses.hpp ${INC}/DeferredRendererCommon.hpp)
 
-file(GLOB_RECURSE SOURCE_PASSES "${SRC}/Passes/*.cpp")
-file(GLOB_RECURSE HEADER_PASSES "${INC}/Passes/*.hpp")
-source_group("Source Files\\Passes" FILES ${SOURCE_PASSES})
-source_group("Header Files\\Passes" FILES ${HEADER_PASSES})
+file(GLOB_RECURSE SOURCE_FEATURES "${SRC}/Features/*.cpp")
+file(GLOB_RECURSE HEADER_FEATURES "${INC}/Features/*.hpp")
+source_group("Source Files\\Features" FILES ${SOURCE_FEATURES})
+source_group("Header Files\\Features" FILES ${HEADER_FEATURES})
 
 add_library(
 	PluginRendererDeferred
 	MODULE
 	${RENDERER_DEFERRED_SOURCES}
 	${RENDERER_DEFERRED_HEADERS}
-	${SOURCE_PASSES}
-	${HEADER_PASSES}
+	${SOURCE_FEATURES}
+	${HEADER_FEATURES}
 	${CORE_UTILS}
 )
 

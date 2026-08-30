@@ -20,6 +20,7 @@ file(
     ${COMMON_DIR}/Logging.hpp
     ${COMMON_DIR}/Math.cpp
     ${COMMON_DIR}/Math.hpp
+    ${COMMON_DIR}/Result.hpp
     ${COMMON_DIR}/Observable.hpp
     ${COMMON_DIR}/String.hpp
 )
@@ -28,6 +29,12 @@ file(GLOB_RECURSE SOURCE_ASSETS "${COMMON_DIR}/Assets/*.cpp")
 file(GLOB_RECURSE HEADER_ASSETS "${COMMON_DIR}/Assets/*.hpp")
 source_group("Source Files\\Assets" FILES ${SOURCE_ASSETS})
 source_group("Header Files\\Assets" FILES ${HEADER_ASSETS})
+
+
+file(GLOB_RECURSE SOURCE_BLACKBOARD "${COMMON_DIR}/Blackboard/*.cpp")
+file(GLOB_RECURSE HEADER_BLACKBOARD "${COMMON_DIR}/Blackboard/*.hpp")
+source_group("Source Files\\Blackboard" FILES ${SOURCE_BLACKBOARD})
+source_group("Header Files\\Blackboard" FILES ${HEADER_BLACKBOARD})
 
 file(GLOB_RECURSE SOURCE_CONSOLE "${COMMON_DIR}/Console/*.cpp")
 file(GLOB_RECURSE HEADER_CONSOLE "${COMMON_DIR}/Console/*.hpp")
@@ -92,6 +99,7 @@ source_group("Header Files\\Window" FILES ${HEADER_WINDOW})
 set(COMMON_SOURCES
     ${SOURCE_MAIN}
     ${SOURCE_ASSETS}
+    ${SOURCE_BLACKBOARD}
     ${SOURCE_CONSOLE}
     ${SOURCE_CONTAINERS}
     ${SOURCE_DISPLAY}
@@ -108,6 +116,7 @@ set(COMMON_SOURCES
 
 set(COMMON_HEADERS
     ${HEADER_ASSETS}
+    ${HEADER_BLACKBOARD}
     ${HEADER_CONSOLE}
     ${HEADER_CONTAINERS}
     ${HEADER_DISPLAY}

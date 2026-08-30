@@ -32,6 +32,10 @@ namespace Grindstone {
 		class SystemRegistrar;
 	}
 
+	namespace Rendering {
+		class RendererFeature;
+	}
+
 	class CvarSystem;
 	class WindowManager;
 	class DisplayManager;
@@ -44,6 +48,10 @@ namespace Grindstone {
 		public:
 			virtual ~IEditorInterface() {}
 		};
+
+		namespace Rendering {
+			class RendererFeature;
+		}
 
 		class ENGINE_CORE_API Interface {
 		public:
@@ -73,6 +81,8 @@ namespace Grindstone {
 			virtual Grindstone::CvarSystem* GetCvarSystem() const;
 			virtual void RegisterWorldContextFactory(Grindstone::HashedString contextName, Grindstone::UniquePtr<Grindstone::WorldContext> (*FactoryFn)());
 			virtual void UnregisterWorldContextFactory(Grindstone::HashedString contextName);
+			virtual void RegisterRendererFeature(Grindstone::Rendering::RendererFeature* feature);
+			virtual void UnregisterRendererFeature(const char* name);
 
 			template<typename ClassType>
 			void RegisterWorldContextFactory(Grindstone::HashedString contextName) {
@@ -87,6 +97,16 @@ namespace Grindstone {
 			template<typename T>
 			void UnregisterComponent() {
 				componentRegistrar->UnregisterComponent<T>();
+			}
+
+			template<typename ClassType>
+			void RegisterRendererFeature() {
+				RegisterRendererFeature(Grindstone::Memory::AllocatorCore::Allocate<ClassType>());
+			}
+
+			template<typename ClassType>
+			void UnregisterRendererFeature() {
+				UnregisterRendererFeature(ClassType::GetStaticFeatureName());
 			}
 
 			template<typename Asset>

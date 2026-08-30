@@ -6,9 +6,11 @@
 #include <functional>
 #include <stdint.h>
 
+#include <Common/Rect.hpp>
 #include <Common/EnumTraits.hpp>
 #include <Common/Graphics/Formats.hpp>
 #include <Common/Graphics/Image.hpp>
+#include <Common/Graphics/CommandBuffer.hpp>
 
 #include "RenderGraphResourceRef.hpp"
 

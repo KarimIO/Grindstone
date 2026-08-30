@@ -16,7 +16,7 @@ Grindstone::Renderer::RenderGraph::RenderGraph(
 }
 
 void Grindstone::Renderer::RenderGraph::ExecuteGraph(Grindstone::Renderer::RenderGraphContext context) {
-	auto resourceManager = context.transientResourceManager;
+	Grindstone::Renderer::TransientResourceManager* resourceManager = context.transientResourceManager;
 	resourceManager->BeginFrame();
 
 	// Build this frame's ResourceId -> physical mapping

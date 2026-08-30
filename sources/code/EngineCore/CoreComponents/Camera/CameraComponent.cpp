@@ -3,7 +3,7 @@
 #include <EngineCore/Reflection/ComponentReflection.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
-#include <EngineCore/Rendering/BaseRenderer.hpp>
+#include <EngineCore/Rendering/RenderingPipeline.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
 
@@ -38,14 +38,6 @@ void Grindstone::CameraComponent::Construct(Grindstone::WorldContextSet& cxtSet,
 
 	CameraComponent& cameraComponent = cxtSet.GetEntityRegistry().get<CameraComponent>(entity);
 
-	GraphicsAPI::RenderPass* renderPass = nullptr;
-	cameraComponent.renderer = engineCore.GetRendererFactory()->CreateRenderer(wgb->GetRenderPass());
-
-	eventDispatcher->AddEventListener(
-		Events::EventType::WindowResize,
-		std::bind(&BaseRenderer::OnWindowResize, cameraComponent.renderer, std::placeholders::_1)
-	);
-
 	eventDispatcher->AddEventListener(
 		Events::EventType::WindowResize,
 		std::bind(&CameraComponent::OnWindowResize, &cameraComponent, std::placeholders::_1)
@@ -54,6 +46,4 @@ void Grindstone::CameraComponent::Construct(Grindstone::WorldContextSet& cxtSet,
 
 void Grindstone::CameraComponent::Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	CameraComponent& cameraComponent = cxtSet.GetEntityRegistry().get<CameraComponent>(entity);
-	AllocatorCore::Free(cameraComponent.renderer);
-	cameraComponent.renderer = nullptr;
 }

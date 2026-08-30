@@ -48,12 +48,15 @@ namespace Grindstone {
 		class Manager;
 	}
 
+	namespace Renderer {
+		class RenderingPipeline;
+	}
+
 	class Window;
 	class DisplayManager;
 	class WindowManager;
 
 	class AssetRendererManager;
-	class BaseRendererFactory;
 	class RenderPassRegistry;
 	class WorldContextManager;
 
@@ -88,7 +91,6 @@ namespace Grindstone {
 		virtual void UpdateWindows();
 		void RegisterGraphicsCore(GraphicsAPI::Core*);
 		virtual void RegisterInputManager(Input::Interface*);
-		virtual void SetRendererFactory(BaseRendererFactory* factory);
 		virtual Input::Interface* GetInputManager() const;
 		virtual SceneManagement::SceneManager* GetSceneManager() const;
 		virtual Plugins::IPluginManager* GetPluginManager() const;
@@ -98,7 +100,6 @@ namespace Grindstone {
 		virtual ECS::ComponentRegistrar* GetComponentRegistrar() const;
 		virtual GraphicsAPI::Core* GetGraphicsCore() const;
 		virtual Profiler::Manager* GetProfiler() const;
-		virtual BaseRendererFactory* GetRendererFactory() const;
 		virtual RenderPassRegistry* GetRenderPassRegistry() const;
 		virtual WorldContextManager* GetWorldContextManager() const;
 		virtual std::filesystem::path GetProjectPath() const;
@@ -108,6 +109,7 @@ namespace Grindstone {
 		virtual std::filesystem::path GetEngineAssetsPath() const;
 		virtual std::filesystem::path GetAssetPath(std::string subPath) const;
 		virtual entt::registry& GetEntityRegistry();
+		virtual Renderer::RenderingPipeline* GetRenderingPipeline() const;
 
 		virtual bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
 		virtual bool OnForceQuit(Grindstone::Events::BaseEvent* ev);
@@ -169,11 +171,11 @@ namespace Grindstone {
 		SceneManagement::SceneManager* sceneManager = nullptr;
 		ECS::ComponentRegistrar* componentRegistrar = nullptr;
 		ECS::SystemRegistrar* systemRegistrar = nullptr;
-		BaseRendererFactory* rendererFactory = nullptr;
 		RenderPassRegistry* renderpassRegistry = nullptr;
 		Events::Dispatcher* eventDispatcher = nullptr;
 		Plugins::Interface* pluginInterface = nullptr;
 		Plugins::IPluginManager* pluginManager = nullptr;
+		Renderer::RenderingPipeline* renderingPipeline = nullptr;
 		GraphicsAPI::Core* graphicsCore = nullptr;
 		Input::Interface* inputManager = nullptr;
 		std::unordered_map<std::size_t, void*> services;

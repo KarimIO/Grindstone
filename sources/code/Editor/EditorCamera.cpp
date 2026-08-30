@@ -3,22 +3,17 @@
 #include <Common/Graphics/Core.hpp>
 #include <Common/Console/Cvars.hpp>
 #include <Common/Window/WindowManager.hpp>
+#include <EngineCore/Rendering/RenderingPipeline.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
-#include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
-#include <EngineCore/CoreComponents/Lights/PointLightComponent.hpp>
-#include <EngineCore/CoreComponents/Lights/SpotLightComponent.hpp>
-#include <EngineCore/CoreComponents/Lights/DirectionalLightComponent.hpp>
 #include <EngineCore/Rendering/RenderGraphContextSet.hpp>
 #include <EngineCore/Rendering/RenderPassRegistry.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Logger.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanDescriptorSet.hpp>
-#include <Grindstone.Physics.Jolt/include/Components/ColliderComponent.hpp>
-#include <Grindstone.Renderables.3D/include/Components/MeshComponent.hpp>
 
 #include "EditorCamera.hpp"
 #include "EditorManager.hpp"
@@ -33,16 +28,6 @@ const Grindstone::ConstHashedString mousePickRenderQueue("MousePick");
 static GraphicsAPI::RenderPass* editorRenderPass = nullptr;
 static GraphicsAPI::RenderPass* gizmoRenderPass = nullptr;
 static GraphicsAPI::RenderPass* mousePickRenderPass = nullptr;
-
-struct MousePickMatrixBuffer {
-	glm::mat4 projectionMatrix;
-	glm::mat4 viewMatrix;
-};
-
-struct MousePickResponseBuffer {
-	float depth;
-	uint32_t entityId;
-};
 
 void EditorCamera::SetupRenderPasses() {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
@@ -112,61 +97,6 @@ EditorCamera::EditorCamera() {
 		GraphicsAPI::ImageUsageFlags::Sampled |
 		GraphicsAPI::ImageUsageFlags::DepthStencil;
 
-	{
-		Grindstone::GraphicsAPI::Buffer::CreateInfo mousePickBufferMatrixCreateInfo{};
-		mousePickBufferMatrixCreateInfo.bufferSize = sizeof(MousePickMatrixBuffer);
-		mousePickBufferMatrixCreateInfo.bufferUsage =
-			GraphicsAPI::BufferUsage::TransferDst |
-			GraphicsAPI::BufferUsage::TransferSrc |
-			GraphicsAPI::BufferUsage::Uniform;
-		mousePickBufferMatrixCreateInfo.memoryUsage = GraphicsAPI::MemoryUsage::CPUToGPU;
-		mousePickBufferMatrixCreateInfo.content = nullptr;
-
-		MousePickResponseBuffer mousePickResponseInitialBuffer{};
-		mousePickResponseInitialBuffer.depth = 1.0f;
-		mousePickResponseInitialBuffer.entityId = static_cast<uint32_t>(entt::null);
-
-		Grindstone::GraphicsAPI::Buffer::CreateInfo mousePickBufferResponseCreateInfo{};
-		mousePickBufferResponseCreateInfo.bufferSize = sizeof(MousePickResponseBuffer);
-		mousePickBufferResponseCreateInfo.memoryUsage = Grindstone::GraphicsAPI::MemoryUsage::CPUOnly;
-		mousePickBufferResponseCreateInfo.bufferUsage = Grindstone::GraphicsAPI::BufferUsage::Storage | GraphicsAPI::BufferUsage::TransferSrc | Grindstone::GraphicsAPI::BufferUsage::TransferDst;
-		mousePickBufferResponseCreateInfo.content = &mousePickResponseInitialBuffer;
-
-		std::array<GraphicsAPI::DescriptorSetLayout::Binding, 2> mousePickDescriptorBindingLayouts{};
-		mousePickDescriptorBindingLayouts[0] = GraphicsAPI::DescriptorSetLayout::Binding{ 0, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Vertex | GraphicsAPI::ShaderStageBit::Fragment };
-		mousePickDescriptorBindingLayouts[1] = GraphicsAPI::DescriptorSetLayout::Binding{ 1, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Fragment };
-
-		GraphicsAPI::DescriptorSetLayout::CreateInfo mousePickDescriptorSetLayoutCreateInfo{};
-		mousePickDescriptorSetLayoutCreateInfo.debugName = "Mouse Pick Descriptor Set Layout";
-		mousePickDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(mousePickDescriptorBindingLayouts.size());
-		mousePickDescriptorSetLayoutCreateInfo.bindings = mousePickDescriptorBindingLayouts.data();
-		mousePickDescriptorSetLayout = core->GetOrCreateDescriptorSetLayoutFromCache(mousePickDescriptorSetLayoutCreateInfo);
-
-		GraphicsAPI::DescriptorSet::CreateInfo mousePickDescriptorSetCreateInfo{};
-		mousePickDescriptorSetCreateInfo.layout = mousePickDescriptorSetLayout;
-
-		for (int i = 0; i < 3; ++i) {
-			std::string mousePickMatrixBufferName = std::vformat("Mouse Pick Uniform Buffer [{}]", std::make_format_args(i));
-			std::string mousePickResponseBufferName = std::vformat("Mouse Pick SSBO [{}]", std::make_format_args(i));
-			std::string mousePickDescriptorSetName = std::vformat("Mouse Pick Descriptor Set [{}]", std::make_format_args(i));
-
-			mousePickBufferMatrixCreateInfo.debugName = mousePickMatrixBufferName.c_str();
-			mousePickBufferResponseCreateInfo.debugName = mousePickResponseBufferName.c_str();
-			mousePickDescriptorSetCreateInfo.debugName = mousePickDescriptorSetName.c_str();
-
-			mousePickMatrixBuffer[i] = core->CreateBuffer(mousePickBufferMatrixCreateInfo);
-			mousePickResponseBuffer[i] = core->CreateBuffer(mousePickBufferResponseCreateInfo);
-
-			std::array<GraphicsAPI::DescriptorSet::Binding, 2> mousePickDescriptorBindings{};
-			mousePickDescriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(mousePickMatrixBuffer[i]);
-			mousePickDescriptorBindings[1] = GraphicsAPI::DescriptorSet::Binding::StorageBuffer(mousePickResponseBuffer[i]);
-
-			mousePickDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(mousePickDescriptorBindings.size());
-			mousePickDescriptorSetCreateInfo.bindings = mousePickDescriptorBindings.data();
-			mousePickDescriptorSet[i] = core->CreateDescriptorSet(mousePickDescriptorSetCreateInfo);
-		}
-	}
-
 	Grindstone::GraphicsAPI::Sampler::CreateInfo samplerCreateInfo{
 		.debugName = "Editor Sampler",
 		.options{
@@ -217,13 +147,7 @@ EditorCamera::EditorCamera() {
 		descriptorSet[i] = core->CreateDescriptorSet(descriptorSetCreateInfo);
 	}
 
-	gridRenderer.Initialize();
 	gizmoRenderer.Initialize();
-
-	Grindstone::BaseRendererFactory* rendererFactory = engineCore.GetRendererFactory();
-	if (rendererFactory) {
-		renderer = rendererFactory->CreateRenderer(editorRenderPass);
-	}
 
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	auto wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
@@ -286,7 +210,6 @@ EditorCamera::EditorCamera() {
 }
 
 EditorCamera::~EditorCamera() {
-	ClearRenderer();
 }
 
 void Grindstone::Editor::EditorCamera::RegisterGizmoPass(
@@ -314,11 +237,7 @@ void Grindstone::Editor::EditorCamera::CaptureMousePick(int x, int y) {
 }
 
 uint32_t EditorCamera::GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandBuffer) {
-	Editor::Manager& editorManager = Editor::Manager::GetInstance();
-	EngineCore& engineCore = editorManager.GetEngineCore();
-	entt::registry& registry = engineCore.GetEntityRegistry();
-	Grindstone::AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
-	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	EngineCore& engineCore = EngineCore::GetInstance();
 	GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	uint32_t frameIndex = (wgb->GetCurrentImageIndex() + (wgb->GetMaxFramesInFlight() - 1)) % wgb->GetMaxFramesInFlight();
 	Grindstone::GraphicsAPI::Buffer* buffer = mousePickResponseBuffer[frameIndex];
@@ -362,7 +281,7 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	SceneManagement::SceneManager* sceneManager = engineCore.GetSceneManager();
 
-	if (renderer == nullptr || sceneManager == nullptr || sceneManager->scenes.size() == 0) {
+	if (sceneManager == nullptr || sceneManager->scenes.size() == 0) {
 		return;
 	}
 
@@ -412,6 +331,11 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 
 	Grindstone::Renderer::RenderGraphContext context{
 		.graphicsCore = graphicsCore,
+		.cameraViewData = Grindstone::Rendering::RenderViewData {
+			.projectionMatrix = projection,
+			.viewMatrix = view,
+			.renderArea = Math::IntRect2D(width, height),
+		},
 		.transientResourceManager = transientResourceManager,
 		.globalDescriptorSetLayout = globalDescriptorSetLayout,
 		.globalDescriptorSet = globalDescriptorSet[imageIndex],
@@ -467,266 +391,9 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		}
 	);
 
-	renderer->Render(
-		commandBuffer,
-		*cxtSet,
-		adjustedPerspectiveMatrix,
-		view,
-		position,
-		renderGraphBuilder,
-		colorImageRef,
-		depthImageRef
-	);
-
-	auto pushStats = [this](const Rendering::GeometryRenderStats& stats) { renderer->PushRenderingStats(stats); };
-
-	Renderer::RenderGraphBuilderResourceRef gridImageRef = renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
-		"Grid Pass",
-		Renderer::MetaRect::Swapchain(),
-		[colorImageRef, depthImageRef](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
-			Renderer::RenderGraphBuilderResourceRef outputRef = pass.ReadWriteColorAttachment(colorImageRef);
-			pass.ReadDepthAttachment(depthImageRef);
-			return outputRef;
-		},
-		[this, adjustedPerspectiveMatrix](
-			Grindstone::Math::IntRect2D rect,
-			const Grindstone::Renderer::RenderGraphContext& cxt,
-			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
-			Renderer::RenderGraphBuilderResourceRef& outputRef
-		) {
-			Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
-			Grindstone::Editor::Manager& editorManager = Editor::Manager::GetInstance();
-			Grindstone::GraphicsAPI::CommandBuffer* commandBuffer = cxt.commandBuffer;
-			Grindstone::GraphicsAPI::Core* graphicsCore = cxt.graphicsCore;
-
-			glm::mat4 projView = adjustedPerspectiveMatrix * view;
-			glm::vec2 renderScale = glm::vec2(1.0f, 1.0f);
-
-			if (isGridEnabled) {
-				gridRenderer.Render(commandBuffer, renderScale, adjustedPerspectiveMatrix, view, nearPlaneDistance, farPlaneDistance, glm::quat(), 0.0f);
-			}
-		}
-	);
-
-	Renderer::RenderGraphBuilderResourceRef gizmoImageRef = renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
-		"Gizmo Pass",
-		Renderer::MetaRect::Swapchain(),
-		[this, gridImageRef, depthImageRef](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
-			Renderer::RenderGraphBuilderResourceRef outputRef = pass.ReadWriteColorAttachment(gridImageRef);
-			pass.ReadExternalSampler(sampler);
-			pass.ReadSampledImage(depthImageRef);
-			return outputRef;
-		},
-		[this, adjustedPerspectiveMatrix](
-			Grindstone::Math::IntRect2D rect,
-			const Grindstone::Renderer::RenderGraphContext& cxt,
-			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
-			Renderer::RenderGraphBuilderResourceRef& outputRef
-		) {
-			Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
-			Grindstone::Editor::Manager& editorManager = Editor::Manager::GetInstance();
-			Grindstone::GraphicsAPI::CommandBuffer* commandBuffer = cxt.commandBuffer;
-			Grindstone::GraphicsAPI::Core* graphicsCore = cxt.graphicsCore;
-
-			glm::mat4 projView = adjustedPerspectiveMatrix * view;
-			glm::vec2 renderScale = glm::vec2(1.0f, 1.0f);
-
-			if (editorManager.GetSelection().GetSelectedEntityCount() > 0) {
-				static const glm::vec4 boundingBoxColor = glm::vec4(0.2f, 0.9f, 0.3f, 1.0f);
-				static const glm::vec4 boundingSphereColor = glm::vec4(0.2f, 0.9f, 0.3f, 0.4f);
-				static const glm::vec4 colliderColor = glm::vec4(1.0f, 0.8f, 0.0f, 1.0f);
-
-				Physics::BoxColliderComponent* box = nullptr;
-				Physics::CapsuleColliderComponent* capsule = nullptr;
-				Physics::PlaneColliderComponent* plane = nullptr;
-				Physics::SphereColliderComponent* sphere = nullptr;
-				Grindstone::MeshComponent* mesh = nullptr;
-				Grindstone::PointLightComponent* pointLight = nullptr;
-				Grindstone::SpotLightComponent* spotLight = nullptr;
-				Grindstone::DirectionalLightComponent* directionalLight = nullptr;
-
-				for (const ECS::Entity& selectedEntity : editorManager.GetSelection().selectedEntities) {
-					if (
-						(isBoundingSphereGizmoEnabled || isBoundingBoxGizmoEnabled) &&
-						selectedEntity.TryGetComponent<Grindstone::MeshComponent>(mesh)
-					) {
-						Grindstone::Mesh3dAsset* meshAsset = engineCore.assetManager->GetAssetByUuid<Grindstone::Mesh3dAsset>(mesh->mesh.uuid);
-						auto& boundingData = meshAsset->boundingData;
-						TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-						Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-						glm::vec3 center = boundingData.sphereCenter;
-						glm::vec3 boxSize = boundingData.maxAABB - boundingData.minAABB;
-						matrix = matrix * glm::translate(center);
-						if (isBoundingSphereGizmoEnabled) {
-							gizmoRenderer.SubmitSphereGizmo(matrix, boundingData.sphereRadius, boundingSphereColor);
-						}
-
-						if (isBoundingBoxGizmoEnabled) {
-							gizmoRenderer.SubmitCubeGizmo(matrix, boxSize, boundingBoxColor);
-						}
-					}
-
-					if (selectedEntity.TryGetComponent<Grindstone::PointLightComponent>(pointLight)) {
-						TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-						Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-						gizmoRenderer.SubmitSphereGizmo(matrix, pointLight->attenuationRadius, glm::vec4(pointLight->color, 1));
-					}
-
-					if (selectedEntity.TryGetComponent<Grindstone::SpotLightComponent>(spotLight)) {
-						TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-						Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-						gizmoRenderer.SubmitSphereGizmo(matrix, spotLight->attenuationRadius, glm::vec4(spotLight->color, 1));
-					}
-
-					if (selectedEntity.TryGetComponent<Grindstone::DirectionalLightComponent>(directionalLight)) {
-						static std::array<glm::vec4, DirectionalLightComponent::MAX_CASCADE_COUNT> lightCascadeColors{
-							glm::vec4(0, 0, 1, 1),
-							glm::vec4(0, 1, 0, 1),
-							glm::vec4(0, 1, 1, 1),
-							glm::vec4(1, 0, 0, 1),
-							glm::vec4(1, 0, 1, 1),
-							glm::vec4(1, 1, 0, 1),
-							glm::vec4(1, 1, 1, 1),
-							glm::vec4(0.5, 0.5, 1, 1),
-						};
-
-						float projection_43 = directionalLight->debugCameraProjectionMatrix[3][2];
-						float projection_33 = directionalLight->debugCameraProjectionMatrix[2][2];
-						float nearDistance = projection_43 / (projection_33 - 1.0f);
-						float fov = -2.0 * atan(1.0 / directionalLight->debugCameraProjectionMatrix[1][1]);
-						float aspect = -directionalLight->debugCameraProjectionMatrix[1][1] / directionalLight->debugCameraProjectionMatrix[0][0];
-
-						glm::mat4 slice = glm::translate(glm::mat4(1), glm::vec3(0.0f, 0.0f, 0.5f));
-
-						Grindstone::CvarSystem* cvarSystem = Grindstone::CvarSystem::GetInstance();
-						int32_t csmInspectIndex = *cvarSystem->GetIntCvar(cvarSystem->GetCvar("render.lights.csmInspectIndex"_hash)->arrayIndex);
-						for (uint32_t i = 0; i < directionalLight->cascadeCount; ++i) {
-							if (i + 1 == csmInspectIndex || csmInspectIndex == 0) {
-								Math::Matrix4 shadowCascadeMatrix = glm::inverse(directionalLight->debugShadowProjectionMatrix[i] * directionalLight->shadowViewMatrix[i]);
-								gizmoRenderer.SubmitCubeGizmo(shadowCascadeMatrix, glm::vec3(1.0f, 1.0f, 1.0f), lightCascadeColors[i]);
-
-								float nearDist = i == 0 ? nearDistance : directionalLight->cascadeDistances[i - 1];
-								float farDist = directionalLight->cascadeDistances[i];
-
-								glm::mat4 cascadeProjView = glm::perspective(fov, aspect, nearDist, farDist);
-								Math::Matrix4 cameraCascadeMatrix = glm::inverse(cascadeProjView * directionalLight->debugCameraViewMatrix) * slice;
-								gizmoRenderer.SubmitCubeGizmo(cameraCascadeMatrix, glm::vec3(1.0f, 1.0f, 1.0f), lightCascadeColors[i]);
-							}
-						}
-					}
-
-					if (isColliderGizmoEnabled) {
-						if (selectedEntity.TryGetComponent<Physics::BoxColliderComponent>(box)) {
-							TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-							Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-							gizmoRenderer.SubmitCubeGizmo(matrix, box->GetSize(), colliderColor);
-						}
-						else if (selectedEntity.TryGetComponent<Physics::CapsuleColliderComponent>(capsule)) {
-							TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-							Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-							gizmoRenderer.SubmitCapsuleGizmo(matrix, capsule->GetHeight(), capsule->GetRadius(), colliderColor);
-						}
-						else if (selectedEntity.TryGetComponent<Physics::PlaneColliderComponent>(plane)) {
-							TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-							Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-							gizmoRenderer.SubmitPlaneGizmo(matrix, plane->GetPlaneNormal(), plane->GetPositionAlongNormal(), colliderColor);
-						}
-						else if (selectedEntity.TryGetComponent<Physics::SphereColliderComponent>(sphere)) {
-							TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
-							Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-							gizmoRenderer.SubmitSphereGizmo(matrix, sphere->GetRadius(), colliderColor);
-						}
-					}
-				}
-
-				gizmoRenderer.Render(commandBuffer, projView);
-			}
-		}
-	);
-
-	if (captureThisFrame) {
-		captureThisFrame = false;
-
-		renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
-			"Mouse Pick",
-			Renderer::MetaRect::Swapchain(),
-			[depthImageRef](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
-				Renderer::ImageDescription resource{
-					.name = "Mouse Pick Color Attachment",
-					.size = Renderer::MetaSize2D::Viewport(),
-					.samples = 1,
-					.mipLevels = 1,
-					.depth = 1,
-					.arrayLayers = 1,
-					.format = GraphicsAPI::Format::R32_UINT,
-					.imageDimensions = GraphicsAPI::ImageDimension::Dimension2D,
-					.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly,
-					.imageUsage = GraphicsAPI::ImageUsageFlags::Sampled | GraphicsAPI::ImageUsageFlags::RenderTarget
-				};
-
-				Renderer::ImageDescription depthResourceDesc{
-					.name = "Mouse Pick Depth Attachment",
-					.size = Renderer::MetaSize2D::Viewport(),
-					.samples = 1,
-					.mipLevels = 1,
-					.depth = 1,
-					.arrayLayers = 1,
-					.format = GraphicsAPI::Format::D32_SFLOAT,
-					.imageDimensions = GraphicsAPI::ImageDimension::Dimension2D,
-					.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly,
-					.imageUsage = GraphicsAPI::ImageUsageFlags::Sampled | GraphicsAPI::ImageUsageFlags::DepthStencil
-				};
-
-				GraphicsAPI::ClearColor clearColor(UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX);
-				GraphicsAPI::ClearDepthStencil clearDepthStencil{};
-				clearDepthStencil.depth = 1.0f;
-				clearDepthStencil.stencil = 0;
-
-				Renderer::RenderGraphBuilderResourceRef outputRef = pass.WriteColorAttachment(resource, GraphicsAPI::LoadOp::Clear, clearColor);
-				pass.WriteDepthStencilAttachment(depthResourceDesc, GraphicsAPI::LoadOp::Clear, clearDepthStencil);
-				return outputRef;
-			},
-			[this, adjustedPerspectiveMatrix, pushStats, imageIndex](
-				Grindstone::Math::IntRect2D rect,
-				const Grindstone::Renderer::RenderGraphContext& cxt,
-				const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
-				Renderer::RenderGraphBuilderResourceRef& outputRef
-			) {
-				Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
-				Grindstone::AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
-				Grindstone::Editor::Manager& editorManager = Editor::Manager::GetInstance();
-				Grindstone::GraphicsAPI::CommandBuffer* commandBuffer = cxt.commandBuffer;
-				Grindstone::GraphicsAPI::Core* graphicsCore = cxt.graphicsCore;
-				entt::registry& registry = cxt.worldContextSet->GetEntityRegistry();
-
-				MousePickResponseBuffer mousePickResponseInitialBuffer{};
-				mousePickResponseInitialBuffer.depth = 1.0f;
-				mousePickResponseInitialBuffer.entityId = static_cast<uint32_t>(entt::null);
-				mousePickResponseBuffer[imageIndex]->UploadData(&mousePickResponseInitialBuffer);
-
-				MousePickMatrixBuffer matrixBuffer{};
-				matrixBuffer.projectionMatrix = projection;
-				matrixBuffer.viewMatrix = view;
-				mousePickMatrixBuffer[imageIndex]->UploadData(&matrixBuffer);
-
-				commandBuffer->SetViewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
-				commandBuffer->SetScissor(captureX, captureY, 1, 1);
-
-				Grindstone::Rendering::RenderViewData viewData{
-					.projectionMatrix = projection,
-					.viewMatrix = view,
-					.renderArea = Math::IntRect2D(0, 0, width, height)
-				};
-
-				assetRendererManager->SetEngineDescriptorSet(mousePickDescriptorSet[imageIndex]);
-				pushStats(assetRendererManager->RenderQueue("Editor Mouse Pick", commandBuffer, viewData, registry, mousePickRenderQueue));
-			}
-		);
-	}
-
-	for (auto& callback : gizmoRenderCallbacks) {
-		gizmoImageRef = callback(renderGraphBuilder, gizmoImageRef, depthImageRef);
-	}
+	Grindstone::Blackboard blackboard;
+	Grindstone::Renderer::RenderingPipeline* renderPipeline = engineCore.GetRenderingPipeline();
+	renderPipeline->Render(blackboard, renderGraphBuilder);
 
 	auto renderGraph = renderGraphBuilder.Compile();
 	renderGraph.ExecuteGraph(context);
@@ -756,12 +423,11 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 		}
 	);
 
-	if (entity == entt::null || cameraComponent == nullptr || cameraComponent->renderer == nullptr) {
+	if (entity == entt::null || cameraComponent == nullptr) {
 		return;
 	}
 
 	cameraComponent->aspectRatio = static_cast<float>(width) / height;
-	cameraComponent->renderer->Resize(width, height);
 
 	const glm::mat4 transformMatrix = TransformComponent::GetWorldTransformMatrix(entity, registry);
 
@@ -814,6 +480,11 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 
 	Grindstone::Renderer::RenderGraphContext context{
 		.graphicsCore = graphicsCore,
+		.cameraViewData = Grindstone::Rendering::RenderViewData {
+			.projectionMatrix = projection,
+			.viewMatrix = viewMatrix,
+			.renderArea = Math::IntRect2D(width, height),
+		},
 		.transientResourceManager = transientResourceManager,
 		.globalDescriptorSetLayout = globalDescriptorSetLayout,
 		.globalDescriptorSet = globalDescriptorSet[imageIndex],
@@ -869,16 +540,9 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 		}
 	);
 
-	renderer->Render(
-		commandBuffer,
-		*cxtSet,
-		adjustedPerspectiveMatrix,
-		viewMatrix,
-		pos,
-		renderGraphBuilder,
-		colorImageRef,
-		depthImageRef
-	);
+	Grindstone::Blackboard blackboard;
+	Grindstone::Renderer::RenderingPipeline* renderPipeline = engineCore.GetRenderingPipeline();
+	renderPipeline->Render(blackboard, renderGraphBuilder);
 
 	auto renderGraph = renderGraphBuilder.Compile();
 	renderGraph.ExecuteGraph(context);
@@ -964,10 +628,6 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 		descriptorSet[i]->ChangeBindings(&descriptorSetBinding, 1u);
 	}
 
-	if (renderer) {
-		renderer->Resize(width, height);
-	}
-
 	UpdateProjectionMatrix();
 }
 
@@ -988,14 +648,4 @@ glm::mat4& EditorCamera::GetProjectionMatrix() {
 
 glm::mat4& EditorCamera::GetViewMatrix() {
 	return view;
-}
-
-BaseRenderer* EditorCamera::GetRenderer() const {
-	return renderer;
-}
-
-void Grindstone::Editor::EditorCamera::ClearRenderer() {
-	gizmoRenderCallbacks.clear();
-	AllocatorCore::Free(renderer);
-	renderer = nullptr;
 }
