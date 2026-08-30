@@ -24,7 +24,7 @@ pipelineSet abstract "PostProcessing" {
 
 				shaderHlsl {
 					struct VertexInput {
-						[[vk::location(0)]] float2 position : POSITION0;
+						uint id : SV_VertexID;
 					};
 
 					struct VertexToFragment {
@@ -35,9 +35,11 @@ pipelineSet abstract "PostProcessing" {
 
 					VertexToFragment mainVertex(VertexInput input) {
 						VertexToFragment output = (VertexToFragment)0;
-						output.position = float4(input.position, 0.0, 1.0);
-						output.fragmentTexCoord = ((input.position * 0.5f) + float2(0.5f, 0.5f));
-						output.scaledFragmentTexCoord = output.fragmentTexCoord * rendererUbo.renderScale;
+						
+						float2 uv = float2((id << 1) & 2, id & 2);
+						output.position = float4(uv * float2(2, -2) + float2(-1, 1), 0, 1);
+						output.fragmentTexCoord = uv;
+						output.scaledFragmentTexCoord = uv * rendererUbo.renderScale;
 						return output;
 					}
 				}

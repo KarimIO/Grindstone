@@ -6,15 +6,16 @@
 
 #include <Common/Window/WindowManager.hpp>
 #include <Common/Graphics/Core.hpp>
+#include <EngineCore/Rendering/RenderingPipeline.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 #include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
-#include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Profiling.hpp>
 
 #include "RenderSystem.hpp"
 
 std::vector<Grindstone::GraphicsAPI::CommandBuffer*> commandBuffers;
+static std::array<Grindstone::Renderer::TransientResourceManager*, 3> transientResourceManagers{};
 
 namespace Grindstone {
 	void RenderSystem(Grindstone::WorldContextSet& worldContextSet) {
@@ -25,10 +26,9 @@ namespace Grindstone {
 			return;
 		}
 
+		GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+		Grindstone::Renderer::RenderingPipeline* renderPipeline = engineCore.GetRenderingPipeline();
 		GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-
-		uint32_t width = wgb->GetCurrentFramebuffer()->GetWidth();
-		uint32_t height = wgb->GetCurrentFramebuffer()->GetHeight();
 
 		if (!wgb->AcquireNextImage()) {
 			return;
@@ -46,19 +46,26 @@ namespace Grindstone {
 			}
 		}
 
+		// TODO: We don't always want to render to the entire window, we don't always want to render to window 0.
+		// We need a way to figure out what viewport and window to draw to, and therefore what wgb.
+
 		entt::registry& registry = worldContextSet.GetEntityRegistry();
 		auto view = registry.view<entt::entity, const TransformComponent, const CameraComponent>();
 
 		view.each(
-			[&](
+			[&worldContextSet, renderPipeline, graphicsCore, wgb](
 				entt::entity entity,
 				const TransformComponent& transformComponent,
 				const CameraComponent& cameraComponent
 			) {
+				uint32_t width = wgb->GetCurrentFramebuffer()->GetWidth();
+				uint32_t height = wgb->GetCurrentFramebuffer()->GetHeight();
+				uint32_t swapchainIndex = wgb->GetCurrentImageIndex();
+
 				// TODO: Handle case for not main camera
-				// Do we only want to allow rendering to backbuffer and render targets, or also allow useless framebuffers
+				// Do we only want to allow rendering to backbuffer and render targets
 				GraphicsAPI::CommandBuffer* currentCommandBuffer = cameraComponent.isMainCamera
-					? commandBuffers[wgb->GetCurrentImageIndex()]
+					? commandBuffers[swapchainIndex]
 					: nullptr;
 
 				if (currentCommandBuffer == nullptr) {
@@ -67,10 +74,11 @@ namespace Grindstone {
 
 				currentCommandBuffer->BeginCommandBuffer();
 
-				if (std::isnan(cameraComponent.aspectRatio) || cameraComponent.renderer == nullptr) {
+				if (std::isnan(cameraComponent.aspectRatio)) {
 					return;
 				}
 
+				entt::registry& registry = worldContextSet.GetEntityRegistry();
 				const glm::mat4 transformMatrix = TransformComponent::GetWorldTransformMatrix(entity, registry);
 				const glm::vec3 upVector = glm::normalize(-glm::vec3(transformMatrix[1]));
 				const glm::vec3 forwardVector = glm::normalize(glm::vec3(transformMatrix[2]));
@@ -89,10 +97,6 @@ namespace Grindstone {
 					cameraComponent.farPlaneDistance
 				);
 
-				if (cameraComponent.isMainCamera) {
-					cameraComponent.renderer->Resize(width, height);
-				}
-
 				Grindstone::GraphicsAPI::Image* image = wgb->GetCurrentFramebuffer()->GetRenderTarget(0);
 				Grindstone::GraphicsAPI::RenderAttachment attachment{
 					.image = image,
@@ -100,17 +104,55 @@ namespace Grindstone {
 					.clearValue = Grindstone::GraphicsAPI::ClearColor()
 				};
 
-				/*
-				cameraComponent.renderer->Render(
-					currentCommandBuffer,
-					worldContextSet,
-					projectionMatrix,
-					viewMatrix,
-					pos,
-					image,
-					nullptr // TODO: Depth
+				Grindstone::Renderer::TransientResourceManager*& transientResourceManager = transientResourceManagers[swapchainIndex];
+				if (transientResourceManager == nullptr) {
+					transientResourceManager = Grindstone::Memory::AllocatorCore::Allocate<Grindstone::Renderer::TransientResourceManager>();
+				}
+
+				Grindstone::Renderer::RenderGraphContext context{
+					.graphicsCore = graphicsCore,
+					.cameraViewData = Grindstone::Rendering::RenderViewData {
+						.projectionMatrix = projectionMatrix,
+						.viewMatrix = viewMatrix,
+						.renderArea = Math::IntRect2D(width, height),
+					},
+					.transientResourceManager = transientResourceManager,
+					// TODO: RenderGraph2.0 Set GlobalDescriptorSets
+					// .globalDescriptorSetLayout = globalDescriptorSetLayout,
+					// .globalDescriptorSet = globalDescriptorSet[imageIndex],
+					.swapchainSize = Math::Extent2D(width, height),
+					.commandBuffer = currentCommandBuffer,
+					.worldContextSet = &worldContextSet,
+					.swapchainIndex = swapchainIndex
+				};
+
+				Grindstone::Renderer::RenderGraphBuilder renderGraphBuilder;
+
+				Renderer::RenderGraphBuilderResourceRef colorImageRef = renderGraphBuilder.AddImage(
+					Grindstone::Renderer::ImageDescription{
+						.name = "Camera Output Image (Tonemapped)",
+						.size = Grindstone::Renderer::MetaSize2D::Viewport(),
+						.samples = 1,
+						.mipLevels = 1,
+						.depth = 1,
+						.arrayLayers = 1,
+						.format = Grindstone::GraphicsAPI::Format::R8G8B8A8_SNORM,
+						.imageDimensions = GraphicsAPI::ImageDimension::Dimension2D,
+						.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly,
+						.imageUsage = GraphicsAPI::ImageUsageFlags::RenderTarget | GraphicsAPI::ImageUsageFlags::Sampled,
+						.externalInitialLayout = GraphicsAPI::ImageLayout::Undefined,
+						.externalInitialAccessFlags = GraphicsAPI::AccessFlags::None,
+						.externalInitialPipelineStage = GraphicsAPI::PipelineStageBit::TopOfPipe,
+						.externalFinalLayout = GraphicsAPI::ImageLayout::ShaderRead,
+						.externalFinalAccessFlags = GraphicsAPI::AccessFlags::ShaderRead,
+						.externalFinalPipelineStage = GraphicsAPI::PipelineStageBit::FragmentShader,
+						.externalGetterCallback = [image]() { return image; }
+					}
 				);
-				*/
+
+				Grindstone::Renderer::RenderFrameContext renderFrameContext(worldContextSet);
+
+				renderPipeline->Render(renderGraphBuilder, renderFrameContext);
 
 				currentCommandBuffer->EndCommandBuffer();
 				wgb->SubmitCommandBufferForCurrentFrame(currentCommandBuffer);

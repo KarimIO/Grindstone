@@ -10,7 +10,7 @@
 #include <EngineCore/PluginSystem/DefaultPluginManager.hpp>
 #include <EngineCore/Events/InputManager.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
-#include <EngineCore/Rendering/BaseRenderer.hpp>
+#include <EngineCore/Rendering/RenderingPipeline.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <EngineCore/Rendering/RenderPassRegistry.hpp>
 #include <EngineCore/WorldContext/WorldContextManager.hpp>
@@ -89,6 +89,7 @@ bool EngineCore::Initialize(LateCreateInfo& createInfo) {
 
 	GS_ASSERT_ENGINE(windowManager != nullptr);
 	GS_ASSERT_ENGINE(graphicsCore != nullptr);
+	renderingPipeline = AllocatorCore::Allocate<Renderer::RenderingPipeline>();
 
 	Grindstone::Window* mainWindow = nullptr;
 	{
@@ -231,6 +232,10 @@ EngineCore::~EngineCore() {
 		worldContextManager->ClearContextSets();
 	}
 
+	if (renderingPipeline != nullptr) {
+		AllocatorCore::Free(renderingPipeline);
+	}
+
 	if (pluginManager != nullptr) {
 		pluginManager->UnloadPluginsByStage("EndOfEngineSetup");
 	}
@@ -275,10 +280,6 @@ void EngineCore::RegisterInputManager(Input::Interface* newInputManager) {
 	inputManager = newInputManager;
 }
 
-void Grindstone::EngineCore::SetRendererFactory(BaseRendererFactory* factory) {
-	rendererFactory = factory;
-}
-
 Input::Interface* EngineCore::GetInputManager() const {
 	return inputManager;
 }
@@ -309,10 +310,6 @@ ECS::SystemRegistrar* EngineCore::GetSystemRegistrar() const {
 
 Events::Dispatcher* EngineCore::GetEventDispatcher() const {
 	return eventDispatcher;
-}
-
-BaseRendererFactory* EngineCore::GetRendererFactory() const {
-	return rendererFactory;
 }
 
 RenderPassRegistry* EngineCore::GetRenderPassRegistry() const {
@@ -367,6 +364,10 @@ bool EngineCore::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
 
 entt::registry& EngineCore::GetEntityRegistry() {
 	return worldContextManager->GetActiveWorldContextSet()->GetEntityRegistry();
+}
+
+Renderer::RenderingPipeline* EngineCore::GetRenderingPipeline() const {
+	return renderingPipeline;
 }
 
 void EngineCore::CalculateDeltaTime() {

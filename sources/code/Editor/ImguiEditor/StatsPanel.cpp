@@ -6,6 +6,7 @@
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/Rendering/RenderingPipeline.hpp>
 #include <EngineCore/Assets/Materials/MaterialImporter.hpp>
 #include <EngineCore/Assets/Textures/TextureImporter.hpp>
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineImporter.hpp>
@@ -81,11 +82,11 @@ void RenderAsset(Grindstone::Assets::AssetManager* assetManager, const char* tit
 	}
 }
 
-#include <EngineCore/Rendering/BaseRenderer.hpp>
-
-static void RenderRenderQueueTable(const char* name, Grindstone::BaseRenderer* renderer) {
+static void RenderRenderQueueTable(const char* name) {
 	if (ImGui::TreeNode(name)) {
-		std::vector<Grindstone::Rendering::GeometryRenderStats> renderingStats = renderer->GetRenderingStats();
+		Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+		Grindstone::Renderer::RenderingPipeline* renderingPipeline = engineCore.GetRenderingPipeline();
+		std::vector<Grindstone::Rendering::GeometryRenderStats> renderingStats = renderingPipeline->GetRenderingStats();
 
 		Grindstone::Rendering::GeometryRenderStats combinedRenderingStats;
 		for (auto& renderingQueueStat : renderingStats) {
@@ -140,9 +141,9 @@ static void RenderRenderQueuesTable(Grindstone::EngineCore& engineCore) {
 		Grindstone::Editor::ImguiEditor::ImguiEditor& imguiEditor = editorManager.GetImguiEditor();
 		Grindstone::Editor::ImguiEditor::ViewportPanel* viewportPanel = imguiEditor.GetViewportPanel();
 		Grindstone::Editor::EditorCamera* editorCamera = viewportPanel->GetCamera();
-		Grindstone::BaseRenderer* renderer = editorCamera->GetRenderer();
-		RenderRenderQueueTable("Editor Camera", renderer);
+		RenderRenderQueueTable("Rendeirng");
 	}
+	/*
 	else {
 		entt::registry& entityRegistry = engineCore.GetEntityRegistry();
 		auto view = entityRegistry.view<Grindstone::TagComponent, Grindstone::CameraComponent>();
@@ -153,6 +154,7 @@ static void RenderRenderQueuesTable(Grindstone::EngineCore& engineCore) {
 			}
 		);
 	}
+	*/
 
 	ImGui::TreePop();
 }

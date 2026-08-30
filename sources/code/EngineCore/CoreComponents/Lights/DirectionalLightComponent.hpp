@@ -1,8 +1,10 @@
 #pragma once
 
-#include "EngineCore/Reflection/ComponentReflection.hpp"
-#include "EngineCore/ECS/Entity.hpp"
-#include "Common/Math.hpp"
+#include <Common/Math.hpp>
+#include <Common/Rect.hpp>
+
+#include <EngineCore/Reflection/ComponentReflection.hpp>
+#include <EngineCore/ECS/Entity.hpp>
 
 namespace Grindstone {
 	class WorldContextSet;

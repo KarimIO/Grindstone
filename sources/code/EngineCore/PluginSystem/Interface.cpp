@@ -2,6 +2,8 @@
 
 #include <Common/Console/Cvars.hpp>
 #include <Common/Window/Window.hpp>
+#include <Common/Rendering/RendererFeature.hpp>
+#include <EngineCore/Rendering/RenderingPipeline.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <EngineCore/ECS/SystemRegistrar.hpp>
 #include <EngineCore/Logger.hpp>
@@ -50,6 +52,18 @@ void Plugins::Interface::RegisterWorldContextFactory(Grindstone::HashedString co
 
 void Plugins::Interface::UnregisterWorldContextFactory(Grindstone::HashedString contextName) {
 	Grindstone::EngineCore::GetInstance().GetWorldContextManager()->Unregister(contextName);
+}
+
+void Plugins::Interface::RegisterRendererFeature(Grindstone::Rendering::RendererFeature* feature) {
+	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+	Grindstone::Renderer::RenderingPipeline* pipeline = engineCore.GetRenderingPipeline();
+	pipeline->RegisterFeature(feature);
+}
+
+void Plugins::Interface::UnregisterRendererFeature(const char* name) {
+	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+	Grindstone::Renderer::RenderingPipeline* pipeline = engineCore.GetRenderingPipeline();
+	pipeline->UnregisterFeature(name);
 }
 
 void Plugins::Interface::RegisterGraphicsCore(GraphicsAPI::Core* gw) {

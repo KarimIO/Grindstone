@@ -5,7 +5,6 @@
 #include "EngineCore/ECS/Entity.hpp"
 
 namespace Grindstone {
-	class BaseRenderer;
 	class WorldContextSet;
 
 	namespace Events {
@@ -19,7 +18,6 @@ namespace Grindstone {
 		float farPlaneDistance = 200.0f;
 		float fieldOfView = glm::radians(90.0f);
 		float aspectRatio = 800.0f / 600.0f;
-		BaseRenderer* renderer = nullptr;
 
 		static void Construct(Grindstone::WorldContextSet&, entt::entity);
 		static void Destroy(Grindstone::WorldContextSet&, entt::entity);

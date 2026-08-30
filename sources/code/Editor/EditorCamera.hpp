@@ -4,7 +4,6 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include <Common/Rendering/RenderGraphBuilder.hpp>
-#include "GridRenderer.hpp"
 #include "GizmoRenderer.hpp"
 
 struct EngineUboStruct {
@@ -21,7 +20,6 @@ struct EngineUboStruct {
 };
 
 namespace Grindstone {
-	class BaseRenderer;
 	struct TransformComponent;
 	struct CameraComponent;
 
@@ -55,8 +53,6 @@ namespace Grindstone {
 			void UpdateViewMatrix();
 			glm::mat4& GetProjectionMatrix();
 			glm::mat4& GetViewMatrix();
-			BaseRenderer* GetRenderer() const;
-			void ClearRenderer();
 
 			glm::vec3 GetPosition() const;
 			glm::vec3 GetForward() const;
@@ -79,7 +75,6 @@ namespace Grindstone {
 			std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> globalDescriptorSet;
 
 			GizmoRenderer gizmoRenderer;
-			GridRenderer gridRenderer;
 			std::array<GraphicsAPI::Image*, 3> renderTarget;
 			std::array<GraphicsAPI::Image*, 3> depthTarget;
 			GraphicsAPI::Sampler* sampler = nullptr;
@@ -95,14 +90,6 @@ namespace Grindstone {
 				>
 			> gizmoRenderCallbacks;
 
-			GraphicsAPI::DescriptorSetLayout* mousePickDescriptorSetLayout = nullptr;
-			std::array<GraphicsAPI::Image*, 3> mousePickRenderTarget{};
-			std::array<GraphicsAPI::Framebuffer*, 3> mousePickFramebuffer{};
-			std::array<GraphicsAPI::DescriptorSet*, 3> mousePickDescriptorSet{};
-			std::array<GraphicsAPI::Buffer*, 3> mousePickMatrixBuffer{};
-			std::array<GraphicsAPI::Buffer*, 3> mousePickResponseBuffer{};
-
-			BaseRenderer* renderer = nullptr;
 			glm::mat4 projection;
 			glm::mat4 view;
 			glm::vec3 position = glm::vec3();

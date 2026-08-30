@@ -20,7 +20,6 @@
 #include <Editor/PluginSystem/EditorPluginInterface.hpp>
 #include <Editor/PluginSystem/EditorPluginManager.hpp>
 #include <Editor/ImguiEditor/ViewportPanel.hpp>
-#include <EngineCore/Rendering/BaseRenderer.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
@@ -339,26 +338,16 @@ Manager::~Manager() {
 		engineCore->ForceDeleteAllDeferred();
 	}
 
-	// Remove the renderer earlier because it (and its virtual destructor) are defined in an editor plugin.
-	if (imguiEditor) {
-		auto viewport = imguiEditor->GetViewportPanel();
-		if (viewport != nullptr) {
-			auto camera = viewport->GetCamera();
-			if (camera != nullptr) {
-				camera->ClearRenderer();
-			}
-		}
-	}
-
 	if (engineCore != nullptr) {
-		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAfterUiSetup");
-		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAfterSceneInitialization");
-		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorBeforeSceneInitialization");
-		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAfterCameraInitialization");
-		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorBeforeCameraInitialization");
-		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAssetImportLate");
-		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAssetImportEarly");
-		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorEarly");
+		Grindstone::Plugins::IPluginManager* pluginManager = engineCore->GetPluginManager();
+		pluginManager->UnloadPluginsByStage("EditorAfterUiSetup");
+		pluginManager->UnloadPluginsByStage("EditorAfterSceneInitialization");
+		pluginManager->UnloadPluginsByStage("EditorBeforeSceneInitialization");
+		pluginManager->UnloadPluginsByStage("EditorAfterCameraInitialization");
+		pluginManager->UnloadPluginsByStage("EditorBeforeCameraInitialization");
+		pluginManager->UnloadPluginsByStage("EditorAssetImportLate");
+		pluginManager->UnloadPluginsByStage("EditorAssetImportEarly");
+		pluginManager->UnloadPluginsByStage("EditorEarly");
 	}
 
 	if (imguiEditor) {

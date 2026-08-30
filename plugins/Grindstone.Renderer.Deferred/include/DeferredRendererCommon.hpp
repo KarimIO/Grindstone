@@ -3,7 +3,7 @@
 
 #include <Common/HashedString.hpp>
 #include <Common/Graphics/Formats.hpp>
-#include <Grindstone.Renderer.Deferred/include/Passes/GbufferPass.hpp>
+#include <Common/Rendering/AttachmentInfo.hpp>
 
 static Grindstone::ConstHashedString gbufferRenderPassKey = "Gbuffer";
 static Grindstone::ConstHashedString geometryOpaqueRenderPassKey = "GeometryOpaque";
