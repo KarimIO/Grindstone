@@ -24,10 +24,8 @@ using namespace Grindstone;
 
 const Grindstone::ConstHashedString editorRenderPassHashedString("Editor");
 const Grindstone::ConstHashedString gizmoRenderPassHashedString("Gizmo");
-const Grindstone::ConstHashedString mousePickRenderQueue("MousePick");
 static GraphicsAPI::RenderPass* editorRenderPass = nullptr;
 static GraphicsAPI::RenderPass* gizmoRenderPass = nullptr;
-static GraphicsAPI::RenderPass* mousePickRenderPass = nullptr;
 
 void EditorCamera::SetupRenderPasses() {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
@@ -56,18 +54,6 @@ void EditorCamera::SetupRenderPasses() {
 	gizmoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
 	gizmoRenderPass = core->CreateRenderPass(gizmoRenderPassCreateInfo);
 	renderPassRegistry->RegisterRenderpass(gizmoRenderPassHashedString, gizmoRenderPass);
-
-	GraphicsAPI::Format mousePickColorImageFormat = GraphicsAPI::Format::R32_UINT;
-	GraphicsAPI::RenderPass::AttachmentInfo mousePickAttachmentInfo = { mousePickColorImageFormat, true };
-
-	GraphicsAPI::RenderPass::CreateInfo mousePickRenderPassCreateInfo{};
-	mousePickRenderPassCreateInfo.debugName = "MousePick RenderPass";
-	mousePickRenderPassCreateInfo.colorAttachmentCount = 1u;
-	mousePickRenderPassCreateInfo.colorAttachments = &mousePickAttachmentInfo;
-	mousePickRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
-	mousePickRenderPassCreateInfo.shouldClearDepthOnLoad = false;
-	mousePickRenderPass = core->CreateRenderPass(mousePickRenderPassCreateInfo);
-	renderPassRegistry->RegisterRenderpass(mousePickRenderQueue, mousePickRenderPass);
 }
 
 EditorCamera::EditorCamera() {
@@ -224,46 +210,6 @@ void Grindstone::Editor::EditorCamera::RegisterGizmoPass(
 	gizmoRenderCallbacks.emplace_back(callback);
 }
 
-void Grindstone::Editor::EditorCamera::CaptureMousePick(int x, int y) {
-	y = height - y;
-
-	if (x < 0 || y < 0 || x > static_cast<int>(width) || y > static_cast<int>(height)) {
-		return;
-	}
-
-	captureThisFrame = true;
-	captureX = x;
-	captureY = y;
-}
-
-uint32_t EditorCamera::GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandBuffer) {
-	EngineCore& engineCore = EngineCore::GetInstance();
-	GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
-	uint32_t frameIndex = (wgb->GetCurrentImageIndex() + (wgb->GetMaxFramesInFlight() - 1)) % wgb->GetMaxFramesInFlight();
-	Grindstone::GraphicsAPI::Buffer* buffer = mousePickResponseBuffer[frameIndex];
-
-	GraphicsAPI::BufferBarrier bufferBarrier{
-		.buffer = buffer,
-		.srcStageMask = GraphicsAPI::PipelineStageBit::FragmentShader,
-		.dstStageMask = GraphicsAPI::PipelineStageBit::Host,
-		.srcAccess = GraphicsAPI::AccessFlags::ShaderWrite,
-		.dstAccess = GraphicsAPI::AccessFlags::HostRead,
-		.offset = 0,
-		.size = static_cast<uint32_t>(buffer->GetSize())
-	};
-
-	commandBuffer->PipelineBarrier(
-		&bufferBarrier, 1,
-		nullptr, 0
-	);
-
-	MousePickResponseBuffer* mappedBuffer = reinterpret_cast<MousePickResponseBuffer*>(buffer->Map());
-	uint32_t entityId = mappedBuffer->entityId;
-	buffer->Unmap();
-
-	return entityId;
-}
-
 uint64_t EditorCamera::GetRenderOutput() {
 	EngineCore& engineCore = EngineCore::GetInstance();
 	auto window = engineCore.windowManager->GetWindowByIndex(0);
@@ -309,14 +255,16 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 	glm::mat4 adjustedPerspectiveMatrix = projection;
 	graphicsCore->AdjustPerspective(&adjustedPerspectiveMatrix[0][0]);
 
+	glm::vec2 renderResolution = glm::vec2(width, height);
+
 	EngineUboStruct engineUboStruct{
 		.projectionMatrix = adjustedPerspectiveMatrix,
 		.viewMatrix = view,
 		.inverseProjectionMatrix = glm::inverse(adjustedPerspectiveMatrix),
 		.inverseViewMatrix = glm::inverse(view),
 		.eyePos = position,
-		.framebufferResolution = glm::vec2(width, height),
-		.renderResolution = glm::vec2(width, height),
+		.framebufferResolution = renderResolution,
+		.renderResolution = renderResolution,
 		.renderScale = glm::vec2(1.0f, 1.0f),
 		.time = static_cast<float>(engineCore.GetTimeSinceLaunch())
 	};
@@ -391,9 +339,27 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		}
 	);
 
-	Grindstone::Blackboard blackboard;
+	Grindstone::Renderer::RenderFrameContext frameCxt(*cxtSet);
+	frameCxt.imageIndex = imageIndex;
+	frameCxt.imageSize = renderResolution;
+	frameCxt.colorRef = colorImageRef;
+	frameCxt.depthRef = depthImageRef;
+	frameCxt.views.emplace_back(
+		Renderer::RenderFrameViewContext{
+			.projectionMatrix = projection,
+			.viewMatrix = view,
+			.projectionViewMatrix = projection * view,
+			.inverseProjectionMatrix = glm::inverse(projection),
+			.inverseViewMatrix = glm::inverse(view),
+			.inverseProjectionViewMatrix = glm::inverse(projection * view),
+			.eyePos = position,
+			.nearDistance = nearPlaneDistance,
+			.farDistance = farPlaneDistance
+		}
+	);
+
 	Grindstone::Renderer::RenderingPipeline* renderPipeline = engineCore.GetRenderingPipeline();
-	renderPipeline->Render(blackboard, renderGraphBuilder);
+	renderPipeline->Render(renderGraphBuilder, frameCxt);
 
 	auto renderGraph = renderGraphBuilder.Compile();
 	renderGraph.ExecuteGraph(context);
@@ -463,14 +429,16 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 	glm::mat4 adjustedPerspectiveMatrix = projectionMatrix;
 	graphicsCore->AdjustPerspective(&adjustedPerspectiveMatrix[0][0]);
 
+	glm::vec2 renderResolution = glm::vec2(width, height);
+
 	EngineUboStruct engineUboStruct{
 		.projectionMatrix = adjustedPerspectiveMatrix,
 		.viewMatrix = viewMatrix,
 		.inverseProjectionMatrix = glm::inverse(adjustedPerspectiveMatrix),
 		.inverseViewMatrix = glm::inverse(viewMatrix),
 		.eyePos = pos,
-		.framebufferResolution = glm::vec2(width, height),
-		.renderResolution = glm::vec2(width, height),
+		.framebufferResolution = renderResolution,
+		.renderResolution = renderResolution,
 		.renderScale = glm::vec2(1.0f, 1.0f),
 		.time = static_cast<float>(engineCore.GetTimeSinceLaunch())
 	};
@@ -540,9 +508,27 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 		}
 	);
 
-	Grindstone::Blackboard blackboard;
+	Grindstone::Renderer::RenderFrameContext frameCxt(*cxtSet);
+	frameCxt.imageIndex = imageIndex;
+	frameCxt.imageSize = renderResolution;
+	frameCxt.colorRef = colorImageRef;
+	frameCxt.depthRef = depthImageRef;
+	frameCxt.views.emplace_back(
+		Renderer::RenderFrameViewContext{
+			.projectionMatrix = projectionMatrix,
+			.viewMatrix = viewMatrix,
+			.projectionViewMatrix = projectionMatrix * viewMatrix,
+			.inverseProjectionMatrix = glm::inverse(projectionMatrix),
+			.inverseViewMatrix = glm::inverse(viewMatrix),
+			.inverseProjectionViewMatrix = glm::inverse(projectionMatrix * viewMatrix),
+			.eyePos = position,
+			.nearDistance = nearPlaneDistance,
+			.farDistance = farPlaneDistance
+		}
+	);
+
 	Grindstone::Renderer::RenderingPipeline* renderPipeline = engineCore.GetRenderingPipeline();
-	renderPipeline->Render(blackboard, renderGraphBuilder);
+	renderPipeline->Render(renderGraphBuilder, frameCxt);
 
 	auto renderGraph = renderGraphBuilder.Compile();
 	renderGraph.ExecuteGraph(context);

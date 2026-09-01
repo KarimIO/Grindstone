@@ -353,17 +353,20 @@ void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
 	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
 		for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
 			if (binary.loadStage == stageName) {
+
 				switch (binary.buildType) {
 				case Grindstone::Plugins::MetaData::BinaryBuildType::Cmake: {
 					std::filesystem::path binaryPath = metaData.pluginResolvedPath / binary.libraryRelativePath;
 					std::filesystem::path parentPath = binaryPath.parent_path();
 					DLL_DIRECTORY_COOKIE dllCookie = AddDllDirectory(parentPath.wstring().c_str());
+					GPRINT_INFO_V(LogSource::Editor, "[PluginSystem] In stage {}, mounting C++ (cmake) plugin: {}", stageName, binary.libraryRelativePath.string());
 					LoadModule(binaryPath);
 					RemoveDllDirectory(dllCookie);
 					break;
 				}
 				case Grindstone::Plugins::MetaData::BinaryBuildType::Dotnet: {
 					auto scriptManager = Grindstone::EngineCore::GetInstance().TryGetService<Grindstone::Scripting::CSharp::CSharpManager>();
+					GPRINT_INFO_V(LogSource::Editor, "[PluginSystem] In stage {}, mounting C# (dotnet) plugin: {}", stageName, binary.libraryRelativePath.string());
 					scriptManager->LoadAssemblyIntoMap(metaData.name + ":" + binary.libraryRelativePath.filename().string());
 					break;
 				}
@@ -375,6 +378,7 @@ void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
 			if (assetDir.loadStage == stageName) {
 				std::filesystem::path assetsPath = metaData.pluginResolvedPath / assetDir.assetDirectoryRelativePath;
 				Editor::FileManager& fileManager = editorManager.GetFileManager();
+				GPRINT_INFO_V(LogSource::Editor, "[PluginSystem] In stage {}, mounted plugin asset directory {} to path: {}", stageName, assetDir.mountPoint, assetsPath.string());
 				fileManager.MountDirectory(assetDir.mountPoint, assetsPath);
 			}
 		}

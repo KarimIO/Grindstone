@@ -16,9 +16,18 @@ namespace Grindstone::Editor::RendererFeatures {
 			Grindstone::Renderer::RenderFrameContext& context
 		) override;
 
+		uint32_t GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandBuffer);
+
 	private:
+		Grindstone::GraphicsAPI::RenderPass* mousePickRenderPass = nullptr;
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> mousePickPipelineSet;
 		GraphicsAPI::DescriptorSetLayout* mousePickDescriptorSetLayout = nullptr;
+
+		// TODO: None of this makes sense, it all should be removed. Get CaptureX/Y through Cvar.
+		// Expose data through Blackboard.
+		bool captureThisFrame = false;
+		int captureX = 0;
+		int captureY = 0;
 		std::array<GraphicsAPI::Image*, 3> mousePickRenderTarget{};
 		std::array<GraphicsAPI::Framebuffer*, 3> mousePickFramebuffer{};
 		std::array<GraphicsAPI::DescriptorSet*, 3> mousePickDescriptorSet{};

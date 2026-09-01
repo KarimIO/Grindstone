@@ -31,7 +31,7 @@ struct BloomStageUboStruct {
 Grindstone::Renderer::ImageDescription genericBloomImageDescription{
 	.format = Grindstone::GraphicsAPI::Format::R32G32B32A32_SFLOAT,
 	.imageUsage =
-		Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget |
+		Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget | 
 		Grindstone::GraphicsAPI::ImageUsageFlags::Sampled |
 		Grindstone::GraphicsAPI::ImageUsageFlags::Storage
 };
@@ -275,7 +275,6 @@ void Grindstone::Renderer::Bloom::Bind(
 	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
 	Grindstone::Renderer::RenderFrameContext& context
 ) {
-	// TODO: Get these for RenderGraph 2.0.
 	uint32_t imageIndex = context.imageIndex;
 	Grindstone::Math::Uint2 size = context.imageSize;
 
@@ -332,5 +331,5 @@ void Grindstone::Renderer::Bloom::Bind(
 		stageOutputs[BLOOM_MIPS + i] = outRef = Upscale(i, mipSizes[BLOOM_MIPS - i - 1u], *(ds++), screenSampler, bloomPipeline, pipelineLayout, renderGraphBuilder, outRef, stageOutputs[BLOOM_MIPS - 1u - i]);
 	}
 
-	context.blackboard.SetValue<RenderGraphBuilderResourceRef>("SceneColor", outRef);
+	context.blackboard.SetValue<RenderGraphBuilderResourceRef>("BloomOutput", outRef);
 }

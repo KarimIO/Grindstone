@@ -88,7 +88,8 @@ static void RenderPointLightComponent(
 		.renderArea = renderArea
 	};
 
-	pushRenderingStatsCallback(RenderShadowMap(passName, cxtSet, renderViewData, engineCore, cmd));
+	Grindstone::Rendering::GeometryRenderStats stats = RenderShadowMap(passName, cxtSet, renderViewData, engineCore, cmd);
+	// TODO: RenderGraph 2.0 - pushRenderingStatsCallback(stats);
 }
 
 static void RenderSpotLightComponent(
@@ -131,7 +132,8 @@ static void RenderSpotLightComponent(
 		.renderArea = renderArea
 	};
 
-	pushRenderingStatsCallback(RenderShadowMap(passName, cxtSet, renderViewData, engineCore, cmd));
+	Grindstone::Rendering::GeometryRenderStats stats = RenderShadowMap(passName, cxtSet, renderViewData, engineCore, cmd);
+	// TODO: RenderGraph 2.0 - pushRenderingStatsCallback(stats);
 }
 
 static std::array<glm::vec4, 8> GetFrustumCornersWorldSpace(const glm::mat4& proj, const glm::mat4& view) {
@@ -242,7 +244,8 @@ static void RenderDirectionalLightComponent(
 		.renderArea = renderArea
 	};
 
-	pushRenderingStatsCallback(RenderShadowMap(passName, cxtSet, renderViewData, engineCore, cmd));
+	Grindstone::Rendering::GeometryRenderStats stats = RenderShadowMap(passName, cxtSet, renderViewData, engineCore, cmd);
+	// TODO: RenderGraph 2.0 - pushRenderingStatsCallback(stats);
 }
 
 static Grindstone::Renderer::RenderGraphBuilderResourceRef AddSpotShadowPass(
@@ -314,17 +317,17 @@ static Grindstone::Renderer::RenderGraphBuilderResourceRef AddPointShadowPass(
 			const Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
 			Grindstone::Renderer::RenderGraphBuilderResourceRef& data
-			) {
-				RenderPointLightComponent(
-					passName,
-					viewportArea,
-					cxt.commandBuffer,
-					cxt.worldContextSet,
-					entity,
-					pointLightComponent,
-					pushRenderingStatsCallback,
-					faceIndex
-				);
+		) {
+			RenderPointLightComponent(
+				passName,
+				viewportArea,
+				cxt.commandBuffer,
+				cxt.worldContextSet,
+				entity,
+				pointLightComponent,
+				pushRenderingStatsCallback,
+				faceIndex
+			);
 		}
 	);
 }

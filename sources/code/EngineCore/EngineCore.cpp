@@ -140,6 +140,7 @@ bool EngineCore::Initialize(LateCreateInfo& createInfo) {
 	GPRINT_INFO(LogSource::EngineCore, "Application Initialized.");
 	GRIND_PROFILE_END_SESSION();
 
+	pluginManager->LoadPluginsByStage("JustBeforeEndOfEngineSetup");
 	pluginManager->LoadPluginsByStage("EndOfEngineSetup");
 
 	lastFrameTime = std::chrono::steady_clock::now();
@@ -238,6 +239,7 @@ EngineCore::~EngineCore() {
 
 	if (pluginManager != nullptr) {
 		pluginManager->UnloadPluginsByStage("EndOfEngineSetup");
+		pluginManager->UnloadPluginsByStage("JustBeforeEndOfEngineSetup");
 	}
 
 	AllocatorCore::Free(worldContextManager);

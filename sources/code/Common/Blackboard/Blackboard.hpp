@@ -19,12 +19,12 @@ namespace Grindstone {
 		template<typename T>
 		BlackboardError SetValue(BlackboardKey key, T value) {
 			static_assert(sizeof(T) <= sizeof(BlackboardValue), "Value is too big - use a pointer.");
-			std::type_index type = (typeid(int));
+			std::type_index type = (typeid(T));
 
 			auto it = entries.find(key);
 			if (it == entries.end()) {
-				entries.emplace(key, BlackboardEntry(type));
-				memcpy(&it->second.value, &value, sizeof(T));
+				auto insertedEntry = entries.emplace(key, BlackboardEntry(type));
+				memcpy(&insertedEntry.first->second.value, &value, sizeof(T));
 			}
 			else if (it->second.type != type) {
 				return BlackboardError::MismatchingType;
@@ -39,7 +39,7 @@ namespace Grindstone {
 		template<typename T>
 		BlackboardError SetValueIfExists(BlackboardKey key, T value) {
 			static_assert(sizeof(T) <= sizeof(BlackboardValue), "Value is too big - use a pointer.");
-			std::type_index type = (typeid(int));
+			std::type_index type = (typeid(T));
 
 			auto it = entries.find(key);
 			if (it == entries.end()) {
@@ -58,25 +58,25 @@ namespace Grindstone {
 		template<typename T>
 		[[nodiscard]] Grindstone::Result<T, BlackboardError> GetValue(BlackboardKey key) const {
 			static_assert(sizeof(T) <= sizeof(BlackboardValue), "Value is too big - use a pointer.");
-			std::type_index type = (typeid(int));
+			std::type_index type = (typeid(T));
 			auto it = entries.find(key);
 			if (it == entries.end()) {
-				return BlackboardError::Success;
+				return BlackboardError::KeyNotFound;
 			}
 			else if (it->second.type != type) {
 				return BlackboardError::MismatchingType;
 			}
 			else {
-				T outValue{};
-				memcpy(&outValue, &it->second, sizeof(T));
-				return outValue;
+				T value{};
+				memcpy(&value, &it->second.value, sizeof(T));
+				return value;
 			}
 		}
 
 		template<typename T>
 		[[nodiscard]] bool TryGetValue(BlackboardKey key, T& outValue) const {
 			static_assert(sizeof(T) <= sizeof(BlackboardValue), "Value is too big - use a pointer.");
-			std::type_index type = (typeid(int));
+			std::type_index type = (typeid(T));
 			auto it = entries.find(key);
 			if (it == entries.end()) {
 				return false;
@@ -101,12 +101,12 @@ namespace Grindstone {
 		BlackboardError SetValue(T value) {
 			const BlackboardKey key = GetBlackboardKeyFromType<T>();
 			static_assert(sizeof(T) <= sizeof(BlackboardValue), "Value is too big - use a pointer.");
-			std::type_index type = (typeid(int));
+			std::type_index type = (typeid(T));
 
 			auto it = entries.find(key);
 			if (it == entries.end()) {
-				entries.emplace(key, BlackboardEntry(type));
-				memcpy(&it->second.value, &value, sizeof(T));
+				auto insertedEntry = entries.emplace(key, BlackboardEntry(type));
+				memcpy(&insertedEntry.first->second.value, &value, sizeof(T));
 			}
 			else if (it->second.type != type) {
 				return BlackboardError::MismatchingType;
@@ -122,7 +122,7 @@ namespace Grindstone {
 		BlackboardError SetValueIfExists(T value) {
 			const BlackboardKey key = GetBlackboardKeyFromType<T>();
 			static_assert(sizeof(T) <= sizeof(BlackboardValue), "Value is too big - use a pointer.");
-			std::type_index type = (typeid(int));
+			std::type_index type = (typeid(T));
 
 			auto it = entries.find(key);
 			if (it == entries.end()) {
@@ -142,10 +142,10 @@ namespace Grindstone {
 		[[nodiscard]] Grindstone::Result<T, BlackboardError> GetValue() const {
 			const BlackboardKey key = GetBlackboardKeyFromType<T>();
 			static_assert(sizeof(T) <= sizeof(BlackboardValue), "Value is too big - use a pointer.");
-			std::type_index type = (typeid(int));
+			std::type_index type = (typeid(T));
 			auto it = entries.find(key);
 			if (it == entries.end()) {
-				return BlackboardError::Success;
+				return BlackboardError::KeyNotFound;
 			}
 			else if (it->second.type != type) {
 				return BlackboardError::MismatchingType;
@@ -161,7 +161,7 @@ namespace Grindstone {
 		[[nodiscard]] bool TryGetValue(T& outValue) const {
 			const BlackboardKey key = GetBlackboardKeyFromType<T>();
 			static_assert(sizeof(T) <= sizeof(BlackboardValue), "Value is too big - use a pointer.");
-			std::type_index type = (typeid(int));
+			std::type_index type = (typeid(T));
 			auto it = entries.find(key);
 			if (it == entries.end()) {
 				return false;

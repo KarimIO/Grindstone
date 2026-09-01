@@ -12,7 +12,10 @@ namespace Grindstone::Editor::RendererFeatures {
 		Gizmos() : Rendering::RendererFeature("Gizmos", Rendering::DeferredRenderGraphOrderEvent::EndRendering - 1) {}
 		static const char* GetStaticFeatureName() { return "Gizmos"; }
 		virtual void Initialize() override;
-		virtual void Bind(Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder) override;
+		virtual void Bind(
+			Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
+			Grindstone::Renderer::RenderFrameContext& context
+		) override;
 
 	private:
 		Grindstone::GraphicsAPI::Sampler* screenSampler = nullptr;

@@ -50,6 +50,7 @@ void Grindstone::Renderer::RenderingPipeline::RegisterFeature(Grindstone::Render
 	// Insert sorted
 	auto it = std::lower_bound(features.begin(), features.end(), feature, RendererFeatureOrder);
 	features.insert(it, feature);
+	feature->Initialize();
 }
 
 void Grindstone::Renderer::RenderingPipeline::UnregisterFeature(const char* featureName) {

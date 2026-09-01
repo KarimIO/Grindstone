@@ -99,6 +99,7 @@ bool Manager::Initialize(const std::unordered_map<std::string, std::string>& cmd
 	engineBinariesPath = std::filesystem::current_path();
 
 	fileManager.Initialize();
+	assetRegistry.Initialize(projectPath);
 
 	if (!LoadEngine()) {
 		return false;
@@ -117,7 +118,6 @@ bool Manager::Initialize(const std::unordered_map<std::string, std::string>& cmd
 		reinterpret_cast<const void*>(materialContent.c_str()), materialContent.size()
 	);
 
-	assetRegistry.Initialize(projectPath);
 	importerManager.Initialize();
 
 	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAssetImportEarly");

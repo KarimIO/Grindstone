@@ -11,7 +11,10 @@ namespace Grindstone::Editor::RendererFeatures {
 		Grid() : Rendering::RendererFeature("Grid", Rendering::DeferredRenderGraphOrderEvent::EndRendering - 2) {}
 		static const char* GetStaticFeatureName() { return "Grid"; }
 		virtual void Initialize() override;
-		virtual void Bind(Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder) override;
+		virtual void Bind(
+			Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
+			Grindstone::Renderer::RenderFrameContext& context
+		) override;
 
 	private:
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> pipelineSet;

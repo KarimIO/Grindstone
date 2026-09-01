@@ -2,6 +2,7 @@
 #include <Common/Graphics/Buffer.hpp>
 #include <Editor/EditorManager.hpp>
 #include <Editor/RendererFeatures/Gizmos.hpp>
+#include <EngineCore/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
@@ -32,18 +33,27 @@ void Grindstone::Editor::RendererFeatures::Gizmos::Initialize() {
 	screenSampler = engineCore.GetGraphicsCore()->GetOrCreateSampler(screenSamplerCreateInfo);
 }
 
-void Grindstone::Editor::RendererFeatures::Gizmos::Bind(Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder) {
+void Grindstone::Editor::RendererFeatures::Gizmos::Bind(
+	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
+	Grindstone::Renderer::RenderFrameContext& context
+) {
 	Renderer::ImageDescription imageDescription;
-	Renderer::RenderGraphBuilderResourceRef imageToGizmosRef;
+
+	auto colorImageResponse = context.blackboard.GetValue<Renderer::RenderGraphBuilderResourceRef>("SceneColor");
+	if (colorImageResponse.HasError()) {
+		GPRINT_ERROR_V(LogSource::Rendering, "MousePick: Unable to get SceneColor: {}", colorImageResponse.GetError());
+		return;
+	}
+
+	Grindstone::Renderer::RenderGraphBuilderResourceRef colorImageRef = colorImageResponse.GetValue();
+
 
 	renderGraphBuilder.CreateGraphicsPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>(
 		"Gizmos Pass",
 		Grindstone::Renderer::MetaRect::Swapchain(),
-		[this, &imageDescription, imageToGizmosRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) {
-			renderPass.ReadExternalSampler(screenSampler);
-			renderPass.ReadSampledImage(imageToGizmosRef);
+		[this, &imageDescription, colorImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) {
 			// TODO: There should be a way to recover the image description from the reference.
-			Renderer::RenderGraphBuilderResourceRef output = renderPass.WriteColorAttachment(imageDescription, GraphicsAPI::LoadOp::DontCare, GraphicsAPI::ClearColor{});
+			Renderer::RenderGraphBuilderResourceRef output = renderPass.ReadWriteColorAttachment(colorImageRef);
 
 			return output;
 		},
