@@ -9,7 +9,7 @@
 		{
 			"path": "assets",
 			"mountPoint": "GRINDSTONE.RENDERER.DEFERRED",
-			"loadStage": "EditorAssetImportEarly"
+			"loadStage": "JustBeforeEndOfEngineSetup"
 		}
 	],
 	"dependencies": [],

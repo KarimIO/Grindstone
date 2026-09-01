@@ -1,10 +1,15 @@
 #include <Common/Graphics/Buffer.hpp>
+#include <Common/Window/WindowManager.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
 #include <EngineCore/Logger.hpp>
+#include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
+#include <EngineCore/Rendering/RenderPassRegistry.hpp>
 
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
 #include <Editor/RendererFeatures/MousePick.hpp>
+
+const Grindstone::ConstHashedString mousePickRenderQueue("MousePick");
 
 struct MousePickMatrixBuffer {
 	glm::mat4 projectionMatrix;
@@ -44,9 +49,12 @@ static Grindstone::Renderer::ImageDescription depthResourceDesc{
 
 void Grindstone::Editor::RendererFeatures::MousePick::Initialize() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+	Grindstone::RenderPassRegistry* renderPassRegistry = engineCore.GetRenderPassRegistry();
+
 	mousePickPipelineSet = engineCore.assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/postProcessing/screenSpaceAmbientOcclusionBlur");
 
 	{
+		Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 		Grindstone::GraphicsAPI::Buffer::CreateInfo mousePickBufferMatrixCreateInfo{};
 		mousePickBufferMatrixCreateInfo.bufferSize = sizeof(MousePickMatrixBuffer);
 		mousePickBufferMatrixCreateInfo.bufferUsage =
@@ -74,10 +82,23 @@ void Grindstone::Editor::RendererFeatures::MousePick::Initialize() {
 		mousePickDescriptorSetLayoutCreateInfo.debugName = "Mouse Pick Descriptor Set Layout";
 		mousePickDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(mousePickDescriptorBindingLayouts.size());
 		mousePickDescriptorSetLayoutCreateInfo.bindings = mousePickDescriptorBindingLayouts.data();
-		mousePickDescriptorSetLayout = core->GetOrCreateDescriptorSetLayoutFromCache(mousePickDescriptorSetLayoutCreateInfo);
+		mousePickDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(mousePickDescriptorSetLayoutCreateInfo);
 
 		GraphicsAPI::DescriptorSet::CreateInfo mousePickDescriptorSetCreateInfo{};
 		mousePickDescriptorSetCreateInfo.layout = mousePickDescriptorSetLayout;
+
+		GraphicsAPI::Format mousePickColorImageFormat = GraphicsAPI::Format::R32_UINT;
+		GraphicsAPI::RenderPass::AttachmentInfo mousePickAttachmentInfo = { mousePickColorImageFormat, true };
+
+		GraphicsAPI::RenderPass::CreateInfo mousePickRenderPassCreateInfo{};
+		mousePickRenderPassCreateInfo.debugName = "MousePick RenderPass";
+		mousePickRenderPassCreateInfo.colorAttachmentCount = 1u;
+		mousePickRenderPassCreateInfo.colorAttachments = &mousePickAttachmentInfo;
+		mousePickRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
+		mousePickRenderPassCreateInfo.shouldClearDepthOnLoad = false;
+		mousePickRenderPass = graphicsCore->CreateRenderPass(mousePickRenderPassCreateInfo);
+		renderPassRegistry->RegisterRenderpass(mousePickRenderQueue, mousePickRenderPass);
+
 
 		for (int i = 0; i < 3; ++i) {
 			std::string mousePickMatrixBufferName = std::vformat("Mouse Pick Uniform Buffer [{}]", std::make_format_args(i));
@@ -88,8 +109,8 @@ void Grindstone::Editor::RendererFeatures::MousePick::Initialize() {
 			mousePickBufferResponseCreateInfo.debugName = mousePickResponseBufferName.c_str();
 			mousePickDescriptorSetCreateInfo.debugName = mousePickDescriptorSetName.c_str();
 
-			mousePickMatrixBuffer[i] = core->CreateBuffer(mousePickBufferMatrixCreateInfo);
-			mousePickResponseBuffer[i] = core->CreateBuffer(mousePickBufferResponseCreateInfo);
+			mousePickMatrixBuffer[i] = graphicsCore->CreateBuffer(mousePickBufferMatrixCreateInfo);
+			mousePickResponseBuffer[i] = graphicsCore->CreateBuffer(mousePickBufferResponseCreateInfo);
 
 			std::array<GraphicsAPI::DescriptorSet::Binding, 2> mousePickDescriptorBindings{};
 			mousePickDescriptorBindings[0] = GraphicsAPI::DescriptorSet::Binding::UniformBuffer(mousePickMatrixBuffer[i]);
@@ -97,7 +118,7 @@ void Grindstone::Editor::RendererFeatures::MousePick::Initialize() {
 
 			mousePickDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(mousePickDescriptorBindings.size());
 			mousePickDescriptorSetCreateInfo.bindings = mousePickDescriptorBindings.data();
-			mousePickDescriptorSet[i] = core->CreateDescriptorSet(mousePickDescriptorSetCreateInfo);
+			mousePickDescriptorSet[i] = graphicsCore->CreateDescriptorSet(mousePickDescriptorSetCreateInfo);
 		}
 	}
 }
@@ -106,13 +127,13 @@ void Grindstone::Editor::RendererFeatures::MousePick::Bind(
 	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
 	Grindstone::Renderer::RenderFrameContext& context
 ) {
-	auto litImageResponse = context.blackboard.GetValue<Renderer::RenderGraphBuilderResourceRef>("SceneDepth");
-	if (litImageResponse.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "MousePick: Unable to get SceneDepth: {}", litImageResponse.GetError());
+	auto depthImageResponse = context.blackboard.GetValue<Renderer::RenderGraphBuilderResourceRef>("SceneDepth");
+	if (depthImageResponse.HasError()) {
+		GPRINT_ERROR_V(LogSource::Rendering, "MousePick: Unable to get SceneDepth: {}", depthImageResponse.GetError());
 		return;
 	}
 
-	Grindstone::Renderer::RenderGraphBuilderResourceRef litImageRef = litImageResponse.GetValue();
+	Grindstone::Renderer::RenderGraphBuilderResourceRef depthImageRef = depthImageResponse.GetValue();
 
 	renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
 		"Mouse Pick",
@@ -127,7 +148,7 @@ void Grindstone::Editor::RendererFeatures::MousePick::Bind(
 			pass.WriteDepthStencilAttachment(depthResourceDesc, GraphicsAPI::LoadOp::Clear, clearDepthStencil);
 			return outputRef;
 		},
-		[this, adjustedPerspectiveMatrix, pushStats, imageIndex](
+		[this, imageIndex=context.imageIndex](
 			Grindstone::Math::IntRect2D rect,
 			const Grindstone::Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
@@ -156,7 +177,38 @@ void Grindstone::Editor::RendererFeatures::MousePick::Bind(
 			cmd->SetScissor(captureX, captureY, 1, 1);
 
 			assetRendererManager->SetEngineDescriptorSet(mousePickDescriptorSet[imageIndex]);
-			pushStats(assetRendererManager->RenderQueue("Editor Mouse Pick", cmd, cxt.viewData, registry, mousePickRenderQueue));
+			Rendering::GeometryRenderStats stats = assetRendererManager->RenderQueue("Editor Mouse Pick", cmd, cxt.cameraViewData, registry, mousePickRenderQueue);
+			// TODO: RenderGraph 2.0: pushStats(stats);
 		}
 	);
+}
+
+// TODO: This doesn't make sense - RenderFeatures should not have per-view data, per-view data should be transient, and data
+// should be taken through the Blackboard. The problem is this is last-frame data.
+uint32_t Grindstone::Editor::RendererFeatures::MousePick::GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandBuffer) {
+	EngineCore& engineCore = EngineCore::GetInstance();
+	GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	uint32_t frameIndex = (wgb->GetCurrentImageIndex() + (wgb->GetMaxFramesInFlight() - 1)) % wgb->GetMaxFramesInFlight();
+	Grindstone::GraphicsAPI::Buffer* buffer = mousePickResponseBuffer[frameIndex];
+
+	GraphicsAPI::BufferBarrier bufferBarrier{
+		.buffer = buffer,
+		.srcStageMask = GraphicsAPI::PipelineStageBit::FragmentShader,
+		.dstStageMask = GraphicsAPI::PipelineStageBit::Host,
+		.srcAccess = GraphicsAPI::AccessFlags::ShaderWrite,
+		.dstAccess = GraphicsAPI::AccessFlags::HostRead,
+		.offset = 0,
+		.size = static_cast<uint32_t>(buffer->GetSize())
+	};
+
+	commandBuffer->PipelineBarrier(
+		&bufferBarrier, 1,
+		nullptr, 0
+	);
+
+	MousePickResponseBuffer* mappedBuffer = reinterpret_cast<MousePickResponseBuffer*>(buffer->Map());
+	uint32_t entityId = mappedBuffer->entityId;
+	buffer->Unmap();
+
+	return entityId;
 }

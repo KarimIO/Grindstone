@@ -40,8 +40,6 @@ namespace Grindstone {
 			EditorCamera();
 			~EditorCamera();
 			void RegisterGizmoPass(std::function<Grindstone::Renderer::RenderGraphBuilderResourceRef(Grindstone::Renderer::RenderGraphBuilder&, Grindstone::Renderer::RenderGraphBuilderResourceRef, Grindstone::Renderer::RenderGraphBuilderResourceRef)> callback);
-			void CaptureMousePick(int x, int y);
-			uint32_t GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandBuffer);
 			uint64_t GetRenderOutput();
 			void Render(GraphicsAPI::CommandBuffer* commandBuffer);
 			void RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffer);

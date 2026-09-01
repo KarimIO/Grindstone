@@ -232,7 +232,8 @@ void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 	hasRenderedThisFrame = true;
 
 	if (isHoveringLastFrame) {
-		entt::entity entityId = static_cast<entt::entity>(camera->GetMousePickedEntity(commandBuffer));
+		// TODO: RenderGraph 2.0 - entt::entity entityId = static_cast<entt::entity>(camera->GetMousePickedEntity(commandBuffer));
+		entt::entity entityId = entt::entity();
 		if (shouldMousePickClickLastFrame) {
 			shouldMousePickClickLastFrame = false;
 			shouldMousePickClick = false;
@@ -256,9 +257,12 @@ void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 		}
 	}
 
+	// TODO: Replace this for RenderGraph 2.0
+	/*
 	if (isHovering) {
 		camera->CaptureMousePick(hoverX, hoverY);
 	}
+	*/
 }
 
 Grindstone::Editor::EditorCamera* ViewportPanel::GetCamera() const {

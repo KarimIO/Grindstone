@@ -215,5 +215,5 @@ void Grindstone::Renderer::ScreenSpaceAmbientOcclusion::Bind(
 		}
 	);
 
-	context.blackboard.SetValue("UnblurredAmbientOcclusionRef", ssaoRef);
+	context.blackboard.SetValue("UnblurredAmbientOcclusion", ssaoRef);
 }

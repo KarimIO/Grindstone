@@ -40,7 +40,7 @@ extern "C" {
 		deferredRenderPasses = Grindstone::Renderer::InitializeRenderPasses();
 		pluginInterface->RegisterRendererFeature<Bloom>();
 		pluginInterface->RegisterRendererFeature<Blur>();
-		pluginInterface->RegisterRendererFeature<Debug>();
+		// pluginInterface->RegisterRendererFeature<Debug>();
 		pluginInterface->RegisterRendererFeature<DepthOfField>();
 		pluginInterface->RegisterRendererFeature<Forward>();
 		pluginInterface->RegisterRendererFeature<Gbuffer>();

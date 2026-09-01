@@ -10,13 +10,15 @@
 
 namespace Grindstone::Renderer {
 	struct RenderFrameViewContext {
-		glm::vec3 eyePos;
 		glm::mat4 projectionMatrix;
 		glm::mat4 viewMatrix;
 		glm::mat4 projectionViewMatrix;
 		glm::mat4 inverseProjectionMatrix;
 		glm::mat4 inverseViewMatrix;
 		glm::mat4 inverseProjectionViewMatrix;
+		glm::vec3 eyePos;
+		float nearDistance;
+		float farDistance;
 	};
 
 	struct RenderFrameContext {

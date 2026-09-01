@@ -106,19 +106,19 @@ void Renderer::Lighting::Bind(
 
 	auto shadowAtlasResponse = context.blackboard.GetValue<Grindstone::Renderer::RenderGraphBuilderResourceRef>("ShadowAtlasRef");
 	if (shadowAtlasResponse.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "Lighting Pass: Unable to get ShadowAtlasRef: {}", gbufferDataResponse.GetError());
+		GPRINT_ERROR_V(LogSource::Rendering, "Lighting Pass: Unable to get ShadowAtlasRef: {}", shadowAtlasResponse.GetError());
 		return;
 	}
 	Grindstone::Renderer::RenderGraphBuilderResourceRef shadowAtlasRef = shadowAtlasResponse.GetValue();
 
-	auto ambientOcclusionResponse = context.blackboard.GetValue<Grindstone::Renderer::RenderGraphBuilderResourceRef>("AmbientOcclusionRef");
+	auto ambientOcclusionResponse = context.blackboard.GetValue<Grindstone::Renderer::RenderGraphBuilderResourceRef>("AmbientOcclusionBlurred");
 	if (ambientOcclusionResponse.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "Lighting Pass: Unable to get AmbientOcclusionRef: {}", gbufferDataResponse.GetError());
+		GPRINT_ERROR_V(LogSource::Rendering, "Lighting Pass: Unable to get AmbientOcclusionBlurred: {}", ambientOcclusionResponse.GetError());
 		return;
 	}
 	Grindstone::Renderer::RenderGraphBuilderResourceRef ambientOcclusionRef = ambientOcclusionResponse.GetValue();
 
-	Renderer::RenderGraphBuilderResourceRef litPass = renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
+	Renderer::RenderGraphBuilderResourceRef litPassRef = renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
 		"Lighting Pass",
 		MetaRect::Swapchain(),
 		[this, shadowAtlasRef, ambientOcclusionRef, &gbufferData](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& renderPass) -> Renderer::RenderGraphBuilderResourceRef {
@@ -284,4 +284,6 @@ void Renderer::Lighting::Bind(
 			}
 		}
 	);
+
+	context.blackboard.SetValue<RenderGraphBuilderResourceRef>("SceneColor", litPassRef);
 }

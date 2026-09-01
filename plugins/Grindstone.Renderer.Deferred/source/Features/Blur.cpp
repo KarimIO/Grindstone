@@ -35,9 +35,9 @@ void Grindstone::Renderer::Blur::Bind(
 		.imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled
 	};
 
-	auto ssaoResponse = context.blackboard.GetValue<Grindstone::Renderer::RenderGraphBuilderResourceRef>();
+	auto ssaoResponse = context.blackboard.GetValue<Grindstone::Renderer::RenderGraphBuilderResourceRef>("UnblurredAmbientOcclusion");
 	if (ssaoResponse.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "Blur: Unable to get Gbuffer: {}", ssaoResponse.GetError());
+		GPRINT_ERROR_V(LogSource::Rendering, "Blur: Unable to get UnblurredAmbientOcclusion: {}", ssaoResponse.GetError());
 		return;
 	}
 	Grindstone::Renderer::RenderGraphBuilderResourceRef ssaoRef = ssaoResponse.GetValue();
@@ -80,5 +80,5 @@ void Grindstone::Renderer::Blur::Bind(
 		}
 	);
 
-	context.blackboard.SetValue("AmbientOcclusionRef", blurredRef);
+	context.blackboard.SetValue("AmbientOcclusionBlurred", blurredRef);
 }

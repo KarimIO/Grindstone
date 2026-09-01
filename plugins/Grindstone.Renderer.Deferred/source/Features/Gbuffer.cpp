@@ -9,6 +9,7 @@ void Grindstone::Renderer::Gbuffer::Bind(
 	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
 	Grindstone::Renderer::RenderFrameContext& context
 ) {
+	/*
 	auto depthResult = context.blackboard.GetValue<RenderGraphBuilderResourceRef>("DepthPrePass");
 	if (depthResult.HasError()) {
 		GPRINT_ERROR_V(LogSource::Rendering, "Gbuffer: Unable to get DepthPrePass: {}", depthResult.GetError());
@@ -16,6 +17,9 @@ void Grindstone::Renderer::Gbuffer::Bind(
 	}
 
 	RenderGraphBuilderResourceRef depthImageRef = depthResult.GetValue();
+	*/
+
+	RenderGraphBuilderResourceRef depthImageRef = context.depthRef;
 
 	for (const RenderFrameViewContext& view : context.views) {
 		const glm::mat4& projectionMatrix = view.projectionMatrix;
@@ -55,7 +59,7 @@ void Grindstone::Renderer::Gbuffer::Bind(
 				};
 
 				const Grindstone::Rendering::GeometryRenderStats stats = engineCore.assetRendererManager->RenderQueue("Gbuffer Geometry Opaque", cmd, renderViewData, cxtSet->GetEntityRegistry(), geometryOpaqueRenderPassKey);
-				// pushRenderingStatsCallback(stats);
+				// TODO: RenderGraph 2.0 - pushRenderingStatsCallback(stats);
 			}
 		);
 

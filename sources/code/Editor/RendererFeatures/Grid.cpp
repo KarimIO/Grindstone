@@ -6,6 +6,7 @@
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
 #include <Editor/RendererFeatures/Grid.hpp>
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
+#include <EngineCore/Logger.hpp>
 
 struct GridUniformBuffer {
 	glm::mat4 projectionMatrix;
@@ -47,7 +48,7 @@ void Grindstone::Editor::RendererFeatures::Grid::Initialize() {
 	Grindstone::Assets::AssetManager* assetManager = engineCore.assetManager;
 	pipelineSet = assetManager->GetAssetReferenceByAddress<Grindstone::GraphicsPipelineAsset>("@CORESHADERS/editor/grid");
 
-	GraphicsAPI::DescriptorSetLayout::Binding gridDescriptorLayoutBinding {
+	GraphicsAPI::DescriptorSetLayout::Binding gridDescriptorLayoutBinding{
 		0,
 		1,
 		GraphicsAPI::BindingType::UniformBuffer,
@@ -75,58 +76,73 @@ void Grindstone::Editor::RendererFeatures::Grid::Initialize() {
 	}
 }
 
-void Grindstone::Editor::RendererFeatures::Grid::Bind(Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder) {
-	Renderer::RenderGraphBuilderResourceRef gridImageRef = renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
-		"Grid Pass",
-		Renderer::MetaRect::Swapchain(),
-		[](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
-			Renderer::RenderGraphBuilderResourceRef outputRef = pass.ReadWriteColorAttachment(colorImageRef);
-			pass.ReadDepthAttachment(depthImageRef);
-			return outputRef;
-		},
-		[this](
-			Grindstone::Math::IntRect2D rect,
-			const Grindstone::Renderer::RenderGraphContext& cxt,
-			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
-			Renderer::RenderGraphBuilderResourceRef& outputRef
-		) {
-			// TODO: RenderGraph2 - link values
-			glm::mat4 proj;
-			glm::mat4 view;
-			glm::vec2 renderScale;
-			float renderScale, nearDist, farDist;
+void Grindstone::Editor::RendererFeatures::Grid::Bind(
+	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
+	Grindstone::Renderer::RenderFrameContext& context
+) {
+	auto colorImageResponse = context.blackboard.GetValue<Renderer::RenderGraphBuilderResourceRef>("SceneDepth");
+	if (colorImageResponse.HasError()) {
+		GPRINT_ERROR_V(LogSource::Rendering, "MousePick: Unable to get SceneDepth: {}", colorImageResponse.GetError());
+		return;
+	}
 
-			EngineCore& engineCore = EngineCore::GetInstance();
-			GraphicsAPI::Core* graphicsCore = cxt.graphicsCore;
-			GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
-			uint32_t imageIndex = cxt.swapchainIndex;
+	Grindstone::Renderer::RenderGraphBuilderResourceRef colorImageRef = colorImageResponse.GetValue();
 
-			Grindstone::GraphicsPipelineAsset* pipelineAsset = pipelineSet.Get();
-			if (pipelineAsset == nullptr) {
-				return;
+	auto depthImageResponse = context.blackboard.GetValue<Renderer::RenderGraphBuilderResourceRef>("SceneDepth");
+	if (depthImageResponse.HasError()) {
+		GPRINT_ERROR_V(LogSource::Rendering, "MousePick: Unable to get SceneDepth: {}", depthImageResponse.GetError());
+		return;
+	}
+
+	Grindstone::Renderer::RenderGraphBuilderResourceRef depthImageRef = depthImageResponse.GetValue();
+
+	for (const Renderer::RenderFrameViewContext& view : context.views) {
+		Renderer::RenderGraphBuilderResourceRef gridImageRef = renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
+			"Grid Pass",
+			Renderer::MetaRect::Swapchain(),
+			[colorImageRef, depthImageRef](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
+				Renderer::RenderGraphBuilderResourceRef outputRef = pass.ReadWriteColorAttachment(colorImageRef);
+				pass.ReadDepthAttachment(depthImageRef);
+				return outputRef;
+			},
+			[this, view](
+				Grindstone::Math::IntRect2D rect,
+				const Grindstone::Renderer::RenderGraphContext& cxt,
+				const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
+				Renderer::RenderGraphBuilderResourceRef& outputRef
+			) {
+				EngineCore& engineCore = EngineCore::GetInstance();
+				GraphicsAPI::Core* graphicsCore = cxt.graphicsCore;
+				GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
+				uint32_t imageIndex = cxt.swapchainIndex;
+
+				Grindstone::GraphicsPipelineAsset* pipelineAsset = pipelineSet.Get();
+				if (pipelineAsset == nullptr) {
+					return;
+				}
+
+				Grindstone::GraphicsAPI::GraphicsPipeline* pipeline = pipelineAsset->GetFirstPassPipeline(nullptr);
+				if (pipeline == nullptr) {
+					return;
+				}
+
+				Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = pipelineAsset->GetFirstPassPipelineLayout();
+
+				GridUniformBuffer gridData{
+					.projectionMatrix = view.projectionMatrix,
+					.viewMatrix = view.viewMatrix,
+					.inverseProjectionMatrix = view.inverseProjectionMatrix,
+					.inverseViewMatrix = view.inverseViewMatrix,
+					.renderScale = glm::vec2(1.0f, 1.0f), // TODO: Resolve renderScale,
+					.nearDistance = view.nearDistance,
+					.farDistance = view.farDistance
+				};
+
+				gridUniformBuffers[imageIndex]->UploadData(&gridData);
+				cmd->BindGraphicsPipeline(pipeline);
+				cmd->BindGraphicsDescriptorSet(pipelineLayout, &gridDescriptorSets[imageIndex], 2, 1);
+				cmd->DrawVertices(6, 0, 1, 0);
 			}
-
-			Grindstone::GraphicsAPI::GraphicsPipeline* pipeline = pipelineAsset->GetFirstPassPipeline(nullptr);
-			if (pipeline == nullptr) {
-				return;
-			}
-
-			Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = pipelineAsset->GetFirstPassPipelineLayout();
-
-			GridUniformBuffer gridData{
-				.projectionMatrix = proj,
-				.viewMatrix = view,
-				.inverseProjectionMatrix = glm::inverse(proj),
-				.inverseViewMatrix = glm::inverse(view),
-				.renderScale = renderScale,
-				.nearDistance = nearDist,
-				.farDistance = farDist
-			};
-
-			gridUniformBuffers[imageIndex]->UploadData(&gridData);
-			cmd->BindGraphicsPipeline(pipeline);
-			cmd->BindGraphicsDescriptorSet(pipelineLayout, &gridDescriptorSets[imageIndex], 2, 1);
-			cmd->DrawVertices(6, 0, 1, 0);
-		}
-	);
+		);
+	}
 }

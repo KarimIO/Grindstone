@@ -4,6 +4,7 @@
 
 #include <Grindstone.Renderer.Deferred/include/Features/Tonemap.hpp>
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
+#include <EngineCore/Logger.hpp>
 
 void Grindstone::Renderer::Tonemap::Initialize() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
@@ -75,17 +76,31 @@ void Grindstone::Renderer::Tonemap::Bind(
 	Grindstone::Renderer::RenderFrameContext& context
 ) {
 	PostProcessSettings settings;
-	Renderer::RenderGraphBuilderResourceRef lightingImageRef;
-	Renderer::RenderGraphBuilderResourceRef bloomImageRef;
+
+	auto lightingImageResponse = context.blackboard.GetValue<Grindstone::Renderer::RenderGraphBuilderResourceRef>("SceneColor");
+	if (lightingImageResponse.HasError()) {
+		GPRINT_ERROR_V(LogSource::Rendering, "Blur: Unable to get SceneColor: {}", lightingImageResponse.GetError());
+		return;
+	}
+	Grindstone::Renderer::RenderGraphBuilderResourceRef lightingImageRef = lightingImageResponse.GetValue();
+
+	auto bloomImageResponse = context.blackboard.GetValue<Grindstone::Renderer::RenderGraphBuilderResourceRef>("BloomOutput");
+	if (bloomImageResponse.HasError()) {
+		GPRINT_ERROR_V(LogSource::Rendering, "Blur: Unable to get BloomOutput: {}", bloomImageResponse.GetError());
+		return;
+	}
+	Grindstone::Renderer::RenderGraphBuilderResourceRef bloomImageRef = bloomImageResponse.GetValue();
+
+	Grindstone::Renderer::RenderGraphBuilderResourceRef attachmentOutputRef = context.colorRef;
 
 	renderGraphBuilder.CreateGraphicsPass<Grindstone::Renderer::TonemapPassReturnData>(
 		"Tonemapping",
 		MetaRect::Swapchain(),
-		[this, lightingImageRef, bloomImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::TonemapPassReturnData>& renderPass) {
+		[this, attachmentOutputRef, lightingImageRef, bloomImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::TonemapPassReturnData>& renderPass) {
 			renderPass.ReadExternalSampler(screenSampler);
 			renderPass.ReadSampledImage(lightingImageRef);
 			renderPass.ReadSampledImage(bloomImageRef);
-			Renderer::RenderGraphBuilderResourceRef output = renderPass.WriteColorAttachment(attachmentOutput, GraphicsAPI::LoadOp::DontCare, GraphicsAPI::ClearColor{});
+			Renderer::RenderGraphBuilderResourceRef output = renderPass.WriteColorAttachment(attachmentOutputRef, GraphicsAPI::LoadOp::DontCare, GraphicsAPI::ClearColor{});
 
 			return Grindstone::Renderer::TonemapPassReturnData{
 				.postProcessOutput = output
