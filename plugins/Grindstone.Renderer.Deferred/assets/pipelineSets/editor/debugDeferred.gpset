@@ -31,7 +31,7 @@ pipelineSet "DebugDeferred" {
 
 			shaderHlsl {
 				struct VertexInput {
-					[[vk::location(0)]] float2 position : POSITION0;
+					uint id : SV_VertexID;
 				};
 
 				struct VertexToFragment {
@@ -41,11 +41,24 @@ pipelineSet "DebugDeferred" {
 				};
 
 				VertexToFragment mainVertex(VertexInput inData) {
-					VertexToFragment outData = (VertexToFragment)0;
-					outData.position = float4(inData.position, 0.0, 1.0);
-					outData.fragmentTexCoord = ((inData.position * 0.5f) + float2(0.5f, 0.5f));
-					outData.scaledFragmentTexCoord = outData.fragmentTexCoord * rendererUbo.renderScale;
-					return outData;
+					VertexToFragment output = (VertexToFragment)0;
+				
+					float2 uv = float2(
+						(input.id << 1) & 2,
+						input.id & 2
+					);
+
+					output.position = float4(
+						uv * float2(2, -2) + float2(-1, 1),
+						0, 1
+					);
+
+					uv.y = 1.0 - uv.y;
+
+					output.fragmentTexCoord = uv;
+					output.scaledFragmentTexCoord = uv * rendererUbo.renderScale;
+					
+					return output;
 				}
 
 				SamplerState gbufferSampler : register(s0, space1);

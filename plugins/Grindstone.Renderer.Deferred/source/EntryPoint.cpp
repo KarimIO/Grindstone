@@ -65,7 +65,7 @@ extern "C" {
 		pluginInterface->UnregisterRendererFeature<Gbuffer>();
 		pluginInterface->UnregisterRendererFeature<Forward>();
 		pluginInterface->UnregisterRendererFeature<DepthOfField>();
-		pluginInterface->UnregisterRendererFeature<Debug>();
+		// pluginInterface->UnregisterRendererFeature<Debug>();
 		pluginInterface->UnregisterRendererFeature<Blur>();
 		pluginInterface->UnregisterRendererFeature<Bloom>();
 		Grindstone::Renderer::ReleaseRenderPasses(deferredRenderPasses);

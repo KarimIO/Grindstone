@@ -276,7 +276,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 			0,
 			static_cast<uint32_t>(descriptorSets.size())
 		);
-		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
+		currentCommandBuffer->DrawVertices(3, 0, 1, 0);
 		currentCommandBuffer->EndRendering();
 	}
 
@@ -305,7 +305,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 			0,
 			static_cast<uint32_t>(descriptorSets.size())
 		);
-		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
+		currentCommandBuffer->DrawVertices(3, 0, 1, 0);
 		currentCommandBuffer->EndRendering();
 	}
 
@@ -330,7 +330,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 			0,
 			static_cast<uint32_t>(descriptorSets.size())
 		);
-		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
+		currentCommandBuffer->DrawVertices(3, 0, 1, 0);
 		currentCommandBuffer->EndRendering();
 	}
 
@@ -357,7 +357,7 @@ void DeferredRenderer::RenderDepthOfField(DeferredRendererImageSet& imageSet, Gr
 			0,
 			static_cast<uint32_t>(descriptorSets.size())
 		);
-		currentCommandBuffer->DrawIndices(0, 6, 0, 1, 0);
+		currentCommandBuffer->DrawVertices(3, 0, 1, 0);
 		currentCommandBuffer->EndRendering();
 	}
 

@@ -29,10 +29,6 @@ pipelineSet "SMAA" {
 			shaderHlsl {
 				Texture2D<float4> litSceneTexture : register(t1, space1);
 
-				struct VertexInput {
-					[[vk::location(0)]] float2 position : POSITION0;
-				};
-
 				struct VertexToFragment {
 					float4 position : SV_Position;
 					[[vk::location(0)]] float2 fragmentTexCoord : TEXCOORD0;
@@ -40,11 +36,22 @@ pipelineSet "SMAA" {
 					[[vk::location(2)]] float4 offsets[3] : TEXCOORD2;
 				};
 
-				VertexToFragment mainVertex(VertexInput input) {
+				VertexToFragment mainVertex(uint id : SV_VertexID) {
 					VertexToFragment output = (VertexToFragment)0;
-					output.position = float4(input.position, 0.0, 1.0);
-					output.fragmentTexCoord = ((input.position * 0.5f) + float2(0.5f, 0.5f));
-					output.scaledFragmentTexCoord = output.fragmentTexCoord * rendererUbo.renderScale;
+					float2 uv = float2(
+						(id << 1) & 2,
+						id & 2
+					);
+
+					output.position = float4(
+						uv * float2(2, -2) + float2(-1, 1),
+						0, 1
+					);
+
+					uv.y = 1.0 - uv.y;
+
+					output.fragmentTexCoord = uv;
+					output.scaledFragmentTexCoord = uv * rendererUbo.renderScale;
 
 					SetDimensions(litSceneTexture);
 					SMAAEdgeDetectionVS(output.scaledFragmentTexCoord, output.offsets);
@@ -92,10 +99,6 @@ pipelineSet "SMAA" {
 				Texture2D<float4> areaTexture : register(t0, space2);
 				Texture2D<float4> searchTexture : register(t1, space2);
 
-				struct VertexInput {
-					[[vk::location(0)]] float2 position : POSITION0;
-				};
-
 				struct VertexToFragment {
 					float4 position : SV_Position;
 					[[vk::location(0)]] float2 fragmentTexCoord : TEXCOORD0;
@@ -104,11 +107,23 @@ pipelineSet "SMAA" {
 					[[vk::location(3)]] float4 offsets[3] : TEXCOORD3;
 				};
 
-				VertexToFragment mainVertex(VertexInput input) {
+				VertexToFragment mainVertex(uint id : SV_VertexID) {
 					VertexToFragment output = (VertexToFragment)0;
-					output.position = float4(input.position, 0.0, 1.0);
-					output.fragmentTexCoord = ((input.position * 0.5f) + float2(0.5f, 0.5f));
-					output.scaledFragmentTexCoord = output.fragmentTexCoord * rendererUbo.renderScale;
+					
+					float2 uv = float2(
+						(id << 1) & 2,
+						id & 2
+					);
+
+					output.position = float4(
+						uv * float2(2, -2) + float2(-1, 1),
+						0, 1
+					);
+
+					uv.y = 1.0 - uv.y;
+
+					output.fragmentTexCoord = uv;
+					output.scaledFragmentTexCoord = uv * rendererUbo.renderScale;
 
 					SetDimensions(edgesTexture);
 					SMAABlendingWeightCalculationVS(
@@ -165,10 +180,6 @@ pipelineSet "SMAA" {
 				Texture2D<float4> litSceneTexture : register(t1, space1);
 				Texture2D<float4> blendTexture : register(t2, space1);
 
-				struct VertexInput {
-					[[vk::location(0)]] float2 position : POSITION0;
-				};
-
 				struct VertexToFragment {
 					float4 position : SV_Position;
 					[[vk::location(0)]] float2 fragmentTexCoord : TEXCOORD0;
@@ -176,11 +187,23 @@ pipelineSet "SMAA" {
 					[[vk::location(2)]] float4 offset : TEXCOORD2;
 				};
 
-				VertexToFragment mainVertex(VertexInput input) {
+				VertexToFragment mainVertex(uint id : SV_VertexID) {
 					VertexToFragment output = (VertexToFragment)0;
-					output.position = float4(input.position, 0.0, 1.0);
-					output.fragmentTexCoord = ((input.position * 0.5f) + float2(0.5f, 0.5f));
-					output.scaledFragmentTexCoord = output.fragmentTexCoord * rendererUbo.renderScale;
+					
+					float2 uv = float2(
+						(id << 1) & 2,
+						id & 2
+					);
+
+					output.position = float4(
+						uv * float2(2, -2) + float2(-1, 1),
+						0, 1
+					);
+
+					uv.y = 1.0 - uv.y;
+
+					output.fragmentTexCoord = uv;
+					output.scaledFragmentTexCoord = uv * rendererUbo.renderScale;
 
 					SetDimensions(litSceneTexture);
 					SMAANeighborhoodBlendingVS(output.scaledFragmentTexCoord, output.offset);

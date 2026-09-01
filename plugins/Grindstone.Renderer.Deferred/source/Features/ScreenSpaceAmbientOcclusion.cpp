@@ -211,7 +211,7 @@ void Grindstone::Renderer::ScreenSpaceAmbientOcclusion::Bind(
 
 			commandBuffer->BindGraphicsPipeline(ssaoPipeline);
 			commandBuffer->BindGraphicsDescriptorSet(ssaoPipelineLayout, &ssaoInputDescriptorSet, 2u, 1u);
-			commandBuffer->DrawIndices(0, 6, 0, 1, 0);
+			commandBuffer->DrawVertices(3, 0, 1, 0);
 		}
 	);
 

@@ -76,7 +76,7 @@ void Grindstone::Renderer::Blur::Bind(
 			}
 
 			cmd->BindGraphicsPipeline(blurPipelineSet);
-			cmd->DrawIndices(0, 6, 0, 1, 0);
+			cmd->DrawVertices(3, 0, 1, 0);
 		}
 	);
 
