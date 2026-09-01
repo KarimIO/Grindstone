@@ -30,7 +30,7 @@ static void PerformImageBasedLighting(
 	if (imageBasedLightingPipeline != nullptr) {
 		cmd->BeginDebugLabelSection("Image Based Lighting", nullptr);
 		cmd->BindGraphicsPipeline(imageBasedLightingPipeline);
-		cmd->DrawIndices(0, 6, 0, 1, 0);
+		cmd->DrawVertices(3, 0, 1, 0);
 		cmd->EndDebugLabelSection();
 	}
 }
@@ -196,7 +196,7 @@ void Renderer::Lighting::Bind(
 								2u, // Offset
 								1u // Count
 							);
-							cmd->DrawIndices(0, 6, 0, 1, 0);
+							cmd->DrawVertices(3, 0, 1, 0);
 						}
 					);
 					cmd->EndDebugLabelSection();
@@ -234,7 +234,7 @@ void Renderer::Lighting::Bind(
 								2u, // Offset
 								1u // Count
 							);
-							cmd->DrawIndices(0, 6, 0, 1, 0);
+							cmd->DrawVertices(3, 0, 1, 0);
 						}
 					);
 					cmd->EndDebugLabelSection();
@@ -276,7 +276,7 @@ void Renderer::Lighting::Bind(
 								2u, // Offset
 								1u // Count
 							);
-							cmd->DrawIndices(0, 6, 0, 1, 0);
+							cmd->DrawVertices(3, 0, 1, 0);
 						}
 					);
 					cmd->EndDebugLabelSection();

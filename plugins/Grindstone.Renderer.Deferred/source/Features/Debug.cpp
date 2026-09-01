@@ -94,11 +94,10 @@ void Grindstone::Renderer::Debug::Bind(
 	}
 	Grindstone::Renderer::GbufferData gbufferData = gbufferDataResponse.GetValue();
 
-	// TODO: RenderGraph 2.0 Handle these
+	RenderGraphBuilderResourceRef outputRef = context.colorRef;
+
+	// TODO: RenderGraph 2.0 Handle this.
 	DeferredRenderMode renderMode = DeferredRenderMode::Default;
-	GraphicsAPI::Buffer* vertexBuffer = nullptr;
-	GraphicsAPI::Buffer* indexBuffer = nullptr;
-	RenderGraphBuilderResourceRef outputRef = RenderGraphBuilderResourceRef::Invalid();
 
 	for(const RenderFrameViewContext& view : context.views) {
 		const glm::mat4& projectionMatrix = view.projectionMatrix;
@@ -119,7 +118,7 @@ void Grindstone::Renderer::Debug::Bind(
 
 				return debugOutputRef;
 			},
-			[this, &projectionMatrix, renderMode, vertexBuffer, indexBuffer](
+			[this, &projectionMatrix, renderMode](
 				Grindstone::Math::IntRect2D viewportArea,
 				const Renderer::RenderGraphContext& cxt,
 				const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
@@ -150,9 +149,6 @@ void Grindstone::Renderer::Debug::Bind(
 
 				debugDataUniformBuffer[swapchainIndex]->UploadData(&debugData);
 
-				commandBuffer->BindVertexBuffers(&vertexBuffer, 1);
-				commandBuffer->BindIndexBuffer(indexBuffer);
-
 				commandBuffer->BindGraphicsDescriptorSet(
 					debugPipelineLayout,
 					&debugDataDescriptorSet[swapchainIndex],
@@ -161,7 +157,7 @@ void Grindstone::Renderer::Debug::Bind(
 				);
 
 				commandBuffer->BindGraphicsPipeline(debugPipeline);
-				commandBuffer->DrawIndices(0, 6, 0, 1, 0);
+				commandBuffer->DrawVertices(3, 0, 1, 0);
 			}
 		);
 	}

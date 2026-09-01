@@ -50,7 +50,7 @@ static Grindstone::Renderer::RenderGraphBuilderResourceRef SmaaEdgeDetectionPass
 			}
 
 			cmd->BindGraphicsPipeline(smaaPipeline);
-			cmd->DrawIndices(0, 6, 0, 1, 0);
+			cmd->DrawVertices(3, 0, 1, 0);
 		}
 	);
 }
@@ -98,7 +98,7 @@ static Grindstone::Renderer::RenderGraphBuilderResourceRef SmaaBlendWeightCalcul
 				2u, // Offset
 				1u // Count
 			);
-			cmd->DrawIndices(0, 6, 0, 1, 0);
+			cmd->DrawVertices(3, 0, 1, 0);
 		}
 	);
 }
@@ -135,7 +135,7 @@ static Grindstone::Renderer::RenderGraphBuilderResourceRef SmaaNeighborhoodBlend
 			}
 
 			cmd->BindGraphicsPipeline(smaaPipeline);
-			cmd->DrawIndices(0, 6, 0, 1, 0);
+			cmd->DrawVertices(3, 0, 1, 0);
 		}
 	);
 }
@@ -244,7 +244,7 @@ void Grindstone::Renderer::Smaa::Bind(
 		return;
 	}
 
-	auto litImageResponse = context.blackboard.GetValue<RenderGraphBuilderResourceRef>("SceneColor");
+	auto litImageResponse = context.blackboard.GetValue<RenderGraphBuilderResourceRef>("Tonemapped");
 	if (litImageResponse.HasError()) {
 		GPRINT_ERROR_V(LogSource::Rendering, "Smaa: Unable to get SceneColor: {}", litImageResponse.GetError());
 		return;

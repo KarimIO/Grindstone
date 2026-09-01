@@ -48,17 +48,6 @@ static Grindstone::Renderer::ImageDescription attachmentShadowDepthStencil{
 	.imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::DepthStencil | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled
 };
 
-static Grindstone::GraphicsAPI::VertexInputLayout vertexLightPositionLayout = Grindstone::GraphicsAPI::VertexInputLayoutBuilder().AddBinding(
-	{ 0, 2 * sizeof(float), Grindstone::GraphicsAPI::VertexInputRate::Vertex },
-		{
-			{
-				"vertexPosition",
-				0,
-				Grindstone::GraphicsAPI::Format::R32G32_SFLOAT,
-				0,
-				Grindstone::GraphicsAPI::AttributeUsage::Position
-			}
-		}
-).Build();
+static Grindstone::GraphicsAPI::VertexInputLayout vertexLightPositionLayout = Grindstone::GraphicsAPI::VertexInputLayoutBuilder().Build();
 
 #endif

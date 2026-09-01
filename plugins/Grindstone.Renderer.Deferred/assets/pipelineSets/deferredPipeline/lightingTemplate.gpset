@@ -31,21 +31,24 @@ pipelineSet abstract "DeferredLighting" {
 				]
 
 				shaderHlsl {
-					struct VertexInput {
-						uint id : SV_VertexID;
-					};
-
 					struct VertexToFragment {
 						float4 position : SV_Position;
 						[[vk::location(0)]] float2 fragmentTexCoord : TEXCOORD0;
 						[[vk::location(1)]] float2 scaledFragmentTexCoord : TEXCOORD1;
 					};
 
-					VertexToFragment mainVertex(VertexInput inData) {
+					VertexToFragment mainVertex(uint id : SV_VertexID) {
 						VertexToFragment output = (VertexToFragment)0;
 						
 						float2 uv = float2((id << 1) & 2, id & 2);
-						output.position = float4(uv * float2(2, -2) + float2(-1, 1), 0, 1);
+
+						output.position = float4(
+							uv * float2(2, -2) + float2(-1, 1),
+							0, 1
+						);
+
+						uv.y = 1.0 - uv.y;
+
 						output.fragmentTexCoord = uv;
 						output.scaledFragmentTexCoord = uv * rendererUbo.renderScale;
 						return output;

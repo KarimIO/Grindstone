@@ -91,12 +91,10 @@ void Grindstone::Renderer::Tonemap::Bind(
 	}
 	Grindstone::Renderer::RenderGraphBuilderResourceRef bloomImageRef = bloomImageResponse.GetValue();
 
-	Grindstone::Renderer::RenderGraphBuilderResourceRef attachmentOutputRef = context.colorRef;
-
-	renderGraphBuilder.CreateGraphicsPass<Grindstone::Renderer::TonemapPassReturnData>(
+	Grindstone::Renderer::RenderGraphBuilderResourceRef attachmentOutputRef = renderGraphBuilder.CreateGraphicsPass<Grindstone::Renderer::TonemapPassReturnData>(
 		"Tonemapping",
 		MetaRect::Swapchain(),
-		[this, attachmentOutputRef, lightingImageRef, bloomImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::TonemapPassReturnData>& renderPass) {
+		[this, lightingImageRef, bloomImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::TonemapPassReturnData>& renderPass) {
 			renderPass.ReadExternalSampler(screenSampler);
 			renderPass.ReadSampledImage(lightingImageRef);
 			renderPass.ReadSampledImage(bloomImageRef);
@@ -137,7 +135,9 @@ void Grindstone::Renderer::Tonemap::Bind(
 				2u, // Offset
 				1u // Count
 			);
-			cmd->DrawIndices(0, 6, 0, 1, 0);
+			cmd->DrawVertices(3, 0, 1, 0);
 		}
 	);
+
+	context.blackboard.SetValue("Tonemapped", attachmentOutputRef);
 }
