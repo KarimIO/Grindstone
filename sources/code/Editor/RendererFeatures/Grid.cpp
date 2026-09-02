@@ -82,7 +82,7 @@ void Grindstone::Editor::RendererFeatures::Grid::Bind(
 ) {
 	auto colorImageResponse = context.blackboard.GetValue<Renderer::RenderGraphBuilderResourceRef>("SceneDepth");
 	if (colorImageResponse.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "MousePick: Unable to get SceneDepth: {}", colorImageResponse.GetError());
+		GPRINT_ERROR(LogSource::Rendering, "Grid: Unable to get SceneDepth: {}", colorImageResponse.GetError());
 		return;
 	}
 
@@ -90,7 +90,7 @@ void Grindstone::Editor::RendererFeatures::Grid::Bind(
 
 	auto depthImageResponse = context.blackboard.GetValue<Renderer::RenderGraphBuilderResourceRef>("SceneDepth");
 	if (depthImageResponse.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "MousePick: Unable to get SceneDepth: {}", depthImageResponse.GetError());
+		GPRINT_ERROR(LogSource::Rendering, "Grid: Unable to get SceneDepth: {}", depthImageResponse.GetError());
 		return;
 	}
 

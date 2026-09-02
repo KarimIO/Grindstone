@@ -12,7 +12,7 @@ void Grindstone::Renderer::Gbuffer::Bind(
 	/*
 	auto depthResult = context.blackboard.GetValue<RenderGraphBuilderResourceRef>("DepthPrePass");
 	if (depthResult.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "Gbuffer: Unable to get DepthPrePass: {}", depthResult.GetError());
+		GPRINT_ERROR(LogSource::Rendering, "Gbuffer: Unable to get DepthPrePass: {}", depthResult.GetError());
 		return;
 	}
 

@@ -246,7 +246,7 @@ void Grindstone::Renderer::Smaa::Bind(
 
 	auto litImageResponse = context.blackboard.GetValue<RenderGraphBuilderResourceRef>("Tonemapped");
 	if (litImageResponse.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "Smaa: Unable to get SceneColor: {}", litImageResponse.GetError());
+		GPRINT_ERROR(LogSource::Rendering, "Smaa: Unable to get SceneColor: {}", litImageResponse.GetError());
 		return;
 	}
 

@@ -54,7 +54,7 @@ void ArchiveDirectoryDeserializer::Load(std::filesystem::path path) {
 
 	// Unsupported version
 	if (header->version != ArchiveDirectoryFile::CURRENT_VERSION) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Unuspported archive directory version: found {}, expected {}.", header->version, ArchiveDirectoryFile::CURRENT_VERSION);
+		GPRINT_ERROR(LogSource::EngineCore, "Unuspported archive directory version: found {}, expected {}.", header->version, ArchiveDirectoryFile::CURRENT_VERSION);
 		return;
 	}
 

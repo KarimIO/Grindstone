@@ -14,7 +14,7 @@ static bool ImportRigFile(RigAsset& rig) {
 
 	Grindstone::Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::Rig, rig.uuid);
 	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "RigImporter::LoadAsset Unable to load file with id: {}", rig.uuid.ToString());
+		GPRINT_ERROR(LogSource::EngineCore, "RigImporter::LoadAsset Unable to load file with id: {}", rig.uuid.ToString());
 		rig.assetLoadStatus = AssetLoadStatus::Missing;
 		return false;
 	}
@@ -29,14 +29,14 @@ static bool ImportRigFile(RigAsset& rig) {
 	const uint32_t sizeOfMagic = V1::magicSize;
 
 	if (result.buffer.GetCapacity() <= sizeOfMagic + sizeof(V1::Header)) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "RigImporter::LoadAsset Failed to read file '{}' because it is too small (does not fit magic + header).", result.displayName.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, "RigImporter::LoadAsset Failed to read file '{}' because it is too small (does not fit magic + header).", result.displayName.c_str());
 		rig.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
 	const char* actualMagic = reinterpret_cast<const char*>(result.buffer.Get());
 	if (strncmp(actualMagic, desiredMagicCode, sizeOfMagic)) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "RigImporter::LoadAsset Failed to read file '{}' because it starts with an invalid magic code '{}' (not '{}').", result.displayName.c_str(), actualMagic, desiredMagicCode);
+		GPRINT_ERROR(LogSource::EngineCore, "RigImporter::LoadAsset Failed to read file '{}' because it starts with an invalid magic code '{}' (not '{}').", result.displayName.c_str(), actualMagic, desiredMagicCode);
 		rig.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
@@ -44,13 +44,13 @@ static bool ImportRigFile(RigAsset& rig) {
 	const V1::Header& rigHeader = reinterpret_cast<V1::Header&>(*result.buffer.Get(sizeOfMagic));
 
 	if (result.buffer.GetCapacity() != rigHeader.totalFileSize) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "RigImporter::LoadAsset Failed to read file '{}' file size {} does not match totalFileSize {} in header.", result.displayName.c_str(), result.buffer.GetCapacity(), rigHeader.totalFileSize);
+		GPRINT_ERROR(LogSource::EngineCore, "RigImporter::LoadAsset Failed to read file '{}' file size {} does not match totalFileSize {} in header.", result.displayName.c_str(), result.buffer.GetCapacity(), rigHeader.totalFileSize);
 		rig.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
 	if (rigHeader.version != desiredVersion) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "RigImporter::LoadAsset Failed to read file '{}' version in header {} does not match expected version {}.", result.displayName.c_str(), rigHeader.version, desiredVersion);
+		GPRINT_ERROR(LogSource::EngineCore, "RigImporter::LoadAsset Failed to read file '{}' version in header {} does not match expected version {}.", result.displayName.c_str(), rigHeader.version, desiredVersion);
 		rig.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}

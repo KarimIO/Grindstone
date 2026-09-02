@@ -37,7 +37,7 @@ Vulkan::PipelineLayout::PipelineLayout(const Grindstone::GraphicsAPI::PipelineLa
 
 	if (vkCreatePipelineLayout(Vulkan::Core::Get().GetDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 		if (createInfo.debugName != nullptr) {
-			GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to create pipeline layout '{}'!", createInfo.debugName);
+			GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to create pipeline layout '{}'!", createInfo.debugName);
 		}
 		else {
 			GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to create unnamed pipeline layout!");

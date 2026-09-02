@@ -87,7 +87,7 @@ void* Vulkan::Buffer::Map() {
 		VkDevice device = Vulkan::Core::Get().GetDevice();
 		VkResult result = vkMapMemory(device, deviceMemory, 0, bufferSize, 0, &mappedMemoryPtr);
 		if (result != VK_SUCCESS) {
-			GPRINT_ERROR_V(LogSource::GraphicsAPI, "Failed to map buffer memory!");
+			GPRINT_ERROR(LogSource::GraphicsAPI, "Failed to map buffer memory!");
 			return nullptr;
 		}
 	}

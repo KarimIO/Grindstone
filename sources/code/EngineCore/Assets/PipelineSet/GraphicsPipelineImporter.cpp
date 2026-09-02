@@ -109,7 +109,7 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 
 	Assets::AssetLoadBinaryResult result = assetManager->LoadBinaryByUuid(AssetType::GraphicsPipelineSet, graphicsPipelineAsset.uuid);
 	if (result.status != Assets::AssetLoadStatus::Success) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find shader with id {}.", graphicsPipelineAsset.uuid.ToString());
+		GPRINT_ERROR(LogSource::EngineCore, "Could not find shader with id {}.", graphicsPipelineAsset.uuid.ToString());
 		graphicsPipelineAsset.assetLoadStatus = AssetLoadStatus::Missing;
 		return false;
 	}
@@ -118,7 +118,7 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 	GS_ASSERT(fileData.GetCapacity() >= (4 + sizeof(V1::PipelineSetFileHeader)));
 
 	if (memcmp(fileData.Get(), V1::FileMagicCode, 4) != 0) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Graphics Pipeline file does not start with GPSF - {}.", result.displayName);
+		GPRINT_ERROR(LogSource::EngineCore, "Graphics Pipeline file does not start with GPSF - {}.", result.displayName);
 		graphicsPipelineAsset.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
@@ -179,10 +179,11 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		GraphicsPipelineAsset::Pass& pass = graphicsPipelineAsset.passes[passIndex];
 		const V1::PassPipelineHeader& srcPass = pipelinePasses[passIndex];
 		const char* passName = reinterpret_cast<const char*>(&blobs[srcPass.pipelineNameOffsetFromBlobStart]);
-		Grindstone::HashedString renderQueueName = Grindstone::HashedString(reinterpret_cast<const char*>(&blobs[srcPass.renderQueueNameOffsetFromBlobStart]));
+		const char* renderQueueName = reinterpret_cast<const char*>(&blobs[srcPass.renderQueueNameOffsetFromBlobStart]);
+		Grindstone::HashedString renderQueueHashedString = Grindstone::HashedString(renderQueueName);
 		pass.passDebugName = result.displayName + " " + passName;
 		pass.passPipelineName = passName;
-		pass.renderQueue = renderQueueName;
+		pass.renderQueue = renderQueueHashedString;
 
 		GraphicsPipeline::PipelineData& pipelineData = pass.pipelineData;
 		pipelineData.debugName = pass.passDebugName.c_str();
@@ -194,7 +195,8 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		pipelineData.scissorH = 0;
 		pipelineData.hasDynamicViewport = true;
 		pipelineData.hasDynamicScissor = true;
-		pipelineData.renderPass = renderPassRegistry->GetRenderpass(renderQueueName);
+		pipelineData.renderPass = renderPassRegistry->GetRenderpass(renderQueueHashedString);
+		GS_ASSERT_ENGINE_WITH_MESSAGE(pipelineData.renderPass != nullptr, "Error processing GraphicsPipeline '{}', Pass '{}': RenderQueue '{}' not registered!", result.displayName.c_str(), passName, renderQueueName);
 
 		// Get the highest descriptor set index
 		uint32_t descriptorSetLayoutCount = 0;

@@ -38,7 +38,7 @@ void SceneWriterJson::Save(const std::filesystem::path& path) {
 	std::filesystem::path parentPath = dstPath.parent_path();
 	if (parentPath != "") {
 		if (std::filesystem::create_directories(parentPath)) {
-			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Failed to create directories to scene output path");
+			GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Failed to create directories to scene output path");
 		}
 	}
 

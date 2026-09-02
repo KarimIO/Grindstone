@@ -38,36 +38,36 @@ extern "C" {
 		EngineCore::SetInstance(*engineCore);
 
 		deferredRenderPasses = Grindstone::Renderer::InitializeRenderPasses();
-		pluginInterface->RegisterRendererFeature<Bloom>();
-		pluginInterface->RegisterRendererFeature<Blur>();
 		// pluginInterface->RegisterRendererFeature<Debug>();
-		pluginInterface->RegisterRendererFeature<DepthOfField>();
-		pluginInterface->RegisterRendererFeature<Forward>();
-		pluginInterface->RegisterRendererFeature<Gbuffer>();
-		pluginInterface->RegisterRendererFeature<Lighting>();
-		pluginInterface->RegisterRendererFeature<ScreenSpaceAmbientOcclusion>();
-		pluginInterface->RegisterRendererFeature<ScreenSpaceReflections>();
-		pluginInterface->RegisterRendererFeature<Shadow>();
-		pluginInterface->RegisterRendererFeature<Skinning>();
-		pluginInterface->RegisterRendererFeature<Smaa>();
-		pluginInterface->RegisterRendererFeature<Tonemap>();
+		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Bloom>();
+		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Blur>();
+		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::DepthOfField>();
+		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Forward>();
+		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Gbuffer>();
+		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Lighting>();
+		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::ScreenSpaceAmbientOcclusion>();
+		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::ScreenSpaceReflections>();
+		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Shadow>();
+		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Skinning>();
+		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Smaa>();
+		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Tonemap>();
 	}
 
 	RENDERER_DEFERRED_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
 		Grindstone::EngineCore* engineCore = pluginInterface->GetEngineCore();
-		pluginInterface->UnregisterRendererFeature<Tonemap>();
-		pluginInterface->UnregisterRendererFeature<Smaa>();
-		pluginInterface->UnregisterRendererFeature<Skinning>();
-		pluginInterface->UnregisterRendererFeature<Shadow>();
-		pluginInterface->UnregisterRendererFeature<ScreenSpaceReflections>();
-		pluginInterface->UnregisterRendererFeature<ScreenSpaceAmbientOcclusion>();
-		pluginInterface->UnregisterRendererFeature<Lighting>();
-		pluginInterface->UnregisterRendererFeature<Gbuffer>();
-		pluginInterface->UnregisterRendererFeature<Forward>();
-		pluginInterface->UnregisterRendererFeature<DepthOfField>();
 		// pluginInterface->UnregisterRendererFeature<Debug>();
-		pluginInterface->UnregisterRendererFeature<Blur>();
-		pluginInterface->UnregisterRendererFeature<Bloom>();
+		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Tonemap>();
+		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Smaa>();
+		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Skinning>();
+		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Shadow>();
+		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::ScreenSpaceReflections>();
+		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::ScreenSpaceAmbientOcclusion>();
+		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Lighting>();
+		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Gbuffer>();
+		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Forward>();
+		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::DepthOfField>();
+		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Blur>();
+		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Bloom>();
 		Grindstone::Renderer::ReleaseRenderPasses(deferredRenderPasses);
 	}
 }

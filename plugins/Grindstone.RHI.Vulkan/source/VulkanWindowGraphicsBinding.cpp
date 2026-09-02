@@ -142,7 +142,7 @@ bool Vulkan::WindowGraphicsBinding::Initialize(Window *window) {
 	VkResult result = glfwCreateWindowSurface(Vulkan::Core::Get().GetInstance(), static_cast<GlfwWindow*>(window)->GetHandle(), NULL, &surface);
 	if (result != VK_SUCCESS) {
 		WaitForAftermathCrash();
-		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to create window surface ({})!", VkResultToString(result));
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to create window surface ({})!", VkResultToString(result));
 		return false;
 	}
 
@@ -353,7 +353,7 @@ void Vulkan::WindowGraphicsBinding::CreateImageSets() {
 		VkResult result = vkCreateFramebuffer(device, &framebufferInfo, nullptr, &vkFramebuffer);
 		if (result != VK_SUCCESS) {
 			WaitForAftermathCrash();
-			GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to create framebuffer ({})", VkResultToString(result));
+			GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to create framebuffer ({})", VkResultToString(result));
 		}
 
 		Vulkan::ImageSet& imageSet = imageSets[i];
@@ -387,7 +387,7 @@ bool Vulkan::WindowGraphicsBinding::AcquireNextImage() {
 	}
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
 		WaitForAftermathCrash();
-		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to acquire swap chain image! ({})!", VkResultToString(result));
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to acquire swap chain image! ({})!", VkResultToString(result));
 	}
 
 	vkResetFences(device, 1, &inFlightFences[currentFrameIndex]);
@@ -468,7 +468,7 @@ void Vulkan::WindowGraphicsBinding::SubmitCommandBufferNoSynchronization(Graphic
 	VkResult result = vkQueueSubmit2(graphicsQueue, 1, &submitInfo, fence);
 	if (result != VK_SUCCESS) {
 		WaitForAftermathCrash();
-		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to submit draw command buffer ({})!", VkResultToString(result));
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to submit draw command buffer ({})!", VkResultToString(result));
 	}
 
 	vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX);
@@ -523,7 +523,7 @@ void Vulkan::WindowGraphicsBinding::SubmitCommandBufferForCurrentFrame(GraphicsA
 	VkResult result = vkQueueSubmit2(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrameIndex]);
 	if (result != VK_SUCCESS) {
 		WaitForAftermathCrash();
-		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to submit draw command buffer ({})!", VkResultToString(result));
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to submit draw command buffer ({})!", VkResultToString(result));
 	}
 }
 
@@ -548,7 +548,7 @@ bool Vulkan::WindowGraphicsBinding::PresentSwapchain() {
 	}
 	else if (result != VK_SUCCESS) {
 		WaitForAftermathCrash();
-		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to present queue ({})!", VkResultToString(result));
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to present queue ({})!", VkResultToString(result));
 	}
 
 	currentFrameIndex = (currentFrameIndex + 1) % maxFramesInFlight;
@@ -605,7 +605,7 @@ void Vulkan::WindowGraphicsBinding::CreateSwapChain() {
 	VkResult result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain);
 	if (result != VK_SUCCESS) {
 		WaitForAftermathCrash();
-		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to create swap chain ({})!", VkResultToString(result));
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to create swap chain ({})!", VkResultToString(result));
 	}
 
 	CreateRenderPass();
@@ -659,7 +659,7 @@ void Vulkan::WindowGraphicsBinding::CreateRenderPass() {
 	VkResult result = vkCreateRenderPass(device, &renderPassInfo, nullptr, &vkRenderPass);
 	if (result != VK_SUCCESS) {
 		WaitForAftermathCrash();
-		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to create render pass ({})", VkResultToString(result));
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to create render pass ({})", VkResultToString(result));
 	}
 
 	if (renderPass == nullptr) {

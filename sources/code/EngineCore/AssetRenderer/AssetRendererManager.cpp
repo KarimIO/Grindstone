@@ -19,7 +19,7 @@ void AssetRendererManager::RemoveAssetRenderer(BaseAssetRenderer* assetRenderer)
 		assetRenderers.erase(rendererInMap);
 	}
 	else {
-		GPRINT_ERROR_V(Grindstone::LogSource::RenderingBackend, "Unable to find asset renderer to remove", assetRendererName.c_str());
+		GPRINT_ERROR(Grindstone::LogSource::RenderingBackend, "Unable to find asset renderer to remove", assetRendererName.c_str());
 	}
 }
 

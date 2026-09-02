@@ -37,7 +37,7 @@ void Grindstone::Renderer::Blur::Bind(
 
 	auto ssaoResponse = context.blackboard.GetValue<Grindstone::Renderer::RenderGraphBuilderResourceRef>("UnblurredAmbientOcclusion");
 	if (ssaoResponse.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "Blur: Unable to get UnblurredAmbientOcclusion: {}", ssaoResponse.GetError());
+		GPRINT_ERROR(LogSource::Rendering, "Blur: Unable to get UnblurredAmbientOcclusion: {}", ssaoResponse.GetError());
 		return;
 	}
 	Grindstone::Renderer::RenderGraphBuilderResourceRef ssaoRef = ssaoResponse.GetValue();

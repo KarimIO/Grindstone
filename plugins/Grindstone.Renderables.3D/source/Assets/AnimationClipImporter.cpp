@@ -13,7 +13,7 @@ static bool ImportAnimationClipFile(AnimationClipAsset& anim) {
 
 	Grindstone::Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::AnimationClip, anim.uuid);
 	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Unable to load file with id: {}", anim.uuid.ToString());
+		GPRINT_ERROR(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Unable to load file with id: {}", anim.uuid.ToString());
 		anim.assetLoadStatus = AssetLoadStatus::Missing;
 		return false;
 	}
@@ -28,14 +28,14 @@ static bool ImportAnimationClipFile(AnimationClipAsset& anim) {
 	const uint32_t sizeOfMagic = V1::magicSize;
 	
 	if (result.buffer.GetCapacity() <= sizeOfMagic + sizeof(V1::Header)) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Failed to read file '{}' because it is too small (does not fit magic + header).", result.displayName.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Failed to read file '{}' because it is too small (does not fit magic + header).", result.displayName.c_str());
 		anim.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
 	const char* actualMagic = reinterpret_cast<const char*>(result.buffer.Get());
 	if (strncmp(actualMagic, desiredMagicCode, sizeOfMagic)) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Failed to read file '{}' because it starts with an invalid magic code '{}' (not '{}').", result.displayName.c_str(), actualMagic, desiredMagicCode);
+		GPRINT_ERROR(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Failed to read file '{}' because it starts with an invalid magic code '{}' (not '{}').", result.displayName.c_str(), actualMagic, desiredMagicCode);
 		anim.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
@@ -43,13 +43,13 @@ static bool ImportAnimationClipFile(AnimationClipAsset& anim) {
 	const V1::Header& animHeader = reinterpret_cast<V1::Header&>(*result.buffer.Get(sizeOfMagic));
 
 	if (result.buffer.GetCapacity() != animHeader.totalFileSize) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Failed to read file '{}' file size {} does not match totalFileSize {} in header.", result.displayName.c_str(), result.buffer.GetCapacity(), animHeader.totalFileSize);
+		GPRINT_ERROR(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Failed to read file '{}' file size {} does not match totalFileSize {} in header.", result.displayName.c_str(), result.buffer.GetCapacity(), animHeader.totalFileSize);
 		anim.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
 	if (animHeader.version != desiredVersion) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Failed to read file '{}' version in header {} does not match expected version {}.", result.displayName.c_str(), animHeader.version, desiredVersion);
+		GPRINT_ERROR(LogSource::EngineCore, "AnimationClipImporter::LoadAsset Failed to read file '{}' version in header {} does not match expected version {}.", result.displayName.c_str(), animHeader.version, desiredVersion);
 		anim.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}

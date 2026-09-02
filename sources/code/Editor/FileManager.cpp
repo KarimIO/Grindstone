@@ -78,7 +78,7 @@ static void FileWatcherCallback(
 		}
 		break;
 	default:
-		GPRINT_ERROR_V(LogSource::Editor, "Invalid filesystem event trying to process {}", path.string().c_str());
+		GPRINT_ERROR(LogSource::Editor, "Invalid filesystem event trying to process {}", path.string().c_str());
 	}
 }
 
@@ -92,7 +92,7 @@ void FileManager::MountDirectory(std::string_view mountPoint, const std::filesys
 	efsw_watchid watchID = efsw_addwatch(watcher, path.string().c_str(), FileWatcherCallback, 1, this);
 
 	if (watchID < 0) {
-		GPRINT_FATAL_V(LogSource::Editor, "Failed to watch path: {}", efsw_getlasterror());
+		GPRINT_FATAL(LogSource::Editor, "Failed to watch path: {}", efsw_getlasterror());
 	}
 	else {
 		efsw_watch(watcher);
@@ -121,7 +121,7 @@ void FileManager::UnmountDirectory(std::string_view mountPoint) {
 		}
 	}
 
-	GPRINT_ERROR_V(LogSource::Editor, "Unable to unmount directory at mount point: {}", mountPoint);
+	GPRINT_ERROR(LogSource::Editor, "Unable to unmount directory at mount point: {}", mountPoint);
 }
 
 static void GetCompiledFilePaths(
@@ -130,7 +130,7 @@ static void GetCompiledFilePaths(
 ) {
 	for (const std::filesystem::directory_entry& directoryEntry : directoryIterator) {
 		if (directoryEntry.is_directory()) {
-			GPRINT_ERROR_V(LogSource::Editor, "Found a folder in compiled assets folder - these shouldn't be here: {}", directoryEntry.path().string());
+			GPRINT_ERROR(LogSource::Editor, "Found a folder in compiled assets folder - these shouldn't be here: {}", directoryEntry.path().string());
 		}
 		else {
 			compiledFiles.insert(directoryEntry.path().filename());
@@ -221,7 +221,7 @@ void FileManager::DispatchTask(const std::filesystem::path& path) const {
 		std::filesystem::path nPath = path;
 		auto& importManager = Editor::Manager::GetInstance().GetImporterManager();
 		importManager.Import(nPath);
-		GPRINT_TRACE_V(LogSource::Editor, "Finished importing {}", path.string().c_str());
+		GPRINT_TRACE(LogSource::Editor, "Finished importing {}", path.string().c_str());
 	});
 }
 
@@ -300,18 +300,18 @@ static bool IsSubassetValid(
 ) {
 	AssetRegistry::Entry outEntry;
 	if (!assetRegistry.TryGetAssetData(subasset.uuid, outEntry)) {
-		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} not having an AssetRegistry entry.", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString());
+		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} not having an AssetRegistry entry.", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString());
 		return false;
 	}
 
 	if (outEntry.assetType != subasset.assetType) {
-		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching asset types (meta file says {} but AssetRegistry says {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), GetAssetTypeToString(subasset.assetType), GetAssetTypeToString(outEntry.assetType));
+		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching asset types (meta file says {} but AssetRegistry says {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), GetAssetTypeToString(subasset.assetType), GetAssetTypeToString(outEntry.assetType));
 		return false;
 	}
 
 	// TODO: Fix this so path uses mount point
 	if (outEntry.path != mountedPath) {
-		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} mismatching path {}.", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.path.string().c_str());
+		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} mismatching path {}.", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.path.string().c_str());
 		return false;
 	}
 
@@ -321,32 +321,32 @@ static bool IsSubassetValid(
 
 	std::filesystem::path assetPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / subasset.uuid.ToString();
 	if (!std::filesystem::exists(assetPath)) {
-		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} not having a compiledAsset file.", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString());
+		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} not having a compiledAsset file.", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString());
 		return false;
 	}
 
 	if (importerVersion != outEntry.assetImporterVersion) {
-		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching version ({} should be {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.assetImporterVersion, importerVersion);
+		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching version ({} should be {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.assetImporterVersion, importerVersion);
 		return false;
 	}
 
 	if (assetFileLastWriteTime != outEntry.sourceFileWrite) {
-		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching source asset file write times ({} should be {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.sourceFileWrite, assetFileLastWriteTime);
+		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching source asset file write times ({} should be {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.sourceFileWrite, assetFileLastWriteTime);
 		return false;
 	}
 
 	if (metaFileLastWriteTime != outEntry.metaFileWrite) {
-		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching meta file write times ({} should be {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.metaFileWrite, metaFileLastWriteTime);
+		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching meta file write times ({} should be {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.metaFileWrite, metaFileLastWriteTime);
 		return false;
 	}
 
 	if (assetFileSize != outEntry.assetFileSize) {
-		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching source asset size (cached is {} but actual is {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.assetFileSize, assetFileSize);
+		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching source asset size (cached is {} but actual is {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.assetFileSize, assetFileSize);
 		return false;
 	}
 
 	if (metaFileSize != outEntry.metaFileSize) {
-		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching meta file size (cached is {} but actual is {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.metaFileSize, metaFileSize);
+		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching meta file size (cached is {} but actual is {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.metaFileSize, metaFileSize);
 		return false;
 	}
 
@@ -362,24 +362,24 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(const MountPoint& mountPoi
 
 	std::filesystem::path metaFilePath = path.string() + ".meta";
 	if (!std::filesystem::exists(metaFilePath)) {
-		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to missing meta file.", path.string().c_str());
+		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to missing meta file.", path.string().c_str());
 		return true;
 	}
 
 	Grindstone::Editor::ImporterVersion importerVersion = importManager.GetImporterVersionByPath(path);
 	MetaFile metaFile(editorManager.GetAssetRegistry(), path);
 	if (metaFile.IsOutdatedMetaVersion()) {
-		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to outdated meta file version.", path.string().c_str());
+		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to outdated meta file version.", path.string().c_str());
 		return true;
 	}
 
 	if (metaFile.IsOutdatedImporterVersion(importerVersion)) {
-		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to outdated importer version {}.", path.string().c_str(), importerVersion);
+		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to outdated importer version {}.", path.string().c_str(), importerVersion);
 		return true;
 	}
 
 	if (!metaFile.IsValid()) {
-		GPRINT_TRACE_V(LogSource::Editor, "Importing '{}' due to invalid meta file.", path.string().c_str());
+		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to invalid meta file.", path.string().c_str());
 		return true;
 	}
 

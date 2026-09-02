@@ -156,7 +156,7 @@ void Grindstone::Renderer::ScreenSpaceAmbientOcclusion::Bind(
 ) {
 	auto gbufferDataResponse = context.blackboard.GetValue<Grindstone::Renderer::GbufferData>();
 	if (gbufferDataResponse.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "ScreenSpaceReflections: Unable to get Gbuffer: {}", gbufferDataResponse.GetError());
+		GPRINT_ERROR(LogSource::Rendering, "ScreenSpaceReflections: Unable to get Gbuffer: {}", gbufferDataResponse.GetError());
 		return;
 	}
 	Grindstone::Renderer::GbufferData gbufferData = gbufferDataResponse.GetValue();

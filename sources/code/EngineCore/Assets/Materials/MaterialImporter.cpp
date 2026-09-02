@@ -30,7 +30,7 @@ static inline void ReadMaterialDataArray(
 
 	for (rapidjson::SizeType i = 0; i < materialDocumentData.Size(); ++i) {
 		if (materialDocumentData[i].GetType() != rapidjson::kNumberType) {
-			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Expected a number for an element of the array '{}' in material '{}'!", shaderMemberData.name, "Unset material name");
+			GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Expected a number for an element of the array '{}' in material '{}'!", shaderMemberData.name, "Unset material name");
 		}
 		else {
 			materialArray[i] = static_cast<Type>((materialDocumentData[i].*memberFunction)());
@@ -50,7 +50,7 @@ static void ReadMaterialDataMember(
 
 	switch (materialDocumentData.GetType()) {
 		case rapidjson::kNullType:
-			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Unsupported type 'null' for member '{}' in material '{}'!", shaderMemberData.name, name);
+			GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Unsupported type 'null' for member '{}' in material '{}'!", shaderMemberData.name, name);
 			break;
 		case rapidjson::kFalseType: {
 			bool value = false;
@@ -64,12 +64,12 @@ static void ReadMaterialDataMember(
 		}
 		case rapidjson::kObjectType:
 			// TODO: We need to handle this in the future.
-			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Unhandled type 'object' for member '{}' in material '{}'! We will support this in the future.", shaderMemberData.name, name);
+			GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Unhandled type 'object' for member '{}' in material '{}'! We will support this in the future.", shaderMemberData.name, name);
 			break;
 		case rapidjson::kArrayType: {
 			switch (shaderMemberData.type) {
 			default:
-				GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Unhandled shader member type for array '{}' in material '{}'!", shaderMemberData.name, name);
+				GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Unhandled shader member type for array '{}' in material '{}'!", shaderMemberData.name, name);
 				break;
 			case PipelineAssetMetaData::ParameterType::Float:
 				ReadMaterialDataArray<float>(buffer, materialDocumentData, shaderMemberData, &rapidjson::Value::GetFloat);
@@ -106,14 +106,14 @@ static void ReadMaterialDataMember(
 		}
 		case rapidjson::kStringType: {
 			// Shader languages don't support strings.
-			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Unsupported type 'string' for member '{}' in material '{}'! Shaders do not support strings.", shaderMemberData.name, name);
+			GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Unsupported type 'string' for member '{}' in material '{}'! Shaders do not support strings.", shaderMemberData.name, name);
 			break;
 		}
 		case rapidjson::kNumberType: {
 			void* offset = buffer.Get() + shaderMemberData.offset;
 			switch (shaderMemberData.type) {
 				default:
-					GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Unhandled shader member type for member '{}' in material '{}'!", shaderMemberData.name, name);
+					GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Unhandled shader member type for member '{}' in material '{}'!", shaderMemberData.name, name);
 					break;
 				case PipelineAssetMetaData::ParameterType::Float: {
 					float value = materialDocumentData.GetFloat();
@@ -246,7 +246,7 @@ static void SetupSamplers(
 			if (resourcesJson.HasMember(textureName)) {
 				GraphicsAPI::Image* itemPtr = missingTexture;
 				if (!resourcesJson[textureName].IsString()) {
-					GPRINT_ERROR_V(LogSource::EngineCore, "Textures expects a UUID in the form of a string in member {} of material {}.", textureName, materialAsset.name.c_str());
+					GPRINT_ERROR(LogSource::EngineCore, "Textures expects a UUID in the form of a string in member {} of material {}.", textureName, materialAsset.name.c_str());
 				}
 				else {
 					const char* textureValueString = resourcesJson[textureName].GetString();
@@ -318,14 +318,14 @@ static bool LoadMaterial(
 
 	rapidjson::Document document;
 	if (document.Parse(materialContent.data()).HasParseError()) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Unable to parse material {}.", displayName);
+		GPRINT_ERROR(LogSource::EngineCore, "Unable to parse material {}.", displayName);
 		material.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
 	Grindstone::Uuid shaderUuid;
 	if (!document.HasMember("shader") || !Grindstone::Uuid::MakeFromString(document["shader"].GetString(), shaderUuid)) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "No shader found in material {}.", displayName);
+		GPRINT_ERROR(LogSource::EngineCore, "No shader found in material {}.", displayName);
 		material.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
@@ -335,14 +335,14 @@ static bool LoadMaterial(
 	}
 
 	if (!material.pipelineSetAsset.IsValid()) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Failed to load shader for {}.", displayName);
+		GPRINT_ERROR(LogSource::EngineCore, "Failed to load shader for {}.", displayName);
 		material.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
 
 	Grindstone::GraphicsPipelineAsset* pipelineSetAsset = material.pipelineSetAsset.Get();
 	if (pipelineSetAsset == nullptr) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Failed to load shader {} for material {}.", material.pipelineSetAsset.uuid.ToString(), displayName);
+		GPRINT_ERROR(LogSource::EngineCore, "Failed to load shader {} for material {}.", material.pipelineSetAsset.uuid.ToString(), displayName);
 		material.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}
@@ -387,7 +387,7 @@ void* MaterialImporter::LoadAsset(Uuid uuid) {
 
 	Assets::AssetLoadTextResult result = assetManager->LoadTextByUuid(AssetType::Material, uuid);
 	if (result.status != Assets::AssetLoadStatus::Success) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find material with id {}.", uuid.ToString());
+		GPRINT_ERROR(LogSource::EngineCore, "Could not find material with id {}.", uuid.ToString());
 		materialAsset.assetLoadStatus = AssetLoadStatus::Missing;
 		return nullptr;
 	}
@@ -413,7 +413,7 @@ void MaterialImporter::QueueReloadAsset(Uuid uuid) {
 
 	Assets::AssetLoadTextResult result = assetManager->LoadTextByUuid(AssetType::Material, uuid);
 	if (result.status != Assets::AssetLoadStatus::Success) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find material with id {}.", uuid.ToString());
+		GPRINT_ERROR(LogSource::EngineCore, "Could not find material with id {}.", uuid.ToString());
 		return;
 	}
 

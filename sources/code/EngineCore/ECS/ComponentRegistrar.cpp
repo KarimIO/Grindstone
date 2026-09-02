@@ -22,10 +22,10 @@ void ComponentRegistrar::CopyRegistry(WorldContextSet& dst, WorldContextSet& src
 		[&dstRegistry](entt::entity entityID) {
 			entt::entity dstEntity = dstRegistry.create(entityID);
 			if (dstEntity == entt::null) {
-				GPRINT_ERROR_V(LogSource::EngineCore, "Failure to create entity {}", static_cast<uint32_t>(dstEntity));
+				GPRINT_ERROR(LogSource::EngineCore, "Failure to create entity {}", static_cast<uint32_t>(dstEntity));
 			}
 			else if (dstEntity != entityID) {
-				GPRINT_ERROR_V(LogSource::EngineCore, "New entity {} != old entity {}", static_cast<uint32_t>(dstEntity), static_cast<uint32_t>(entityID));
+				GPRINT_ERROR(LogSource::EngineCore, "New entity {} != old entity {}", static_cast<uint32_t>(dstEntity), static_cast<uint32_t>(entityID));
 			}
 		}
 	);
@@ -84,7 +84,7 @@ void ComponentRegistrar::CallDestroyOnRegistry(Grindstone::WorldContextSet& worl
 void ComponentRegistrar::RegisterComponent(Grindstone::HashedString name, ComponentFunctions componentFunctions) {
 	auto comp = componentFunctionsList.find(name);
 	if (comp != componentFunctionsList.end()) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Registering a component that was already registered: {}", name.ToString());
+		GPRINT_ERROR(LogSource::EngineCore, "Registering a component that was already registered: {}", name.ToString());
 	}
 
 	componentFunctionsList.emplace(name, componentFunctions);
@@ -93,7 +93,7 @@ void ComponentRegistrar::RegisterComponent(Grindstone::HashedString name, Compon
 void ComponentRegistrar::UnregisterComponent(Grindstone::HashedString name) {
 	auto comp = componentFunctionsList.find(name);
 	if (comp == componentFunctionsList.end()) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Unregistering a component that isn't registered: {}", name.ToString());
+		GPRINT_ERROR(LogSource::EngineCore, "Unregistering a component that isn't registered: {}", name.ToString());
 	}
 
 	componentFunctionsList.erase(comp);

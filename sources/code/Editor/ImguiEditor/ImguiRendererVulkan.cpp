@@ -312,7 +312,7 @@ ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
 	std::string assetAddress = "@EDITOR_ICONS/" + path.string();
 	Grindstone::Uuid uuid = assetManager->GetUuidByAddress(Grindstone::AssetType::Texture, assetAddress);
 	if (!uuid.IsValid()) {
-		GPRINT_ERROR_V(LogSource::Editor, "Could not find texture uuid for {}.", assetAddress);
+		GPRINT_ERROR(LogSource::Editor, "Could not find texture uuid for {}.", assetAddress);
 		return 0;
 	}
 

@@ -59,7 +59,7 @@ bool EngineCore::EarlyInitialize(EarlyCreateInfo& createInfo) {
 
 	Logger::Initialize(projectPath / "log" / "output.log", eventDispatcher);
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Loading", projectPath / "log" / "grind-profile-load.json");
-	GPRINT_INFO_V(LogSource::EngineCore, "Initializing {0}...", createInfo.applicationTitle);
+	GPRINT_INFO(LogSource::EngineCore, "Initializing {0}...", createInfo.applicationTitle);
 
 	return true;
 }
@@ -266,7 +266,7 @@ EngineCore::~EngineCore() {
 	AllocatorCore::Free(Grindstone::HashedString::GetHashedStringMap());
 
 	if (!AllocatorCore::IsEmpty()) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Uncleared memory: {0} bytes left!", static_cast<intmax_t>(AllocatorCore::GetUsed()));
+		GPRINT_ERROR(LogSource::EngineCore, "Uncleared memory: {0} bytes left!", static_cast<intmax_t>(AllocatorCore::GetUsed()));
 	}
 
 	GPRINT_INFO(LogSource::EngineCore, "Closed.");

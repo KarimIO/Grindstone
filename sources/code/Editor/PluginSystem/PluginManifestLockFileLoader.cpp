@@ -19,7 +19,7 @@ bool Grindstone::Plugins::LoadPluginManifestLockFile(std::vector<ManifestData>& 
 		}
 
 		if (manifestData.path.empty()) {
-			GPRINT_ERROR_V(Grindstone::LogSource::Editor, "Couldn't find plugin '{}' after searching plugin folders.", manifestData.pluginName.c_str());
+			GPRINT_ERROR(Grindstone::LogSource::Editor, "Couldn't find plugin '{}' after searching plugin folders.", manifestData.pluginName.c_str());
 			manifestDataList.erase(manifestDataList.begin() + i);
 		}
 	}

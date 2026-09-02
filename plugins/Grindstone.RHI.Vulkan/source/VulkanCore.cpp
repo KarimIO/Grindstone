@@ -252,7 +252,7 @@ void Vulkan::Core::CreateInstance() {
 			missingExtensionsStr += std::string("\n - ") + missingExtension;
 		}
 
-		GPRINT_FATAL_V(LogSource::GraphicsAPI, "Vulkan required extensions not supported:{}", missingExtensionsStr);
+		GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan required extensions not supported:{}", missingExtensionsStr);
 	}
 
 	// Add optional extensions.
@@ -330,7 +330,7 @@ void Vulkan::Core::PickPhysicalDevice() {
 	VkPhysicalDeviceProperties gpuProperties{};
 	vkGetPhysicalDeviceProperties(physicalDevice, &gpuProperties);
 
-	GPRINT_INFO_V(LogSource::GraphicsAPI, "Using Device: {}", gpuProperties.deviceName);
+	GPRINT_INFO(LogSource::GraphicsAPI, "Using Device: {}", gpuProperties.deviceName);
 
 	auto [vendorName, vendorType] = GetVendorNameFromID(gpuProperties.vendorID);
 	if (vendorType == VendorType::Unknown || vendorType == VendorType::Unset) {
@@ -571,7 +571,7 @@ uint16_t Vulkan::Core::ScoreDevice(VkPhysicalDevice physicalDevice) {
 
 	VkPhysicalDeviceProperties gpuProps{};
 	vkGetPhysicalDeviceProperties(physicalDevice, &gpuProps);
-	GPRINT_INFO_V(LogSource::GraphicsAPI, "Evaluating device '{}':", gpuProps.deviceName);
+	GPRINT_INFO(LogSource::GraphicsAPI, "Evaluating device '{}':", gpuProps.deviceName);
 
 	bool extensionsSupported = CheckDeviceExtensionSupport(physicalDevice);
 
@@ -585,7 +585,7 @@ uint16_t Vulkan::Core::ScoreDevice(VkPhysicalDevice physicalDevice) {
 		for (VkSurfaceFormatKHR format : swapChainSupport.formats) {
 			VkFormatProperties formatProperties{};
 			vkGetPhysicalDeviceFormatProperties(physicalDevice, format.format, &formatProperties);
-			GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t\t- {} - {}", string_VkFormat(format.format), string_VkColorSpaceKHR(format.colorSpace));
+			GPRINT_INFO(LogSource::GraphicsAPI, "\t\t\t- {} - {}", string_VkFormat(format.format), string_VkColorSpaceKHR(format.colorSpace));
 		}
 
 		GPRINT_INFO(LogSource::GraphicsAPI, "\t\t- Supported Present Modes:");
@@ -599,20 +599,20 @@ uint16_t Vulkan::Core::ScoreDevice(VkPhysicalDevice physicalDevice) {
 				case VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR: presentModeName = "Shared Demand Refresh"; break;
 				case VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR: presentModeName = "Shared Continuous Refresh"; break;
 			}
-			GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t\t- {}", presentModeName);
+			GPRINT_INFO(LogSource::GraphicsAPI, "\t\t\t- {}", presentModeName);
 		}
 	}
 
 	GPRINT_INFO(LogSource::GraphicsAPI, "\t\t- Queue Families:");
 	if (indices.hasGraphicsFamily) {
-		GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t\t- Graphics Queue Index: {}", indices.graphicsFamily);
+		GPRINT_INFO(LogSource::GraphicsAPI, "\t\t\t- Graphics Queue Index: {}", indices.graphicsFamily);
 	}
 	else {
 		GPRINT_INFO(LogSource::GraphicsAPI, "\t\t\t- Graphics Queue Index: NONE");
 	}
 
 	if (indices.hasPresentFamily) {
-		GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t\t- Present Queue Index: {}", indices.presentFamily);
+		GPRINT_INFO(LogSource::GraphicsAPI, "\t\t\t- Present Queue Index: {}", indices.presentFamily);
 	}
 	else {
 		GPRINT_INFO(LogSource::GraphicsAPI, "\t\t\t- Present Queue Index: NONE");
@@ -642,7 +642,7 @@ uint16_t Vulkan::Core::ScoreDevice(VkPhysicalDevice physicalDevice) {
 	for (const auto& heap : heaps) {
 		if (heap.flags & VkMemoryHeapFlagBits::VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) {
 			float deviceSize = heap.size * HEAP_SIZE_IN_GB_MULTIPLIER;
-			GPRINT_INFO_V(LogSource::GraphicsAPI, " - Heap Size: {}GB", deviceSize);
+			GPRINT_INFO(LogSource::GraphicsAPI, " - Heap Size: {}GB", deviceSize);
 			heapScore += deviceSize * HEAP_SCORE_MULTIPLIER;
 			break;
 		}
@@ -668,7 +668,7 @@ bool Vulkan::Core::CheckDeviceExtensionSupport(VkPhysicalDevice device) {
 	}
 	for (const auto& extension : availableExtensions) {
 		if (requiredExtensions.contains(extension.extensionName)) {
-			GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t- {}", extension.extensionName);
+			GPRINT_INFO(LogSource::GraphicsAPI, "\t\t- {}", extension.extensionName);
 			requiredExtensions.erase(extension.extensionName);
 		}
 	}
@@ -680,7 +680,7 @@ bool Vulkan::Core::CheckDeviceExtensionSupport(VkPhysicalDevice device) {
 		GPRINT_INFO(LogSource::GraphicsAPI, "\t- Unsupported Required Extensions:");
 	}
 	for (const auto& extension : requiredExtensions) {
-		GPRINT_INFO_V(LogSource::GraphicsAPI, "\t\t- {}", extension);
+		GPRINT_INFO(LogSource::GraphicsAPI, "\t\t- {}", extension);
 	}
 
 	return requiredExtensions.empty();

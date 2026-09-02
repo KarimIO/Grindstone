@@ -79,14 +79,14 @@ void Grindstone::Renderer::Tonemap::Bind(
 
 	auto lightingImageResponse = context.blackboard.GetValue<Grindstone::Renderer::RenderGraphBuilderResourceRef>("SceneColor");
 	if (lightingImageResponse.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "Blur: Unable to get SceneColor: {}", lightingImageResponse.GetError());
+		GPRINT_ERROR(LogSource::Rendering, "Tonemap: Unable to get SceneColor: {}", lightingImageResponse.GetError());
 		return;
 	}
 	Grindstone::Renderer::RenderGraphBuilderResourceRef lightingImageRef = lightingImageResponse.GetValue();
 
 	auto bloomImageResponse = context.blackboard.GetValue<Grindstone::Renderer::RenderGraphBuilderResourceRef>("BloomOutput");
 	if (bloomImageResponse.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "Blur: Unable to get BloomOutput: {}", bloomImageResponse.GetError());
+		GPRINT_ERROR(LogSource::Rendering, "Tonemap: Unable to get BloomOutput: {}", bloomImageResponse.GetError());
 		return;
 	}
 	Grindstone::Renderer::RenderGraphBuilderResourceRef bloomImageRef = bloomImageResponse.GetValue();

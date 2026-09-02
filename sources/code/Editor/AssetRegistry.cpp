@@ -165,7 +165,7 @@ void AssetRegistry::ReadFile() {
 
 		Uuid uuid;
 		if (!Grindstone::Uuid::MakeFromString(uuidAsStr, uuid)) {
-			GPRINT_FATAL_V(Grindstone::LogSource::EngineCore, "Unable to make uuid for asset from {}", uuidAsStr);
+			GPRINT_FATAL(Grindstone::LogSource::EngineCore, "Unable to make uuid for asset from {}", uuidAsStr);
 			continue;
 		}
 

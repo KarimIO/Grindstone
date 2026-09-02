@@ -44,7 +44,7 @@ ECS::Entity Scene::CreateEmptyEntity(entt::entity entityToUse) {
 	}
 
 	if (registry.valid(entityToUse)) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Registry already has entity with ID {}", static_cast<uint32_t>(entityToUse));
+		GPRINT_ERROR(LogSource::EngineCore, "Registry already has entity with ID {}", static_cast<uint32_t>(entityToUse));
 		entt::entity entityId = registry.create();
 		return { entityId, this };
 	}

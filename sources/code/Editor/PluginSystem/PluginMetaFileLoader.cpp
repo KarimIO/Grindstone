@@ -13,7 +13,7 @@ static std::string ParseBinaryPath(const char* path) {
 
 bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, Grindstone::Plugins::MetaData& metaData) {
 	if (!std::filesystem::exists(metaDataFilePath)) {
-		GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Couldn't open Plugin MetaData file '{}'.", metaDataFilePath.string());
+		GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Couldn't open Plugin MetaData file '{}'.", metaDataFilePath.string());
 		return false;
 	}
 
@@ -32,7 +32,7 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 		if (GetParseError != nullptr) {
 			errorCode = GetParseError(parseResult.Code());
 		}
-		GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Failed to parse MetaData file '{}'.", metaDataFilePath.string());
+		GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Failed to parse MetaData file '{}'.", metaDataFilePath.string());
 		return false;
 	}
 

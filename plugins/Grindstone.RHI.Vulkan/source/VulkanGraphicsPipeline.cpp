@@ -236,7 +236,7 @@ Vulkan::GraphicsPipeline::GraphicsPipeline(const CreateInfo& createInfo) {
 
 	if (vkCreateGraphicsPipelines(Vulkan::Core::Get().GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
 		if (pipelineData.debugName != nullptr) {
-			GPRINT_FATAL_V(LogSource::GraphicsAPI, "Failed to create graphics pipeline '{}'!", pipelineData.debugName);
+			GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to create graphics pipeline '{}'!", pipelineData.debugName);
 		}
 		else {
 			GPRINT_FATAL(LogSource::GraphicsAPI, "Failed to create unnamed graphics pipeline!");

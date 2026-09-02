@@ -21,7 +21,7 @@ AssetLoadBinaryResult ArchiveAssetLoader::LoadBinaryByUuid(AssetType assetType, 
 	size_t assetTypeIndex = static_cast<size_t>(assetType);
 
 	if (assetTypeIndex >= static_cast<size_t>(AssetType::Count)) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Invalid Asset Type when trying to load file: {}", uuid.ToString());
+		GPRINT_ERROR(LogSource::EngineCore, "Invalid Asset Type when trying to load file: {}", uuid.ToString());
 		return { AssetLoadStatus::InvalidAssetType, {} };
 	}
 
@@ -29,7 +29,7 @@ AssetLoadBinaryResult ArchiveAssetLoader::LoadBinaryByUuid(AssetType assetType, 
 	auto assetIterator = assetTypeSegment.assetsByUuid.find(uuid);
 
 	if (assetIterator == assetTypeSegment.assetsByUuid.end()) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Could not load asset: {}", uuid.ToString());
+		GPRINT_ERROR(LogSource::EngineCore, "Could not load asset: {}", uuid.ToString());
 		return { AssetLoadStatus::AssetNotInRegistry, {} };
 	}
 
@@ -50,7 +50,7 @@ Grindstone::Uuid ArchiveAssetLoader::GetUuidByAddress(AssetType assetType, std::
 	size_t assetTypeIndex = static_cast<size_t>(assetType);
 
 	if (assetTypeIndex >= static_cast<size_t>(AssetType::Count)) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Invalid Asset Type when trying to load file: {}", address);
+		GPRINT_ERROR(LogSource::EngineCore, "Invalid Asset Type when trying to load file: {}", address);
 		return Uuid();
 	}
 

@@ -139,7 +139,7 @@ HANDLE hStdOutPipeWrite = nullptr;
 // TODO: Multi-thread this with DWORD __stdcall ReadDataFromExtProgram(void* argh) {
 static DWORD ReadDataFromExtProgram(const std::string& path) {
 	CloseHandle(hStdOutPipeWrite);
-	GPRINT_INFO_V(Grindstone::LogSource::Editor, "Building user project \"{}\"...", path.c_str());
+	GPRINT_INFO(Grindstone::LogSource::Editor, "Building user project \"{}\"...", path.c_str());
 
 	for (;;) {
 		DWORD bytesAvail = 0;
@@ -172,7 +172,7 @@ static DWORD ReadDataFromExtProgram(const std::string& path) {
 		}
 	}
 
-	GPRINT_INFO_V(Grindstone::LogSource::Editor, "Done building user project \"{}\".", path.c_str());
+	GPRINT_INFO(Grindstone::LogSource::Editor, "Done building user project \"{}\".", path.c_str());
 	CloseHandle(dotnetProcessInfo.hProcess);
 	CloseHandle(dotnetProcessInfo.hThread);
 
@@ -212,7 +212,7 @@ static bool CreateChildProcess() {
 		return true;
 	}
 
-	GPRINT_ERROR_V(Grindstone::LogSource::Editor, "Unable to build project: {}", command.c_str());
+	GPRINT_ERROR(Grindstone::LogSource::Editor, "Unable to build project: {}", command.c_str());
 	return false;
 }
 #endif
