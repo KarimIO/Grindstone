@@ -26,10 +26,6 @@ namespace Grindstone::Renderer {
 		bool isAnimated = true;
 	};
 
-	struct TonemapPassReturnData {
-		RenderGraphBuilderResourceRef postProcessOutput;
-	};
-
 	class Tonemap : public Rendering::RendererFeature {
 	public:
 		Tonemap() : Rendering::RendererFeature("Tonemap", Rendering::DeferredRenderGraphOrderEvent::Tonemap) {}

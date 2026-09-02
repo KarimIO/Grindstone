@@ -91,24 +91,22 @@ void Grindstone::Renderer::Tonemap::Bind(
 	}
 	Grindstone::Renderer::RenderGraphBuilderResourceRef bloomImageRef = bloomImageResponse.GetValue();
 
-	Grindstone::Renderer::RenderGraphBuilderResourceRef attachmentOutputRef = renderGraphBuilder.CreateGraphicsPass<Grindstone::Renderer::TonemapPassReturnData>(
+	Grindstone::Renderer::RenderGraphBuilderResourceRef attachmentOutputRef = renderGraphBuilder.CreateGraphicsPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>(
 		"Tonemapping",
 		MetaRect::Swapchain(),
-		[this, lightingImageRef, bloomImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::TonemapPassReturnData>& renderPass) {
+		[this, lightingImageRef, bloomImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) {
 			renderPass.ReadExternalSampler(screenSampler);
 			renderPass.ReadSampledImage(lightingImageRef);
 			renderPass.ReadSampledImage(bloomImageRef);
-			Renderer::RenderGraphBuilderResourceRef output = renderPass.WriteColorAttachment(attachmentOutputRef, GraphicsAPI::LoadOp::DontCare, GraphicsAPI::ClearColor{});
+			Renderer::RenderGraphBuilderResourceRef output = renderPass.WriteColorAttachment(attachmentOutput, GraphicsAPI::LoadOp::DontCare, GraphicsAPI::ClearColor{});
 
-			return Grindstone::Renderer::TonemapPassReturnData{
-				.postProcessOutput = output
-			};
+			return output;
 		},
 		[this, settings](
 			Grindstone::Math::IntRect2D renderingArea,
 			const Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
-			Grindstone::Renderer::TonemapPassReturnData& data
+			Grindstone::Renderer::RenderGraphBuilderResourceRef& data
 		) {
 			Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 			Grindstone::WorldContextSet* cxtSet = cxt.worldContextSet;
