@@ -80,21 +80,22 @@ void Grindstone::Editor::RendererFeatures::Grid::Bind(
 	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
 	Grindstone::Renderer::RenderFrameContext& context
 ) {
-	auto colorImageResponse = context.blackboard.GetValue<Renderer::RenderGraphBuilderResourceRef>("SceneDepth");
+	/* TODO: Rendergraph 2.0, maybe get scenedepth thru blackboard
+	auto colorImageResponse = context.blackboard.GetValue<Renderer::RenderGraphBuilderResourceRef>("SceneColor");
 	if (colorImageResponse.HasError()) {
 		GPRINT_ERROR(LogSource::Rendering, "Grid: Unable to get SceneDepth: {}", colorImageResponse.GetError());
 		return;
 	}
-
-	Grindstone::Renderer::RenderGraphBuilderResourceRef colorImageRef = colorImageResponse.GetValue();
 
 	auto depthImageResponse = context.blackboard.GetValue<Renderer::RenderGraphBuilderResourceRef>("SceneDepth");
 	if (depthImageResponse.HasError()) {
 		GPRINT_ERROR(LogSource::Rendering, "Grid: Unable to get SceneDepth: {}", depthImageResponse.GetError());
 		return;
 	}
+	*/
 
-	Grindstone::Renderer::RenderGraphBuilderResourceRef depthImageRef = depthImageResponse.GetValue();
+	Grindstone::Renderer::RenderGraphBuilderResourceRef colorImageRef = context.colorRef;
+	Grindstone::Renderer::RenderGraphBuilderResourceRef depthImageRef = context.depthRef;
 
 	for (const Renderer::RenderFrameViewContext& view : context.views) {
 		Renderer::RenderGraphBuilderResourceRef gridImageRef = renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
