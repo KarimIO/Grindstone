@@ -244,13 +244,21 @@ void Grindstone::Renderer::Smaa::Bind(
 		return;
 	}
 
-	auto litImageResponse = context.blackboard.GetValue<RenderGraphBuilderResourceRef>("Tonemapped");
+	auto litImageResponse = context.blackboard.GetValue<RenderGraphBuilderResourceRef>("SceneColor");
 	if (litImageResponse.HasError()) {
 		GPRINT_ERROR(LogSource::Rendering, "Smaa: Unable to get SceneColor: {}", litImageResponse.GetError());
 		return;
 	}
 
 	Grindstone::Renderer::RenderGraphBuilderResourceRef litImageRef = litImageResponse.GetValue();
+
+	auto tonemappedResponse = context.blackboard.GetValue<RenderGraphBuilderResourceRef>("Tonemapped");
+	if (tonemappedResponse.HasError()) {
+		GPRINT_ERROR(LogSource::Rendering, "Smaa: Unable to get Tonemapped: {}", tonemappedResponse.GetError());
+		return;
+	}
+
+	Grindstone::Renderer::RenderGraphBuilderResourceRef tonemappedRef = tonemappedResponse.GetValue();
 
 	Grindstone::Renderer::RenderGraphBuilderResourceRef edgesImageRef = SmaaEdgeDetectionPass(
 		renderGraphBuilder,
@@ -270,9 +278,9 @@ void Grindstone::Renderer::Smaa::Bind(
 	Grindstone::Renderer::RenderGraphBuilderResourceRef finalAAImageRef = SmaaNeighborhoodBlendingPass(
 		renderGraphBuilder,
 		smaaPipelineAsset,
-		litImageRef,
+		tonemappedRef,
 		blendImageRef,
-		context.colorRef, // TODO: This is passed in as an external img but may be better to just use returned ref.
+		context.colorRef,
 		linearSampler
 	);
 }
