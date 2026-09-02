@@ -26,11 +26,17 @@ namespace Grindstone {
 				Grindstone::Renderer::RenderFrameContext& renderFrameContext
 			);
 
+			virtual const std::vector<Grindstone::Renderer::RenderMode>& GetDebugModes();
 			virtual std::vector<Grindstone::Rendering::GeometryRenderStats> GetRenderingStats();
 			virtual void PushRenderingStats(const Grindstone::Rendering::GeometryRenderStats& stats);
 
 			virtual void RegisterFeature(Grindstone::Rendering::RendererFeature* feature);
 			virtual void UnregisterFeature(const char* name);
+
+			template <typename T>
+			void UnregisterFeature() {
+				UnregisterFeature(T::GetStaticFeatureName());
+			}
 		
 		protected:
 			std::vector<Grindstone::Rendering::GeometryRenderStats> renderStats;
