@@ -9,7 +9,7 @@
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
 #include <Editor/RendererFeatures/MousePick.hpp>
 
-const Grindstone::ConstHashedString mousePickRenderQueue("MousePick");
+const Grindstone::ConstHashedString mousePickRenderQueue("mousePick");
 
 struct MousePickMatrixBuffer {
 	glm::mat4 projectionMatrix;
@@ -50,8 +50,6 @@ static Grindstone::Renderer::ImageDescription depthResourceDesc{
 void Grindstone::Editor::RendererFeatures::MousePick::Initialize() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 	Grindstone::RenderPassRegistry* renderPassRegistry = engineCore.GetRenderPassRegistry();
-
-	mousePickPipelineSet = engineCore.assetManager->GetAssetReferenceByAddress<GraphicsPipelineAsset>("@CORESHADERS/postProcessing/screenSpaceAmbientOcclusionBlur");
 
 	{
 		Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
@@ -99,7 +97,6 @@ void Grindstone::Editor::RendererFeatures::MousePick::Initialize() {
 		mousePickRenderPass = graphicsCore->CreateRenderPass(mousePickRenderPassCreateInfo);
 		renderPassRegistry->RegisterRenderpass(mousePickRenderQueue, mousePickRenderPass);
 
-
 		for (int i = 0; i < 3; ++i) {
 			std::string mousePickMatrixBufferName = std::vformat("Mouse Pick Uniform Buffer [{}]", std::make_format_args(i));
 			std::string mousePickResponseBufferName = std::vformat("Mouse Pick SSBO [{}]", std::make_format_args(i));
@@ -127,18 +124,10 @@ void Grindstone::Editor::RendererFeatures::MousePick::Bind(
 	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
 	Grindstone::Renderer::RenderFrameContext& context
 ) {
-	auto depthImageResponse = context.blackboard.GetValue<Renderer::RenderGraphBuilderResourceRef>("SceneDepth");
-	if (depthImageResponse.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "MousePick: Unable to get SceneDepth: {}", depthImageResponse.GetError());
-		return;
-	}
-
-	Grindstone::Renderer::RenderGraphBuilderResourceRef depthImageRef = depthImageResponse.GetValue();
-
 	renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
 		"Mouse Pick",
 		Renderer::MetaRect::Swapchain(),
-		[depthImageRef](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
+		[](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
 			GraphicsAPI::ClearColor clearColor(UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX);
 			GraphicsAPI::ClearDepthStencil clearDepthStencil{};
 			clearDepthStencil.depth = 1.0f;
