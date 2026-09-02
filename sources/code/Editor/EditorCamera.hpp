@@ -60,6 +60,7 @@ namespace Grindstone {
 			bool isGridEnabled = true;
 			bool isBoundingSphereGizmoEnabled = false;
 			bool isBoundingBoxGizmoEnabled = false;
+			uint32_t renderMode = 0;
 			bool isColliderGizmoEnabled = true;
 			bool captureThisFrame = false;
 			int captureX = 0;

@@ -339,6 +339,8 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		}
 	);
 
+	glm::mat4 projView = adjustedPerspectiveMatrix * view;
+
 	Grindstone::Renderer::RenderFrameContext frameCxt(*cxtSet);
 	frameCxt.imageIndex = imageIndex;
 	frameCxt.imageSize = renderResolution;
@@ -348,16 +350,17 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 		Renderer::RenderFrameViewContext{
 			.projectionMatrix = projection,
 			.viewMatrix = view,
-			.projectionViewMatrix = projection * view,
-			.inverseProjectionMatrix = glm::inverse(projection),
+			.projectionViewMatrix = projView,
+			.inverseProjectionMatrix = glm::inverse(adjustedPerspectiveMatrix),
 			.inverseViewMatrix = glm::inverse(view),
-			.inverseProjectionViewMatrix = glm::inverse(projection * view),
+			.inverseProjectionViewMatrix = glm::inverse(projView),
 			.eyePos = position,
 			.nearDistance = nearPlaneDistance,
 			.farDistance = farPlaneDistance
 		}
 	);
 
+	frameCxt.blackboard.SetValue("RenderMode", renderMode);
 	Grindstone::Renderer::RenderingPipeline* renderPipeline = engineCore.GetRenderingPipeline();
 	renderPipeline->Render(renderGraphBuilder, frameCxt);
 
@@ -508,6 +511,7 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 		}
 	);
 
+	glm::mat4 projView = adjustedPerspectiveMatrix * viewMatrix;
 	Grindstone::Renderer::RenderFrameContext frameCxt(*cxtSet);
 	frameCxt.imageIndex = imageIndex;
 	frameCxt.imageSize = renderResolution;
@@ -517,16 +521,17 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 		Renderer::RenderFrameViewContext{
 			.projectionMatrix = projectionMatrix,
 			.viewMatrix = viewMatrix,
-			.projectionViewMatrix = projectionMatrix * viewMatrix,
+			.projectionViewMatrix = projView,
 			.inverseProjectionMatrix = glm::inverse(projectionMatrix),
 			.inverseViewMatrix = glm::inverse(viewMatrix),
-			.inverseProjectionViewMatrix = glm::inverse(projectionMatrix * viewMatrix),
+			.inverseProjectionViewMatrix = glm::inverse(projView),
 			.eyePos = position,
 			.nearDistance = nearPlaneDistance,
 			.farDistance = farPlaneDistance
 		}
 	);
 
+	frameCxt.blackboard.SetValue("RenderMode", renderMode);
 	Grindstone::Renderer::RenderingPipeline* renderPipeline = engineCore.GetRenderingPipeline();
 	renderPipeline->Render(renderGraphBuilder, frameCxt);
 
