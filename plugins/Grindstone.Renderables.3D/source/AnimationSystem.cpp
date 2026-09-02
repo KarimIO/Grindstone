@@ -212,7 +212,7 @@ void Grindstone::AnimateSkeletonSystem(Grindstone::WorldContextSet& worldContext
 				auto boneIt = rig->boneNameToIndex.find(channel.boneName);
 				if (boneIt == rig->boneNameToIndex.end()) {
 					// TODO: Throttle this warning or preprocess it.
-					GPRINT_WARN_V(Grindstone::LogSource::Rendering, "Bone channel for bone name \"{}\" does not exist in RigAsset \"{}\". This bone channel will be ignored.", channel.boneName, rig->name);
+					GPRINT_WARN(Grindstone::LogSource::Rendering, "Bone channel for bone name \"{}\" does not exist in RigAsset \"{}\". This bone channel will be ignored.", channel.boneName, rig->name);
 					continue;
 				}
 

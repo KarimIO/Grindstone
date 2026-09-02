@@ -13,6 +13,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS TRUE)
 
 if (WIN32 AND CMAKE_GENERATOR MATCHES "Visual Studio")
 	project(Grindstone VERSION 1.0.0 LANGUAGES CXX)
+	add_compile_options(/Zc:preprocessor /permissive-)
 else()
 	project(Grindstone VERSION 1.0.0 LANGUAGES CXX)
 endif()

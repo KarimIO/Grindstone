@@ -148,7 +148,7 @@ static bool LoadHostFxr() {
 	size_t bufferSize = sizeof(buffer) / sizeof(char_t);
 	int rc = get_hostfxr_path(buffer, &bufferSize, &params);
 	if (rc != 0) {
-		GPRINT_ERROR_V(Grindstone::LogSource::Scripting, "Failed to get hostfxr path, returned error '{}'.", GetDotNetErrorMessage(rc));
+		GPRINT_ERROR(Grindstone::LogSource::Scripting, "Failed to get hostfxr path, returned error '{}'.", GetDotNetErrorMessage(rc));
 		return false;
 	}
 
@@ -168,7 +168,7 @@ static bool LoadHostFxr() {
 		csharpGlobals.RunApp == nullptr ||
 		csharpGlobals.Close == nullptr
 		) {
-		GPRINT_ERROR_V(Grindstone::LogSource::Scripting, "Failed to get hostfxr functions.");
+		GPRINT_ERROR(Grindstone::LogSource::Scripting, "Failed to get hostfxr functions.");
 		return false;
 	}
 
@@ -192,7 +192,7 @@ static bool LoadHostFxr() {
 
 		rc = csharpGlobals.InitForConfig(configPath.c_str(), nullptr, &csharpGlobals.fxrHandle);
 		if (rc != 0 || csharpGlobals.fxrHandle == nullptr) {
-			GPRINT_ERROR_V(Grindstone::LogSource::Scripting, "Failed to initialize hostfxr, returned error '{}'.", GetDotNetErrorMessage(rc));
+			GPRINT_ERROR(Grindstone::LogSource::Scripting, "Failed to initialize hostfxr, returned error '{}'.", GetDotNetErrorMessage(rc));
 			return false;
 		}
 
@@ -206,7 +206,7 @@ static bool LoadHostFxr() {
 	);
 
 	if (rc != 0 || csharpGlobals.LoadAssemblyAndGetFunctionPointer == nullptr) {
-		GPRINT_ERROR_V(Grindstone::LogSource::Scripting, "Failed to get dotnet function 'LoadAssemblyAndGetFunctionPointer', returned error '{}'.", GetDotNetErrorMessage(rc));
+		GPRINT_ERROR(Grindstone::LogSource::Scripting, "Failed to get dotnet function 'LoadAssemblyAndGetFunctionPointer', returned error '{}'.", GetDotNetErrorMessage(rc));
 		return false;
 	}
 
@@ -226,7 +226,7 @@ static bool LoadGrindstoneCoreFunction(std::wstring_view dllPath, std::string_vi
 	);
 
 	if (rc != 0 || fn == nullptr) {
-		GPRINT_ERROR_V(Grindstone::LogSource::Scripting, "Failed to get CSharpCore function {}, returned error '{}'.", functionName, GetDotNetErrorMessage(rc));
+		GPRINT_ERROR(Grindstone::LogSource::Scripting, "Failed to get CSharpCore function {}, returned error '{}'.", functionName, GetDotNetErrorMessage(rc));
 		return false;
 	}
 
@@ -238,7 +238,7 @@ static bool LoadGrindstoneCoreFunctions() {
 	std::wstring coreDllWide = std::wstring(coreDllPath.begin(), coreDllPath.end());
 
 	if (!std::filesystem::exists(coreDllPath)) {
-		GPRINT_ERROR_V(LogSource::Scripting, "Unable to load C# Hostbridge '{}'.", coreDllPath.c_str());
+		GPRINT_ERROR(LogSource::Scripting, "Unable to load C# Hostbridge '{}'.", coreDllPath.c_str());
 		return false;
 	}
 
@@ -274,7 +274,7 @@ static bool LoadGrindstoneCoreFunctions() {
 		return true;
 	}
 
-	GPRINT_ERROR_V(LogSource::Scripting, "Unable to all functions from C# Hostbridge '{}', C# support is disabled.", coreDllPath.c_str());
+	GPRINT_ERROR(LogSource::Scripting, "Unable to all functions from C# Hostbridge '{}', C# support is disabled.", coreDllPath.c_str());
 	return false;
 }
 
@@ -321,7 +321,7 @@ void CSharpManager::Initialize() {
 	std::filesystem::path rootBinPath = engineCore.GetBinaryPath();
 	std::string rootBinPathStr = rootBinPath.string();
 	if (!std::filesystem::exists(rootBinPath) && !std::filesystem::create_directories(rootBinPath)) {
-		GPRINT_ERROR_V(LogSource::Scripting, "Failed to create directory: '{}'.", rootBinPathStr.c_str());
+		GPRINT_ERROR(LogSource::Scripting, "Failed to create directory: '{}'.", rootBinPathStr.c_str());
 		return;
 	}
 
@@ -347,7 +347,7 @@ bool CSharpManager::LoadAssembly(const char* basePath, AssemblyData& outAssembly
 	}
 
 	if (!std::filesystem::exists(basePath)) {
-		GPRINT_ERROR_V(LogSource::Scripting, "Attempting to load invalid assembly: {}", basePath);
+		GPRINT_ERROR(LogSource::Scripting, "Attempting to load invalid assembly: {}", basePath);
 		return false;
 	}
 

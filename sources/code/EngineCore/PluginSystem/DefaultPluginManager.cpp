@@ -20,7 +20,7 @@ DefaultPluginManager::~DefaultPluginManager() {
 			}
 			else {
 				const std::string& pluginName = it->first;
-				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {}", pluginName.c_str());
+				GPRINT_ERROR(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {}", pluginName.c_str());
 			}
 		}
 	}
@@ -74,7 +74,7 @@ bool DefaultPluginManager::LoadModule(const std::string& path) {
 			return true;
 		}
 		else {
-			GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call InitializeModule in plugin: {0}", path.c_str());
+			GPRINT_ERROR(LogSource::EngineCore, "Unable to call InitializeModule in plugin: {0}", path.c_str());
 			return false;
 		}
 	}
@@ -92,9 +92,9 @@ bool DefaultPluginManager::LoadModule(const std::string& path) {
 		nullptr
 	);
 
-	GPRINT_ERROR_V(LogSource::EngineCore, "Unable to load plugin \"{0}\": {1}", path.c_str(), errorString);
+	GPRINT_ERROR(LogSource::EngineCore, "Unable to load plugin \"{0}\": {1}", path.c_str(), errorString);
 #else
-	GPRINT_ERROR_V(LogSource::EngineCore, "Unable to load plugin: {0}", path.c_str());
+	GPRINT_ERROR(LogSource::EngineCore, "Unable to load plugin: {0}", path.c_str());
 #endif
 
 	return false;
@@ -111,7 +111,7 @@ void DefaultPluginManager::UnloadModule(const std::string& path) {
 				releaseModuleFnPtr(EngineCore::GetInstance().GetPluginInterface());
 			}
 			else {
-				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", it->first.c_str());
+				GPRINT_ERROR(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", it->first.c_str());
 			}
 
 			Grindstone::Utilities::Modules::Unload(handle);

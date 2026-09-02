@@ -729,7 +729,7 @@ void ModelImporter::ProcessAnimation(aiAnimation* animation, const std::map<std:
 		std::string channelName(srcChannel->mNodeName.data);
 
 		errno_t cpyRes = strcpy_s(stringBlockBuffer.data() + stringBlockBufferSize, channelName.size() + 1, channelName.data());
-		GS_ASSERT(cpyRes == 0)
+		GS_ASSERT(cpyRes == 0);
 
 		dstChannel.boneNameStringOffset = static_cast<uint32_t>(stringBlockBufferSize);
 		stringBlockBufferSize += channelName.size() + 1;
@@ -884,7 +884,7 @@ void ModelImporter::Import(Grindstone::Editor::AssetRegistry& assetRegistry, Gri
 	);
 
 	if (!scene) {
-		GPRINT_ERROR_V(Grindstone::LogSource::EditorImporter, "Model Importer: Unable to load scene from '{}'.", importer.GetErrorString());
+		GPRINT_ERROR(Grindstone::LogSource::EditorImporter, "Model Importer: Unable to load scene from '{}'.", importer.GetErrorString());
 		return;
 	}
 

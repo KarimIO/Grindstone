@@ -261,12 +261,12 @@ namespace Grindstone {
 		virtual Grindstone::Containers::BufferSpan GetSpan(uint64_t segmentOffset, uint64_t segmentSize) override {
 			Byte* targetPtr = bufferPtr + segmentOffset;
 			if (targetPtr < bufferPtr) {
-				GS_ASSERT_ENGINE("Start of span is before start of buffer.")
+				GS_ASSERT_ENGINE("Start of span is before start of buffer.");
 				return Grindstone::Containers::BufferSpan();
 			}
 
 			if (targetPtr + segmentSize > bufferPtr + size) {
-				GS_ASSERT_ENGINE("End of span is after end of used buffer.")
+				GS_ASSERT_ENGINE("End of span is after end of used buffer.");
 				return Grindstone::Containers::BufferSpan();
 			}
 
@@ -291,13 +291,13 @@ namespace Grindstone {
 
 		void* AddToBuffer(const void* srcPtr, uint64_t srcSize) {
 			if (srcPtr == nullptr) {
-				GS_ASSERT_ENGINE("Source memory is nullptr.")
+				GS_ASSERT_ENGINE("Source memory is nullptr.");
 				return nullptr;
 			}
 
 			uint64_t spaceLeft = GetSpaceLeft();
 			if (srcSize > spaceLeft) {
-				GS_ASSERT_ENGINE("Source memory size is too small to fit.")
+				GS_ASSERT_ENGINE("Source memory size is too small to fit.");
 				return nullptr;
 			}
 

@@ -82,14 +82,14 @@ void Grindstone::Renderer::Debug::Bind(
 ) {
 	auto ambientOcclusionResponse = context.blackboard.GetValue<Grindstone::Renderer::RenderGraphBuilderResourceRef>("AmbientOcclusionBlurred");
 	if (ambientOcclusionResponse.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "ScreenSpaceReflections: Unable to get blurred SSAO: {}", ambientOcclusionResponse.GetError());
+		GPRINT_ERROR(LogSource::Rendering, "Debug: Unable to get blurred SSAO: {}", ambientOcclusionResponse.GetError());
 		return;
 	}
 	Grindstone::Renderer::RenderGraphBuilderResourceRef ambientOcclusionRef = ambientOcclusionResponse.GetValue();
 
 	auto gbufferDataResponse = context.blackboard.GetValue<Grindstone::Renderer::GbufferData>();
 	if (gbufferDataResponse.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "ScreenSpaceReflections: Unable to get Gbuffer: {}", gbufferDataResponse.GetError());
+		GPRINT_ERROR(LogSource::Rendering, "Debug: Unable to get Gbuffer: {}", gbufferDataResponse.GetError());
 		return;
 	}
 	Grindstone::Renderer::GbufferData gbufferData = gbufferDataResponse.GetValue();

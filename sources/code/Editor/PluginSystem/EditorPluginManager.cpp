@@ -134,7 +134,7 @@ static void CompileBinaries(const std::filesystem::path& solutionPath, const std
 				switch (binary.buildType) {
 				case MetaData::BinaryBuildType::NoBuild: {
 					std::string path = binary.libraryRelativePath.string();
-					GPRINT_ERROR_V(LogSource::Editor, "Binary {} has a target {} but no build type.", path.c_str(), binary.buildTarget.c_str());
+					GPRINT_ERROR(LogSource::Editor, "Binary {} has a target {} but no build type.", path.c_str(), binary.buildTarget.c_str());
 					break;
 				}
 				case MetaData::BinaryBuildType::Cmake:
@@ -146,7 +146,7 @@ static void CompileBinaries(const std::filesystem::path& solutionPath, const std
 			}
 			else if (binary.buildType != MetaData::BinaryBuildType::NoBuild) {
 				std::string path = binary.libraryRelativePath.string();
-				GPRINT_ERROR_V(LogSource::Editor, "Binary {} has a build type other than 'NoBuild' but not a target.", path.c_str());
+				GPRINT_ERROR(LogSource::Editor, "Binary {} has a build type other than 'NoBuild' but not a target.", path.c_str());
 			}
 		}
 	}
@@ -172,7 +172,7 @@ static std::optional<AssemblyDefinition> ParseAssemblyDefinition(std::filesystem
 	std::string pathStr = path.string();
 	const char* pathCstr = pathStr.c_str();
 	if (!std::filesystem::exists(path)) {
-		GPRINT_ERROR_V(LogSource::Editor, "Assembly definition file doesn't exist {}", pathCstr);
+		GPRINT_ERROR(LogSource::Editor, "Assembly definition file doesn't exist {}", pathCstr);
 		return std::nullopt;
 	}
 
@@ -187,7 +187,7 @@ static std::optional<AssemblyDefinition> ParseAssemblyDefinition(std::filesystem
 		if (GetParseError != nullptr) {
 			errorCode = GetParseError(parseResult.Code());
 		}
-		GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Failed to parse Assembly Definition file '{}'.", pathCstr);
+		GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Failed to parse Assembly Definition file '{}'.", pathCstr);
 		return std::nullopt;
 	}
 
@@ -199,12 +199,12 @@ static std::optional<AssemblyDefinition> ParseAssemblyDefinition(std::filesystem
 			assemblyDefinition.name = nameJson.GetString();
 		}
 		else {
-			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Assembly definition file {} has 'name' which should be of type string.\n", pathCstr);
+			GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Assembly definition file {} has 'name' which should be of type string.\n", pathCstr);
 			return std::nullopt;
 		}
 	}
 	else {
-		GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Assembly definition file {} has no required parameter 'name'.\n", pathCstr);
+		GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Assembly definition file {} has no required parameter 'name'.\n", pathCstr);
 		return std::nullopt;
 	}
 
@@ -230,13 +230,13 @@ static std::optional<AssemblyDefinition> ParseAssemblyDefinition(std::filesystem
 			}
 		}
 		else {
-			GPRINT_ERROR_V(Grindstone::LogSource::EngineCore, "Assembly definition file {} has 'references' which should be of type array of strings.\n", nameCString);
+			GPRINT_ERROR(Grindstone::LogSource::EngineCore, "Assembly definition file {} has 'references' which should be of type array of strings.\n", nameCString);
 			return std::nullopt;
 		}
 	}
 
 	if (!warningMsg.empty()) {
-		GPRINT_WARN_V(Grindstone::LogSource::EngineCore, "Assembly definition file {} was parsed successfully, but has warnings:\n{}", nameCString, warningMsg.c_str());
+		GPRINT_WARN(Grindstone::LogSource::EngineCore, "Assembly definition file {} was parsed successfully, but has warnings:\n{}", nameCString, warningMsg.c_str());
 	}
 
 	return assemblyDefinition;
@@ -255,7 +255,7 @@ static void MakeProjectsAndSolutions(const std::filesystem::path& solutionPath, 
 					AssemblyDefinition& assemblyDefinition = assemblyDefinitionOpt.value();
 					auto assemblyIt = assembliesMap.find(assemblyDefinition.name);
 					if (assemblyIt != assembliesMap.end()) {
-						GPRINT_WARN_V(LogSource::Editor, "Duplicate project called '{}' found!", assemblyDefinition.name.c_str());
+						GPRINT_WARN(LogSource::Editor, "Duplicate project called '{}' found!", assemblyDefinition.name.c_str());
 					}
 					else {
 						assemblyDefinition.projectPath = filepath.parent_path() / (assemblyDefinition.name + ".csproj");
@@ -280,7 +280,7 @@ static void MakeProjectsAndSolutions(const std::filesystem::path& solutionPath, 
 				references.emplace_back(referencePath);
 			}
 			else {
-				GPRINT_WARN_V(LogSource::Editor, "Unknown reference '{}' found in assembly '{}'!", ref.referenceName, assemblyDefinition.name.c_str());
+				GPRINT_WARN(LogSource::Editor, "Unknown reference '{}' found in assembly '{}'!", ref.referenceName, assemblyDefinition.name.c_str());
 			}
 		}
 
@@ -322,7 +322,7 @@ EditorPluginManager::~EditorPluginManager() {
 			}
 			else {
 				std::string pluginName = it->first.string();
-				GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {}", pluginName.c_str());
+				GPRINT_ERROR(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {}", pluginName.c_str());
 			}
 		}
 	}
@@ -359,14 +359,14 @@ void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
 					std::filesystem::path binaryPath = metaData.pluginResolvedPath / binary.libraryRelativePath;
 					std::filesystem::path parentPath = binaryPath.parent_path();
 					DLL_DIRECTORY_COOKIE dllCookie = AddDllDirectory(parentPath.wstring().c_str());
-					GPRINT_INFO_V(LogSource::Editor, "[PluginSystem] In stage {}, mounting C++ (cmake) plugin: {}", stageName, binary.libraryRelativePath.string());
+					GPRINT_INFO(LogSource::Editor, "[PluginSystem] In stage {}, mounting C++ (cmake) plugin: {}", stageName, binary.libraryRelativePath.string());
 					LoadModule(binaryPath);
 					RemoveDllDirectory(dllCookie);
 					break;
 				}
 				case Grindstone::Plugins::MetaData::BinaryBuildType::Dotnet: {
 					auto scriptManager = Grindstone::EngineCore::GetInstance().TryGetService<Grindstone::Scripting::CSharp::CSharpManager>();
-					GPRINT_INFO_V(LogSource::Editor, "[PluginSystem] In stage {}, mounting C# (dotnet) plugin: {}", stageName, binary.libraryRelativePath.string());
+					GPRINT_INFO(LogSource::Editor, "[PluginSystem] In stage {}, mounting C# (dotnet) plugin: {}", stageName, binary.libraryRelativePath.string());
 					scriptManager->LoadAssemblyIntoMap(metaData.name + ":" + binary.libraryRelativePath.filename().string());
 					break;
 				}
@@ -378,7 +378,7 @@ void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
 			if (assetDir.loadStage == stageName) {
 				std::filesystem::path assetsPath = metaData.pluginResolvedPath / assetDir.assetDirectoryRelativePath;
 				Editor::FileManager& fileManager = editorManager.GetFileManager();
-				GPRINT_INFO_V(LogSource::Editor, "[PluginSystem] In stage {}, mounted plugin asset directory {} to path: {}", stageName, assetDir.mountPoint, assetsPath.string());
+				GPRINT_INFO(LogSource::Editor, "[PluginSystem] In stage {}, mounted plugin asset directory {} to path: {}", stageName, assetDir.mountPoint, assetsPath.string());
 				fileManager.MountDirectory(assetDir.mountPoint, assetsPath);
 			}
 		}
@@ -447,7 +447,7 @@ bool EditorPluginManager::LoadModule(const std::filesystem::path& path) {
 			return true;
 		}
 		else {
-			GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call InitializeModule in plugin: {0}", path.string().c_str());
+			GPRINT_ERROR(LogSource::EngineCore, "Unable to call InitializeModule in plugin: {0}", path.string().c_str());
 			return false;
 		}
 	}
@@ -465,9 +465,9 @@ bool EditorPluginManager::LoadModule(const std::filesystem::path& path) {
 		nullptr
 	);
 
-	GPRINT_ERROR_V(LogSource::EngineCore, "Unable to load plugin \"{0}\": {1}", path.string(), errorString);
+	GPRINT_ERROR(LogSource::EngineCore, "Unable to load plugin \"{0}\": {1}", path.string(), errorString);
 #else
-	GPRINT_ERROR_V(LogSource::EngineCore, "Unable to load plugin: {0}", path.string());
+	GPRINT_ERROR(LogSource::EngineCore, "Unable to load plugin: {0}", path.string());
 #endif
 
 	return false;
@@ -476,7 +476,7 @@ bool EditorPluginManager::LoadModule(const std::filesystem::path& path) {
 void EditorPluginManager::UnloadModule(const std::filesystem::path& path) {
 	auto it = pluginModules.find(path);
 	if (it == pluginModules.end()) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Unable to unload plugin \"{0}\"", path.string());
+		GPRINT_ERROR(LogSource::EngineCore, "Unable to unload plugin \"{0}\"", path.string());
 		return;
 	}
 
@@ -488,7 +488,7 @@ void EditorPluginManager::UnloadModule(const std::filesystem::path& path) {
 			releaseModuleFnPtr(EngineCore::GetInstance().GetPluginInterface());
 		}
 		else {
-			GPRINT_ERROR_V(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", it->first.string().c_str());
+			GPRINT_ERROR(LogSource::EngineCore, "Unable to call ReleaseModule in plugin: {0}", it->first.string().c_str());
 		}
 
 		Grindstone::Utilities::Modules::Unload(handle);

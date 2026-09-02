@@ -182,7 +182,7 @@ DynamicAllocator::~DynamicAllocator() {
 #ifdef _DEBUG
 	for (auto& allocation : nameMap) {
 		AllocationHeader* header = reinterpret_cast<AllocationHeader*>(static_cast<char*>(allocation.first) - sizeof(AllocationHeader));
-		GPRINT_TRACE_V(LogSource::EngineCore, "Unfreed Memory - {} Size({}): {}", allocation.first, header->blockSize, allocation.second);
+		GPRINT_TRACE(LogSource::EngineCore, "Unfreed Memory - {} Size({}): {}", allocation.first, header->blockSize, allocation.second);
 	}
 #endif
 

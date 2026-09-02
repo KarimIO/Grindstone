@@ -35,7 +35,7 @@ bool SceneLoaderJson::Load(Grindstone::Uuid uuid) {
 
 	Assets::AssetLoadTextResult result = engineCore.assetManager->LoadTextByUuid(AssetType::Scene, uuid);
 	if (result.status != Assets::AssetLoadStatus::Success) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find scene with id {}.", uuid.ToString());
+		GPRINT_ERROR(LogSource::EngineCore, "Could not find scene with id {}.", uuid.ToString());
 		return false;
 	}
 
@@ -49,11 +49,11 @@ bool SceneLoaderJson::Load(Grindstone::Uuid uuid) {
 		if (GetParseError != nullptr) {
 			errorCode = GetParseError(parseResult.Code());
 		}
-		GPRINT_ERROR_V(LogSource::EngineCore, "Failed to load scene '{}' with id {} - Got error '{}' with offset {}.", result.displayName, uuid.ToString(), errorCode, document.GetErrorOffset());
+		GPRINT_ERROR(LogSource::EngineCore, "Failed to load scene '{}' with id {} - Got error '{}' with offset {}.", result.displayName, uuid.ToString(), errorCode, document.GetErrorOffset());
 		return false;
 	}
 
-	GPRINT_INFO_V(LogSource::EngineCore, "Loading scene '{}' with id {}.", result.displayName, uuid.ToString());
+	GPRINT_INFO(LogSource::EngineCore, "Loading scene '{}' with id {}.", result.displayName, uuid.ToString());
 
 	ProcessMeta();
 	ProcessEntities();
@@ -192,7 +192,7 @@ static void ParseMember(
 ) {
 	switch (member->type) {
 	default:
-		GPRINT_ERROR_V(LogSource::EngineCore, "Unhandled reflection type '{}' in SceneLoaderJson!", member->GetFullName());
+		GPRINT_ERROR(LogSource::EngineCore, "Unhandled reflection type '{}' in SceneLoaderJson!", member->GetFullName());
 		break;
 	case ReflectionTypeData::Entity: {
 		entt::entity& entity = *(entt::entity*)memberPtr;

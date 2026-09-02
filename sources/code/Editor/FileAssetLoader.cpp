@@ -25,7 +25,7 @@ static AssetLoadBinaryResult LoadBinary(Grindstone::Editor::AssetRegistry::Entry
 		return { AssetLoadStatus::FileNotFound, {} };
 	}
 
-	GPRINT_INFO_V(Grindstone::LogSource::Editor, "Loading binary asset '{}' of type {}", entry.displayName, GetAssetTypeToString(entry.assetType));
+	GPRINT_INFO(Grindstone::LogSource::Editor, "Loading binary asset '{}' of type {}", entry.displayName, GetAssetTypeToString(entry.assetType));
 
 	std::ifstream file(path, std::ios::binary | std::ios::ate);
 	size_t fileSize = file.tellg();
@@ -41,7 +41,7 @@ static AssetLoadBinaryResult LoadBinary(Grindstone::Editor::AssetRegistry::Entry
 static AssetLoadTextResult LoadText(Grindstone::Editor::AssetRegistry::Entry& entry) {
 	std::filesystem::path path = Grindstone::Editor::Manager::GetEngineCore().GetAssetPath(entry.uuid.ToString());
 
-	GPRINT_INFO_V(Grindstone::LogSource::Editor, "Loading text asset '{}' of type {}", entry.displayName, GetAssetTypeToString(entry.assetType));
+	GPRINT_INFO(Grindstone::LogSource::Editor, "Loading text asset '{}' of type {}", entry.displayName, GetAssetTypeToString(entry.assetType));
 
 	if (!std::filesystem::exists(path)) {
 		return { AssetLoadStatus::FileNotFound, {} };
@@ -60,7 +60,7 @@ AssetLoadBinaryResult FileAssetLoader::LoadBinaryByUuid(AssetType assetType, Uui
 
 	Editor::AssetRegistry::Entry outEntry;
 	if (!assetRegistry.TryGetAssetData(uuid, outEntry)) {
-		GPRINT_ERROR_V(LogSource::Editor, "Could not get asset: {}", uuid.ToString());
+		GPRINT_ERROR(LogSource::Editor, "Could not get asset: {}", uuid.ToString());
 		return std::move(AssetLoadBinaryResult{ AssetLoadStatus::AssetNotInRegistry, {} });
 	}
 
@@ -73,7 +73,7 @@ AssetLoadTextResult FileAssetLoader::LoadTextByUuid(AssetType assetType, Uuid uu
 
 	Editor::AssetRegistry::Entry outEntry;
 	if (!assetRegistry.TryGetAssetData(uuid, outEntry)) {
-		GPRINT_ERROR_V(LogSource::Editor, "Could not get asset: {}", uuid.ToString());
+		GPRINT_ERROR(LogSource::Editor, "Could not get asset: {}", uuid.ToString());
 		return std::move(AssetLoadTextResult{ AssetLoadStatus::AssetNotInRegistry, {} });
 	}
 
@@ -86,7 +86,7 @@ Grindstone::Uuid Grindstone::Assets::FileAssetLoader::GetUuidByAddress(AssetType
 	Editor::AssetRegistry::Entry outEntry;
 	std::string addressString = std::string(address);
 	if (!assetRegistry.TryGetAssetData(addressString, outEntry)) {
-		GPRINT_ERROR_V(LogSource::Editor, "Could not get uuid of asset: {}", address);
+		GPRINT_ERROR(LogSource::Editor, "Could not get uuid of asset: {}", address);
 		return Grindstone::Uuid();
 	}
 

@@ -150,7 +150,7 @@ uint16_t ThumbnailManager::LoadThumbnailByPathToAtlas(const std::filesystem::pat
 	std::string name = path.string();
 
 	if (thumbnailFreeCount == 0) {
-		GPRINT_WARN_V(LogSource::EngineCore, "Could not allocate a thumbnail for asset at path '{}'", name.c_str());
+		GPRINT_WARN(LogSource::EngineCore, "Could not allocate a thumbnail for asset at path '{}'", name.c_str());
 		return std::numeric_limits<uint16_t>::max();
 	}
 
@@ -162,7 +162,7 @@ uint16_t ThumbnailManager::LoadThumbnailByPathToAtlas(const std::filesystem::pat
 
 uint16_t ThumbnailManager::LoadNamedAssetToAtlas(std::string_view name) {
 	if (thumbnailFreeCount == 0) {
-		GPRINT_WARN_V(LogSource::EngineCore, "Could not allocate a thumbnail for asset {}", name);
+		GPRINT_WARN(LogSource::EngineCore, "Could not allocate a thumbnail for asset {}", name);
 		return std::numeric_limits<uint16_t>::max();
 	}
 
@@ -170,7 +170,7 @@ uint16_t ThumbnailManager::LoadNamedAssetToAtlas(std::string_view name) {
 	Grindstone::Uuid uuid = engineCore.assetManager->GetUuidByAddress(AssetType::Texture, name.data());
 	Grindstone::Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::Texture, uuid);
 	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
-		GPRINT_WARN_V(LogSource::EngineCore, "Unable to load thumbnail for icon: {}", name);
+		GPRINT_WARN(LogSource::EngineCore, "Unable to load thumbnail for icon: {}", name);
 		return std::numeric_limits<uint16_t>::max();
 	}
 
@@ -216,7 +216,7 @@ ThumbnailManager::AtlasCoords ThumbnailManager::GetCmakeIconCoords() const {
 void ThumbnailManager::RegisterGenerator(AssetType type, ThumbnailGenerateFn generator) {
 	auto assetIterator = generators.find(type);
 	if (assetIterator != generators.end()) {
-		GPRINT_WARN_V(
+		GPRINT_WARN(
 			Grindstone::LogSource::Editor,
 			"Trying to register thumbnail generator for {} when one already is registered. Overwriting it.",
 			GetAssetTypeToString(type)
@@ -229,7 +229,7 @@ void ThumbnailManager::RegisterGenerator(AssetType type, ThumbnailGenerateFn gen
 void ThumbnailManager::DeregisterGenerator(AssetType type, ThumbnailGenerateFn generator) {
 	auto assetIterator = generators.find(type);
 	if (assetIterator == generators.end()) {
-		GPRINT_WARN_V(
+		GPRINT_WARN(
 			Grindstone::LogSource::Editor,
 			"Trying to unregister thumbnail generator for {} but none found.",
 			GetAssetTypeToString(type)
@@ -237,7 +237,7 @@ void ThumbnailManager::DeregisterGenerator(AssetType type, ThumbnailGenerateFn g
 	}
 
 	if (assetIterator->second == generator) {
-		GPRINT_WARN_V(
+		GPRINT_WARN(
 			Grindstone::LogSource::Editor,
 			"Trying to register unregister generator for {}, but found a different generator. Ignoring this Unregister call.",
 				GetAssetTypeToString(type)
@@ -302,7 +302,7 @@ bool ThumbnailManager::FreeThumbnailFromMemory(Grindstone::Uuid uuid) {
 	auto assetIterator = iconsByUuid.find(uuid);
 	if (assetIterator == iconsByUuid.end()) {
 		std::string uuidAsStr = uuid.ToString();
-		GPRINT_WARN_V(
+		GPRINT_WARN(
 			Grindstone::LogSource::Editor,
 			"Trying to free thumbnail for uuid '{}' in memory cache, but none found.",
 			uuidAsStr
@@ -329,7 +329,7 @@ bool ThumbnailManager::DeleteThumbnailFromStorage(Grindstone::Uuid uuid) {
 	}
 	else {
 		std::string uuidAsStr = uuid.ToString();
-		GPRINT_WARN_V(
+		GPRINT_WARN(
 			Grindstone::LogSource::Editor,
 			"Trying to delete thumbnail file for uuid '{}' in storage cache, but file not found.",
 			uuidAsStr
@@ -360,7 +360,7 @@ void Grindstone::Editor::ThumbnailManager::CreateRequestedThumbnails() {
 		}
 		else {
 			std::string uuidAsStr = uuid.ToString();
-			GPRINT_WARN_V(
+			GPRINT_WARN(
 				Grindstone::LogSource::Editor,
 				"Thumbnail generation requested for {} but then generator was removed.",
 				uuidAsStr

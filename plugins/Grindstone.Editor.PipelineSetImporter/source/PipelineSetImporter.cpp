@@ -15,16 +15,16 @@ static void Log(Grindstone::LogSeverity severity, PipelineConverterLogSource sou
 	}
 
 	if (line == UNDEFINED_LINE && column == UNDEFINED_COLUMN) {
-		GPRINT_V(severity, Grindstone::LogSource::EditorImporter, "{} - {}", filename.string(), msg);
+		GPRINT(severity, Grindstone::LogSource::EditorImporter, "{} - {}", filename.string(), msg);
 		return;
 	}
 
 	if (column == UNDEFINED_COLUMN) {
-		GPRINT_V(severity, Grindstone::LogSource::EditorImporter, "{}:{} - {}", filename.string(), line, msg);
+		GPRINT(severity, Grindstone::LogSource::EditorImporter, "{}:{} - {}", filename.string(), line, msg);
 		return;
 	}
 
-	GPRINT_V(severity, Grindstone::LogSource::EditorImporter, "{}:{}:{} - {}", filename.string(), line, column, msg);
+	GPRINT(severity, Grindstone::LogSource::EditorImporter, "{}:{}:{} - {}", filename.string(), line, column, msg);
 }
 
 static std::filesystem::path ResolvePath(Grindstone::Editor::AssetRegistry& assetRegistry, const std::filesystem::path& path) {
@@ -59,7 +59,7 @@ void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::As
 
 			std::ofstream outStream(outputPath, std::ios::binary);
 			if (outStream.fail()) {
-				GPRINT_ERROR_V(Grindstone::LogSource::EditorImporter, "{} - Unable to write shader {} to file {}.", path.string(), pout.name, outputPath.string());
+				GPRINT_ERROR(Grindstone::LogSource::EditorImporter, "{} - Unable to write shader {} to file {}.", path.string(), pout.name, outputPath.string());
 				return;
 			}
 

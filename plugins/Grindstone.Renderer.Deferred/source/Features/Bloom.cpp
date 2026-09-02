@@ -280,7 +280,7 @@ void Grindstone::Renderer::Bloom::Bind(
 
 	auto litImageResponse = context.blackboard.GetValue<RenderGraphBuilderResourceRef>("SceneColor");
 	if (litImageResponse.HasError()) {
-		GPRINT_ERROR_V(LogSource::Rendering, "Bloom: Unable to get SceneColor: {}", litImageResponse.GetError());
+		GPRINT_ERROR(LogSource::Rendering, "Bloom: Unable to get SceneColor: {}", litImageResponse.GetError());
 		return;
 	}
 

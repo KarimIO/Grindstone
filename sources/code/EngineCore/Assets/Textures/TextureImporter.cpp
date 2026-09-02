@@ -20,7 +20,7 @@ static bool LoadTextureAsset(TextureAsset& textureAsset) {
 
 	Grindstone::Assets::AssetLoadBinaryResult result = engineCore.assetManager->LoadBinaryByUuid(AssetType::Texture, textureAsset.uuid);
 	if (result.status != Grindstone::Assets::AssetLoadStatus::Success) {
-		GPRINT_WARN_V(LogSource::EngineCore, "Unable to load texture: {}", textureAsset.uuid.ToString());
+		GPRINT_WARN(LogSource::EngineCore, "Unable to load texture: {}", textureAsset.uuid.ToString());
 		textureAsset.assetLoadStatus = Grindstone::AssetLoadStatus::Missing;
 		return false;
 	}

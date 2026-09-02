@@ -68,7 +68,7 @@ bool Grindstone::Plugins::LoadPluginManifestFile(std::vector<Grindstone::Plugins
 
 	std::string pluginListFileString = pluginListFile.string();
 	if (!std::filesystem::exists(pluginListFile)) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Expected plugin list file at {} but couldn't find one. Making a new one.", pluginListFileString.c_str());
+		GPRINT_ERROR(LogSource::EngineCore, "Expected plugin list file at {} but couldn't find one. Making a new one.", pluginListFileString.c_str());
 
 		std::filesystem::path pluginFolderDir = projectDir / "plugins";
 		std::string projectName = projectDir.filename().string();

@@ -262,7 +262,7 @@ static Grindstone::GraphicsAPI::Format DetectFormatFromPixelFormat(const Grindst
 bool Grindstone::Formats::DDS::TryParseDds(const char* debugName, Grindstone::Containers::BufferSpan bufferView, DdsParseOutput& output) {
 	char* fileContents = reinterpret_cast<char*>(&bufferView.GetBegin());
 	if (strncmp(fileContents, "DDS ", 4) != 0) {
-		GPRINT_WARN_V(LogSource::EngineCore, "Invalid texture file: {}", debugName);
+		GPRINT_WARN(LogSource::EngineCore, "Invalid texture file: {}", debugName);
 		return false;
 	}
 
@@ -291,7 +291,7 @@ bool Grindstone::Formats::DDS::TryParseDds(const char* debugName, Grindstone::Co
 			format = MapFourCC(header.ddspf.dwFourCC, hasAlpha);
 
 			if (format == GraphicsAPI::Format::Invalid) {
-				GPRINT_ERROR_V(LogSource::EngineCore, "Invalid FourCC in texture with name {}.", debugName);
+				GPRINT_ERROR(LogSource::EngineCore, "Invalid FourCC in texture with name {}.", debugName);
 				return false;
 			}
 		}
@@ -299,12 +299,12 @@ bool Grindstone::Formats::DDS::TryParseDds(const char* debugName, Grindstone::Co
 	else if (isPixelFormat) {
 		format = DetectFormatFromPixelFormat(header.ddspf);
 		if (format == GraphicsAPI::Format::Invalid) {
-			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid FourCC in texture with name {}.", debugName);
+			GPRINT_ERROR(LogSource::EngineCore, "Invalid FourCC in texture with name {}.", debugName);
 			return false;
 		}
 	}
 	else {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Invalid pixel format in texture with name {}.", debugName);
+		GPRINT_ERROR(LogSource::EngineCore, "Invalid pixel format in texture with name {}.", debugName);
 		return false;
 	}
 
@@ -318,7 +318,7 @@ bool Grindstone::Formats::DDS::TryParseDds(const char* debugName, Grindstone::Co
 		format = MapDXGIToFormat(extendedHeader.dxgiFormat);
 
 		if (format == Grindstone::GraphicsAPI::Format::Invalid) {
-			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid extended DXGI format in texture with name {}.", debugName);
+			GPRINT_ERROR(LogSource::EngineCore, "Invalid extended DXGI format in texture with name {}.", debugName);
 			return false;
 		}
 
@@ -326,14 +326,14 @@ bool Grindstone::Formats::DDS::TryParseDds(const char* debugName, Grindstone::Co
 
 		switch (extendedHeader.resourceDimension) {
 		default:
-			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid dimensions in texture with name({}).", debugName);
+			GPRINT_ERROR(LogSource::EngineCore, "Invalid dimensions in texture with name({}).", debugName);
 			imageDimensions = Grindstone::GraphicsAPI::ImageDimension::Invalid;
 			break;
 		case D3d10ResourceDimension::D3D10_RESOURCE_DIMENSION_UNKNOWN:
 			imageDimensions = Grindstone::GraphicsAPI::ImageDimension::Invalid;
 			break;
 		case D3d10ResourceDimension::D3D10_RESOURCE_DIMENSION_BUFFER:
-			GPRINT_ERROR_V(LogSource::EngineCore, "Invalid dimensions \"Buffer\" in texture with name({}).", debugName);
+			GPRINT_ERROR(LogSource::EngineCore, "Invalid dimensions \"Buffer\" in texture with name({}).", debugName);
 			imageDimensions = Grindstone::GraphicsAPI::ImageDimension::Invalid;
 			break;
 		case D3d10ResourceDimension::D3D10_RESOURCE_DIMENSION_TEXTURE1D:

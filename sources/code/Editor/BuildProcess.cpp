@@ -65,7 +65,7 @@ namespace Grindstone::Editor {
 		std::filesystem::path runtimePluginListPath = (targetBuildSettingsPath / "pluginsManifest.txt");
 		std::ofstream pluginlistStream(runtimePluginListPath);
 		if (pluginlistStream.fail()) {
-			GPRINT_ERROR_V(LogSource::Editor, "Failed to write plugin manifest to '{}'.", runtimePluginListPath.string());
+			GPRINT_ERROR(LogSource::Editor, "Failed to write plugin manifest to '{}'.", runtimePluginListPath.string());
 			return;
 		}
 

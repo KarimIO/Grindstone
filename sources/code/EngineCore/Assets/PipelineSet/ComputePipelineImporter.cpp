@@ -64,7 +64,7 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 
 	Assets::AssetLoadBinaryResult result = assetManager->LoadBinaryByUuid(AssetType::ComputePipelineSet, computePipelineAsset.uuid);
 	if (result.status != Assets::AssetLoadStatus::Success) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Could not find shader with id {}.", computePipelineAsset.uuid.ToString());
+		GPRINT_ERROR(LogSource::EngineCore, "Could not find shader with id {}.", computePipelineAsset.uuid.ToString());
 		return false;
 	}
 
@@ -72,7 +72,7 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 	GS_ASSERT(fileData.GetCapacity() >= (4 + sizeof(V1::PipelineSetFileHeader)));
 
 	if (memcmp(fileData.Get(), V1::FileMagicCode, 4) != 0) {
-		GPRINT_ERROR_V(LogSource::EngineCore, "Graphics Pipeline file does not start with GPSF - {}.", result.displayName);
+		GPRINT_ERROR(LogSource::EngineCore, "Graphics Pipeline file does not start with GPSF - {}.", result.displayName);
 		computePipelineAsset.assetLoadStatus = AssetLoadStatus::Failed;
 		return false;
 	}

@@ -1,6 +1,9 @@
 #pragma once
 
 #include <Windows.h>
+#include <source_location>
+#include <format>
+#include <string>
 #include <iostream>
 
 #include <Common/Break.hpp>
@@ -10,47 +13,109 @@
 	#define GS_ENABLE_ASSERTS
 #endif
 
-#ifdef GS_ENABLE_ASSERTS
-	#define GS_ASSERT_LOG(text, ...) \
-		std::wcout << TEXT(__FILE__) << TEXT("(" << __LINE__ << "): ") << TEXT("Assertion Failed: ") << TEXT(#text) << std::endl; \
-		MessageBox( \
-			NULL, \
-			TEXT(#text), \
-			TEXT("Assertion Failed"), \
-			MB_ICONEXCLAMATION | MB_OK \
+namespace Grindstone::Debug {
+	template<typename... Args>
+	void AssertLog(
+		std::format_string<Args...> format,
+		const ::std::source_location& location = ::std::source_location::current(),
+		Args&&... args
+	) {
+		const std::string message = std::format(
+			format,
+			::std::forward<Args>(args)...
 		);
 
-	#define GS_BREAK_WITH_MESSAGE(msg, ...) \
-		GS_ASSERT_LOG(msg, __VA_ARGS__); \
-		GS_DEBUG_BREAK;
+		const std::string fullMessage = std::format(
+			"{}({}): Assertion Failed\n"
+			"Function: {}\n\n"
+			"{}",
+			location.file_name(),
+			location.line(),
+			location.function_name(),
+			message
+		);
 
-	#define GS_ASSERT_ENGINE_WITH_MESSAGE(condition, msg, ...) \
-		if(!(condition)) { \
-			GS_ASSERT_LOG(msg, __VA_ARGS__); \
-			GS_DEBUG_BREAK; \
-		}
+		std::cerr << fullMessage << std::endl;
 
-	#define GS_ASSERT_WITH_MESSAGE(condition, msg, ...) \
-		if(!(condition)) { \
-			GS_ASSERT_LOG(msg, __VA_ARGS__); \
-			GS_DEBUG_BREAK; \
-		}
-	#define GS_ASSERT_ENGINE(condition) \
-		if(!(condition)) { \
-			GS_ASSERT_LOG(condition); \
-			GS_DEBUG_BREAK; \
-		}
+		const int wideSize = MultiByteToWideChar(
+			CP_UTF8,
+			0,
+			fullMessage.data(),
+			static_cast<int>(fullMessage.size()),
+			nullptr,
+			0
+		);
 
-	#define GS_ASSERT(condition) \
-		if(!(condition)) { \
-			GS_ASSERT_LOG(condition); \
+		std::wstring wideMessage(wideSize, L'\0');
+
+		MultiByteToWideChar(
+			CP_UTF8,
+			0,
+			fullMessage.data(),
+			static_cast<int>(fullMessage.size()),
+			wideMessage.data(),
+			wideSize
+		);
+
+		MessageBoxW(
+			nullptr,
+			wideMessage.c_str(),
+			L"Assertion Failed",
+			MB_ICONEXCLAMATION | MB_OK
+		);
+	}
+}
+
+#ifdef GS_ENABLE_ASSERTS
+
+#define GS_ASSERT_LOG(msg, ...) \
+	::Grindstone::Debug::AssertLog(msg, std::source_location::current() __VA_OPT__(,) __VA_ARGS__)
+
+#define GS_BREAK_WITH_MESSAGE(msg, ...) \
+	do { \
+		GS_ASSERT_LOG(msg __VA_OPT__(,) __VA_ARGS__); \
+		GS_DEBUG_BREAK; \
+	} while (false)
+
+#define GS_ASSERT_ENGINE_WITH_MESSAGE(condition, msg, ...) \
+	do { \
+		if (!(condition)) { \
+			GS_ASSERT_LOG(msg __VA_OPT__(,) __VA_ARGS__); \
 			GS_DEBUG_BREAK; \
-		}
+		} \
+	} while (false)
+
+#define GS_ASSERT_WITH_MESSAGE(condition, msg, ...) \
+	do { \
+		if (!(condition)) { \
+			GS_ASSERT_LOG(msg __VA_OPT__(,) __VA_ARGS__); \
+			GS_DEBUG_BREAK; \
+		} \
+	} while (false)
+
+#define GS_ASSERT_ENGINE(condition) \
+	do { \
+		if (!(condition)) { \
+			GS_ASSERT_LOG("Assertion failed: {}", #condition); \
+			GS_DEBUG_BREAK; \
+		} \
+	} while (false)
+
+#define GS_ASSERT(condition) \
+	do { \
+		if (!(condition)) { \
+			GS_ASSERT_LOG("Assertion failed: {}", #condition); \
+			GS_DEBUG_BREAK; \
+		} \
+	} while (false)
+
 #else
-	#define GS_ASSERT_LOG(text, ...)
-	#define GS_BREAK_WITH_MESSAGE(msg, ...)
-	#define GS_ASSERT_ENGINE_WITH_MESSAGE(condition, msg, ...)
-	#define GS_ASSERT_WITH_MESSAGE(condition, msg, ...)
-	#define GS_ASSERT_ENGINE(condition)
-	#define GS_ASSERT(condition)
+
+#define GS_ASSERT_LOG(msg, ...)
+#define GS_BREAK_WITH_MESSAGE(msg, ...)
+#define GS_ASSERT_ENGINE_WITH_MESSAGE(condition, msg, ...)
+#define GS_ASSERT_WITH_MESSAGE(condition, msg, ...)
+#define GS_ASSERT_ENGINE(condition)
+#define GS_ASSERT(condition)
+
 #endif

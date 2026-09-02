@@ -567,7 +567,7 @@ void AssetBrowserPanel::TryRenameFile() {
 		pathRenameNewName = "";
 	}
 	catch (const std::filesystem::filesystem_error& error) {
-		GPRINT_ERROR_V(LogSource::Editor, "Rename failed: %s!", error.what());
+		GPRINT_ERROR(LogSource::Editor, "Rename failed: %s!", error.what());
 	}
 }
 
