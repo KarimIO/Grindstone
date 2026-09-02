@@ -20,7 +20,6 @@ namespace Grindstone::Editor::RendererFeatures {
 
 	private:
 		Grindstone::GraphicsAPI::RenderPass* mousePickRenderPass = nullptr;
-		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> mousePickPipelineSet;
 		GraphicsAPI::DescriptorSetLayout* mousePickDescriptorSetLayout = nullptr;
 
 		// TODO: None of this makes sense, it all should be removed. Get CaptureX/Y through Cvar.
