@@ -78,12 +78,11 @@ bool EngineCore::Initialize(LateCreateInfo& createInfo) {
 	// Load core (Logging, ECS and Plugin Manager)
 	if (createInfo.pluginManagerOverride == nullptr) {
 		pluginManager = AllocatorCore::Allocate<Plugins::DefaultPluginManager>();
+		pluginManager->PreprocessPlugins();
 	}
 	else {
 		pluginManager = createInfo.pluginManagerOverride;
 	}
-
-	pluginManager->PreprocessPlugins();
 
 	pluginManager->LoadPluginsByStage("EarlyEngineSetup");
 

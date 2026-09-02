@@ -334,7 +334,7 @@ bool EditorPluginManager::PreprocessPlugins() {
 		return false;
 	}
 
-	if (!Grindstone::Plugins::LoadPluginManifestLockFile(manifestResults)) {
+	if (!Grindstone::Plugins::LoadPluginManifestLockFile(this, manifestResults)) {
 		return false;
 	}
 
