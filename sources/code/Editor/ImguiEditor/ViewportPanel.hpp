@@ -31,7 +31,6 @@ namespace Grindstone {
 				EditorCamera* camera = nullptr;
 				uint32_t width = 1;
 				uint32_t height = 1;
-				uint16_t renderMode = 0;
 
 				bool hasRenderedThisFrame = false;
 				int startDragX = 0;

@@ -12,6 +12,7 @@
 #include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
+#include <EngineCore/Rendering/RenderingPipeline.hpp>
 #include <Editor/EditorCamera.hpp>
 #include <Editor/EditorManager.hpp>
 
@@ -280,20 +281,13 @@ void ViewportPanel::DisplayCameraToPanel() {
 }
 
 void ViewportPanel::DisplayOptions() {
-	/*
-	* TODO: Re-Introduce DisplayOptions
-	BaseRenderer* renderer = camera->GetRenderer();
-
-	if (renderer == nullptr) {
-		return;
-	}
-
-	uint16_t count = renderer->GetRenderModeCount();
-	const BaseRenderer::RenderMode* modes = renderer->GetRenderModes();
+	EngineCore& engineCore = EngineCore::GetInstance();
+	Renderer::RenderingPipeline* renderingPipeline = engineCore.GetRenderingPipeline();
+	const std::vector<Renderer::RenderMode>& modes = renderingPipeline->GetDebugModes();
 
 	ImVec2 position = ImVec2(0.0f, 24.0f);
 	ImGui::SetCursorPos(position);
-	const BaseRenderer::RenderMode& currentMode = modes[renderMode];
+	const Renderer::RenderMode& currentMode = modes[camera->renderMode];
 	if (ImGui::BeginCombo("##DisplayMode", currentMode.name, ImGuiComboFlags_WidthFitPreview)) {
 		if (ImGui::Selectable("Show Grid", camera->isGridEnabled)) {
 			camera->isGridEnabled = !camera->isGridEnabled;
@@ -311,16 +305,14 @@ void ViewportPanel::DisplayOptions() {
 			camera->isBoundingBoxGizmoEnabled = !camera->isBoundingBoxGizmoEnabled;
 		}
 
-		for (uint16_t i = 0; i < count; ++i) {
-			bool isSelected = renderMode;
+		for (uint16_t i = 0; i < modes.size(); ++i) {
+			bool isSelected = camera->renderMode == i;
 			if (ImGui::Selectable(modes[i].name, isSelected)) {
-				renderer->SetRenderMode(i);
-				renderMode = i;
+				camera->renderMode = i;
 			}
 		}
 		ImGui::EndCombo();
 	}
-	*/
 }
 
 void ViewportPanel::Render() {
