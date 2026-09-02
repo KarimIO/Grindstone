@@ -4,8 +4,7 @@
 #include "EditorPluginManager.hpp"
 #include "PluginManifestLockFileLoader.hpp"
 
-bool Grindstone::Plugins::LoadPluginManifestLockFile(std::vector<ManifestData>& manifestDataList) {
-	auto pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager*>(Grindstone::EngineCore::GetInstance().GetPluginManager());
+bool Grindstone::Plugins::LoadPluginManifestLockFile(Grindstone::Plugins::EditorPluginManager* pluginManager, std::vector<ManifestData>& manifestDataList) {
 	const std::vector<std::filesystem::path> &pluginsFolders = pluginManager->GetPluginsFolders();
 
 	for (int i = static_cast<int>(manifestDataList.size()) - 1; i >= 0; --i) {

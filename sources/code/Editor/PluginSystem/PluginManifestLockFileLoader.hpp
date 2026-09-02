@@ -4,5 +4,5 @@
 #include "PluginManifestData.hpp"
 
 namespace Grindstone::Plugins {
-	bool LoadPluginManifestLockFile(std::vector<ManifestData>& manifestData);
+	bool LoadPluginManifestLockFile(Grindstone::Plugins::EditorPluginManager* pluginManager, std::vector<ManifestData>& manifestData);
 }
