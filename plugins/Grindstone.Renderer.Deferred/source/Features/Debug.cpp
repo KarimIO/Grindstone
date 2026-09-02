@@ -80,6 +80,17 @@ void Grindstone::Renderer::Debug::Bind(
 	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
 	Grindstone::Renderer::RenderFrameContext& context
 ) {
+	auto renderModeResponse = context.blackboard.GetValue<uint32_t>("RenderMode");
+	if (renderModeResponse.HasError()) {
+		GPRINT_ERROR(LogSource::Rendering, "Debug: Unable to get render mode: {}", renderModeResponse.GetError());
+		return;
+	}
+
+	uint32_t renderMode = renderModeResponse.GetValue();
+	if (renderMode == 0) {
+		return;
+	}
+
 	auto ambientOcclusionResponse = context.blackboard.GetValue<Grindstone::Renderer::RenderGraphBuilderResourceRef>("AmbientOcclusionBlurred");
 	if (ambientOcclusionResponse.HasError()) {
 		GPRINT_ERROR(LogSource::Rendering, "Debug: Unable to get blurred SSAO: {}", ambientOcclusionResponse.GetError());
@@ -95,9 +106,6 @@ void Grindstone::Renderer::Debug::Bind(
 	Grindstone::Renderer::GbufferData gbufferData = gbufferDataResponse.GetValue();
 
 	RenderGraphBuilderResourceRef outputRef = context.colorRef;
-
-	// TODO: RenderGraph 2.0 Handle this.
-	DeferredRenderMode renderMode = DeferredRenderMode::Default;
 
 	for(const RenderFrameViewContext& view : context.views) {
 		const glm::mat4& projectionMatrix = view.projectionMatrix;

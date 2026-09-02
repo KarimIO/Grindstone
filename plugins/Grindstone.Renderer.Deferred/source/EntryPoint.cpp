@@ -38,9 +38,9 @@ extern "C" {
 		EngineCore::SetInstance(*engineCore);
 
 		deferredRenderPasses = Grindstone::Renderer::InitializeRenderPasses();
-		// pluginInterface->RegisterRendererFeature<Debug>();
 		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Bloom>();
 		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Blur>();
+		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Debug>();
 		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::DepthOfField>();
 		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Forward>();
 		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Gbuffer>();
@@ -55,7 +55,6 @@ extern "C" {
 
 	RENDERER_DEFERRED_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
 		Grindstone::EngineCore* engineCore = pluginInterface->GetEngineCore();
-		// pluginInterface->UnregisterRendererFeature<Debug>();
 		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Tonemap>();
 		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Smaa>();
 		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Skinning>();
@@ -66,6 +65,7 @@ extern "C" {
 		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Gbuffer>();
 		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Forward>();
 		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::DepthOfField>();
+		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Debug>();
 		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Blur>();
 		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Bloom>();
 		Grindstone::Renderer::ReleaseRenderPasses(deferredRenderPasses);

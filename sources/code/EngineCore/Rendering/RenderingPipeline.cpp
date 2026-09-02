@@ -5,7 +5,7 @@
 
 using namespace Grindstone::Renderer;
 
-std::array<RenderMode, 13> renderModes = {
+static std::vector<RenderMode> renderModes = {
 	RenderMode{ "Default" },
 	RenderMode{ "World Position" },
 	RenderMode{ "World Position (Modulus)" },
@@ -29,6 +29,10 @@ void RenderingPipeline::Render(
 	for (Grindstone::Rendering::RendererFeature* feature : features) {
 		feature->Bind(renderGraphBuilder, renderFrameContext);
 	}
+}
+
+const std::vector<Grindstone::Renderer::RenderMode>& Grindstone::Renderer::RenderingPipeline::GetDebugModes() {
+	return renderModes;
 }
 
 std::vector<Grindstone::Rendering::GeometryRenderStats> Grindstone::Renderer::RenderingPipeline::GetRenderingStats() {
