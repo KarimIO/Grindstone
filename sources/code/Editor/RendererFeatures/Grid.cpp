@@ -81,6 +81,17 @@ void Grindstone::Editor::RendererFeatures::Grid::Bind(
 	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
 	Grindstone::Renderer::RenderFrameContext& context
 ) {
+	auto gizmoRenderingFlagsResponse = context.blackboard.GetValue<uint32_t>("GizmoRenderingFlags");
+	if (gizmoRenderingFlagsResponse.HasError()) {
+		GPRINT_ERROR(LogSource::Rendering, "Grid: Unable to get GizmoRenderingFlags: {}", gizmoRenderingFlagsResponse.GetError());
+		return;
+	}
+	uint32_t gizmoRenderingFlags = gizmoRenderingFlagsResponse.GetValue();
+	bool isGridShown = (gizmoRenderingFlags & 1) > 0;
+	if (!isGridShown) {
+		return;
+	}
+
 	auto gbufferDataResponse = context.blackboard.GetValue<Grindstone::Renderer::GbufferData>();
 	if (gbufferDataResponse.HasError()) {
 		GPRINT_ERROR(LogSource::Rendering, "Grid: Unable to get Gbuffer: {}", gbufferDataResponse.GetError());
