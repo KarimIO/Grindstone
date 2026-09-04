@@ -7,6 +7,7 @@
 #include <Editor/RendererFeatures/Grid.hpp>
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
 #include <EngineCore/Logger.hpp>
+#include <Grindstone.Renderer.Deferred/include/Features/Gbuffer.hpp>
 
 struct GridUniformBuffer {
 	glm::mat4 projectionMatrix;
@@ -80,22 +81,15 @@ void Grindstone::Editor::RendererFeatures::Grid::Bind(
 	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
 	Grindstone::Renderer::RenderFrameContext& context
 ) {
-	/* TODO: Rendergraph 2.0, maybe get scenedepth thru blackboard
-	auto colorImageResponse = context.blackboard.GetValue<Renderer::RenderGraphBuilderResourceRef>("SceneColor");
-	if (colorImageResponse.HasError()) {
-		GPRINT_ERROR(LogSource::Rendering, "Grid: Unable to get SceneDepth: {}", colorImageResponse.GetError());
+	auto gbufferDataResponse = context.blackboard.GetValue<Grindstone::Renderer::GbufferData>();
+	if (gbufferDataResponse.HasError()) {
+		GPRINT_ERROR(LogSource::Rendering, "Grid: Unable to get Gbuffer: {}", gbufferDataResponse.GetError());
 		return;
 	}
-
-	auto depthImageResponse = context.blackboard.GetValue<Renderer::RenderGraphBuilderResourceRef>("SceneDepth");
-	if (depthImageResponse.HasError()) {
-		GPRINT_ERROR(LogSource::Rendering, "Grid: Unable to get SceneDepth: {}", depthImageResponse.GetError());
-		return;
-	}
-	*/
+	Grindstone::Renderer::GbufferData gbufferData = gbufferDataResponse.GetValue();
 
 	Grindstone::Renderer::RenderGraphBuilderResourceRef colorImageRef = context.colorRef;
-	Grindstone::Renderer::RenderGraphBuilderResourceRef depthImageRef = context.depthRef;
+	Grindstone::Renderer::RenderGraphBuilderResourceRef depthImageRef = gbufferData.depthRef;
 
 	for (const Renderer::RenderFrameViewContext& view : context.views) {
 		Renderer::RenderGraphBuilderResourceRef gridImageRef = renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(

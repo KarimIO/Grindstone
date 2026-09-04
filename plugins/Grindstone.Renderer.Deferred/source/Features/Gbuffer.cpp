@@ -32,7 +32,7 @@ void Grindstone::Renderer::Gbuffer::Bind(
 				RenderGraphBuilderResourceRef albedoRef = renderPass.WriteColorAttachment(attachmentAlbedo, GraphicsAPI::LoadOp::Clear, GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
 				RenderGraphBuilderResourceRef normalRef = renderPass.WriteColorAttachment(attachmentNormal, GraphicsAPI::LoadOp::Clear, GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
 				RenderGraphBuilderResourceRef specularRoughnessRef = renderPass.WriteColorAttachment(attachmentSpecularRoughness, GraphicsAPI::LoadOp::Clear, GraphicsAPI::ClearColor(0.0f, 0.0f, 0.0f, 0.0f));
-				RenderGraphBuilderResourceRef depthRef = renderPass.WriteDepthStencilAttachment(depthImageRef, GraphicsAPI::LoadOp::Clear, GraphicsAPI::ClearDepthStencil(1.0f, 0u));
+				RenderGraphBuilderResourceRef depthRef = renderPass.WriteDepthStencilAttachment(attachmentDepthStencil, GraphicsAPI::LoadOp::Clear, GraphicsAPI::ClearDepthStencil(1.0f, 0u));
 
 				return Grindstone::Renderer::GbufferData{
 					.albedoRef = albedoRef,

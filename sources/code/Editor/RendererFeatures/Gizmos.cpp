@@ -13,6 +13,7 @@
 #include <Grindstone.Renderables.3D/include/Components/MeshComponent.hpp>
 
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
+#include <Grindstone.Renderer.Deferred/include/Features/Gbuffer.hpp>
 
 void Grindstone::Editor::RendererFeatures::Gizmos::Initialize() {
 	gizmoRenderer.Initialize();
@@ -37,14 +38,23 @@ void Grindstone::Editor::RendererFeatures::Gizmos::Bind(
 	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
 	Grindstone::Renderer::RenderFrameContext& context
 ) {
+	auto gbufferDataResponse = context.blackboard.GetValue<Grindstone::Renderer::GbufferData>();
+	if (gbufferDataResponse.HasError()) {
+		GPRINT_ERROR(LogSource::Rendering, "Gizmos: Unable to get Gbuffer: {}", gbufferDataResponse.GetError());
+		return;
+	}
+	Grindstone::Renderer::GbufferData gbufferData = gbufferDataResponse.GetValue();
+
 	Grindstone::Renderer::RenderGraphBuilderResourceRef colorImageRef = context.colorRef;
+	Grindstone::Renderer::RenderGraphBuilderResourceRef depthImageRef = gbufferData.depthRef;
 
 	for (const Renderer::RenderFrameViewContext& view : context.views) {
 		renderGraphBuilder.CreateGraphicsPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>(
 			"Gizmos Pass",
 			Grindstone::Renderer::MetaRect::Swapchain(),
-			[this, colorImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) {
-				// TODO: There should be a way to recover the image description from the reference.
+			[screenSampler=this->screenSampler, depthImageRef, colorImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) {
+				renderPass.ReadExternalSampler(screenSampler);
+				renderPass.ReadSampledImage(depthImageRef);
 				Renderer::RenderGraphBuilderResourceRef output = renderPass.ReadWriteColorAttachment(colorImageRef);
 
 				return output;

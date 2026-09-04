@@ -139,9 +139,7 @@ bool Manager::Initialize(const std::unordered_map<std::string, std::string>& cmd
 	assetRegistry.WriteFile();
 	gitManager.Initialize();
 
-	engineCore->GetPluginManager()->LoadPluginsByStage("EditorBeforeCameraInitialization");
-	Grindstone::Editor::EditorCamera::SetupRenderPasses();
-	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAfterCameraInitialization");
+	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAssetRegistryInitialization");
 
 	editorWorldContext = engineCore->GetWorldContextManager()->Create("Editor");
 

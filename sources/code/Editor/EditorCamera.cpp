@@ -22,40 +22,6 @@ using namespace Grindstone::Memory;
 using namespace Grindstone::Editor;
 using namespace Grindstone;
 
-const Grindstone::ConstHashedString editorRenderPassHashedString("Editor");
-const Grindstone::ConstHashedString gizmoRenderPassHashedString("Gizmo");
-static GraphicsAPI::RenderPass* editorRenderPass = nullptr;
-static GraphicsAPI::RenderPass* gizmoRenderPass = nullptr;
-
-void EditorCamera::SetupRenderPasses() {
-	EngineCore& engineCore = Editor::Manager::GetEngineCore();
-	Grindstone::RenderPassRegistry* renderPassRegistry = engineCore.GetRenderPassRegistry();
-	GraphicsAPI::Core* core = engineCore.GetGraphicsCore();
-
-
-	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> attachments = { { GraphicsAPI::Format::R8G8B8A8_UNORM, true } };
-
-	GraphicsAPI::RenderPass::CreateInfo editorRenderPassCreateInfo{};
-	editorRenderPassCreateInfo.debugName = "Editor RenderPass";
-	editorRenderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(attachments.size());
-	editorRenderPassCreateInfo.colorAttachments = attachments.data();
-	editorRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::Invalid;
-	editorRenderPassCreateInfo.shouldClearDepthOnLoad = false;
-	editorRenderPass = core->CreateRenderPass(editorRenderPassCreateInfo);
-	renderPassRegistry->RegisterRenderpass(editorRenderPassHashedString, editorRenderPass);
-
-	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> gizmoAttachments = { { GraphicsAPI::Format::R8G8B8A8_UNORM, false } };
-
-	GraphicsAPI::RenderPass::CreateInfo gizmoRenderPassCreateInfo{};
-	gizmoRenderPassCreateInfo.debugName = "Editor Gizmo RenderPass";
-	gizmoRenderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(gizmoAttachments.size());
-	gizmoRenderPassCreateInfo.colorAttachments = gizmoAttachments.data();
-	gizmoRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
-	gizmoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
-	gizmoRenderPass = core->CreateRenderPass(gizmoRenderPassCreateInfo);
-	renderPassRegistry->RegisterRenderpass(gizmoRenderPassHashedString, gizmoRenderPass);
-}
-
 EditorCamera::EditorCamera() {
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 	Grindstone::RenderPassRegistry* renderPassRegistry = engineCore.GetRenderPassRegistry();
@@ -196,18 +162,6 @@ EditorCamera::EditorCamera() {
 }
 
 EditorCamera::~EditorCamera() {
-}
-
-void Grindstone::Editor::EditorCamera::RegisterGizmoPass(
-	std::function<
-		Grindstone::Renderer::RenderGraphBuilderResourceRef(
-			Grindstone::Renderer::RenderGraphBuilder&,
-			Grindstone::Renderer::RenderGraphBuilderResourceRef,
-			Grindstone::Renderer::RenderGraphBuilderResourceRef
-		)
-	> callback
-) {
-	gizmoRenderCallbacks.emplace_back(callback);
 }
 
 uint64_t EditorCamera::GetRenderOutput() {
@@ -359,6 +313,10 @@ void EditorCamera::Render(GraphicsAPI::CommandBuffer* commandBuffer) {
 			.farDistance = farPlaneDistance
 		}
 	);
+
+	if (mousePickedThisFrame) {
+		frameCxt.blackboard.SetValue("MousePickCoords", mousePickCoordinates);
+	}
 
 	frameCxt.blackboard.SetValue("RenderMode", renderMode);
 	Grindstone::Renderer::RenderingPipeline* renderPipeline = engineCore.GetRenderingPipeline();
@@ -531,12 +489,21 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 		}
 	);
 
+	if (mousePickedThisFrame) {
+		frameCxt.blackboard.SetValue("MousePickCoords", mousePickCoordinates);
+	}
+
 	frameCxt.blackboard.SetValue("RenderMode", renderMode);
 	Grindstone::Renderer::RenderingPipeline* renderPipeline = engineCore.GetRenderingPipeline();
 	renderPipeline->Render(renderGraphBuilder, frameCxt);
 
 	auto renderGraph = renderGraphBuilder.Compile();
 	renderGraph.ExecuteGraph(context);
+}
+
+void EditorCamera::CaptureMousePick(Grindstone::Math::Int2 coordinates) {
+	mousePickCoordinates = coordinates;
+	mousePickedThisFrame = true;
 }
 
 const float maxAngle = 1.55f;

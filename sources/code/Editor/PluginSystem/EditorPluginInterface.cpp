@@ -24,23 +24,6 @@ Grindstone::Editor::Manager* EditorPluginInterface::GetEditorInstance() const {
 	return &manager;
 }
 
-void EditorPluginInterface::RegisterGizmoPass(
-	std::function<
-		Grindstone::Renderer::RenderGraphBuilderResourceRef(
-			Grindstone::Renderer::RenderGraphBuilder&,
-			Grindstone::Renderer::RenderGraphBuilderResourceRef,
-			Grindstone::Renderer::RenderGraphBuilderResourceRef
-		)
-	> callback
-) {
-	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
-	Grindstone::Editor::ImguiEditor::ImguiEditor& imguiEditor = manager.GetImguiEditor();
-	Grindstone::Editor::ImguiEditor::ViewportPanel* viewport = imguiEditor.GetViewportPanel();
-	Grindstone::Editor::EditorCamera* editorCamera = viewport->GetCamera();
-
-	editorCamera->RegisterGizmoPass(callback);
-}
-
 void EditorPluginInterface::MapExtensionToImporterType(const char* extension, Grindstone::HashedString importerType) {
 	Grindstone::Editor::Manager& manager = Grindstone::Editor::Manager::GetInstance();
 	Grindstone::Importers::ImporterManager& importerManager = manager.GetImporterManager();

@@ -631,15 +631,6 @@ extern "C" {
 
 		Grindstone::Plugins::EditorPluginInterface* editorInterface = static_cast<Grindstone::Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 		if (editorInterface != nullptr) {
-			editorInterface->RegisterGizmoPass(
-				[](
-					Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
-					Grindstone::Renderer::RenderGraphBuilderResourceRef colorImageRef,
-					Grindstone::Renderer::RenderGraphBuilderResourceRef depthImageRef
-				) -> Grindstone::Renderer::RenderGraphBuilderResourceRef {
-					return debugRenderer->DrawRenderPass(renderGraphBuilder, colorImageRef, depthImageRef);
-				}
-			);
 			editorInterface->RegisterMenuItem("Build/Generate Navigation Mesh", MenuItemGenerateNavMesh);
 			editorInterface->RegisterMenuItem("Build/Load Navigation Mesh", MenuItemLoadNavMesh);
 		}

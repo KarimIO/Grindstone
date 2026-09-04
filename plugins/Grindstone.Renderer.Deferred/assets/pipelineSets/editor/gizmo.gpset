@@ -20,11 +20,6 @@ shaderBlock GizmoBase {
 			[[vk::location(0)]] float3 position : POSITION0;
 		};
 
-		struct VertexToFragment {
-			float4 position : SV_Position;
-			[[vk::location(0)]] float4 color : COLOR0;
-		};
-
 		SamplerState gbufferSampler : register(s0, space1);
 		Texture2D<float4> gbufferDepth : register(t1, space1);
 	}
@@ -58,24 +53,48 @@ pipelineSet "Gizmo" {
 			]
 
 			shaderHlsl {
+				struct VertexToFragment {
+					float4 position : SV_Position;
+					[[vk::location(0)]] float4 color : COLOR0;
+					[[vk::location(1)]] nointerpolation float2 startScreenPosition : POSITION1;
+				};
+
 				VertexToFragment mainVertex(VertexInput input, [[vk::builtin("BaseInstance")]] uint baseInstance : BASEINSTANCE) {
 					VertexToFragment output = (VertexToFragment)0;
-					output.position = mul(elementsBuffer.elements[baseInstance].matrix, float4(input.position, 1.0));
+
+					output.position = mul(
+						elementsBuffer.elements[baseInstance].matrix,
+						float4(input.position, 1.0)
+					);
+
+					output.startScreenPosition =
+						(output.position.xy / output.position.w * 0.5 + 0.5)
+						* rendererUbo.renderResolution;
+
 					output.color = elementsBuffer.elements[baseInstance].outlineColor;
+
 					return output;
 				}
 
 				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
 					float2 uv = input.position.xy / rendererUbo.renderResolution;
 					float dGbuffer = gbufferDepth.SampleLevel(gbufferSampler, uv, 0);
+
 					float dDraw = input.position.z;
-					float4 color = input.color;
 
 					if (dDraw > dGbuffer) {
-						color.a *= 0.5f;
+						const float dashSize = 20.0f;
+						const float gapSize = 10.0f;
+						const float period = dashSize + gapSize;
+
+						float dist = length(input.position.xy - input.startScreenPosition);
+
+						if (frac(dist / period) >= dashSize / period) {
+							discard;
+						}
 					}
 
-					return color;
+					return input.color;
 				}
 			}
 		}
@@ -104,6 +123,11 @@ pipelineSet "Gizmo" {
 			]
 
 			shaderHlsl {
+				struct VertexToFragment {
+					float4 position : SV_Position;
+					[[vk::location(0)]] float4 color : COLOR0;
+				};
+
 				VertexToFragment mainVertex(VertexInput input, [[vk::builtin("BaseInstance")]] uint baseInstance : BASEINSTANCE) {
 					VertexToFragment output = (VertexToFragment)0;
 					output.position = mul(elementsBuffer.elements[baseInstance].matrix, float4(input.position, 1.0));
@@ -111,16 +135,28 @@ pipelineSet "Gizmo" {
 					return output;
 				}
 
-				float4 mainFragment(VertexToFragment input) : SV_TARGET0 {
+				float4 mainFragment(VertexToFragment input, bool isFrontFacing: SV_IsFrontFace) : SV_TARGET0 {
 					float2 uv = input.position.xy / rendererUbo.renderResolution;
 					float dGbuffer = gbufferDepth.SampleLevel(gbufferSampler, uv, 0);
 					float dDraw = input.position.z;
 					float4 color = input.color;
 
 					if (dDraw > dGbuffer) {
-						color.a *= 0.2f;
-					}
+						if (isFrontFacing) {
+							float gridSize = 160.0f;
+							float radius = 0.2f;
+							float minDim = min(rendererUbo.renderResolution.x, rendererUbo.renderResolution.y);
+							float2 cellUv = frac(input.position.xy * gridSize / minDim);
+							float dist = length(cellUv - float2(0.5f, 0.5f));
+							float circle = smoothstep(radius - 0.01f, radius + 0.01f, dist);
 
+							color.a *= 1 - circle;
+						}
+						else {
+							color.a *= 0.2f;
+						}
+					}
+					
 					return color;
 				}
 			}
