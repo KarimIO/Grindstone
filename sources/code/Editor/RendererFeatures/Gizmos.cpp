@@ -38,6 +38,13 @@ void Grindstone::Editor::RendererFeatures::Gizmos::Bind(
 	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
 	Grindstone::Renderer::RenderFrameContext& context
 ) {
+	auto gizmoRenderingFlagsResponse = context.blackboard.GetValue<uint32_t>("GizmoRenderingFlags");
+	if (gizmoRenderingFlagsResponse.HasError()) {
+		GPRINT_ERROR(LogSource::Rendering, "Gizmos: Unable to get GizmoRenderingFlags: {}", gizmoRenderingFlagsResponse.GetError());
+		return;
+	}
+	uint32_t gizmoRenderingFlags = gizmoRenderingFlagsResponse.GetValue();
+
 	auto gbufferDataResponse = context.blackboard.GetValue<Grindstone::Renderer::GbufferData>();
 	if (gbufferDataResponse.HasError()) {
 		GPRINT_ERROR(LogSource::Rendering, "Gizmos: Unable to get Gbuffer: {}", gbufferDataResponse.GetError());
@@ -59,20 +66,23 @@ void Grindstone::Editor::RendererFeatures::Gizmos::Bind(
 
 				return output;
 			},
-			[this, projView=view.projectionViewMatrix](
+			[this, projView=view.projectionViewMatrix, gizmoRenderingFlags](
 				Grindstone::Math::IntRect2D renderingArea,
 				const Renderer::RenderGraphContext& cxt,
 				const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
 				Grindstone::Renderer::RenderGraphBuilderResourceRef& data
 			) {
+				// TODO: All of this needs to be moved out. We need a way of
+				// submitting shapes to the gizmoRenderer, but this should be outside of
+				// the RendererFeature, as that should only call gizmoRenderer->Render().
 				Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
 				Grindstone::Editor::Manager& editorManager = Editor::Manager::GetInstance();
 				Grindstone::GraphicsAPI::CommandBuffer* commandBuffer = cxt.commandBuffer;
 				Grindstone::GraphicsAPI::Core* graphicsCore = cxt.graphicsCore;
 
-				bool isBoundingSphereGizmoEnabled = true;
-				bool isBoundingBoxGizmoEnabled = true;
-				bool isColliderGizmoEnabled = true;
+				bool isBoundingSphereGizmoEnabled = (gizmoRenderingFlags & 2) > 0;
+				bool isBoundingBoxGizmoEnabled = (gizmoRenderingFlags & 4) > 0;
+				bool isColliderGizmoEnabled = (gizmoRenderingFlags & 8) > 0;
 
 				glm::vec2 renderScale = glm::vec2(1.0f, 1.0f);
 
