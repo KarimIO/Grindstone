@@ -20,16 +20,6 @@ namespace Grindstone::Plugins {
 		virtual ImGuiContext* GetImguiContext() const;
 		virtual Grindstone::Editor::Manager* GetEditorInstance() const;
 
-		virtual void RegisterGizmoPass(
-			std::function<
-				Grindstone::Renderer::RenderGraphBuilderResourceRef(
-					Grindstone::Renderer::RenderGraphBuilder&,
-					Grindstone::Renderer::RenderGraphBuilderResourceRef,
-					Grindstone::Renderer::RenderGraphBuilderResourceRef
-				)
-			> callback
-		);
-
 		virtual void MapExtensionToImporterType(const char* extension, Grindstone::HashedString importerType);
 		virtual void UnmapExtensionToImporterType(const char* extension);
 

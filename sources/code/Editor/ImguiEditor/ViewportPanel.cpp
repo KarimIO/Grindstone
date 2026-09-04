@@ -258,12 +258,9 @@ void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 		}
 	}
 
-	// TODO: Replace this for RenderGraph 2.0
-	/*
 	if (isHovering) {
-		camera->CaptureMousePick(hoverX, hoverY);
+		camera->CaptureMousePick(Grindstone::Math::Int2(hoverX, hoverY));
 	}
-	*/
 }
 
 Grindstone::Editor::EditorCamera* ViewportPanel::GetCamera() const {

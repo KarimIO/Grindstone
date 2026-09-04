@@ -240,8 +240,8 @@ void ThumbnailManager::DeregisterGenerator(AssetType type, ThumbnailGenerateFn g
 		GPRINT_WARN(
 			Grindstone::LogSource::Editor,
 			"Trying to register unregister generator for {}, but found a different generator. Ignoring this Unregister call.",
-				GetAssetTypeToString(type)
-				);
+			GetAssetTypeToString(type)
+		);
 	}
 	else {
 		generators.erase(assetIterator);

@@ -146,6 +146,51 @@ static Grindstone::GraphicsAPI::RenderPass* CreateShadowMapRenderPass(Grindstone
 	return rp;
 }
 
+static Grindstone::GraphicsAPI::RenderPass* CreateEditorRenderPass(Grindstone::GraphicsAPI::Core* graphicsCore, Grindstone::RenderPassRegistry* rpRegistry) {
+	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> attachments = { { GraphicsAPI::Format::R8G8B8A8_UNORM, true } };
+
+	GraphicsAPI::RenderPass::CreateInfo editorRenderPassCreateInfo{};
+	editorRenderPassCreateInfo.debugName = "Editor RenderPass";
+	editorRenderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(attachments.size());
+	editorRenderPassCreateInfo.colorAttachments = attachments.data();
+	editorRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::Invalid;
+	editorRenderPassCreateInfo.shouldClearDepthOnLoad = false;
+	Grindstone::GraphicsAPI::RenderPass* rp = graphicsCore->CreateRenderPass(editorRenderPassCreateInfo);
+	rpRegistry->RegisterRenderpass(editorRenderPassHashedString, rp);
+	return rp;
+}
+
+static Grindstone::GraphicsAPI::RenderPass* CreateGizmoRenderPass(Grindstone::GraphicsAPI::Core* graphicsCore, Grindstone::RenderPassRegistry* rpRegistry) {
+	std::array<GraphicsAPI::RenderPass::AttachmentInfo, 1> gizmoAttachments = { { GraphicsAPI::Format::R8G8B8A8_UNORM, false } };
+
+	GraphicsAPI::RenderPass::CreateInfo gizmoRenderPassCreateInfo{};
+	gizmoRenderPassCreateInfo.debugName = "Editor Gizmo RenderPass";
+	gizmoRenderPassCreateInfo.colorAttachmentCount = static_cast<uint32_t>(gizmoAttachments.size());
+	gizmoRenderPassCreateInfo.colorAttachments = gizmoAttachments.data();
+	gizmoRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
+	gizmoRenderPassCreateInfo.shouldClearDepthOnLoad = false;
+	Grindstone::GraphicsAPI::RenderPass* rp = graphicsCore->CreateRenderPass(gizmoRenderPassCreateInfo);
+	rpRegistry->RegisterRenderpass(gizmoRenderPassHashedString, rp);
+	return rp;
+}
+
+
+static Grindstone::GraphicsAPI::RenderPass* CreateMousePickRenderPass(Grindstone::GraphicsAPI::Core* graphicsCore, Grindstone::RenderPassRegistry* rpRegistry) {
+	GraphicsAPI::Format mousePickColorImageFormat = GraphicsAPI::Format::R32_UINT;
+	GraphicsAPI::RenderPass::AttachmentInfo mousePickAttachmentInfo = { mousePickColorImageFormat, true };
+
+	GraphicsAPI::RenderPass::CreateInfo mousePickRenderPassCreateInfo{};
+	mousePickRenderPassCreateInfo.debugName = "MousePick RenderPass";
+	mousePickRenderPassCreateInfo.colorAttachmentCount = 1u;
+	mousePickRenderPassCreateInfo.colorAttachments = &mousePickAttachmentInfo;
+	mousePickRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
+	mousePickRenderPassCreateInfo.shouldClearDepthOnLoad = false;
+	Grindstone::GraphicsAPI::RenderPass* rp = graphicsCore->CreateRenderPass(mousePickRenderPassCreateInfo);
+	rpRegistry->RegisterRenderpass(mousePickRenderQueue, rp);
+	return rp;
+}
+
+
 Grindstone::Renderer::DeferredRendererRenderPasses Grindstone::Renderer::InitializeRenderPasses() {
 	EngineCore& engineCore = EngineCore::GetInstance();
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
@@ -161,6 +206,9 @@ Grindstone::Renderer::DeferredRendererRenderPasses Grindstone::Renderer::Initial
 	rps.ssaoRenderPass = CreateSsaoRenderPass(graphicsCore, rpRegistry);
 	rps.ssaoBlurRenderPass = CreateSsaoBlurRenderPass(graphicsCore, rpRegistry);
 	rps.gbufferRenderpass = CreateGbufferRenderPass(graphicsCore, rpRegistry);
+	rps.editorRenderPass = CreateEditorRenderPass(graphicsCore, rpRegistry);
+	rps.gizmoRenderPass = CreateGizmoRenderPass(graphicsCore, rpRegistry);
+	rps.mousePickRenderPass = CreateMousePickRenderPass(graphicsCore, rpRegistry);
 
 	return rps;
 }
@@ -170,6 +218,9 @@ void Grindstone::Renderer::ReleaseRenderPasses(DeferredRendererRenderPasses& rps
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Grindstone::RenderPassRegistry* rpRegistry = engineCore.GetRenderPassRegistry();
 
+	rpRegistry->UnregisterRenderpass(mousePickRenderQueue);
+	rpRegistry->UnregisterRenderpass(gizmoRenderPassHashedString);
+	rpRegistry->UnregisterRenderpass(editorRenderPassHashedString);
 	rpRegistry->UnregisterRenderpass(gbufferRenderPassKey);
 	rpRegistry->UnregisterRenderpass(geometryOpaqueRenderPassKey);
 	rpRegistry->UnregisterRenderpass(geometryUnlitRenderPassKey);

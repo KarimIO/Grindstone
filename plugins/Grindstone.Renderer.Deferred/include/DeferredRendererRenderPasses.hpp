@@ -19,6 +19,9 @@ namespace Grindstone::Renderer {
 		GraphicsAPI::RenderPass* targetRenderPass = nullptr;
 		GraphicsAPI::RenderPass* mainRenderpass = nullptr;
 		GraphicsAPI::RenderPass* gbufferRenderpass = nullptr;
+		GraphicsAPI::RenderPass* editorRenderPass = nullptr;
+		GraphicsAPI::RenderPass* gizmoRenderPass = nullptr;
+		GraphicsAPI::RenderPass* mousePickRenderPass = nullptr;
 	};
 
 	DeferredRendererRenderPasses InitializeRenderPasses();

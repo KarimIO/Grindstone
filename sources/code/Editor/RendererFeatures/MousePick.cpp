@@ -9,8 +9,6 @@
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
 #include <Editor/RendererFeatures/MousePick.hpp>
 
-const Grindstone::ConstHashedString mousePickRenderQueue("mousePick");
-
 struct MousePickMatrixBuffer {
 	glm::mat4 projectionMatrix;
 	glm::mat4 viewMatrix;
@@ -85,18 +83,6 @@ void Grindstone::Editor::RendererFeatures::MousePick::Initialize() {
 		GraphicsAPI::DescriptorSet::CreateInfo mousePickDescriptorSetCreateInfo{};
 		mousePickDescriptorSetCreateInfo.layout = mousePickDescriptorSetLayout;
 
-		GraphicsAPI::Format mousePickColorImageFormat = GraphicsAPI::Format::R32_UINT;
-		GraphicsAPI::RenderPass::AttachmentInfo mousePickAttachmentInfo = { mousePickColorImageFormat, true };
-
-		GraphicsAPI::RenderPass::CreateInfo mousePickRenderPassCreateInfo{};
-		mousePickRenderPassCreateInfo.debugName = "MousePick RenderPass";
-		mousePickRenderPassCreateInfo.colorAttachmentCount = 1u;
-		mousePickRenderPassCreateInfo.colorAttachments = &mousePickAttachmentInfo;
-		mousePickRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
-		mousePickRenderPassCreateInfo.shouldClearDepthOnLoad = false;
-		mousePickRenderPass = graphicsCore->CreateRenderPass(mousePickRenderPassCreateInfo);
-		renderPassRegistry->RegisterRenderpass(mousePickRenderQueue, mousePickRenderPass);
-
 		for (int i = 0; i < 3; ++i) {
 			std::string mousePickMatrixBufferName = std::vformat("Mouse Pick Uniform Buffer [{}]", std::make_format_args(i));
 			std::string mousePickResponseBufferName = std::vformat("Mouse Pick SSBO [{}]", std::make_format_args(i));
@@ -124,6 +110,22 @@ void Grindstone::Editor::RendererFeatures::MousePick::Bind(
 	Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
 	Grindstone::Renderer::RenderFrameContext& context
 ) {
+	auto mousePickResponse = context.blackboard.GetValue<Grindstone::Math::Int2>("MousePickCoords");
+	if (mousePickResponse.HasError()) {
+		if (mousePickResponse.GetError() != Grindstone::Blackboard::BlackboardError::KeyNotFound) {
+			GPRINT_ERROR(LogSource::Rendering, "MousePick: Unable to get MousePickCoords: {}", mousePickResponse.GetError());
+		}
+
+		return;
+	}
+
+	Grindstone::Math::Int2 mousePickCoords = mousePickResponse.GetValue();
+	if (mousePickCoords.x < 0 || mousePickCoords.y < 0 ||
+		mousePickCoords.x >= context.imageSize.x || mousePickCoords.y >= context.imageSize.y
+	) {
+		return;
+	}
+
 	renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
 		"Mouse Pick",
 		Renderer::MetaRect::Swapchain(),
@@ -137,7 +139,7 @@ void Grindstone::Editor::RendererFeatures::MousePick::Bind(
 			pass.WriteDepthStencilAttachment(depthResourceDesc, GraphicsAPI::LoadOp::Clear, clearDepthStencil);
 			return outputRef;
 		},
-		[this, imageIndex=context.imageIndex](
+		[this, imageIndex=context.imageIndex, mousePickCoords](
 			Grindstone::Math::IntRect2D rect,
 			const Grindstone::Renderer::RenderGraphContext& cxt,
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
@@ -163,7 +165,7 @@ void Grindstone::Editor::RendererFeatures::MousePick::Bind(
 			mousePickMatrixBuffer[imageIndex]->UploadData(&matrixBuffer);
 
 			cmd->SetViewport(0.0f, 0.0f, static_cast<float>(cxt.cameraViewData.renderArea.GetWidth()), static_cast<float>(cxt.cameraViewData.renderArea.GetHeight()));
-			cmd->SetScissor(captureX, captureY, 1, 1);
+			cmd->SetScissor(mousePickCoords.x, mousePickCoords.y, 1, 1);
 
 			assetRendererManager->SetEngineDescriptorSet(mousePickDescriptorSet[imageIndex]);
 			Rendering::GeometryRenderStats stats = assetRendererManager->RenderQueue("Editor Mouse Pick", cmd, cxt.cameraViewData, registry, mousePickRenderQueue);

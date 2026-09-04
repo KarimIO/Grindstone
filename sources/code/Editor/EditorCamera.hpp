@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include <Common/Math.hpp>
 #include <Common/Rendering/RenderGraphBuilder.hpp>
 #include "GizmoRenderer.hpp"
 
@@ -36,10 +37,9 @@ namespace Grindstone {
 	namespace Editor {
 		class EditorCamera {
 		public:
-			static void SetupRenderPasses();
 			EditorCamera();
 			~EditorCamera();
-			void RegisterGizmoPass(std::function<Grindstone::Renderer::RenderGraphBuilderResourceRef(Grindstone::Renderer::RenderGraphBuilder&, Grindstone::Renderer::RenderGraphBuilderResourceRef, Grindstone::Renderer::RenderGraphBuilderResourceRef)> callback);
+			void CaptureMousePick(Grindstone::Math::Int2 coordinates);
 			uint64_t GetRenderOutput();
 			void Render(GraphicsAPI::CommandBuffer* commandBuffer);
 			void RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffer);
@@ -62,9 +62,8 @@ namespace Grindstone {
 			bool isBoundingBoxGizmoEnabled = false;
 			uint32_t renderMode = 0;
 			bool isColliderGizmoEnabled = true;
-			bool captureThisFrame = false;
-			int captureX = 0;
-			int captureY = 0;
+			bool mousePickedThisFrame = false;
+			Grindstone::Math::Int2 mousePickCoordinates;
 		private:
 			GraphicsAPI::Buffer* gpuGlobalUniformBufferObject = nullptr;
 
@@ -79,15 +78,6 @@ namespace Grindstone {
 			GraphicsAPI::Sampler* sampler = nullptr;
 			GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
 			std::array<GraphicsAPI::DescriptorSet*, 3> descriptorSet;
-			std::vector<
-				std::function<
-					Grindstone::Renderer::RenderGraphBuilderResourceRef(
-						Grindstone::Renderer::RenderGraphBuilder&,
-						Grindstone::Renderer::RenderGraphBuilderResourceRef,
-						Grindstone::Renderer::RenderGraphBuilderResourceRef
-					)
-				>
-			> gizmoRenderCallbacks;
 
 			glm::mat4 projection;
 			glm::mat4 view;
