@@ -15,6 +15,13 @@ namespace Grindstone::Renderer {
 		Grindstone::GraphicsAPI::BufferUsage bufferUsage;
 		Grindstone::GraphicsAPI::MemoryUsage memoryUsage;
 
+		Grindstone::GraphicsAPI::AccessFlags		externalInitialAccessFlags;
+		Grindstone::GraphicsAPI::PipelineStageBit	externalInitialPipelineStage;
+		Grindstone::GraphicsAPI::ImageLayout		externalFinalLayout;
+		Grindstone::GraphicsAPI::AccessFlags		externalFinalAccessFlags;
+		Grindstone::GraphicsAPI::PipelineStageBit	externalFinalPipelineStage;
+		std::function<Grindstone::GraphicsAPI::Buffer* ()> externalGetterCallback;
+
 		bool operator==(const BufferDescription& other) const {
 			return size == other.size &&
 				bufferUsage == other.bufferUsage &&
@@ -34,7 +41,7 @@ namespace std {
 			size_t result = std::hash<size_t>{}(
 				static_cast<size_t>(desc.bufferUsage) |
 				static_cast<size_t>(desc.memoryUsage) << 32
-				);
+			);
 
 			result ^= std::hash<size_t>{}(static_cast<size_t>(desc.size));
 			return result;
