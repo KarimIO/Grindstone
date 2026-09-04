@@ -16,7 +16,7 @@ namespace Grindstone::Editor::RendererFeatures {
 			Grindstone::Renderer::RenderFrameContext& context
 		) override;
 
-		uint32_t GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandBuffer);
+		static uint32_t GetMousePickedEntity(GraphicsAPI::CommandBuffer* commandBuffer);
 
 	private:
 		GraphicsAPI::DescriptorSetLayout* mousePickDescriptorSetLayout = nullptr;
@@ -25,6 +25,6 @@ namespace Grindstone::Editor::RendererFeatures {
 		std::array<GraphicsAPI::Framebuffer*, 3> mousePickFramebuffer{};
 		std::array<GraphicsAPI::DescriptorSet*, 3> mousePickDescriptorSet{};
 		std::array<GraphicsAPI::Buffer*, 3> mousePickMatrixBuffer{};
-		std::array<GraphicsAPI::Buffer*, 3> mousePickResponseBuffer{};
+		static std::array<GraphicsAPI::Buffer*, 3> mousePickResponseBuffer;
 	};
 }

@@ -9,6 +9,8 @@
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
 #include <Editor/RendererFeatures/MousePick.hpp>
 
+std::array<Grindstone::GraphicsAPI::Buffer*, 3> Grindstone::Editor::RendererFeatures::MousePick::mousePickResponseBuffer{};
+
 struct MousePickMatrixBuffer {
 	glm::mat4 projectionMatrix;
 	glm::mat4 viewMatrix;
@@ -126,7 +128,7 @@ void Grindstone::Editor::RendererFeatures::MousePick::Bind(
 		return;
 	}
 
-	renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
+	Renderer::RenderGraphBuilderResourceRef mousePickBufferRef = renderGraphBuilder.CreateGraphicsPass<Renderer::RenderGraphBuilderResourceRef>(
 		"Mouse Pick",
 		Renderer::MetaRect::Swapchain(),
 		[](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& pass) -> Renderer::RenderGraphBuilderResourceRef {
@@ -135,7 +137,15 @@ void Grindstone::Editor::RendererFeatures::MousePick::Bind(
 			clearDepthStencil.depth = 1.0f;
 			clearDepthStencil.stencil = 0;
 
-			Renderer::RenderGraphBuilderResourceRef outputRef = pass.WriteColorAttachment(resource, GraphicsAPI::LoadOp::Clear, clearColor);
+			Grindstone::Renderer::BufferDescription bufferDesc{
+				.name = "MousePick buffer description",
+				.size = sizeof(MousePickResponseBuffer),
+				.bufferUsage = GraphicsAPI::BufferUsage::TransferSrc | GraphicsAPI::BufferUsage::Storage | GraphicsAPI::BufferUsage::TransferDst,
+				.memoryUsage = GraphicsAPI::MemoryUsage::CPUOnly,
+			};
+
+			Renderer::RenderGraphBuilderResourceRef outputRef = pass.WriteBuffer(bufferDesc);
+			pass.WriteColorAttachment(resource, GraphicsAPI::LoadOp::Clear, clearColor);
 			pass.WriteDepthStencilAttachment(depthResourceDesc, GraphicsAPI::LoadOp::Clear, clearDepthStencil);
 			return outputRef;
 		},
@@ -145,6 +155,7 @@ void Grindstone::Editor::RendererFeatures::MousePick::Bind(
 			const Grindstone::Renderer::RenderGraphFrameResources& frameResources,
 			Renderer::RenderGraphBuilderResourceRef& outputRef
 		) {
+			auto bufferIt = frameResources.buffers.find(outputRef.GetResourceIndex());
 			Grindstone::EngineCore& engineCore = EngineCore::GetInstance();
 			Grindstone::AssetRendererManager* assetRendererManager = engineCore.assetRendererManager;
 			Grindstone::GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
@@ -158,8 +169,12 @@ void Grindstone::Editor::RendererFeatures::MousePick::Bind(
 			};
 			mousePickResponseBuffer[imageIndex]->UploadData(&mousePickResponseInitialBuffer);
 
+
+			glm::mat4 adjustedPerspective = cxt.cameraViewData.projectionMatrix;
+			cxt.graphicsCore->AdjustPerspective(&adjustedPerspective[0][0]);
+
 			MousePickMatrixBuffer matrixBuffer{
-				.projectionMatrix = cxt.cameraViewData.projectionMatrix,
+				.projectionMatrix = adjustedPerspective,
 				.viewMatrix = cxt.cameraViewData.viewMatrix,
 			};
 			mousePickMatrixBuffer[imageIndex]->UploadData(&matrixBuffer);
@@ -172,6 +187,37 @@ void Grindstone::Editor::RendererFeatures::MousePick::Bind(
 			// TODO: RenderGraph 2.0: pushStats(stats);
 		}
 	);
+
+	Grindstone::GraphicsAPI::Buffer* readbackBuffer = mousePickResponseBuffer[context.imageIndex];
+	Grindstone::Renderer::BufferDescription readbackBufferDesc{
+		.name = "MousePickReadback Buffer",
+		.size = sizeof(MousePickResponseBuffer),
+		.bufferUsage = GraphicsAPI::BufferUsage::Storage | GraphicsAPI::BufferUsage::TransferDst,
+		.memoryUsage = GraphicsAPI::MemoryUsage::CPUOnly,
+		.externalInitialAccessFlags = GraphicsAPI::AccessFlags::None,
+		.externalInitialPipelineStage = GraphicsAPI::PipelineStageBit::TopOfPipe,
+		.externalFinalLayout = GraphicsAPI::ImageLayout::TransferDst,
+		.externalFinalAccessFlags = GraphicsAPI::AccessFlags::HostRead,
+		.externalFinalPipelineStage = GraphicsAPI::PipelineStageBit::Host,
+		.externalGetterCallback = [readbackBuffer]() { return readbackBuffer; }
+	};
+
+	Grindstone::Renderer::RenderGraphBuilderResourceRef readbackBufferRef = renderGraphBuilder.AddBuffer(readbackBufferDesc);
+
+	renderGraphBuilder.CreateTransferPass(
+		"Buffer Readback",
+		[readbackBufferRef, mousePickBufferRef](Grindstone::Renderer::TransferRenderGraphBuilderPass& pass) {
+			pass.AddBufferTransfer(
+				Grindstone::Renderer::BuilderBufferTransfer{
+					.dstBuffer = readbackBufferRef,
+					.srcBuffer = mousePickBufferRef,
+					.dstOffset = 0,
+					.srcOffset = 0,
+					.size = sizeof(MousePickResponseBuffer)
+				}
+			);
+		}
+	);
 }
 
 // TODO: This doesn't make sense - RenderFeatures should not have per-view data, per-view data should be transient, and data
@@ -181,21 +227,6 @@ uint32_t Grindstone::Editor::RendererFeatures::MousePick::GetMousePickedEntity(G
 	GraphicsAPI::WindowGraphicsBinding* wgb = engineCore.windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
 	uint32_t frameIndex = (wgb->GetCurrentImageIndex() + (wgb->GetMaxFramesInFlight() - 1)) % wgb->GetMaxFramesInFlight();
 	Grindstone::GraphicsAPI::Buffer* buffer = mousePickResponseBuffer[frameIndex];
-
-	GraphicsAPI::BufferBarrier bufferBarrier{
-		.buffer = buffer,
-		.srcStageMask = GraphicsAPI::PipelineStageBit::FragmentShader,
-		.dstStageMask = GraphicsAPI::PipelineStageBit::Host,
-		.srcAccess = GraphicsAPI::AccessFlags::ShaderWrite,
-		.dstAccess = GraphicsAPI::AccessFlags::HostRead,
-		.offset = 0,
-		.size = static_cast<uint32_t>(buffer->GetSize())
-	};
-
-	commandBuffer->PipelineBarrier(
-		&bufferBarrier, 1,
-		nullptr, 0
-	);
 
 	MousePickResponseBuffer* mappedBuffer = reinterpret_cast<MousePickResponseBuffer*>(buffer->Map());
 	uint32_t entityId = mappedBuffer->entityId;

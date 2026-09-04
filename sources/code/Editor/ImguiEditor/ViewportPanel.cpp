@@ -13,6 +13,7 @@
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/Rendering/RenderingPipeline.hpp>
+#include <Editor/RendererFeatures/MousePick.hpp>
 #include <Editor/EditorCamera.hpp>
 #include <Editor/EditorManager.hpp>
 
@@ -233,8 +234,7 @@ void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 	hasRenderedThisFrame = true;
 
 	if (isHoveringLastFrame) {
-		// TODO: RenderGraph 2.0 - entt::entity entityId = static_cast<entt::entity>(camera->GetMousePickedEntity(commandBuffer));
-		entt::entity entityId = entt::entity();
+		entt::entity entityId = static_cast<entt::entity>(Grindstone::Editor::RendererFeatures::MousePick::GetMousePickedEntity(commandBuffer));
 		if (shouldMousePickClickLastFrame) {
 			shouldMousePickClickLastFrame = false;
 			shouldMousePickClick = false;
