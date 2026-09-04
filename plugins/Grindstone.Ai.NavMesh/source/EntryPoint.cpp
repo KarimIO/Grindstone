@@ -12,6 +12,7 @@
 #include <Grindstone.Ai.NavMesh/include/Components/NavAgentComponent.hpp>
 #include <Grindstone.Ai.NavMesh/include/Components/OffNavMeshConnectionComponent.hpp>
 #include <Grindstone.Ai.NavMesh/include/NavMeshDebugRenderer.hpp>
+#include <Grindstone.Ai.NavMesh/include/NavMeshDebugRenderFeature.hpp>
 
 #include <Editor/PluginSystem/EditorPluginInterface.hpp>
 
@@ -628,6 +629,7 @@ extern "C" {
 		pluginInterface->RegisterComponent<Grindstone::Ai::NavMeshComponent>();
 		pluginInterface->RegisterComponent<Grindstone::Ai::NavAgentComponent>();
 		pluginInterface->RegisterComponent<Grindstone::Ai::OffNavMeshConnectionComponent>();
+		pluginInterface->RegisterRendererFeature<Grindstone::Ai::RendererFeatures::NavMeshDebug>();
 
 		Grindstone::Plugins::EditorPluginInterface* editorInterface = static_cast<Grindstone::Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 		if (editorInterface != nullptr) {
@@ -642,6 +644,8 @@ extern "C" {
 			editorInterface->DeregisterMenuItem("Build/Generate Navigation Mesh");
 			editorInterface->DeregisterMenuItem("Build/Load Navigation Mesh");
 		}
+
+		pluginInterface->UnregisterRendererFeature<Grindstone::Ai::RendererFeatures::NavMeshDebug>();
 
 		if (debugRenderer != nullptr) {
 			Grindstone::Memory::AllocatorCore::Free(debugRenderer);

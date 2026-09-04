@@ -2,8 +2,6 @@
 
 #include <vector>
 
-#include <Common/Rendering/RenderGraphBuilder.hpp>
-
 #include <DebugDraw.h>
 #include <RecastDebugDraw.h>
 #include <EngineCore/Assets/AssetReference.hpp>
@@ -27,17 +25,13 @@ namespace Grindstone::Ai {
 		};
 
 		void Initialize();
-
-		virtual ~NavMeshDebugRenderer() override;
-
+		static NavMeshDebugRenderer* GetInstance();
+		
 		void Clear();
 		void BuildVertexBuffers();
 
-		virtual Grindstone::Renderer::RenderGraphBuilderResourceRef DrawRenderPass(
-			Grindstone::Renderer::RenderGraphBuilder& rgBuilder,
-			Grindstone::Renderer::RenderGraphBuilderResourceRef colorRef,
-			Grindstone::Renderer::RenderGraphBuilderResourceRef depthRef
-		);
+		bool ShouldRenderThisFrame() const;
+		void DrawDebug(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, Grindstone::GraphicsPipelineAsset* pipelineAsset);
 
 		virtual void depthMask(bool state) override;
 
@@ -77,14 +71,12 @@ namespace Grindstone::Ai {
 		virtual unsigned int areaToCol(unsigned int area) override;
 
 	protected:
-		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> navmeshPipelineSet;
-		Grindstone::GraphicsAPI::DescriptorSet* navmeshDescriptorSet = nullptr;
-		Grindstone::GraphicsAPI::Buffer* vertexBuffer = nullptr;
-		Grindstone::GraphicsAPI::VertexInputLayout vertexLayout;
 		std::vector<DebugVertex>		vertices;
 		std::vector<DrawCall>           drawCalls;
 		DrawCall*                       currentCall = nullptr;
 		bool                            isDepthTestEnabled = true;
 		bool                            isTextured = false;
+		Grindstone::GraphicsAPI::Buffer* vertexBuffer = nullptr;
+		Grindstone::GraphicsAPI::VertexInputLayout vertexLayout;
 	};
 }
