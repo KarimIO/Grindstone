@@ -173,3 +173,35 @@ shaderBlock GsMousePickRenderer {
 		}
 	}
 }
+
+shaderBlock GsSelectionSystemRenderer {
+	requiresBlocks [
+		GsMeshRendererVertexInput,
+		GsMeshRendererInstanceUbo,
+		GsRendererUniform
+	]
+
+	shaderHlsl {
+		struct VertexToFragment {
+			float4 position : SV_Position;
+		};
+
+		VertexToFragment selectionSystemVertex(VertexInput input) {
+			VertexToFragment output;
+
+			float4 worldPos = mul(renderInstanceUbo.modelMatrix, float4(input.position.xyz, 1.0));
+			float4 viewPos  = mul(rendererUbo.viewMatrix, worldPos);
+			output.position = mul(rendererUbo.projectionMatrix, viewPos);
+
+			return output;
+		}
+
+		uint selectionSystemFragment(VertexToFragment input) : SV_TARGET0 {
+			if (renderInstanceUbo.rendererId % 2 == 0) {
+				discard;
+			}
+			
+			return renderInstanceUbo.rendererId;
+		}
+	}
+}

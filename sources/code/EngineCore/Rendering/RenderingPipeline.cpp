@@ -59,6 +59,6 @@ void Grindstone::Renderer::RenderingPipeline::RegisterFeature(Grindstone::Render
 
 void Grindstone::Renderer::RenderingPipeline::UnregisterFeature(const char* featureName) {
 	auto it = std::find_if(features.begin(), features.end(), [featureName](Grindstone::Rendering::RendererFeature* f) { return f->GetFeatureName() == featureName; });
-	GS_ASSERT(it != features.end());
+ 	GS_ASSERT(it != features.end());
 	features.erase(it);
 }

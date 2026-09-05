@@ -191,6 +191,22 @@ static Grindstone::GraphicsAPI::RenderPass* CreateMousePickRenderPass(Grindstone
 }
 
 
+static Grindstone::GraphicsAPI::RenderPass* CreateSelectionSystemRenderPass(Grindstone::GraphicsAPI::Core* graphicsCore, Grindstone::RenderPassRegistry* rpRegistry) {
+	GraphicsAPI::Format selectionSystemColorImageFormat = GraphicsAPI::Format::R32_UINT;
+	GraphicsAPI::RenderPass::AttachmentInfo selectionSystemAttachmentInfo = { selectionSystemColorImageFormat, true };
+
+	GraphicsAPI::RenderPass::CreateInfo selectionSystemRenderPassCreateInfo{};
+	selectionSystemRenderPassCreateInfo.debugName = "Selection System RenderPass";
+	selectionSystemRenderPassCreateInfo.colorAttachmentCount = 1u;
+	selectionSystemRenderPassCreateInfo.colorAttachments = &selectionSystemAttachmentInfo;
+	selectionSystemRenderPassCreateInfo.depthFormat = GraphicsAPI::Format::D32_SFLOAT;
+	selectionSystemRenderPassCreateInfo.shouldClearDepthOnLoad = false;
+	Grindstone::GraphicsAPI::RenderPass* rp = graphicsCore->CreateRenderPass(selectionSystemRenderPassCreateInfo);
+	rpRegistry->RegisterRenderpass(selectionGeometryRenderPassKey, rp);
+	return rp;
+}
+
+
 Grindstone::Renderer::DeferredRendererRenderPasses Grindstone::Renderer::InitializeRenderPasses() {
 	EngineCore& engineCore = EngineCore::GetInstance();
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
@@ -209,6 +225,7 @@ Grindstone::Renderer::DeferredRendererRenderPasses Grindstone::Renderer::Initial
 	rps.editorRenderPass = CreateEditorRenderPass(graphicsCore, rpRegistry);
 	rps.gizmoRenderPass = CreateGizmoRenderPass(graphicsCore, rpRegistry);
 	rps.mousePickRenderPass = CreateMousePickRenderPass(graphicsCore, rpRegistry);
+	rps.selectionSystemRenderPass = CreateSelectionSystemRenderPass(graphicsCore, rpRegistry);
 
 	return rps;
 }
@@ -218,6 +235,7 @@ void Grindstone::Renderer::ReleaseRenderPasses(DeferredRendererRenderPasses& rps
 	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	Grindstone::RenderPassRegistry* rpRegistry = engineCore.GetRenderPassRegistry();
 
+	rpRegistry->UnregisterRenderpass(selectionGeometryRenderPassKey);
 	rpRegistry->UnregisterRenderpass(mousePickRenderQueue);
 	rpRegistry->UnregisterRenderpass(gizmoRenderPassHashedString);
 	rpRegistry->UnregisterRenderpass(editorRenderPassHashedString);

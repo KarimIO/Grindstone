@@ -1,0 +1,15 @@
+{
+    "assetImporterVersion": 1,
+    "metaFileVersion": 1,
+    "defaultUuid": "1b380446-22fb-4dfd-a989-e495ecd3fb39",
+    "subassets": [
+        {
+            "displayName": "Selection Outline",
+            "address": "@CORESHADERS/editor/selectionOutline",
+            "subassetIdentifier": "Selection Outline",
+            "uuid": "1b380446-22fb-4dfd-a989-e495ecd3fb39",
+            "type": "GraphicsPipelineSet"
+        }
+    ],
+    "importerSettings": {}
+}
