@@ -129,5 +129,29 @@ pipelineSet "lit.default" {
 				GsMousePickRenderer
 			]
 		}
+
+		pass "selectionSystem" {
+			shaderEntrypoint: vertex selectionSystemVertex
+			shaderEntrypoint: fragment selectionSystemFragment
+			renderQueue: "SelectionSystem"
+
+			properties {
+				cull: back
+				depthWrite: true
+				depthTest: true
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: [
+					{
+						colorMask: rgba
+						blendPreset: opaque
+					}
+				]
+			}
+
+			requiresBlocks [
+				GsSelectionSystemRenderer
+			]
+		}
 	}
 }

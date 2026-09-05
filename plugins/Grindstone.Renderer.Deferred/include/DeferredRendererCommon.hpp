@@ -9,6 +9,7 @@ const Grindstone::ConstHashedString mousePickRenderQueue("MousePick");
 const Grindstone::ConstHashedString editorRenderPassHashedString("Editor");
 const Grindstone::ConstHashedString gizmoRenderPassHashedString("Gizmo");
 
+static Grindstone::ConstHashedString selectionGeometryRenderPassKey = "SelectionSystem";
 static Grindstone::ConstHashedString gbufferRenderPassKey = "Gbuffer";
 static Grindstone::ConstHashedString geometryOpaqueRenderPassKey = "GeometryOpaque";
 static Grindstone::ConstHashedString geometryUnlitRenderPassKey = "GeometryUnlit";

@@ -32,6 +32,7 @@
 #include <Editor/RendererFeatures/Gizmos.hpp>
 #include <Editor/RendererFeatures/Grid.hpp>
 #include <Editor/RendererFeatures/MousePick.hpp>
+#include <Editor/RendererFeatures/SelectionOutline.hpp>
 #include "EditorCamera.hpp"
 #include "AssetRegistry.hpp"
 #include "AssetTemplateRegistry.hpp"
@@ -157,6 +158,7 @@ bool Manager::Initialize(const std::unordered_map<std::string, std::string>& cmd
 	renderingPipeline->RegisterFeature(AllocatorCore::Allocate<Editor::RendererFeatures::Grid>());
 	renderingPipeline->RegisterFeature(AllocatorCore::Allocate<Editor::RendererFeatures::Gizmos>());
 	renderingPipeline->RegisterFeature(AllocatorCore::Allocate<Editor::RendererFeatures::MousePick>());
+	renderingPipeline->RegisterFeature(AllocatorCore::Allocate<Editor::RendererFeatures::SelectionOutline>());
 
 	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAfterUiSetup");
 
@@ -351,6 +353,7 @@ Manager::~Manager() {
 
 		Grindstone::Renderer::RenderingPipeline* renderingPipeline = engineCore->GetRenderingPipeline();
 		if (renderingPipeline != nullptr) {
+			renderingPipeline->UnregisterFeature<Editor::RendererFeatures::SelectionOutline>();
 			renderingPipeline->UnregisterFeature<Editor::RendererFeatures::MousePick>();
 			renderingPipeline->UnregisterFeature<Editor::RendererFeatures::Gizmos>();
 			renderingPipeline->UnregisterFeature<Editor::RendererFeatures::Grid>();

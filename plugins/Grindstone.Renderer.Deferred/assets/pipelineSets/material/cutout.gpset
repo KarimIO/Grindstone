@@ -162,5 +162,49 @@ pipelineSet "lit.cutout" {
 				GsMousePickRenderer
 			]
 		}
+		
+		pass "selectionSystem" {
+			shaderEntrypoint: vertex mainVertex
+			shaderEntrypoint: fragment selectionSystemFragment
+			renderQueue: "SelectionSystem"
+
+			requiresBlocks [
+				GsMeshRendererVertex,
+				GsMeshRendererVertex
+			]
+
+			properties {
+				cull: back
+				depthWrite: true
+				depthTest: true
+				depthClamp: false
+				depthCompareOp: lessOrEqual
+				attachments: [
+					{
+						colorMask: rgba
+						blendPreset: opaque
+					}
+				]
+			}
+
+			shaderHlsl {
+				SamplerState textureSampler : register(s0, space1);
+				Texture2D<float4> albedoTexture : register(t1, space1);
+
+				uint selectionSystemFragment(VertexToFragment input) : SV_TARGET0 {
+					float4 albedo = albedoTexture.Sample(textureSampler, input.texCoord0);
+
+					if (albedo.a < 0.5f) {
+						discard;
+					}
+
+					if (renderInstanceUbo.rendererId % 2 == 0) {
+						discard;
+					}
+					
+					return renderInstanceUbo.rendererId;
+				}
+			}
+		}
 	}
 }
