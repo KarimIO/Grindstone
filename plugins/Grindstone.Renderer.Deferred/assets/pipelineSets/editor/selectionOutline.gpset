@@ -17,7 +17,7 @@ pipelineSet "Selection Outline" inherits "PostProcessing" {
 				depthCompareOp: lessOrEqual
 				attachments: {
 					colorMask: rgba
-					blendPreset: translucent
+					blendPreset: additive
 				}
 			}
 
@@ -68,25 +68,25 @@ pipelineSet "Selection Outline" inherits "PostProcessing" {
 					float4 dtap1 = selectionDepthImage.GatherRed(screenSampler, input.scaledFragmentTexCoord, int2( 0, -2));
 					float4 dtap2 = selectionDepthImage.GatherRed(screenSampler, input.scaledFragmentTexCoord, int2(-2,  0));
 					float4 dtap3 = selectionDepthImage.GatherRed(screenSampler, input.scaledFragmentTexCoord, int2( 0,  0));
-					float d0 = max(dtap0.x, max(dtap0.y, max(dtap0.z, dtap0.w)));
-					float d1 = max(dtap1.x, max(dtap1.y, max(dtap1.z, dtap1.w)));
-					float d2 = max(dtap2.x, max(dtap2.y, max(dtap2.z, dtap2.w)));
-					float d3 = max(dtap3.x, max(dtap3.y, max(dtap3.z, dtap3.w)));
-					float d = max(d0, max(d1, max(d2, d3)));
+					float d0 = min(dtap0.x, min(dtap0.y, min(dtap0.z, dtap0.w)));
+					float d1 = min(dtap1.x, min(dtap1.y, min(dtap1.z, dtap1.w)));
+					float d2 = min(dtap2.x, min(dtap2.y, min(dtap2.z, dtap2.w)));
+					float d3 = min(dtap3.x, min(dtap3.y, min(dtap3.z, dtap3.w)));
+					float d = min(d0, min(d1, min(d2, d3)));
 
 					float2 near_far = float2(0.1f, 150.0f);
 					float sceneDepth = sceneDepthImage.Sample(screenSampler, input.scaledFragmentTexCoord).r;
 					float linearSceneDepth = LinearizeDepthFromNearFar(near_far.x, near_far.y, sceneDepth);
 					float linearAverageSelectionDepth = LinearizeDepthFromNearFar(near_far.x, near_far.y, d);
 
-					bool visible = linearAverageSelectionDepth <= (linearSceneDepth + 0.01f);
+					bool visible = linearAverageSelectionDepth <= linearSceneDepth;
 
 					// If outline is hidden, reduce its alpha value to 30%.
-					a *= visible ? 1.f : 0.3f;
-
+					a *= visible ? 1.f : 0.6f;
+					
 					float3 outline_color = float3(1, 1, 0);
 
-					return float4(outline_color, a);
+					return float4(outline_color * a, a);
 				}
 			}
 		}

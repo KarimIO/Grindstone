@@ -30,7 +30,13 @@ static Grindstone::Rendering::GeometryRenderStats RenderShadowMap(
 
 	cmd->ClearAttachments(&clearAttachment, 1u, &clearRect, 1u);
 
-	return engineCore.assetRendererManager->RenderQueue(passName, cmd, renderViewData, cxtSet->GetEntityRegistry(), shadowMapRenderPassKey);
+	Grindstone::Rendering::AssetRenderQueueContext renderQueueCxt{
+		.viewData = renderViewData,
+		.registry = cxtSet->GetEntityRegistry(),
+		.renderQueueHash = shadowMapRenderPassKey,
+		.filter = {}
+	};
+	return engineCore.assetRendererManager->RenderQueue(passName, cmd, renderQueueCxt);
 }
 
 static void RenderPointLightComponent(

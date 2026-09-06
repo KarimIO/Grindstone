@@ -24,9 +24,7 @@ namespace Grindstone {
 
 			virtual Grindstone::Rendering::GeometryRenderStats RenderQueue(
 				GraphicsAPI::CommandBuffer* commandBuffer,
-				const Grindstone::Rendering::RenderViewData& viewData,
-				entt::registry& registry,
-				Grindstone::HashedString renderQueueHash
+				Grindstone::Rendering::AssetRenderQueueContext& cxt
 			) override;
 			static GraphicsAPI::DescriptorSetLayout* GetPerDrawDescriptorSetLayout();
 		private:

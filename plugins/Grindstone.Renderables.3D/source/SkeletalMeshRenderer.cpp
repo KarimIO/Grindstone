@@ -102,23 +102,22 @@ std::string SkeletalMeshRenderer::GetName() const {
 
 Grindstone::Rendering::GeometryRenderStats SkeletalMeshRenderer::RenderQueue(
 	GraphicsAPI::CommandBuffer* commandBuffer,
-	const Grindstone::Rendering::RenderViewData& renderViewData,
-	entt::registry& registry,
-	Grindstone::HashedString renderQueueHash
+	Grindstone::Rendering::AssetRenderQueueContext& cxt
 ) {
 	Grindstone::Rendering::GeometryRenderStats renderingStats{};
-	Grindstone::Renderer::CullingFrustum frustum = Grindstone::Renderer::CreateFrustum(renderViewData);
+	Grindstone::Renderer::CullingFrustum frustum = Grindstone::Renderer::CreateFrustum(cxt.viewData);
 
-	glm::mat4 viewMatrix = renderViewData.viewMatrix;
+	glm::mat4 viewMatrix = cxt.viewData.viewMatrix;
 
 	std::chrono::time_point start = std::chrono::steady_clock::now();
 
 	std::vector<RenderTask> renderTasks = Grindstone::Renderer::GenerateTaskList<SkeletalMeshComponent, RenderTask>(
 		renderingStats,
-		registry,
+		cxt.renderQueueHash,
+		cxt.registry,
+		cxt.filter,
 		frustum,
 		viewMatrix,
-		renderQueueHash,
 		AppendSkeletalSubmeshRenderTask
 	);
 	Grindstone::Renderer::SortRenderTasks<RenderTask>(renderTasks);

@@ -23,9 +23,7 @@ namespace Grindstone {
 		virtual Grindstone::Rendering::GeometryRenderStats RenderQueue(
 			const std::string& passName,
 			GraphicsAPI::CommandBuffer* commandBuffer,
-			const Grindstone::Rendering::RenderViewData& viewData,
-			entt::registry& registry,
-			Grindstone::HashedString renderQueue
+			Grindstone::Rendering::AssetRenderQueueContext& cxt
 		);
 		
 		std::map<std::string, BaseAssetRenderer*> assetRenderers;
