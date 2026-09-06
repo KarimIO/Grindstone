@@ -58,7 +58,13 @@ void Grindstone::Renderer::Gbuffer::Bind(
 					.renderArea = viewportArea
 				};
 
-				const Grindstone::Rendering::GeometryRenderStats stats = engineCore.assetRendererManager->RenderQueue("Gbuffer Geometry Opaque", cmd, renderViewData, cxtSet->GetEntityRegistry(), geometryOpaqueRenderPassKey);
+				Grindstone::Rendering::AssetRenderQueueContext renderQueueCxt{
+					.viewData = renderViewData,
+					.registry = cxtSet->GetEntityRegistry(),
+					.renderQueueHash = geometryOpaqueRenderPassKey,
+					.filter = {}
+				};
+				const Grindstone::Rendering::GeometryRenderStats stats = engineCore.assetRendererManager->RenderQueue("Gbuffer Geometry Opaque", cmd, renderQueueCxt);
 				// TODO: RenderGraph 2.0 - pushRenderingStatsCallback(stats);
 			}
 		);

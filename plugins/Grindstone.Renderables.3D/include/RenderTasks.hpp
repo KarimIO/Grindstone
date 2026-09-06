@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Common/HashedString.hpp>
+#include <Common/Rendering/AssetRendererFilter.hpp>
 #include <Common/Rendering/GeometryRenderingStats.hpp>
 #include <Grindstone.Renderables.3D/include/Assets/Mesh3dAsset.hpp>
 #include <Grindstone.Renderables.3D/include/FrustumCulling.hpp>
@@ -15,10 +16,11 @@ namespace Grindstone::Renderer {
 	template<typename MeshComponentType, typename RenderTask>
 	std::vector<RenderTask> GenerateTaskList(
 		Grindstone::Rendering::GeometryRenderStats& renderingStats,
+		Grindstone::HashedString renderQueueHash,
 		entt::registry& registry,
+		const Grindstone::Rendering::AssetRendererFilter& filter,
 		const Grindstone::Renderer::CullingFrustum& frustum,
 		const glm::mat4& viewMatrix,
-		Grindstone::HashedString renderQueueHash,
 		std::function<void(
 			std::vector<RenderTask>&,
 			const Grindstone::HashedString,
@@ -31,18 +33,19 @@ namespace Grindstone::Renderer {
 		std::vector<RenderTask> renderTasks;
 		renderTasks.reserve(1000);
 
-		auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponentType, MeshRendererComponent>();
-		view.each(
-			[&submeshCallback, &renderingStats, &registry, &renderTasks, &viewMatrix, frustum, renderQueueHash](
-				entt::entity entity,
-				const TransformComponent& transformComponent,
-				const MeshComponentType& meshComponent,
-				MeshRendererComponent& meshRenderComponent
-			) {
-				const Mesh3dAsset* meshAsset = meshComponent.mesh.Get();
+		if (filter.useWhitelist) {
+			GS_ASSERT_ENGINE_WITH_MESSAGE(filter.blacklist.GetSize() == 0, "You can only use the blacklist if the whitelist is empty");
+
+			for (entt::entity& entity : filter.whitelist) {
+				auto [transformComponent, meshComponent, meshRendererComponent] = registry.try_get<const TransformComponent, const MeshComponentType, MeshRendererComponent>(entity);
+				if (transformComponent == nullptr || meshComponent == nullptr || meshRendererComponent == nullptr) {
+					continue;
+				}
+
+				const Mesh3dAsset* meshAsset = meshComponent->mesh.Get();
 
 				if (meshAsset == nullptr) {
-					return;
+					continue;
 				}
 
 				Math::Matrix4 transform = TransformComponent::GetWorldTransformMatrix(entity, registry);
@@ -51,7 +54,7 @@ namespace Grindstone::Renderer {
 				Grindstone::Renderer::AABB aabb{ meshAsset->boundingData.minAABB, meshAsset->boundingData.maxAABB };
 				if (!IsInFrustum(frustum, viewTransformTransform, aabb)) {
 					renderingStats.objectsCulled += 1;
-					return;
+					continue;
 				}
 
 				renderingStats.objectsRendered += 1;
@@ -60,21 +63,70 @@ namespace Grindstone::Renderer {
 					.matrix = transform,
 					.entityId = static_cast<uint32_t>(entity)
 				};
-				meshRenderComponent.perDrawUniformBuffer->UploadData(&renderableData);
+				meshRendererComponent->perDrawUniformBuffer->UploadData(&renderableData);
 
-				std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRenderComponent.materials;
+				std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRendererComponent->materials;
 				for (const Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
 					submeshCallback(
 						renderTasks,
 						renderQueueHash,
 						submesh,
 						meshAsset,
-						meshComponent,
-						meshRenderComponent
+						*meshComponent,
+						*meshRendererComponent
 					);
 				}
 			}
-		);
+		}
+		else {
+			GS_ASSERT_ENGINE_WITH_MESSAGE(filter.blacklist.GetSize() == 0, "Blacklist support not implemented yet!");
+			GS_ASSERT_ENGINE_WITH_MESSAGE(filter.whitelist.GetSize() == 0, "You can only use the whitelist if useWhitelist is true");
+
+			auto view = registry.view<const entt::entity, const TransformComponent, const MeshComponentType, MeshRendererComponent>();
+			view.each(
+				[&submeshCallback, &renderingStats, &registry, &renderTasks, &viewMatrix, frustum, renderQueueHash](
+					entt::entity entity,
+					const TransformComponent& transformComponent,
+					const MeshComponentType& meshComponent,
+					MeshRendererComponent& meshRenderComponent
+				) {
+					const Mesh3dAsset* meshAsset = meshComponent.mesh.Get();
+
+					if (meshAsset == nullptr) {
+						return;
+					}
+
+					Math::Matrix4 transform = TransformComponent::GetWorldTransformMatrix(entity, registry);
+					glm::mat4 viewTransformTransform = viewMatrix * transform;
+
+					Grindstone::Renderer::AABB aabb{ meshAsset->boundingData.minAABB, meshAsset->boundingData.maxAABB };
+					if (!IsInFrustum(frustum, viewTransformTransform, aabb)) {
+						renderingStats.objectsCulled += 1;
+						return;
+					}
+
+					renderingStats.objectsRendered += 1;
+
+					RenderableBufferPair renderableData{
+						.matrix = transform,
+						.entityId = static_cast<uint32_t>(entity)
+					};
+					meshRenderComponent.perDrawUniformBuffer->UploadData(&renderableData);
+
+					std::vector<Grindstone::AssetReference<Grindstone::MaterialAsset>>& materials = meshRenderComponent.materials;
+					for (const Grindstone::Mesh3dAsset::Submesh& submesh : meshAsset->submeshes) {
+						submeshCallback(
+							renderTasks,
+							renderQueueHash,
+							submesh,
+							meshAsset,
+							meshComponent,
+							meshRenderComponent
+						);
+					}
+				}
+			);
+		}
 
 		return renderTasks;
 	}

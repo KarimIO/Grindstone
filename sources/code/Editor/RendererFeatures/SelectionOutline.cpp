@@ -9,6 +9,8 @@
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
 #include <Grindstone.Renderer.Deferred/include/Features/Gbuffer.hpp>
 #include <Editor/RendererFeatures/SelectionOutline.hpp>
+#include <Editor/Selection.hpp>
+#include <Editor/EditorManager.hpp>
 
 static Grindstone::Renderer::ImageDescription resource{
 	.name = "Selection Outline Color Attachment",
@@ -69,6 +71,13 @@ void Grindstone::Editor::RendererFeatures::SelectionOutline::Bind(
 	Grindstone::Renderer::RenderGraphBuilderResourceRef colorImageRef = context.colorRef;
 	Grindstone::Renderer::RenderGraphBuilderResourceRef depthImageRef = gbufferData.depthRef;
 
+	Grindstone::Editor::Manager& editorManager = Grindstone::Editor::Manager::GetInstance();
+	Grindstone::Editor::Selection& selection = editorManager.GetSelection();
+
+	if (selection.GetSelectedEntityCount() == 0) {
+		return;
+	}
+
 	using SelectionGeometryReturn = std::tuple<Renderer::RenderGraphBuilderResourceRef, Renderer::RenderGraphBuilderResourceRef>;
 	auto [selectionIdsRef, selectionDepthRef] = renderGraphBuilder.CreateGraphicsPass<SelectionGeometryReturn>(
 		"Selection Geometry",
@@ -94,7 +103,24 @@ void Grindstone::Editor::RendererFeatures::SelectionOutline::Bind(
 			GraphicsAPI::CommandBuffer* cmd = cxt.commandBuffer;
 			engineCore.assetRendererManager->SetEngineDescriptorSet(cxt.globalDescriptorSet);
 
-			const Grindstone::Rendering::GeometryRenderStats stats = engineCore.assetRendererManager->RenderQueue("Selection Geometry for Outline", cmd, cxt.cameraViewData, cxtSet->GetEntityRegistry(), selectionGeometryRenderPassKey);
+			Grindstone::Editor::Manager& editorManager = Grindstone::Editor::Manager::GetInstance();
+			Grindstone::Editor::Selection& selection = editorManager.GetSelection();
+
+			std::vector<entt::entity> selectedEntities;
+			for (Grindstone::ECS::Entity e : selection.selectedEntities) {
+				selectedEntities.emplace_back(e.GetHandle());
+			}
+
+			Grindstone::Rendering::AssetRenderQueueContext renderQueueCxt{
+				.viewData = cxt.cameraViewData,
+				.registry = cxtSet->GetEntityRegistry(),
+				.renderQueueHash = selectionGeometryRenderPassKey,
+				.filter = {
+					.whitelist = Containers::Span<entt::entity>(&*selectedEntities.begin(), selectedEntities.size()),
+					.useWhitelist = true
+				}
+			};
+			const Grindstone::Rendering::GeometryRenderStats stats = engineCore.assetRendererManager->RenderQueue("Selection Geometry for Outline", cmd, renderQueueCxt);
 			// TODO: RenderGraph 2.0 - pushRenderingStatsCallback(stats);
 		}
 	);

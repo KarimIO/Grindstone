@@ -183,7 +183,14 @@ void Grindstone::Editor::RendererFeatures::MousePick::Bind(
 			cmd->SetScissor(mousePickCoords.x, mousePickCoords.y, 1, 1);
 
 			assetRendererManager->SetEngineDescriptorSet(mousePickDescriptorSet[imageIndex]);
-			Rendering::GeometryRenderStats stats = assetRendererManager->RenderQueue("Editor Mouse Pick", cmd, cxt.cameraViewData, registry, mousePickRenderQueue);
+
+			Grindstone::Rendering::AssetRenderQueueContext renderQueueCxt{
+				.viewData = cxt.cameraViewData,
+				.registry = registry,
+				.renderQueueHash = mousePickRenderQueue,
+				.filter = {}
+			};
+			Rendering::GeometryRenderStats stats = assetRendererManager->RenderQueue("Editor Mouse Pick", cmd, renderQueueCxt);
 			// TODO: RenderGraph 2.0: pushStats(stats);
 		}
 	);

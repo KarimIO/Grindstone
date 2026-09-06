@@ -198,10 +198,6 @@ pipelineSet "lit.cutout" {
 						discard;
 					}
 
-					if (renderInstanceUbo.rendererId % 2 == 0) {
-						discard;
-					}
-					
 					return renderInstanceUbo.rendererId;
 				}
 			}
