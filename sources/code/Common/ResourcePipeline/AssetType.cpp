@@ -12,7 +12,8 @@ const char* assetTypeStrings[] = {
 	"Rig",
 	"Animation",
 	"Script",
-	"Scene"
+	"Scene",
+	"ProbeVolume",
 };
 
 const char* Grindstone::GetAssetTypeToString(AssetType type) {

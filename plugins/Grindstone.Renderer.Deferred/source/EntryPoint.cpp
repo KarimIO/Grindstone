@@ -4,6 +4,7 @@
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <EngineCore/EngineCore.hpp>
 
+#include <Grindstone.Renderer.Deferred/include/ProbeVolume.hpp>
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererRenderPasses.hpp>
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
 #include <Grindstone.Renderer.Deferred/include/Features/Bloom.hpp>
@@ -37,6 +38,8 @@ extern "C" {
 		Grindstone::EngineCore* engineCore = pluginInterface->GetEngineCore();
 		EngineCore::SetInstance(*engineCore);
 
+		pluginInterface->RegisterComponent<Grindstone::ProbeVolume>();
+
 		deferredRenderPasses = Grindstone::Renderer::InitializeRenderPasses();
 		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Bloom>();
 		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Blur>();
@@ -69,5 +72,7 @@ extern "C" {
 		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Blur>();
 		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Bloom>();
 		Grindstone::Renderer::ReleaseRenderPasses(deferredRenderPasses);
+
+		pluginInterface->UnregisterComponent<Grindstone::ProbeVolume>();
 	}
 }
