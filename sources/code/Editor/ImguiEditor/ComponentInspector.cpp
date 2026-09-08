@@ -672,6 +672,62 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 			(double*)offset
 		);
 		break;
+	case Reflection::TypeDescriptor::ReflectionTypeData::Rect2D: {
+		Grindstone::Math::Rect2D* rect2D = static_cast<Grindstone::Math::Rect2D*>(offset);
+		std::string offsetName = displayNamePtr + std::string("_Offset");
+		std::string extentName = displayNamePtr + std::string("_Extent");
+		DrawFloat2(offsetName.c_str(), static_cast<float*>(&rect2D->offset[0]));
+		DrawFloat2(extentName.c_str(), static_cast<float*>(&rect2D->extent[0]));
+
+		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::IntRect2D: {
+		Grindstone::Math::IntRect2D* intRect2D = static_cast<Grindstone::Math::IntRect2D*>(offset);
+		std::string offsetName = displayNamePtr + std::string("_Offset");
+		std::string extentName = displayNamePtr + std::string("_Extent");
+		ImGui::InputScalarN(
+			offsetName.c_str(),
+			ImGuiDataType_S32,
+			static_cast<int32_t*>(&intRect2D->offset[0]),
+			2
+		);
+		ImGui::InputScalarN(
+			extentName.c_str(),
+			ImGuiDataType_U32,
+			static_cast<uint32_t*>(&intRect2D->extent[0]),
+			2
+		);
+
+		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::Box3D: {
+		Grindstone::Math::Box3D* box3D = static_cast<Grindstone::Math::Box3D*>(offset);
+		std::string offsetName = displayNamePtr + std::string("_Offset");
+		std::string extentName = displayNamePtr + std::string("_Extent");
+		DrawFloat3(offsetName.c_str(), static_cast<float*>(&box3D->offset[0]));
+		DrawFloat3(extentName.c_str(), static_cast<float*>(&box3D->extent[0]));
+
+		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::IntBox3D: {
+		Grindstone::Math::IntBox3D* intBox3D = static_cast<Grindstone::Math::IntBox3D*>(offset);
+		std::string offsetName = displayNamePtr + std::string("_Offset");
+		std::string extentName = displayNamePtr + std::string("_Extent");
+		ImGui::InputScalarN(
+			offsetName.c_str(),
+			ImGuiDataType_S32,
+			static_cast<int32_t*>(&intBox3D->offset[0]),
+			3
+		);
+		ImGui::InputScalarN(
+			extentName.c_str(),
+			ImGuiDataType_U32,
+			static_cast<uint32_t*>(&intBox3D->extent[0]),
+			3
+		);
+
+		break;
+	}
 	case Reflection::TypeDescriptor::ReflectionTypeData::Vector: {
 		const void* vector = static_cast<const void*>(offset);
 		auto vectorType = static_cast<Reflection::TypeDescriptor_StdVector*>(itemType);

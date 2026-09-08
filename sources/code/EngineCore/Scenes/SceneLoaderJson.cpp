@@ -4,6 +4,7 @@
 
 #include <Common/PhysicsLayer.hpp>
 #include "Common/Math.hpp"
+#include "Common/Rect.hpp"
 #include "EngineCore/Profiling.hpp"
 #include "EngineCore/EngineCore.hpp"
 #include <EngineCore/Logger.hpp>
@@ -332,6 +333,38 @@ static void ParseMember(
 	case ReflectionTypeData::Double4:
 		CopyDataArrayDouble(parameter, static_cast<double*>(memberPtr), 4);
 		break;
+	case ReflectionTypeData::Rect2D: {
+		Grindstone::Math::Rect2D* rect = static_cast<Grindstone::Math::Rect2D*>(memberPtr);
+		const auto& arr = parameter.GetArray();
+		GS_ASSERT(arr.Size() == 2);
+		CopyDataArrayFloat(arr[0], static_cast<float*>(&rect->offset[0]), 2);
+		CopyDataArrayFloat(arr[1], static_cast<float*>(&rect->extent[0]), 2);
+		break;
+	}
+	case ReflectionTypeData::IntRect2D: {
+		Grindstone::Math::IntRect2D* rect = static_cast<Grindstone::Math::IntRect2D*>(memberPtr);
+		const auto& arr = parameter.GetArray();
+		GS_ASSERT(arr.Size() == 2);
+		CopyDataArrayInt(arr[0], static_cast<int32_t*>(&rect->offset[0]), 2);
+		CopyDataArrayUint(arr[1], static_cast<uint32_t*>(&rect->extent[0]), 2);
+		break;
+	}
+	case ReflectionTypeData::Box3D: {
+		Grindstone::Math::Box3D* box = static_cast<Grindstone::Math::Box3D*>(memberPtr);
+		const auto& arr = parameter.GetArray();
+		GS_ASSERT(arr.Size() == 2);
+		CopyDataArrayFloat(arr[0], static_cast<float*>(&box->extent[0]), 3);
+		CopyDataArrayFloat(arr[1], static_cast<float*>(&box->offset[0]), 3);
+		break;
+	}
+	case ReflectionTypeData::IntBox3D: {
+		Grindstone::Math::IntBox3D* box = static_cast<Grindstone::Math::IntBox3D*>(memberPtr);
+		const auto& arr = parameter.GetArray();
+		GS_ASSERT(arr.Size() == 2);
+		CopyDataArrayInt(arr[0], static_cast<int32_t*>(&box->offset[0]), 3);
+		CopyDataArrayUint(arr[1], static_cast<uint32_t*>(&box->extent[0]), 3);
+		break;
+	}
 	}
 }
 

@@ -9,6 +9,7 @@
 #include <EngineCore/Utils/Utilities.hpp>
 #include <EngineCore/Logger.hpp>
 #include <Common/Math.hpp>
+#include <Common/Rect.hpp>
 #include <Common/PhysicsLayer.hpp>
 
 #include "SceneWriterJson.hpp"
@@ -225,6 +226,38 @@ void WriteParameter(SceneRapidjsonWriter& documentWriter, Reflection::TypeDescri
 		case Reflection::TypeDescriptor::ReflectionTypeData::Double4:
 			WriteArrayDouble(documentWriter, static_cast<double*>(dataPtr), 4);
 			break;
+		case Reflection::TypeDescriptor::ReflectionTypeData::Rect2D: {
+			Grindstone::Math::Rect2D* rect2d = static_cast<Grindstone::Math::Rect2D*>(dataPtr);
+			documentWriter.StartArray();
+			WriteArrayFloat(documentWriter, static_cast<float*>(&rect2d->offset[0]), 2);
+			WriteArrayFloat(documentWriter, static_cast<float*>(&rect2d->extent[0]), 2);
+			documentWriter.EndArray();
+			break;
+		}
+		case Reflection::TypeDescriptor::ReflectionTypeData::IntRect2D: {
+			Grindstone::Math::IntRect2D* rect2d = static_cast<Grindstone::Math::IntRect2D*>(dataPtr);
+			documentWriter.StartArray();
+			WriteArrayInt(documentWriter, static_cast<int32_t*>(&rect2d->offset[0]), 2);
+			WriteArrayUint(documentWriter, static_cast<uint32_t*>(&rect2d->extent[0]), 2);
+			documentWriter.EndArray();
+			break;
+		}
+		case Reflection::TypeDescriptor::ReflectionTypeData::Box3D: {
+			Grindstone::Math::Box3D* box3d = static_cast<Grindstone::Math::Box3D*>(dataPtr);
+			documentWriter.StartArray();
+			WriteArrayFloat(documentWriter, static_cast<float*>(&box3d->offset[0]), 3);
+			WriteArrayFloat(documentWriter, static_cast<float*>(&box3d->extent[0]), 3);
+			documentWriter.EndArray();
+			break;
+		}
+		case Reflection::TypeDescriptor::ReflectionTypeData::IntBox3D: {
+			Grindstone::Math::IntBox3D* box3d = static_cast<Grindstone::Math::IntBox3D*>(dataPtr);
+			documentWriter.StartArray();
+			WriteArrayInt(documentWriter, static_cast<int32_t*>(dataPtr), 3);
+			WriteArrayUint(documentWriter, static_cast<uint32_t*>(dataPtr), 3);
+			documentWriter.EndArray();
+			break;
+		}
 		case Reflection::TypeDescriptor::ReflectionTypeData::Vector:
 			WriteArray(documentWriter, dataPtr, member);
 			break;
