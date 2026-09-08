@@ -11,7 +11,7 @@
 #include "TextureAsset.hpp"
 
 namespace Grindstone {
-	class TextureImporter : public SpecificAssetImporter<TextureAsset, AssetType::Texture> {
+	class TextureImporter : public SpecificAssetImporter<TextureAsset> {
 	public:
 		virtual ~TextureImporter() override;
 

@@ -8,7 +8,7 @@
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
 
-#include <Grindstone.Renderables.3D//include/Assets/Mesh3dImporter.hpp>
+#include <Grindstone.Renderables.3D/include/Assets/Mesh3dImporter.hpp>
 using namespace Grindstone;
 
 struct SourceSubmesh {

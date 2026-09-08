@@ -25,13 +25,14 @@ namespace Grindstone {
 
 	};
 
-	template<typename AssetStructType, AssetType internalAssetType>
+	template<typename AssetStructType>
 	class SpecificAssetImporter : public AssetImporter {
 	public:
+		static_assert(std::is_base_of_v<Grindstone::Asset, AssetStructType>, "AssetStructType not derived from Grindstone::Asset");
 
-		SpecificAssetImporter() { assetType = internalAssetType; }
-		static AssetType GetStaticAssetType() { return internalAssetType; }
-		static const char* GetStaticAssetTypeName() { return GetAssetTypeToString(internalAssetType); }
+		SpecificAssetImporter() { assetType = AssetStructType::GetStaticType(); }
+		static AssetType GetStaticAssetType() { return AssetStructType::GetStaticType(); }
+		static const char* GetStaticAssetTypeName() { return GetAssetTypeToString(AssetStructType::GetStaticType()); }
 		virtual void OnDeleteAsset(AssetStructType& asset) {}
 
 		virtual void* IncrementAssetUse(Uuid uuid) override {
