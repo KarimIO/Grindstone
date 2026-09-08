@@ -19,11 +19,18 @@ namespace Grindstone::Assets {
 
 		void ReloadQueuedAssets();
 		virtual AssetImporter* GetManager(AssetType assetType);
+		virtual bool HasManager(AssetType assetType);
 
 		template<typename AssetImporterClass>
 		AssetImporterClass* GetManager() {
 			static_assert(std::is_base_of_v<Grindstone::AssetImporter, AssetImporterClass>, "AssetImporterClass not derived from Grindstone::AssetImporter");
 			return static_cast<AssetImporterClass*>(GetManager(AssetImporterClass::GetStaticAssetType()));
+		}
+
+		template<typename AssetImporterClass>
+		AssetImporterClass* HasManager() {
+			static_assert(std::is_base_of_v<Grindstone::AssetImporter, AssetImporterClass>, "AssetImporterClass not derived from Grindstone::AssetImporter");
+			return static_cast<AssetImporterClass*>(HasManager(AssetImporterClass::GetStaticAssetType()));
 		}
 
 		virtual void QueueReloadAsset(AssetType assetType, Uuid uuid);

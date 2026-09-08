@@ -398,7 +398,7 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 		);
 		break;
 	case Reflection::TypeDescriptor::ReflectionTypeData::AssetReference: {
-		auto assetManager = Editor::Manager::GetEngineCore().assetManager;
+		Grindstone::Assets::AssetManager* assetManager = Editor::Manager::GetEngineCore().assetManager;
 
 		auto assetReferenceType = static_cast<Reflection::TypeDescriptor_AssetReference*>(itemType);
 		GenericAssetReference* assetReference = (GenericAssetReference*)offset;
@@ -425,24 +425,32 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 				// Handle new value
 				assetReference->uuid = newUuid;
 				assetManager->IncrementAssetCount(assetType, newUuid);
-				};
+			};
 
 			imguiEditor->PromptAssetPicker(assetType, callback);
 		}
 
 		if (ImGui::BeginDragDropTarget()) {
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(GetAssetTypeToString(assetReferenceType->assetType))) {
+			const char* assetTypeStr = GetAssetTypeToString(assetReferenceType->assetType);
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(assetTypeStr)) {
 				Uuid newUuid = *static_cast<Uuid*>(payload->Data);
 				AssetRegistry::Entry entry;
 				if (Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(newUuid, entry)) {
-					// Handle old value
-					if (hasValue) {
-						assetManager->DecrementAssetCount(assetType, uuid);
+					if (assetManager->HasManager(assetReferenceType->assetType)) {
+						GPRINT_ERROR(LogSource::Editor, "Unable to find asset importer for {}.", assetTypeStr);
+						// TODO: Should we assign the uuid to newUuid? Might cause errors.
+						assetReference->uuid = Uuid();
 					}
+					else {
+						// Handle old value
+						if (hasValue) {
+							assetManager->DecrementAssetCount(assetType, uuid);
+						}
 
-					// Handle new value
-					assetReference->uuid = newUuid;
-					assetManager->IncrementAssetCount(assetType, newUuid);
+						// Handle new value
+						assetReference->uuid = newUuid;
+						assetManager->IncrementAssetCount(assetType, newUuid);
+					}
 				}
 			}
 
