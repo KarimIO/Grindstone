@@ -10,11 +10,13 @@
 #include <EngineCore/Assets/Asset.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
+#include <EngineCore/Logger.hpp>
 #include <Editor/EditorManager.hpp>
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
 #include <Grindstone.Script.CSharp/include/Components/ScriptComponent.hpp>
 #include <Grindstone.Script.CSharp/include/CSharpManager.hpp>
 #include <Common/Math.hpp>
+#include <Common/Rect.hpp>
 
 #include "ComponentInspector.hpp"
 
@@ -96,12 +98,13 @@ static bool DrawFloatInput(const char* name, float& toEdit, size_t index, float 
 	return hasChanged;
 }
 
+constexpr static float horizontalGap = 8.0f;
 static void DrawFloatInputNewLine() {
-	ImGui::SameLine(0.0f, 0.2f);
+	ImGui::SameLine(0.0f, horizontalGap);
 }
 
 static bool DrawFloat2(const char* name, float* vec2) {
-	float containerWidth = ImGui::GetContentRegionAvail().x / 2.0f;
+	float containerWidth = (ImGui::GetContentRegionAvail().x - horizontalGap) / 2.0f;
 	bool hasChanged = DrawFloatInput(name, vec2[0], 0, containerWidth);
 	DrawFloatInputNewLine();
 	hasChanged |= DrawFloatInput(name, vec2[1], 1, containerWidth);
@@ -110,7 +113,7 @@ static bool DrawFloat2(const char* name, float* vec2) {
 }
 
 static bool DrawFloat3(const char* name, float* vec3) {
-	float containerWidth = ImGui::GetContentRegionAvail().x / 3.0f;
+	float containerWidth = (ImGui::GetContentRegionAvail().x - horizontalGap * 2) / 3.0f;
 	bool hasChanged = DrawFloatInput(name, vec3[0], 0, containerWidth);
 	DrawFloatInputNewLine();
 	hasChanged |= DrawFloatInput(name, vec3[1], 1, containerWidth);
@@ -121,7 +124,7 @@ static bool DrawFloat3(const char* name, float* vec3) {
 }
 
 static bool DrawFloat4(const char* name, float* vec4) {
-	float containerWidth = ImGui::GetContentRegionAvail().x / 4.0f;
+	float containerWidth = (ImGui::GetContentRegionAvail().x - horizontalGap * 3) / 4.0f;
 	bool hasChanged = DrawFloatInput(name, vec4[0], 0, containerWidth);
 	DrawFloatInputNewLine();
 	hasChanged |= DrawFloatInput(name, vec4[1], 1, containerWidth);
@@ -329,7 +332,7 @@ void ComponentInspector::RenderCSharpScript(
 
 			Grindstone::Buffer& valueBuffer = response.first;
 			auto& fields = response.second;
-			if (ImGui::BeginTable("inspectorSplit", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
+			if (ImGui::BeginTable("inspectorSplit", 2, ImGuiTableFlags_Resizable)) {
 				for (auto& field : fields) {
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn();
@@ -365,7 +368,7 @@ void ComponentInspector::RenderComponentCategory(
 		ImGui::TreePop();
 	}
 
-	if (ImGui::BeginTable("inspectorSplit", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
+	if (ImGui::BeginTable("inspectorSplit", 2, ImGuiTableFlags_Resizable)) {
 		for (auto& member : category.members) {
 			bool canView = Any(member.metadata & Grindstone::Reflection::Metadata::ViewInEditor);
 			bool canSet = Any(member.metadata & Grindstone::Reflection::Metadata::SetInEditor);
