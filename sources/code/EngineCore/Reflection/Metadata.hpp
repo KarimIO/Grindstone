@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Common/EnumTraits.hpp>
+
 namespace Grindstone::Reflection {
 	enum class Metadata : short {
 		NoMetadata = 0,
@@ -8,8 +10,10 @@ namespace Grindstone::Reflection {
 		ViewInScript = 1 << 2,
 		SetInScript = 1 << 3,
 		ViewInAll = ViewInEditor | ViewInScript,
-		SetInAll = ViewInAll | SetInEditor | SetInScript,
+		SetInAll = SetInEditor | SetInScript,
 		SaveState = 1 << 4,
-		SaveSetAndView = SetInAll | SaveState
+		SaveSetAndView = ViewInAll | SetInAll | SaveState
 	};
+
+	GS_ENUM_FLAGS_FUNCS(Grindstone::Reflection::Metadata);
 }

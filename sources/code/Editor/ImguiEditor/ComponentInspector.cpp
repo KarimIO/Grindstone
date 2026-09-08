@@ -367,11 +367,20 @@ void ComponentInspector::RenderComponentCategory(
 
 	if (ImGui::BeginTable("inspectorSplit", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
 		for (auto& member : category.members) {
-			ImGui::TableNextRow();
-			ImGui::TableNextColumn();
-			ImGui::Text(member.displayName.c_str());
-			ImGui::TableNextColumn();
-			RenderComponentMember(member, componentPtr, entity);
+			bool canView = Any(member.metadata & Grindstone::Reflection::Metadata::ViewInEditor);
+			bool canSet = Any(member.metadata & Grindstone::Reflection::Metadata::SetInEditor);
+
+			ImGui::BeginDisabled(!canSet);
+
+			if (canView) {
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::Text(member.displayName.c_str());
+				ImGui::TableNextColumn();
+				RenderComponentMember(member, componentPtr, entity);
+			}
+
+			ImGui::EndDisabled();
 		}
 
 		ImGui::EndTable();
