@@ -353,8 +353,8 @@ static void ParseMember(
 		Grindstone::Math::Box3D* box = static_cast<Grindstone::Math::Box3D*>(memberPtr);
 		const auto& arr = parameter.GetArray();
 		GS_ASSERT(arr.Size() == 2);
-		CopyDataArrayFloat(arr[0], static_cast<float*>(&box->extent[0]), 3);
-		CopyDataArrayFloat(arr[1], static_cast<float*>(&box->offset[0]), 3);
+		CopyDataArrayFloat(arr[0], static_cast<float*>(&box->offset[0]), 3);
+		CopyDataArrayFloat(arr[1], static_cast<float*>(&box->extent[0]), 3);
 		break;
 	}
 	case ReflectionTypeData::IntBox3D: {
