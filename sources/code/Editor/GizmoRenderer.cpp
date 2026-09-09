@@ -614,3 +614,21 @@ void GizmoRenderer::Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer
 		}
 	}
 }
+
+void GizmoRenderer::IterateOnGizmoCallbacks(Grindstone::Blackboard& blackboard, const Grindstone::Editor::Selection& selection) {
+	for (auto& entry : gizmoCallbacks) {
+		entry.callback(*this, blackboard, selection);
+	}
+}
+
+void GizmoRenderer::RegisterGizmoCallback(Grindstone::HashedString name, GizmoRendererCallback callback) {
+	auto it = std::find_if(gizmoCallbacks.begin(), gizmoCallbacks.end(), [name](auto& entry) { return entry.name == name; });
+	GS_ASSERT(it == gizmoCallbacks.end());
+	gizmoCallbacks.emplace_back(name, callback);
+}
+
+void GizmoRenderer::UnregisterGizmoCallback(Grindstone::HashedString name) {
+	auto it = std::find_if(gizmoCallbacks.begin(), gizmoCallbacks.end(), [name](auto& entry) { return entry.name == name; });
+	GS_ASSERT(it != gizmoCallbacks.end());
+	gizmoCallbacks.erase(it);
+}

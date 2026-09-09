@@ -17,6 +17,7 @@ namespace Grindstone::Rendering {
 		RendererFeature& operator=(RendererFeature&& o) noexcept = delete;
 
 		virtual void Initialize() {};
+		virtual ~RendererFeature() {};
 		virtual void Bind(
 			Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
 			Grindstone::Renderer::RenderFrameContext& context
