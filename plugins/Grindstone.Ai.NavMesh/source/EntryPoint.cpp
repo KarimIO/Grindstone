@@ -633,16 +633,16 @@ extern "C" {
 
 		Grindstone::Plugins::EditorPluginInterface* editorInterface = static_cast<Grindstone::Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 		if (editorInterface != nullptr) {
-			editorInterface->RegisterMenuItem("Build/Generate Navigation Mesh", MenuItemGenerateNavMesh);
-			editorInterface->RegisterMenuItem("Build/Load Navigation Mesh", MenuItemLoadNavMesh);
+			editorInterface->RegisterMenuItem("Bake/Navigation Mesh/Generate", MenuItemGenerateNavMesh);
+			editorInterface->RegisterMenuItem("Bake/Navigation Mesh/Load", MenuItemLoadNavMesh);
 		}
 	}
 
 	AI_NAVMESH_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
 		Grindstone::Plugins::EditorPluginInterface* editorInterface = static_cast<Grindstone::Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 		if (editorInterface != nullptr) {
-			editorInterface->DeregisterMenuItem("Build/Generate Navigation Mesh");
-			editorInterface->DeregisterMenuItem("Build/Load Navigation Mesh");
+			editorInterface->DeregisterMenuItem("Bake/Navigation Mesh/Generate");
+			editorInterface->DeregisterMenuItem("Bake/Navigation Mesh/Load");
 		}
 
 		pluginInterface->UnregisterRendererFeature<Grindstone::Ai::RendererFeatures::NavMeshDebug>();

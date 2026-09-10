@@ -80,14 +80,14 @@ extern "C" {
 			Grindstone::Editor::GizmoRenderer& gizmoRenderer = editorManager->GetGizmoRenderer();
 			gizmoRenderer.RegisterGizmoCallback("Gizmo::ProbeVolume"_hash, Grindstone::Renderer::Editor::RenderProbeVolumeGizmos);
 
-			editorInterface->RegisterMenuItem("Bake//Bake Lighting", Grindstone::Renderer::Editor::BakeLighting);
+			editorInterface->RegisterMenuItem("Bake/Bake Lighting", Grindstone::Renderer::Editor::BakeLighting);
 		}
 	}
 
 	EDITOR_LIGHT_BAKERY_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
 		Grindstone::Plugins::EditorPluginInterface* editorInterface = static_cast<Grindstone::Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 		if (editorInterface) {
-			editorInterface->DeregisterMenuItem("Bake//Bake Lighting");
+			editorInterface->DeregisterMenuItem("Bake/Bake Lighting");
 
 			Grindstone::Editor::Manager* editorManager = editorInterface->GetEditorInstance();
 			Grindstone::Editor::GizmoRenderer& gizmoRenderer = editorManager->GetGizmoRenderer();
