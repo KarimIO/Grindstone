@@ -22,60 +22,11 @@
 #include <Grindstone.Renderer.Deferred/include/Features/Smaa.hpp>
 #include <Grindstone.Renderer.Deferred/include/Features/Tonemap.hpp>
 
-#include <Editor/GizmoRenderer.hpp>
-#include <Editor/EditorManager.hpp>
-#include <Editor/PluginSystem/EditorPluginInterface.hpp>
-
 using namespace Grindstone;
 using namespace Grindstone::Memory;
 using namespace Grindstone::Renderer;
 
 Grindstone::Renderer::DeferredRendererRenderPasses deferredRenderPasses;
-
-namespace Grindstone::Renderer::Editor {
-	static const glm::vec4 probeVolumeBoxGizmoColor = glm::vec4(0.2f, 0.9f, 0.3f, 1.0f);
-	static const glm::vec4 probeVolumeSphereGizmoColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-	static void RenderProbeVolumeGizmos(Grindstone::Editor::GizmoRenderer& gizmoRenderer, Grindstone::Blackboard& blackboard, const Grindstone::Editor::Selection& selection) {
-		Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
-		Grindstone::ProbeVolume* probeVolume = nullptr;
-
-		for (const ECS::Entity& selectedEntity : selection.selectedEntities) {
-			if (selectedEntity.TryGetComponent<Grindstone::ProbeVolume>(probeVolume)) {
-				Math::Box3D& boundingData = probeVolume->bounds;
-				Grindstone::TransformComponent& transf = selectedEntity.GetComponent<Grindstone::TransformComponent>();
-				Math::Matrix4 entityMatrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
-				glm::vec3 boxSize = boundingData.extent;
-				Math::Matrix4 boxMatrix = entityMatrix * glm::translate(boundingData.offset);
-				gizmoRenderer.SubmitCubeGizmo(boxMatrix, boundingData.extent, probeVolumeBoxGizmoColor);
-
-				Grindstone::Math::Uint3 probeCount(
-					boundingData.extent.x / probeVolume->probeSpacing.x + 1,
-					boundingData.extent.y / probeVolume->probeSpacing.y + 1,
-					boundingData.extent.z / probeVolume->probeSpacing.z + 1
-				);
-
-				Grindstone::Math::Float3 probeVolumeBox(
-					probeVolume->probeSpacing.x * (probeCount.x - 1),
-					probeVolume->probeSpacing.y * (probeCount.y - 1),
-					probeVolume->probeSpacing.z * (probeCount.z - 1)
-				);
-				Grindstone::Math::Float3 boxMin = boundingData.offset - probeVolumeBox / 2.0f;
-				const float probeVolumeSphereGizmoRadius = glm::min(glm::min(probeVolume->probeSpacing.x, probeVolume->probeSpacing.y, probeVolume->probeSpacing.z) * 0.25f, 0.25f);
-
-				for (uint32_t i = 0; i < probeCount.x; ++i) {
-					for (uint32_t j = 0; j < probeCount.y; ++j) {
-						for (uint32_t k = 0; k < probeCount.z; ++k) {
-							glm::vec3 probePosition = boxMin + glm::vec3(probeVolume->probeSpacing.x * i, probeVolume->probeSpacing.y * j, probeVolume->probeSpacing.z * k);
-							Math::Matrix4 sphereMatrix = entityMatrix * glm::translate(probePosition);
-							gizmoRenderer.SubmitSphereGizmo(sphereMatrix, probeVolumeSphereGizmoRadius, probeVolumeSphereGizmoColor);
-						}
-					}
-				}
-			}
-		}
-	}
-}
 
 extern "C" {
 	RENDERER_DEFERRED_EXPORT void InitializeModule(Plugins::Interface* pluginInterface) {
@@ -103,23 +54,9 @@ extern "C" {
 		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Skinning>();
 		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Smaa>();
 		pluginInterface->RegisterRendererFeature<Grindstone::Renderer::Tonemap>();
-
-		Grindstone::Plugins::EditorPluginInterface* editorInterface = static_cast<Grindstone::Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
-		if (editorInterface) {
-			Grindstone::Editor::Manager* editorManager = editorInterface->GetEditorInstance();
-			Grindstone::Editor::GizmoRenderer& gizmoRenderer = editorManager->GetGizmoRenderer();
-			gizmoRenderer.RegisterGizmoCallback("Gizmo::ProbeVolume"_hash, Grindstone::Renderer::Editor::RenderProbeVolumeGizmos);
-		}
 	}
 
 	RENDERER_DEFERRED_EXPORT void ReleaseModule(Plugins::Interface* pluginInterface) {
-		Grindstone::Plugins::EditorPluginInterface* editorInterface = static_cast<Grindstone::Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
-		if (editorInterface) {
-			Grindstone::Editor::Manager* editorManager = editorInterface->GetEditorInstance();
-			Grindstone::Editor::GizmoRenderer& gizmoRenderer = editorManager->GetGizmoRenderer();
-			gizmoRenderer.UnregisterGizmoCallback("Gizmo::ProbeVolume"_hash);
-		}
-
 		Grindstone::EngineCore* engineCore = pluginInterface->GetEngineCore();
 		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Tonemap>();
 		pluginInterface->UnregisterRendererFeature<Grindstone::Renderer::Smaa>();
