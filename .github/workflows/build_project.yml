@@ -1,0 +1,51 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    env:
+      buildDir: ${{ github.workspace }}/build
+    name: ${{ matrix.os }}-build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: windows-latest
+            triplet: x64-windows
+            build-type: RelWithDebInfo
+          - os: ubuntu-latest
+            triplet: x64-linux
+            build-type: RelWithDebInfo
+            
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: get-cmake
+        uses: lukka/get-cmake@v3.21.1
+
+      - name: Run vcpkg
+        uses: lukka/run-vcpkg@v6
+        with:
+          setupOnly: true
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          vcpkgGitCommitId: '57bd7102d9fd880daa1b0958692294c4a125f6d8'
+          appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
+          vcpkgTriplet: ${{ matrix.triplet }}
+          additionalCachedPaths: ${{ env.buildDir }}/vcpkg_installed
+
+      - name: 'Build with CMake'
+        uses: lukka/run-cmake@v3
+        with:
+          cmakeListsOrSettingsJson: CMakeLists.txt
+          cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
+          useVcpkgToolchainFile: true
+          cmakeAppendedArgs: '-GNinja'
+          buildDirectory: ${{ env.buildDir }}
+          
