@@ -15,23 +15,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [windows-latest]
         include:
           - os: windows-latest
             triplet: x64-windows
             build-type: RelWithDebInfo
-          - os: ubuntu-latest
-            triplet: x64-linux
-            build-type: RelWithDebInfo
             
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7.0.1
 
       - name: get-cmake
-        uses: lukka/get-cmake@v3.21.1
+        uses: lukka/get-cmake@v4.4.2
 
       - name: Run vcpkg
-        uses: lukka/run-vcpkg@v6
+        uses: lukka/run-vcpkg@v11
         with:
           setupOnly: true
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
@@ -41,7 +38,7 @@ jobs:
           additionalCachedPaths: ${{ env.buildDir }}/vcpkg_installed
 
       - name: 'Build with CMake'
-        uses: lukka/run-cmake@v3
+        uses: lukka/run-cmake@v10
         with:
           cmakeListsOrSettingsJson: CMakeLists.txt
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
