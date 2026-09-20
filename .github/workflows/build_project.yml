@@ -20,6 +20,7 @@ jobs:
           - os: windows-latest
             triplet: x64-windows
             build-type: RelWithDebInfo
+            cmake-preset: 'windows-release'
             
     steps:
       - uses: actions/checkout@v7.0.1
@@ -27,7 +28,7 @@ jobs:
       - name: get-cmake
         uses: lukka/get-cmake@v4.4.2
 
-      - name: Run vcpkg
+      - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
           setupOnly: true
@@ -40,9 +41,6 @@ jobs:
       - name: 'Build with CMake'
         uses: lukka/run-cmake@v10
         with:
-          cmakeListsOrSettingsJson: CMakeLists.txt
-          cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
-          useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja'
-          buildDirectory: ${{ env.buildDir }}
+          configurePreset: ${{ matrix.cmake-preset }}
+          buildPreset: ${{ matrix.cmake-preset }}
           
