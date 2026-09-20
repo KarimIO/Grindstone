@@ -6,7 +6,7 @@ using namespace Grindstone;
 
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 
-static BOOL CALLBACK EnumDispProc(HMONITOR hMon, HDC dcMon, RECT* pRcMon, LPARAM lParam) {
+static BOOL CALLBACK EnumDispProc([[maybe_unused]] HMONITOR hMon, [[maybe_unused]] HDC dcMon, RECT* pRcMon, LPARAM lParam) {
 	Display* pArg = reinterpret_cast<Display*>(lParam);
 
 	// TODO: Fix all this
@@ -20,7 +20,7 @@ static BOOL CALLBACK EnumDispProc(HMONITOR hMon, HDC dcMon, RECT* pRcMon, LPARAM
 	return TRUE;
 }
 
-static BOOL CALLBACK CountDispProc(HMONITOR hMon, HDC dcMon, RECT* pRcMon, LPARAM lParam) {
+static BOOL CALLBACK CountDispProc([[maybe_unused]] HMONITOR hMon, [[maybe_unused]] HDC dcMon, [[maybe_unused]] RECT* pRcMon, LPARAM lParam) {
 	uint8_t& count = *reinterpret_cast<uint8_t*>(lParam);
 	count++;
 	return TRUE;

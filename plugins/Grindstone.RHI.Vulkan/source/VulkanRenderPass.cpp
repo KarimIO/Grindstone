@@ -40,8 +40,8 @@ Vulkan::RenderPass::RenderPass(const CreateInfo& createInfo)
 	Create();
 }
 
-void Vulkan::RenderPass::Update(VkRenderPass renderPass) {
-	this->renderPass = renderPass;
+void Vulkan::RenderPass::Update(VkRenderPass newRenderPass) {
+  renderPass = newRenderPass;
 }
 
 void Vulkan::RenderPass::Create() {
@@ -69,7 +69,6 @@ void Vulkan::RenderPass::Create() {
 	VkAttachmentReference *depthAttachmentRefPtr = nullptr;
 	VkAttachmentReference depthAttachmentRef = {};
 	if (depthFormat != Format::Invalid) {
-		FormatDepthStencilType depthStencilType = GetFormatDepthStencilType(depthFormat);
 		VkAttachmentDescription &depthAttachment = attachmentDescs[colorAttachments.size()];
 		depthAttachment.format = TranslateFormatToVulkan(depthFormat);
 		depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;

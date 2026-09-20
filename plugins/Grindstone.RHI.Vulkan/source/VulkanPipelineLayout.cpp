@@ -17,12 +17,12 @@ Vulkan::PipelineLayout::PipelineLayout(const Grindstone::GraphicsAPI::PipelineLa
 	std::vector<VkDescriptorSetLayout> layouts;
 	layouts.reserve(createInfo.descriptorSetLayoutCount);
 
-	const Vulkan::DescriptorSetLayout* const* descriptorSetLayouts = reinterpret_cast<const Vulkan::DescriptorSetLayout* const*>(createInfo.descriptorSetLayouts);
-	this->descriptorSetLayouts.resize(createInfo.descriptorSetLayoutCount);
+	const Vulkan::DescriptorSetLayout* const* newDescriptorSetLayouts = reinterpret_cast<const Vulkan::DescriptorSetLayout* const*>(createInfo.descriptorSetLayouts);
+	descriptorSetLayouts.resize(createInfo.descriptorSetLayoutCount);
 	for (uint32_t i = 0; i < createInfo.descriptorSetLayoutCount; ++i) {
-		this->descriptorSetLayouts[i] = createInfo.descriptorSetLayouts[i];
+		descriptorSetLayouts[i] = newDescriptorSetLayouts[i];
 
-		const Vulkan::DescriptorSetLayout* descriptorSetLayout = descriptorSetLayouts[i];
+		const Vulkan::DescriptorSetLayout* descriptorSetLayout = newDescriptorSetLayouts[i];
 		VkDescriptorSetLayout vkDescriptorSetLayout = descriptorSetLayout->GetInternalLayout();
 		layouts.push_back(vkDescriptorSetLayout);
 	}

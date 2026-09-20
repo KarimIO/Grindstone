@@ -74,6 +74,7 @@ find_package(glfw3 CONFIG REQUIRED)
 
 target_link_libraries(PluginRhiVulkan ${CORE_LIBS} Common Vulkan::Vulkan glfw fmt::fmt GPUOpen::VulkanMemoryAllocator Vulkan::LayerSettings Vulkan::UtilityHeaders Vulkan::CompilerConfiguration ${AFTERMATH_LIB})
 
+set_property(TARGET PluginRhiVulkan PROPERTY COMPILE_WARNING_AS_ERROR ON)
 target_compile_features(PluginRhiVulkan PRIVATE cxx_std_20)
 
 add_custom_command(

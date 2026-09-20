@@ -55,15 +55,15 @@ Vulkan::Framebuffer::~Framebuffer() {
 }
 
 void Vulkan::Framebuffer::UpdateNativeFramebuffer(
-	RenderPass* renderPass,
-	VkFramebuffer framebuffer,
-	uint32_t width,
-	uint32_t height
+	RenderPass* newRenderPass,
+	VkFramebuffer newFramebuffer,
+	uint32_t newWidth,
+	uint32_t newHeight
 ) {
-	this->renderPass = renderPass;
-	this->framebuffer = framebuffer;
-	this->width = width;
-	this->height = height;
+	newRenderPass = static_cast<Vulkan::RenderPass*>(renderPass);
+	newFramebuffer = framebuffer;
+	newWidth = width;
+	newHeight = height;
 
 	if (debugName.empty()) {
 		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_FRAMEBUFFER, framebuffer, debugName.c_str());
@@ -85,11 +85,11 @@ Grindstone::GraphicsAPI::RenderPass* Vulkan::Framebuffer::GetRenderPass() const 
 	return renderPass;
 }
 
-void Vulkan::Framebuffer::Resize(uint32_t width, uint32_t height) {
+void Vulkan::Framebuffer::Resize(uint32_t newWidth, uint32_t newHeight) {
 	Cleanup();
 
-	this->width = width;
-	this->height = height;
+	newWidth = width;
+	newHeight = height;
 	Create();
 }
 
@@ -146,7 +146,7 @@ Grindstone::GraphicsAPI::Image* Vulkan::Framebuffer::GetDepthStencilTarget() con
 	return depthAttachment;
 }
 
-void Vulkan::Framebuffer::Clear(GraphicsAPI::ClearMode mask) {
+void Vulkan::Framebuffer::Clear([[maybe_unused]] GraphicsAPI::ClearMode mask) {
 	GPRINT_FATAL(LogSource::GraphicsAPI, "Framebuffer::Clear is not used.");
 	assert(false);
 }
@@ -166,7 +166,7 @@ void Vulkan::Framebuffer::BindRead() {
 	assert(false);
 }
 
-void Vulkan::Framebuffer::BindTextures(int i) {
+void Vulkan::Framebuffer::BindTextures([[maybe_unused]] int i) {
 	GPRINT_FATAL(LogSource::GraphicsAPI, "Framebuffer::BindTextures is not used.");
 	assert(false);
 }

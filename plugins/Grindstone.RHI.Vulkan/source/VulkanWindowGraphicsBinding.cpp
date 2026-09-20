@@ -1,9 +1,3 @@
-#ifdef _WIN32
-#define VK_USE_PLATFORM_WIN32_KHR
-#else
-#define VK_USE_PLATFORM_XLIB_KHR
-#endif
-
 #include <algorithm>
 
 #include <vulkan/vulkan.h>
@@ -135,8 +129,8 @@ static void WaitForAftermathCrash() {
 	}
 }
 
-bool Vulkan::WindowGraphicsBinding::Initialize(Window *window) {
-	this->window = window;
+bool Vulkan::WindowGraphicsBinding::Initialize(Window *newWindow) {
+	window = newWindow;
 	maxFramesInFlight = 3;
 
 	VkResult result = glfwCreateWindowSurface(Vulkan::Core::Get().GetInstance(), static_cast<GlfwWindow*>(window)->GetHandle(), NULL, &surface);
@@ -395,7 +389,7 @@ bool Vulkan::WindowGraphicsBinding::AcquireNextImage() {
 	return true;
 }
 
-void Vulkan::WindowGraphicsBinding::Resize(uint32_t width, uint32_t height) {
+void Vulkan::WindowGraphicsBinding::Resize([[maybe_unused]] uint32_t width, [[maybe_unused]] uint32_t height) {
 	isSwapchainDirty = true;
 }
 
@@ -477,7 +471,6 @@ void Vulkan::WindowGraphicsBinding::SubmitCommandBufferNoSynchronization(Graphic
 
 void Vulkan::WindowGraphicsBinding::SubmitCommandBufferForCurrentFrame(GraphicsAPI::CommandBuffer* buffer) {
 	Vulkan::Core& vkCore = Vulkan::Core::Get();
-	VkDevice device = vkCore.GetDevice();
 	VkQueue graphicsQueue = vkCore.graphicsQueue;
 
 
