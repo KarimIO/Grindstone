@@ -5,40 +5,39 @@ on:
   push:
     branches:
       - main
+      - dev
+
+permissions:
+  contents: read
 
 jobs:
   build:
-    env:
-      buildDir: ${{ github.workspace }}/build
     name: ${{ matrix.os }}-build
     runs-on: ${{ matrix.os }}
+
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest]
         include:
           - os: windows-latest
             triplet: x64-windows
-            build-type: RelWithDebInfo
-            cmake-preset: 'windows-release'
-            
-    steps:
-      - uses: actions/checkout@v7.0.1
+            cmake-preset: windows-release
 
-      - name: get-cmake
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Get CMake
         uses: lukka/get-cmake@v4.4.2
 
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
-          setupOnly: true
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           vcpkgGitCommitId: '57bd7102d9fd880daa1b0958692294c4a125f6d8'
-          appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
-          vcpkgTriplet: ${{ matrix.triplet }}
-          additionalCachedPaths: ${{ env.buildDir }}/vcpkg_installed
+          runVcpkgInstall: true
 
-      - name: 'Build with CMake'
+      - name: Build with CMake
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.cmake-preset }}
