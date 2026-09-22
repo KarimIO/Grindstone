@@ -24,6 +24,7 @@ endif()
 
 set(CMAKE_CXX_STANDARD 20)
 
+find_package(GTest CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(RapidJSON CONFIG REQUIRED)

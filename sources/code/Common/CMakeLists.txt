@@ -143,7 +143,7 @@ set_property(TARGET Common PROPERTY COMPILE_WARNING_AS_ERROR ON)
 target_compile_features(Common PRIVATE cxx_std_20)
 target_link_libraries(Common glfw)
 
-target_include_directories(Common PUBLIC ${COMMON_DIR} ${CODE_DIR} ${PLUGIN_DIR})
+target_include_directories(Common PUBLIC ${COMMON_DIR} ${CODE_DIR})
 target_compile_definitions(Common PUBLIC NOMINMAX GLM_ENABLE_EXPERIMENTAL)
 
 message(STATUS
@@ -155,3 +155,14 @@ message(STATUS
 - COMMON_LIB => ${COMMON_LIB}
 
 ")
+
+
+file(GLOB_RECURSE SOURCE_CONTAINERS "${COMMON_DIR}/Test/Containers/*.cpp")
+source_group("Source Files\\Containers" FILES ${SOURCE_CONTAINERS})
+
+enable_testing()
+add_executable(Common.Test ${SOURCE_CONTAINERS})
+target_include_directories(Common.Test PUBLIC ${COMMON_DIR} ${CODE_DIR})
+target_link_libraries(Common.Test PRIVATE GTest::gtest_main)
+include(GoogleTest)
+gtest_discover_tests(Common.Test)

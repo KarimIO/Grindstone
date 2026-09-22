@@ -12,6 +12,7 @@
 		"gl3w",
 		"glfw3",
 		"glm",
+		"gtest",
 		{
 			"name": "imgui",
 			"features": [

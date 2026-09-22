@@ -9,6 +9,10 @@ PointerAlignment: Left
 # "const west" alignment of cv-qualifiers. In this project we use "east const".
 QualifierAlignment: Right
 
+UseTab: Always
+IndentWidth: 4
+TabWidth: 4
+
 IncludeBlocks: Regroup
 IncludeCategories:
 # System and C-language headers should go last. These expressions may miss a few
