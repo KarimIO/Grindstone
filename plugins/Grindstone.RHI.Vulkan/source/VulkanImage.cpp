@@ -86,11 +86,6 @@ void Vulkan::Image::Create() {
 		aspect = VK_IMAGE_ASPECT_COLOR_BIT;
 	}
 
-	uint8_t axisCount =
-		((width > 1) ? 1 : 0) +
-		((height > 1) ? 1 : 0) +
-		((depth > 1) ? 1 : 0);
-
 	if (imageUsage.Test(ImageUsageFlags::Cubemap)) {
 		if (arrayLayers > 6) {
 			imageViewType = VkImageViewType::VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
@@ -141,13 +136,13 @@ void Vulkan::Image::Create() {
 	}
 }
 
-void Vulkan::Image::UpdateNativeImage(VkImage image, VkImageView imageView, VkFormat format) {
-	this->image = image;
-	this->imageView = imageView;
-	vkFormat = format;
+void Vulkan::Image::UpdateNativeImage(VkImage newImage, VkImageView newImageView, VkFormat newFormat) {
+	image = newImage;
+	imageView = newImageView;
+	vkFormat = newFormat;
 }
 
-void Vulkan::Image::GenerateMipmaps(VkCommandBuffer commandBuffer, VkImage image) {
+void Vulkan::Image::GenerateMipmaps(VkCommandBuffer commandBuffer, VkImage newImage) {
 	VkPhysicalDevice physicalDevice = Vulkan::Core::Get().GetPhysicalDevice();
 
 	// Check if image format supports linear blitting
@@ -161,14 +156,17 @@ void Vulkan::Image::GenerateMipmaps(VkCommandBuffer commandBuffer, VkImage image
 	int32_t mipHeight = height;
 	int32_t mipDepth = depth;
 
-	VkImageMemoryBarrier barrier{};
-	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	barrier.image = image;
-	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	barrier.subresourceRange.aspectMask = aspect;
-	barrier.subresourceRange.layerCount = 1;
-	barrier.subresourceRange.levelCount = 1;
+	VkImageMemoryBarrier barrier{
+		.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+		.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+		.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+		.image = newImage,
+		.subresourceRange{
+			.aspectMask = aspect,
+			.levelCount = 1,
+			.layerCount = 1,
+		}
+	};
 
 	for (uint32_t mipIndex = 1; mipIndex < mipLevels; ++mipIndex) {
 		for (uint32_t arraylayerIndex = 0; arraylayerIndex < arrayLayers; ++arraylayerIndex) {
@@ -258,9 +256,9 @@ void Vulkan::Image::GenerateMipmaps(VkCommandBuffer commandBuffer, VkImage image
 	EndSingleTimeCommands(commandBuffer);
 }
 
-void Vulkan::Image::Resize(uint32_t width, uint32_t height) {
-	this->width = width;
-	this->height = height;
+void Vulkan::Image::Resize(uint32_t newWidth, uint32_t newHeight) {
+	width = newWidth;
+	height = newHeight;
 
 	VkDevice device = Vulkan::Core::Get().GetDevice();
 	vkDestroyImageView(device, imageView, nullptr);
@@ -479,14 +477,12 @@ void Vulkan::Image::UploadDataRegions(void* buffer, size_t bufferSize, ImageRegi
 		1, &preCopyBarrier
 	);
 
-	uint64_t offset = 0;
-
 	std::vector<VkBufferImageCopy> vkRegions;
 	vkRegions.reserve(static_cast<size_t>(regionCount));
 
 	for (uint32_t regionIndex = 0; regionIndex < regionCount; ++regionIndex) {
 		Image::ImageRegion& srcRegion = regions[regionIndex];
-		VkBufferImageCopy& vkRegion = vkRegions.emplace_back(
+		vkRegions.emplace_back(
 			VkBufferImageCopy{
 				.bufferOffset = srcRegion.bufferOffset,
 				.bufferRowLength = srcRegion.bufferRowLength,

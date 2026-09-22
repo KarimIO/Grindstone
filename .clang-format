@@ -1,0 +1,34 @@
+# Use the Google style in this project.
+BasedOnStyle: Google
+
+# Prefer "int& foo" over "int &foo"
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+# The Google Style Guide only asks for consistency w.r.t. "east const" vs.
+# "const west" alignment of cv-qualifiers. In this project we use "east const".
+QualifierAlignment: Right
+
+IncludeBlocks: Regroup
+IncludeCategories:
+# System and C-language headers should go last. These expressions may miss a few
+# cases, we can always add more.  Or we can conservative
+- Regex: '^<[A-Za-z0-9_]*\.h>$'
+  Priority: 10000
+- Regex: '^<sys/[A-Za-z0-9_]*\.h>$'
+  Priority: 10000
+# Matches common headers first, but sorts them after project includes
+- Regex: '^\"Common/'  # project includes should sort first
+  Priority: 500
+- Regex: '^\"EditorCommon/'     # project includes should sort first
+  Priority: 500
+- Regex: '^\"EngineCore/'     # project includes should sort first
+  Priority: 500
+- Regex: '^\"EditorCore/' # project internals second
+  Priority: 1000
+- Regex: '^<.*.hpp>'
+  Priority: 4000
+- Regex: '^<[^/]*>'
+  Priority: 5000
+
+CommentPragmas: '(@copydoc|@copybrief|@see|@overload|@snippet)'

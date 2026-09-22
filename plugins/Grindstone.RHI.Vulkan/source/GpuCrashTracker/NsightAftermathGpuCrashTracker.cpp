@@ -135,7 +135,7 @@ void GpuCrashTracker::OnDescription(PFN_GFSDK_Aftermath_AddGpuCrashDumpDescripti
 }
 
 // Handler for app-managed marker resolve callback
-void GpuCrashTracker::OnResolveMarker(const void* pMarkerData, const uint32_t markerDataSize, PFN_GFSDK_Aftermath_ResolveMarker resolveMarker)
+void GpuCrashTracker::OnResolveMarker(const void* pMarkerData, [[maybe_unused]] const uint32_t markerDataSize, PFN_GFSDK_Aftermath_ResolveMarker resolveMarker)
 {
     for (auto& map : m_markerMap)
     {

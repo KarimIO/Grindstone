@@ -42,11 +42,11 @@ static Input::Interface* GetInput(GLFWwindow* window) {
 }
 
 static Grindstone::EngineCore* g_engineCore = nullptr;
-static void OnErrorCallback(int error, const char* description) {
+static void OnErrorCallback([[maybe_unused]] int error, const char* description) {
 	GPRINT_ERROR(LogSource::GraphicsAPI, description);
 }
 
-static void OnKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+static void OnKeyCallback(GLFWwindow* window, int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mods) {
 	if (Input::Interface* input = GetInput(window)) {
 		input->SetKeyPressed(TranslateKeyboardButton(key), action != GLFW_RELEASE);
 	}
@@ -58,7 +58,7 @@ static void OnCursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
 	}
 }
 
-static void OnMouseBtnCallback(GLFWwindow* window, int button, int action, int mods) {
+static void OnMouseBtnCallback(GLFWwindow* window, int button, int action, [[maybe_unused]] int mods) {
 	if (Input::Interface* input = GetInput(window)) {
 		input->SetMouseButton(TranslateMouseButton(button), action == GLFW_PRESS);
 	}
@@ -70,7 +70,7 @@ static void OnMouseScrollCallback(GLFWwindow* window, double offsetX, double off
 	}
 }
 
-static void OnWindowPosCallback(GLFWwindow* window, int xpos, int ypos) {
+static void OnWindowPosCallback([[maybe_unused]] GLFWwindow* window, [[maybe_unused]] int xpos, [[maybe_unused]] int ypos) {
 }
 
 static void OnWindowSizeCallback(GLFWwindow* window, int width, int height) {
@@ -88,7 +88,7 @@ static void OnWindowFocusCallback(GLFWwindow* window, int focused) {
 	}
 }
 
-static void OnWindowMinimizeCallback(GLFWwindow* window, int iconified) {
+static void OnWindowMinimizeCallback([[maybe_unused]] GLFWwindow* window, [[maybe_unused]] int iconified) {
 }
 
 static void OnWindowTryQuit(GLFWwindow* window) {
@@ -104,16 +104,8 @@ bool GlfwWindow::CopyStringToClipboard(const std::string& stringToCopy) {
 	return true;
 }
 
-static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData) {
-	if (uMsg == BFFM_INITIALIZED) {
-		std::string tmp = (const char*)lpData;
-		SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
-	}
-
-	return 0;
-}
-
-std::filesystem::path GlfwWindow::BrowseFolder(std::filesystem::path& defaultPath) {
+std::filesystem::path GlfwWindow::BrowseFolder([[maybe_unused]] std::filesystem::path& defaultPath) {
+	// TODO: Use default path
 	std::filesystem::path outPath;
 
 	HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED |
@@ -267,7 +259,7 @@ void GlfwWindow::HandleEvents() {
 	glfwPollEvents();
 }
 
-void GlfwWindow::SetFullscreen(FullscreenMode mode) {
+void GlfwWindow::SetFullscreen([[maybe_unused]] FullscreenMode mode) {
 	// TODO: Handle this
 
 }
@@ -355,7 +347,7 @@ GLFWwindow* GlfwWindow::GetHandle() const {
 	return windowHandle;
 }
 
-void GlfwWindow::SetWindowFocus(bool isFocused) {
+void GlfwWindow::SetWindowFocus([[maybe_unused]] bool isFocused) {
 	if (windowHandle) {
 		glfwFocusWindow(windowHandle);
 	}
@@ -369,7 +361,7 @@ bool GlfwWindow::GetWindowMinimized() const {
 	return glfwGetWindowAttrib(windowHandle, GLFW_ICONIFIED) == GLFW_TRUE;
 }
 
-void GlfwWindow::GetTitle(char* allocatedBuffer) const {
+void GlfwWindow::GetTitle([[maybe_unused]] char* allocatedBuffer) const {
 	// TODO: Implement this
 }
 

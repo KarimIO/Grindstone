@@ -10,6 +10,8 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 	endif()
 endif()
 
+set(CMAKE_CXX_CLANG_TIDY "clang-tidy")
+
 include("${CMAKE_TOOLCHAIN_FILE}")
 set_property(GLOBAL PROPERTY USE_FOLDERS TRUE)
 

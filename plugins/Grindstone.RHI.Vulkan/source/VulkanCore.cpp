@@ -1,11 +1,5 @@
 #include <cassert>
 
-#ifdef _WIN32
-#define VK_USE_PLATFORM_WIN32_KHR
-#else
-#define VK_USE_PLATFORM_XLIB_KHR
-#endif
-
 #include <set>
 #include <algorithm>
 #include <array>
@@ -332,14 +326,14 @@ void Vulkan::Core::PickPhysicalDevice() {
 
 	GPRINT_INFO(LogSource::GraphicsAPI, "Using Device: {}", gpuProperties.deviceName);
 
-	auto [vendorName, vendorType] = GetVendorNameFromID(gpuProperties.vendorID);
-	if (vendorType == VendorType::Unknown || vendorType == VendorType::Unset) {
-		this->vendorName = std::string("Unknown Vendor(") + std::to_string(gpuProperties.vendorID) + ")";
+	auto [newVendorName, newVendorType] = GetVendorNameFromID(gpuProperties.vendorID);
+	if (newVendorType == VendorType::Unknown || vendorType == VendorType::Unset) {
+		vendorName = std::string("Unknown Vendor(") + std::to_string(gpuProperties.vendorID) + ")";
 	}
 	else {
-		this->vendorName = vendorName;
+		vendorName = newVendorName;
 	}
-	this->vendorType = vendorType;
+	vendorType = newVendorType;
 	adapterName = gpuProperties.deviceName;
 
 	unsigned int versionMajor = (gpuProperties.apiVersion >> 22) & 0x3FF;
@@ -432,8 +426,7 @@ void Vulkan::Core::CreateLogicalDevice() {
 		IsExtensionSupported(supportedExtensions, VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME)
 	) {
 		static GpuCrashTracker::MarkerMap markerMap;
-		static GpuCrashTracker* gpuCrashTracker = Grindstone::Memory::AllocatorCore::Allocate<GpuCrashTracker>(markerMap);
-		this->gpuCrashTracker = gpuCrashTracker;
+		gpuCrashTracker = Grindstone::Memory::AllocatorCore::Allocate<GpuCrashTracker>(markerMap);
 		gpuCrashTracker->Initialize(true);
 
 		usedDeviceExtensions.emplace_back(VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME);
@@ -497,14 +490,14 @@ bool Vulkan::Core::CheckValidationLayerSupport() {
 	return true;
 }
 
-Vulkan::QueueFamilyIndices Vulkan::Core::FindQueueFamilies(VkPhysicalDevice device) {
+Vulkan::QueueFamilyIndices Vulkan::Core::FindQueueFamilies(VkPhysicalDevice testPhysicaldevice) {
 	QueueFamilyIndices indices;
 
 	uint32_t queueFamilyCount = 0;
-	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+	vkGetPhysicalDeviceQueueFamilyProperties(testPhysicaldevice, &queueFamilyCount, nullptr);
 
 	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+	vkGetPhysicalDeviceQueueFamilyProperties(testPhysicaldevice, &queueFamilyCount, queueFamilies.data());
 
 	int i = 0;
 	for (const VkQueueFamilyProperties& queueFamily : queueFamilies) {
@@ -513,7 +506,7 @@ Vulkan::QueueFamilyIndices Vulkan::Core::FindQueueFamilies(VkPhysicalDevice devi
 			indices.hasGraphicsFamily = true;
 		}
 
-		if (glfwGetPhysicalDevicePresentationSupport(instance, device, i)) {
+		if (glfwGetPhysicalDevicePresentationSupport(instance, testPhysicaldevice, i)) {
 			indices.presentFamily = i;
 			indices.hasPresentFamily = true;
 		}
@@ -566,25 +559,25 @@ void Vulkan::Core::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateI
 	createInfo.pUserData = this;
 }
 
-uint16_t Vulkan::Core::ScoreDevice(VkPhysicalDevice physicalDevice) {
-	QueueFamilyIndices indices = FindQueueFamilies(physicalDevice);
+uint16_t Vulkan::Core::ScoreDevice(VkPhysicalDevice testPhysicalDevice) {
+	QueueFamilyIndices indices = FindQueueFamilies(testPhysicalDevice);
 
 	VkPhysicalDeviceProperties gpuProps{};
-	vkGetPhysicalDeviceProperties(physicalDevice, &gpuProps);
+	vkGetPhysicalDeviceProperties(testPhysicalDevice, &gpuProps);
 	GPRINT_INFO(LogSource::GraphicsAPI, "Evaluating device '{}':", gpuProps.deviceName);
 
-	bool extensionsSupported = CheckDeviceExtensionSupport(physicalDevice);
+	bool extensionsSupported = CheckDeviceExtensionSupport(testPhysicalDevice);
 
 	bool swapChainAdequate = false;
 	if (extensionsSupported) {
 		auto wgb = static_cast<Vulkan::WindowGraphicsBinding*>(primaryWindow->GetWindowGraphicsBinding());
-		SwapChainSupportDetails swapChainSupport = wgb->QuerySwapChainSupport(physicalDevice);
+		SwapChainSupportDetails swapChainSupport = wgb->QuerySwapChainSupport(testPhysicalDevice);
 		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 		GPRINT_INFO(LogSource::GraphicsAPI, "\t- Swapchain Support:");
 		GPRINT_INFO(LogSource::GraphicsAPI, "\t\t- Supported Formats:");
 		for (VkSurfaceFormatKHR format : swapChainSupport.formats) {
 			VkFormatProperties formatProperties{};
-			vkGetPhysicalDeviceFormatProperties(physicalDevice, format.format, &formatProperties);
+			vkGetPhysicalDeviceFormatProperties(testPhysicalDevice, format.format, &formatProperties);
 			GPRINT_INFO(LogSource::GraphicsAPI, "\t\t\t- {} - {}", string_VkFormat(format.format), string_VkColorSpaceKHR(format.colorSpace));
 		}
 
@@ -633,7 +626,7 @@ uint16_t Vulkan::Core::ScoreDevice(VkPhysicalDevice physicalDevice) {
 	}
 
 	VkPhysicalDeviceMemoryProperties memoryProps{};
-	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProps);
+	vkGetPhysicalDeviceMemoryProperties(testPhysicalDevice, &memoryProps);
 
 	auto heapsPointer = memoryProps.memoryHeaps;
 	auto heaps = std::vector<VkMemoryHeap>(heapsPointer, heapsPointer + memoryProps.memoryHeapCount);
@@ -651,12 +644,12 @@ uint16_t Vulkan::Core::ScoreDevice(VkPhysicalDevice physicalDevice) {
 	return static_cast<uint16_t>(heapScore + gpuTypeScore);
 }
 
-bool Vulkan::Core::CheckDeviceExtensionSupport(VkPhysicalDevice device) {
+bool Vulkan::Core::CheckDeviceExtensionSupport(VkPhysicalDevice testPhysicalDevice) {
 	uint32_t extensionCount;
-	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+	vkEnumerateDeviceExtensionProperties(testPhysicalDevice, nullptr, &extensionCount, nullptr);
 
 	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+	vkEnumerateDeviceExtensionProperties(testPhysicalDevice, nullptr, &extensionCount, availableExtensions.data());
 
 	std::set<std::string> requiredExtensions(requiredDeviceExtensions.begin(), requiredDeviceExtensions.end());
 
@@ -1030,7 +1023,12 @@ inline bool Vulkan::Core::SupportsMultiDrawIndirect() const {
 //==================================
 // Unused
 //==================================
-void Vulkan::Core::Clear(ClearMode mask, float clear_color[4], float clear_depth, uint32_t clear_stencil) {
+void Vulkan::Core::Clear(
+	[[maybe_unused]] ClearMode mask,
+    [[maybe_unused]] float clear_color[4],
+    [[maybe_unused]] float clear_depth,
+    [[maybe_unused]] uint32_t clear_stencil
+) {
 	GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan::Core::Clear is not used.");
 	assert(false);
 }
@@ -1042,32 +1040,43 @@ void Vulkan::Core::BindVertexArrayObject(Base::VertexArrayObject *) {
 	GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan::Core::BindVertexArrayObject is not used.");
 	assert(false);
 }
-void Vulkan::Core::DrawImmediateIndexed(GeometryType geometryType, bool largeBuffer, int32_t baseVertex, uint32_t indexOffsetPtr, uint32_t indexCount) {
+void Vulkan::Core::DrawImmediateIndexed(
+    [[maybe_unused]] GeometryType geometryType,
+    [[maybe_unused]] bool largeBuffer,
+	[[maybe_unused]] int32_t baseVertex,
+    [[maybe_unused]] uint32_t indexOffsetPtr,
+    [[maybe_unused]] uint32_t indexCount
+) {
 	GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan::Core::DrawImmediateIndexed is not used.");
 	assert(false);
 }
-void Vulkan::Core::DrawImmediateVertices(GeometryType geometryType, uint32_t base, uint32_t count) {
+void Vulkan::Core::DrawImmediateVertices(
+    [[maybe_unused]] GeometryType geometryType,
+	[[maybe_unused]] uint32_t base,
+    [[maybe_unused]] uint32_t count
+) {
 	GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan::Core::DrawImmediateVertices is not used.");
 	assert(false);
 }
 void Vulkan::Core::SetImmediateBlending(
-	BlendOperation colorOp, BlendFactor colorSrc, BlendFactor colorDst,
-	BlendOperation alphaOp, BlendFactor alphaSrc, BlendFactor alphaDst
+	[[maybe_unused]] BlendOperation colorOp, [[maybe_unused]] BlendFactor colorSrc, [[maybe_unused]] BlendFactor colorDst,
+	[[maybe_unused]] BlendOperation alphaOp, [[maybe_unused]] BlendFactor alphaSrc, [[maybe_unused]] BlendFactor alphaDst
 ) {
 	GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan::Core::SetImmediateBlending is not used.");
 	assert(false);
 }
-void Vulkan::Core::EnableDepthWrite(bool state) {
+void Vulkan::Core::EnableDepthWrite([[maybe_unused]] bool state) {
 	GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan::Core::EnableDepthWrite is not used.");
 	assert(false);
 }
-void Vulkan::Core::SetColorMask(ColorMask mask) {
+void Vulkan::Core::SetColorMask([[maybe_unused]] ColorMask mask) {
 	GPRINT_FATAL(LogSource::GraphicsAPI, "Vulkan::Core::SetColorMask is not used.");
 	assert(false);
 }
 
-void Vulkan::Core::CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) {
-}
+void Vulkan::Core::CopyDepthBufferFromReadToWrite(
+    [[maybe_unused]] uint32_t srcWidth, [[maybe_unused]] uint32_t srcHeight,
+    [[maybe_unused]] uint32_t dstWidth, [[maybe_unused]] uint32_t dstHeight) {}
 
 void Vulkan::Core::BindDefaultFramebuffer() {
 }
@@ -1078,5 +1087,4 @@ void Vulkan::Core::BindDefaultFramebufferWrite() {
 void Vulkan::Core::BindDefaultFramebufferRead() {
 }
 
-void Vulkan::Core::ResizeViewport(uint32_t w, uint32_t h) {
-}
+void Vulkan::Core::ResizeViewport([[maybe_unused]] uint32_t w, [[maybe_unused]] uint32_t h) {}
