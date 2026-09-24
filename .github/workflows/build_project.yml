@@ -42,3 +42,10 @@ jobs:
         with:
           configurePreset: ${{ matrix.cmake-preset }}
           buildPreset: ${{ matrix.cmake-preset }}
+
+      - name: Upload build
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: grindstone-${{ matrix.os }}-build
+          path: build/windows-tests/
+          if-no-files-found: error
