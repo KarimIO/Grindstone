@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 namespace Grindstone {
 	template<typename T>
 	class SharedPtr {
@@ -10,9 +12,13 @@ namespace Grindstone {
 
 		SharedPtr() = default;
 
-		SharedPtr(T* ptr, std::function<void(void*)> deleteFn) : ptr(ptr), deleteFn(deleteFn), refCounter(new SharedPtrRefCounter()) {}
+		SharedPtr(T* ptr, std::function<void(void*)> deleteFn)
+			: ptr(ptr),
+			  refCounter(new SharedPtrRefCounter()),
+			  deleteFn(deleteFn) {}
 
-		SharedPtr(const SharedPtr& obj) : ptr(obj.ptr), refCounter(obj.refCounter) {
+		SharedPtr(const SharedPtr& obj)
+			: ptr(obj.ptr), refCounter(obj.refCounter), deleteFn(obj.deleteFn) {
 			if (refCounter) {
 				++refCounter->refCount;
 			}
@@ -25,12 +31,15 @@ namespace Grindstone {
 				delete refCounter;
 			}
 
-			ptr = obj->ptr;
-			refCounter = obj->refCounter;
+			ptr = obj.ptr;
+			deleteFn = obj.deleteFn;
+			refCounter = obj.refCounter;
 
 			if (ptr && refCounter) {
 				++refCounter->refCount;
 			}
+
+			return *this;
 		}
 
 		T* operator->() {
