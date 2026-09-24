@@ -19,12 +19,46 @@ namespace Grindstone::Containers {
 		Span() = default;
 
 		Span(T* ptr, size_t size) : size(size), contents(ptr) {}
-
+		
 		Span(const Span& other) : size(other.size), contents(other.contents) {}
 
 		Span(Span&& other) noexcept : size(other.size), contents(other.contents) {
 			other.size = 0;
 			other.contents = nullptr;
+		}
+
+		template <typename U,
+				  std::enable_if_t<std::is_convertible_v<U*, T*>, int> = 0>
+		Span(const Span<U>& other)
+			: size(other.GetSize()), contents(std::move(other.contents)) {}
+
+		template <typename U,
+				  std::enable_if_t<std::is_convertible_v<U*, T*>, int> = 0>
+		Span(Span<U>&& other) noexcept
+			: size(other.GetSize()), contents(std::move(other.contents)) {
+			other.size = 0;
+			other.contents = nullptr;
+		}
+
+		template <typename U,
+				  std::enable_if_t<std::is_convertible_v<U*, T*>, int> = 0>
+		Span& operator=(const Span<U>& other) {
+			size = other.size;
+			contents = other.contents;
+
+			return *this;
+		}
+
+		template <typename U,
+				  std::enable_if_t<std::is_convertible_v<U*, T*>, int> = 0>
+		Span& operator=(Span<U>&& other) noexcept {
+			if (this != reinterpret_cast<Span<T>*>(&other)) {
+				size = other.size;
+				contents = other.contents;
+				other.size = 0;
+				other.contents = nullptr;
+			}
+			return *this;
 		}
 
 		Span& operator=(const Span& other) {
@@ -65,7 +99,7 @@ namespace Grindstone::Containers {
 
 		bool TryGet(T& outValue, size_t index) {
 			if (index < size) {
-				contents[index];
+				outValue = contents[index];
 				return true;
 			}
 
