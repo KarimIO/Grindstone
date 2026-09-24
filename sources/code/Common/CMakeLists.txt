@@ -160,9 +160,21 @@ message(STATUS
 file(GLOB_RECURSE SOURCE_CONTAINERS "${COMMON_DIR}/Test/Containers/*.cpp")
 source_group("Source Files\\Containers" FILES ${SOURCE_CONTAINERS})
 
+file(GLOB_RECURSE SOURCE_ALLOCATORS "${COMMON_DIR}/Test/Memory/Allocators/*.cpp")
+source_group("Source Files\\Memory\\Allocator" FILES ${SOURCE_ALLOCATORS})
+
+file(GLOB_RECURSE SOURCE_SMART_POINTERS "${COMMON_DIR}/Test/Memory/SmartPointers/*.cpp")
+source_group("Source Files\\Memory\\SmartPointers" FILES ${SOURCE_SMART_POINTERS})
+
+file(
+    GLOB_RECURSE SOURCE_TEST
+    "${COMMON_DIR}/Test/HashedString.cpp"
+    "${COMMON_DIR}/Test/Result.cpp"
+)
+
 enable_testing()
-add_executable(Common.Test ${SOURCE_CONTAINERS})
+add_executable(Common.Test ${SOURCE_CONTAINERS} ${SOURCE_ALLOCATORS} ${SOURCE_SMART_POINTERS} ${SOURCE_TEST})
 target_include_directories(Common.Test PUBLIC ${COMMON_DIR} ${CODE_DIR})
-target_link_libraries(Common.Test PRIVATE GTest::gtest_main)
+target_link_libraries(Common.Test PRIVATE GTest::gtest_main Common)
 include(GoogleTest)
 gtest_discover_tests(Common.Test)
