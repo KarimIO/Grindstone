@@ -42,7 +42,8 @@ bool EngineCore::EarlyInitialize(EarlyCreateInfo& createInfo) {
 		return false;
 	}
 
-	Grindstone::HashedString::CreateHashMap();
+	Grindstone::HashedString::HashMap* hashMap = AllocatorCore::Allocate<Grindstone::HashedString::HashMap>();
+	Grindstone::HashedString::SetHashMap(hashMap);
 	eventDispatcher = AllocatorCore::Allocate<Events::Dispatcher>();
 	Grindstone::CvarSystem* cvarSystem = Grindstone::CreateCvarSystemInstance();
 	cvarSystem->CreateFloatCvar("test.cvar", "This is a test of the cvar system.", 0.0, 2.0, Grindstone::CvarFlags::EditorNumberSlider);

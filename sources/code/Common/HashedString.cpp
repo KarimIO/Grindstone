@@ -1,8 +1,6 @@
-#include <stdlib.h>
 #include <map>
 
-#include <EngineCore/Utils/MemoryAllocator.hpp>
-
+#include "Hash.hpp"
 #include "HashedString.hpp"
 #include "String.hpp"
 
@@ -10,10 +8,6 @@ static const Grindstone::String emptyString = "[ EMPTY ]";
 static const Grindstone::String invalidString = "[ INVALID ]";
 
 Grindstone::HashedString::HashMap* nameHashMap = nullptr;
-
-void Grindstone::HashedString::CreateHashMap() {
-	nameHashMap = Grindstone::Memory::AllocatorCore::Allocate<HashMap>();
-}
 
 Grindstone::HashedString::HashMap* Grindstone::HashedString::GetHashedStringMap() {
 	return nameHashMap;
