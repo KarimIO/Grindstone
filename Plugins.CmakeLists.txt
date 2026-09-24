@@ -10,3 +10,4 @@ Grindstone.Physics.Jolt/CMakeLists.txt
 Grindstone.Renderables.3D/CMakeLists.txt
 Grindstone.Renderer.Deferred/CMakeLists.txt
 Grindstone.Script.CSharp/CMakeLists.txt
+Grindstone.Editor.LightBakery/CMakeLists.txt

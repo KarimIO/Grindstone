@@ -232,10 +232,6 @@ EngineCore::~EngineCore() {
 		worldContextManager->ClearContextSets();
 	}
 
-	if (renderingPipeline != nullptr) {
-		AllocatorCore::Free(renderingPipeline);
-	}
-
 	if (pluginManager != nullptr) {
 		pluginManager->UnloadPluginsByStage("EndOfEngineSetup");
 		pluginManager->UnloadPluginsByStage("JustBeforeEndOfEngineSetup");
@@ -253,6 +249,11 @@ EngineCore::~EngineCore() {
 	if (pluginManager) {
 		pluginManager->UnloadPluginsByStage("EarlyEngineSetup");
 		AllocatorCore::Free(pluginManager);
+	}
+
+
+	if (renderingPipeline != nullptr) {
+		AllocatorCore::Free(renderingPipeline);
 	}
 
 	AllocatorCore::Free(pluginInterface);

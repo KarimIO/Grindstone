@@ -1,0 +1,17 @@
+{
+	"name": "Grindstone.Editor.LightBakery",
+	"displayName": "Light Baking System",
+	"version": "0.1.0",
+	"description": "Provides a set of tools to facilitate building light probes, cubemaps, and eventually lightmaps.",
+	"author": "Grindstone Foundation",
+	"assets": [],
+	"dependencies": [],
+	"binaries": [
+		{
+			"path": "lib/{Configuration}/PluginEditorLightBakery",
+			"loadStage": "EditorAfterUiSetup",
+			"cmakeTarget": "PluginEditorLightBakery"
+		}
+	],
+	"cmake": "CMakeLists.txt"
+}

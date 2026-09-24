@@ -71,6 +71,11 @@ AssetImporter* AssetManager::GetManager(AssetType assetType) {
 	return assetTypeImporters[index];
 }
 
+bool AssetManager::HasManager(AssetType assetType) {
+	const size_t index = static_cast<size_t>(assetType);
+	return assetTypeImporters[index] != nullptr;
+}
+
 void AssetManager::QueueReloadAsset(AssetType assetType, Uuid uuid) {
 	std::scoped_lock lock(reloadMutex);
 	queuedAssetReloads.emplace_back(assetType, uuid);

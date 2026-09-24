@@ -9,7 +9,7 @@
 
 namespace Grindstone {
 	class BaseAssetRenderer;
-	class ComputePipelineImporter : public SpecificAssetImporter<ComputePipelineAsset, AssetType::ComputePipelineSet> {
+	class ComputePipelineImporter : public SpecificAssetImporter<ComputePipelineAsset> {
 		public:
 			virtual ~ComputePipelineImporter() override;
 

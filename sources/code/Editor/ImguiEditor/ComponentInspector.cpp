@@ -10,11 +10,13 @@
 #include <EngineCore/Assets/Asset.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
+#include <EngineCore/Logger.hpp>
 #include <Editor/EditorManager.hpp>
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
 #include <Grindstone.Script.CSharp/include/Components/ScriptComponent.hpp>
 #include <Grindstone.Script.CSharp/include/CSharpManager.hpp>
 #include <Common/Math.hpp>
+#include <Common/Rect.hpp>
 
 #include "ComponentInspector.hpp"
 
@@ -96,12 +98,13 @@ static bool DrawFloatInput(const char* name, float& toEdit, size_t index, float 
 	return hasChanged;
 }
 
+constexpr static float horizontalGap = 8.0f;
 static void DrawFloatInputNewLine() {
-	ImGui::SameLine(0.0f, 0.2f);
+	ImGui::SameLine(0.0f, horizontalGap);
 }
 
 static bool DrawFloat2(const char* name, float* vec2) {
-	float containerWidth = ImGui::GetContentRegionAvail().x / 2.0f;
+	float containerWidth = (ImGui::GetContentRegionAvail().x - horizontalGap) / 2.0f;
 	bool hasChanged = DrawFloatInput(name, vec2[0], 0, containerWidth);
 	DrawFloatInputNewLine();
 	hasChanged |= DrawFloatInput(name, vec2[1], 1, containerWidth);
@@ -110,7 +113,7 @@ static bool DrawFloat2(const char* name, float* vec2) {
 }
 
 static bool DrawFloat3(const char* name, float* vec3) {
-	float containerWidth = ImGui::GetContentRegionAvail().x / 3.0f;
+	float containerWidth = (ImGui::GetContentRegionAvail().x - horizontalGap * 2) / 3.0f;
 	bool hasChanged = DrawFloatInput(name, vec3[0], 0, containerWidth);
 	DrawFloatInputNewLine();
 	hasChanged |= DrawFloatInput(name, vec3[1], 1, containerWidth);
@@ -121,7 +124,7 @@ static bool DrawFloat3(const char* name, float* vec3) {
 }
 
 static bool DrawFloat4(const char* name, float* vec4) {
-	float containerWidth = ImGui::GetContentRegionAvail().x / 4.0f;
+	float containerWidth = (ImGui::GetContentRegionAvail().x - horizontalGap * 3) / 4.0f;
 	bool hasChanged = DrawFloatInput(name, vec4[0], 0, containerWidth);
 	DrawFloatInputNewLine();
 	hasChanged |= DrawFloatInput(name, vec4[1], 1, containerWidth);
@@ -329,7 +332,7 @@ void ComponentInspector::RenderCSharpScript(
 
 			Grindstone::Buffer& valueBuffer = response.first;
 			auto& fields = response.second;
-			if (ImGui::BeginTable("inspectorSplit", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
+			if (ImGui::BeginTable("inspectorSplit", 2, ImGuiTableFlags_Resizable)) {
 				for (auto& field : fields) {
 					ImGui::TableNextRow();
 					ImGui::TableNextColumn();
@@ -365,13 +368,22 @@ void ComponentInspector::RenderComponentCategory(
 		ImGui::TreePop();
 	}
 
-	if (ImGui::BeginTable("inspectorSplit", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_NoPadInnerX)) {
+	if (ImGui::BeginTable("inspectorSplit", 2, ImGuiTableFlags_Resizable)) {
 		for (auto& member : category.members) {
-			ImGui::TableNextRow();
-			ImGui::TableNextColumn();
-			ImGui::Text(member.displayName.c_str());
-			ImGui::TableNextColumn();
-			RenderComponentMember(member, componentPtr, entity);
+			bool canView = Any(member.metadata & Grindstone::Reflection::Metadata::ViewInEditor);
+			bool canSet = Any(member.metadata & Grindstone::Reflection::Metadata::SetInEditor);
+
+			ImGui::BeginDisabled(!canSet);
+
+			if (canView) {
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::Text(member.displayName.c_str());
+				ImGui::TableNextColumn();
+				RenderComponentMember(member, componentPtr, entity);
+			}
+
+			ImGui::EndDisabled();
 		}
 
 		ImGui::EndTable();
@@ -398,7 +410,7 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 		);
 		break;
 	case Reflection::TypeDescriptor::ReflectionTypeData::AssetReference: {
-		auto assetManager = Editor::Manager::GetEngineCore().assetManager;
+		Grindstone::Assets::AssetManager* assetManager = Editor::Manager::GetEngineCore().assetManager;
 
 		auto assetReferenceType = static_cast<Reflection::TypeDescriptor_AssetReference*>(itemType);
 		GenericAssetReference* assetReference = (GenericAssetReference*)offset;
@@ -425,24 +437,32 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 				// Handle new value
 				assetReference->uuid = newUuid;
 				assetManager->IncrementAssetCount(assetType, newUuid);
-				};
+			};
 
 			imguiEditor->PromptAssetPicker(assetType, callback);
 		}
 
 		if (ImGui::BeginDragDropTarget()) {
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(GetAssetTypeToString(assetReferenceType->assetType))) {
+			const char* assetTypeStr = GetAssetTypeToString(assetReferenceType->assetType);
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(assetTypeStr)) {
 				Uuid newUuid = *static_cast<Uuid*>(payload->Data);
 				AssetRegistry::Entry entry;
 				if (Editor::Manager::GetInstance().GetAssetRegistry().TryGetAssetData(newUuid, entry)) {
-					// Handle old value
-					if (hasValue) {
-						assetManager->DecrementAssetCount(assetType, uuid);
+					if (assetManager->HasManager(assetReferenceType->assetType)) {
+						GPRINT_ERROR(LogSource::Editor, "Unable to find asset importer for {}.", assetTypeStr);
+						// TODO: Should we assign the uuid to newUuid? Might cause errors.
+						assetReference->uuid = Uuid();
 					}
+					else {
+						// Handle old value
+						if (hasValue) {
+							assetManager->DecrementAssetCount(assetType, uuid);
+						}
 
-					// Handle new value
-					assetReference->uuid = newUuid;
-					assetManager->IncrementAssetCount(assetType, newUuid);
+						// Handle new value
+						assetReference->uuid = newUuid;
+						assetManager->IncrementAssetCount(assetType, newUuid);
+					}
 				}
 			}
 
@@ -652,6 +672,62 @@ void ComponentInspector::RenderComponentMember(std::string_view displayName, Ref
 			(double*)offset
 		);
 		break;
+	case Reflection::TypeDescriptor::ReflectionTypeData::Rect2D: {
+		Grindstone::Math::Rect2D* rect2D = static_cast<Grindstone::Math::Rect2D*>(offset);
+		std::string offsetName = displayNamePtr + std::string("_Offset");
+		std::string extentName = displayNamePtr + std::string("_Extent");
+		DrawFloat2(offsetName.c_str(), static_cast<float*>(&rect2D->offset[0]));
+		DrawFloat2(extentName.c_str(), static_cast<float*>(&rect2D->extent[0]));
+
+		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::IntRect2D: {
+		Grindstone::Math::IntRect2D* intRect2D = static_cast<Grindstone::Math::IntRect2D*>(offset);
+		std::string offsetName = displayNamePtr + std::string("_Offset");
+		std::string extentName = displayNamePtr + std::string("_Extent");
+		ImGui::InputScalarN(
+			offsetName.c_str(),
+			ImGuiDataType_S32,
+			static_cast<int32_t*>(&intRect2D->offset[0]),
+			2
+		);
+		ImGui::InputScalarN(
+			extentName.c_str(),
+			ImGuiDataType_U32,
+			static_cast<uint32_t*>(&intRect2D->extent[0]),
+			2
+		);
+
+		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::Box3D: {
+		Grindstone::Math::Box3D* box3D = static_cast<Grindstone::Math::Box3D*>(offset);
+		std::string offsetName = displayNamePtr + std::string("_Offset");
+		std::string extentName = displayNamePtr + std::string("_Extent");
+		DrawFloat3(offsetName.c_str(), static_cast<float*>(&box3D->offset[0]));
+		DrawFloat3(extentName.c_str(), static_cast<float*>(&box3D->extent[0]));
+
+		break;
+	}
+	case Reflection::TypeDescriptor::ReflectionTypeData::IntBox3D: {
+		Grindstone::Math::IntBox3D* intBox3D = static_cast<Grindstone::Math::IntBox3D*>(offset);
+		std::string offsetName = displayNamePtr + std::string("_Offset");
+		std::string extentName = displayNamePtr + std::string("_Extent");
+		ImGui::InputScalarN(
+			offsetName.c_str(),
+			ImGuiDataType_S32,
+			static_cast<int32_t*>(&intBox3D->offset[0]),
+			3
+		);
+		ImGui::InputScalarN(
+			extentName.c_str(),
+			ImGuiDataType_U32,
+			static_cast<uint32_t*>(&intBox3D->extent[0]),
+			3
+		);
+
+		break;
+	}
 	case Reflection::TypeDescriptor::ReflectionTypeData::Vector: {
 		const void* vector = static_cast<const void*>(offset);
 		auto vectorType = static_cast<Reflection::TypeDescriptor_StdVector*>(itemType);

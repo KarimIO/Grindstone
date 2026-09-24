@@ -5,13 +5,18 @@ set(RENDERER_DEFERRED_LIB ${RENDERER_DEFERRED_BASE}/lib)
 set(SRC ${RENDERER_DEFERRED_BASE}/source)
 set(INC ${RENDERER_DEFERRED_BASE}/include)
 
-set(RENDERER_DEFERRED_SOURCES ${SRC}/DeferredRendererRenderPasses.cpp ${SRC}/EntryPoint.cpp)
-set(RENDERER_DEFERRED_HEADERS ${INC}/DeferredRendererRenderPasses.hpp ${INC}/DeferredRendererCommon.hpp)
+set(RENDERER_DEFERRED_SOURCES ${SRC}/DeferredRendererRenderPasses.cpp ${SRC}/ProbeVolume.cpp ${SRC}/ProbeVolumeImporter.cpp ${SRC}/EntryPoint.cpp)
+set(RENDERER_DEFERRED_HEADERS ${INC}/DeferredRendererRenderPasses.hpp ${INC}/ProbeVolume.hpp ${INC}/ProbeVolumeImporter.hpp ${INC}/ProbeVolumeAsset.hpp ${INC}/DeferredRendererCommon.hpp)
 
 file(GLOB_RECURSE SOURCE_FEATURES "${SRC}/Features/*.cpp")
 file(GLOB_RECURSE HEADER_FEATURES "${INC}/Features/*.hpp")
 source_group("Source Files\\Features" FILES ${SOURCE_FEATURES})
 source_group("Header Files\\Features" FILES ${HEADER_FEATURES})
+
+file(GLOB_RECURSE SOURCE_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.cpp")
+file(GLOB_RECURSE HEADER_REFLECTION "${ENGINE_CORE_DIR}/Reflection/*.hpp")
+source_group("Source Files\\Reflection" FILES ${SOURCE_REFLECTION})
+source_group("Header Files\\Reflection" FILES ${HEADER_REFLECTION})
 
 add_library(
 	PluginRendererDeferred
@@ -20,6 +25,8 @@ add_library(
 	${RENDERER_DEFERRED_HEADERS}
 	${SOURCE_FEATURES}
 	${HEADER_FEATURES}
+	${SOURCE_REFLECTION}
+	${HEADER_REFLECTION}
 	${CORE_UTILS}
 )
 

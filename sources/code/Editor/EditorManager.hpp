@@ -17,6 +17,7 @@
 #include "Selection.hpp"
 #include "TaskSystem.hpp"
 #include "ThumbnailManager.hpp"
+#include "GizmoRenderer.hpp"
 
 namespace Grindstone {
 	class WorldContextSet;
@@ -52,13 +53,14 @@ namespace Grindstone::Editor {
 		static void SetInstance(Grindstone::Editor::Manager* editorManager);
 		Grindstone::Importers::ImporterManager& GetImporterManager();
 		ImguiEditor::ImguiEditor& GetImguiEditor();
-		virtual AssetRegistry& GetAssetRegistry();
-		virtual CommandList& GetCommandList();
-		virtual GitManager& GetGitManager();
-		virtual Selection& GetSelection();
-		virtual TaskSystem& GetTaskSystem();
-		virtual AssetTemplateRegistry& GetAssetTemplateRegistry();
+		virtual Grindstone::Editor::AssetRegistry& GetAssetRegistry();
+		virtual Grindstone::Editor::CommandList& GetCommandList();
+		virtual Grindstone::Editor::GitManager& GetGitManager();
+		virtual Grindstone::Editor::Selection& GetSelection();
+		virtual Grindstone::Editor::TaskSystem& GetTaskSystem();
+		virtual Grindstone::Editor::AssetTemplateRegistry& GetAssetTemplateRegistry();
 		virtual Grindstone::Editor::ThumbnailManager& GetThumbnailManager();
+		virtual Grindstone::Editor::GizmoRenderer& GetGizmoRenderer();
 		ScriptBuilder::CSharpBuildManager& GetCSharpBuildManager();
 		static FileManager& GetFileManager();
 		static EngineCore& GetEngineCore();
@@ -110,5 +112,6 @@ namespace Grindstone::Editor {
 		Grindstone::WorldContextSet* runtimeWorldContext = nullptr;
 		Grindstone::WorldContextSet* editorWorldContext = nullptr;
 		Grindstone::Editor::ThumbnailManager thumbnailManager;
+		GizmoRenderer gizmoRenderer;
 	};
 }

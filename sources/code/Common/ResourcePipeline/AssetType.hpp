@@ -15,6 +15,7 @@ namespace Grindstone {
 		AnimationClip,
 		Script,
 		Scene,
+		ProbeVolume,
 		Count
 	};
 
