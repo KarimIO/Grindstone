@@ -2,8 +2,8 @@
 
 #include <limits.h>
 
-#include "../EnumTraits.hpp"
 #include "../Assert.hpp"
+#include "../EnumTraits.hpp"
 
 namespace Grindstone::Containers {
 	static uint32_t Popcount(uint32_t n) {

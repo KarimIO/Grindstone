@@ -1,4 +1,6 @@
 #include "GameplayTag.hpp"
+#include "HashedString.hpp"
+#include "String.hpp"
 
 namespace Grindstone {
 	GameplayTag::GameplayTag() : hashedString() {}
