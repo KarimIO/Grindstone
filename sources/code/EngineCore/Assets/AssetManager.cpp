@@ -1,6 +1,6 @@
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/Profiling.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include "Loaders/AssetLoader.hpp"
 #include "Loaders/ArchiveAssetLoader.hpp"

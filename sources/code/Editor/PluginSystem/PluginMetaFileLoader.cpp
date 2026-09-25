@@ -2,7 +2,7 @@
 #include <rapidjson/document.h>
 
 #include <EngineCore/Utils/Utilities.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include "PluginMetaFileLoader.hpp"
 

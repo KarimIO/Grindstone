@@ -5,7 +5,7 @@
 #include <GFSDK_Aftermath_GpuCrashDump.h>
 
 #include <Common/Window/GlfwWindow.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include <Grindstone.RHI.Vulkan/include/VulkanWindowGraphicsBinding.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanCore.hpp>

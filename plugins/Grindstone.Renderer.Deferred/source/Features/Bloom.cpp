@@ -4,7 +4,7 @@
 #include <Common/Graphics/Core.hpp>
 
 #include <Grindstone.Renderer.Deferred/include/Features/Bloom.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 using namespace Grindstone::Renderer;
 

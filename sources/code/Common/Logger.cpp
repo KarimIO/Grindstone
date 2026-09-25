@@ -1,16 +1,23 @@
-#include <filesystem>
-#include <cstdarg>
 #include <chrono>
+#include <cstdint>
+#include <cstdio>
+#include <ctime>
+#include <filesystem>
+#include <mutex>
+#include <ostream>
+#include <string>
+#include <string.h>
 #ifdef _MSC_VER
 #include <windows.h>
 #endif
 
-#include <Common/Assert.hpp>
 #include <Common/Event/PrintMessageEvent.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
-#include <EngineCore/EngineCore.hpp>
 
-#include "Logger.hpp"
+#include <Common/Break.hpp>
+#include <Common/Event/BaseEvent.hpp>
+#include <Common/Logger.hpp>
+#include <Common/Logging.hpp>
 using namespace Grindstone;
 
 
@@ -98,7 +105,7 @@ void Grindstone::Logger::Print(
 	::WriteConsole(hConsole, outputPrefix.c_str(), static_cast<DWORD>(outputPrefix.size()), nullptr, nullptr);
 
 	::SetConsoleTextAttribute(hConsole, debugColorOff);
-	::WriteConsole(hConsole, str, static_cast<DWORD>(strlen(str)), nullptr, nullptr);
+	::WriteConsole(hConsole, str, static_cast<DWORD>(std::strlen(str)), nullptr, nullptr);
 	::WriteConsole(hConsole, "\n", 1, nullptr, nullptr);
 #else
 	std::ostream& consoleStream = (logSeverity == LogSeverity::Error)

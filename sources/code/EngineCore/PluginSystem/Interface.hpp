@@ -16,7 +16,7 @@
 #include <EngineCore/ECS/ComponentRegistrar.hpp>
 #include <EngineCore/ECS/SystemFactory.hpp>
 #include <EngineCore/ECS/SystemRegistrar.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/WorldContext/WorldContext.hpp>
 
 namespace Grindstone {

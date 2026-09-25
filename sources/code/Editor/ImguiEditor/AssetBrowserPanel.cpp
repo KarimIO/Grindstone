@@ -13,7 +13,7 @@
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
 #include <Editor/EditorManager.hpp>
 #include <Editor/PluginSystem/EditorPluginManager.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
 

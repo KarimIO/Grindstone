@@ -8,7 +8,7 @@
 #include <Common/Window/WindowManager.hpp>
 #include <Common/Window/GlfwWindow.hpp>
 #include <Editor/EditorManager.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Assets/Textures/TextureAsset.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanCore.hpp>

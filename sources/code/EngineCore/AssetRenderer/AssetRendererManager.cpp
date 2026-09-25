@@ -2,7 +2,7 @@
 #include <Common/Rendering/RenderViewData.hpp>
 #include <EngineCore/Profiling.hpp>
 #include <EngineCore/EngineCore.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include "AssetRendererManager.hpp"
 

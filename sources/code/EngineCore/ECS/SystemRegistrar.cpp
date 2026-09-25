@@ -1,5 +1,5 @@
 #include <EngineCore/Profiling.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include "SystemRegistrar.hpp"
 

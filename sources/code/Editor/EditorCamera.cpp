@@ -12,7 +12,7 @@
 #include <EngineCore/Rendering/RenderPassRegistry.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/EngineCore.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanDescriptorSet.hpp>
 
 #include "EditorCamera.hpp"

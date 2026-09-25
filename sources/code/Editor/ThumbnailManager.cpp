@@ -1,7 +1,7 @@
 #include <Editor/EditorManager.hpp>
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
 #include <Editor/ImguiEditor/ImguiRenderer.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Formats/DdsParser.hpp>

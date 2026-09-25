@@ -23,6 +23,8 @@ file(
     ${COMMON_DIR}/Result.hpp
     ${COMMON_DIR}/Observable.hpp
     ${COMMON_DIR}/String.hpp
+    ${COMMON_DIR}/Logger.cpp
+    ${COMMON_DIR}/Logger.hpp
 )
 
 file(GLOB_RECURSE SOURCE_ASSETS "${COMMON_DIR}/Assets/*.cpp")

@@ -91,8 +91,8 @@ source_group("Header Files\\WorldContext" FILES ${HEADER_WORLDCONTEXT})
 source_group("Source Files\\Reflection" FILES ${SOURCE_REFLECTION})
 source_group("Header Files\\Reflection" FILES ${HEADER_REFLECTION})
 
-file(GLOB_RECURSE SOURCE_MAIN EngineCore.cpp Logger.cpp Profiling.cpp EntryPoint.cpp)
-file(GLOB_RECURSE HEADER_MAIN EngineCore.hpp Logger.hpp Profiling.hpp pch.hpp ${COMMON_DIR}/Display/Display.hpp)
+file(GLOB_RECURSE SOURCE_MAIN EngineCore.cpp Profiling.cpp EntryPoint.cpp)
+file(GLOB_RECURSE HEADER_MAIN EngineCore.hpp Profiling.hpp pch.hpp ${COMMON_DIR}/Display/Display.hpp)
 
 set(ENGINE_CORE_SOURCES
 	${SOURCE_MAIN}

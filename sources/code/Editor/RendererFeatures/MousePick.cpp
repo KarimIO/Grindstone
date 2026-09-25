@@ -2,7 +2,7 @@
 #include <Common/Window/WindowManager.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <EngineCore/Rendering/RenderPassRegistry.hpp>
 

@@ -11,7 +11,7 @@
 #include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <Editor/Importers/ImporterManager.hpp>
 #include <Editor/EditorManager.hpp>
 

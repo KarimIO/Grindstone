@@ -5,7 +5,7 @@
 
 #include <Common/Input/InputInterface.hpp>
 #include <Common/Window/WindowManager.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/Events/Dispatcher.hpp>
 #include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>

@@ -12,7 +12,7 @@
 #include <GLFW/glfw3native.h>
 #include <GL/wglext.h>
 
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <Common/Input/InputInterface.hpp>

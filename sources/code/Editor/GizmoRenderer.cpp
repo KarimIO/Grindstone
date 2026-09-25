@@ -1,6 +1,6 @@
 #include <glm/gtx/transform.hpp>
 
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 #include <EngineCore/EngineCore.hpp>

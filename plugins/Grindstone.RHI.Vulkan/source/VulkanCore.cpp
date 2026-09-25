@@ -11,7 +11,7 @@
 #include "GFSDK_Aftermath_GpuCrashDump.h"
 #include "GFSDK_Aftermath_GpuCrashDumpDecoding.h"
 
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 
 #include <Grindstone.RHI.Vulkan/include/VulkanWindowGraphicsBinding.hpp>

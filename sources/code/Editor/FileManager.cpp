@@ -5,7 +5,7 @@
 #include <Common/Logging.hpp>
 #include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <Editor/Importers/ImporterManager.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include "FileManager.hpp"
 #include "EditorManager.hpp"

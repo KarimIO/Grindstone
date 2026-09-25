@@ -7,7 +7,7 @@
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Graphics/Image.hpp>
 

@@ -1,6 +1,6 @@
 #include <Jolt/Jolt.h>
 
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/Components/CharacterKinematicControllerComponent.hpp>
 #include <Grindstone.Physics.Jolt/include/Components/CharacterRigidbodyControllerComponent.hpp>

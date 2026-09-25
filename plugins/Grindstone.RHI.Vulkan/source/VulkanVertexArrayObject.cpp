@@ -1,7 +1,7 @@
 #include <iostream>
 #include <assert.h>
 
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include <Grindstone.RHI.Vulkan/include/VulkanVertexArrayObject.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanBuffer.hpp>

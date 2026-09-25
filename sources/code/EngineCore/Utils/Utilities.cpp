@@ -3,7 +3,7 @@
 #include <fstream>
 
 #include <Common/Buffer.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include "Utilities.hpp"
 

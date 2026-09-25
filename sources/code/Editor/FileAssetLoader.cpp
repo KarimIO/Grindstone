@@ -9,7 +9,7 @@
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 
 #include "AssetRegistry.hpp"

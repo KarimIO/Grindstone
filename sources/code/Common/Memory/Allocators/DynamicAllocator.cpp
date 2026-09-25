@@ -2,7 +2,7 @@
 #include <iostream>
 #include <sstream>
 
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include "DynamicAllocator.hpp"
 #include <Assert.hpp>

@@ -1,6 +1,6 @@
 #include <Common/Graphics/DescriptorSet.hpp>
 #include <Common/Graphics/Core.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/CoreComponents/EnvironmentMap/EnvironmentMapComponent.hpp>
 

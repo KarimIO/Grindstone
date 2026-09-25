@@ -1,6 +1,6 @@
 #include <Common/Containers/Span.hpp>
 #include <Common/Graphics/Buffer.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
 
 #include <Grindstone.Renderables.3D/include/AnimationSystem.hpp>

@@ -54,7 +54,7 @@ namespace Grindstone {
 ```cpp
 // CustomImporter.cpp
 #include <Common/Logging.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/Utilities.hpp>

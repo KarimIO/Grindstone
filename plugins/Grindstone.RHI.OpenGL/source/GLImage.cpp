@@ -2,7 +2,7 @@
 #include <GL/gl3w.h>
 #include <GL/glext.h>
 
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include <Grindstone.RHI.OpenGL/include/GLFormats.hpp>
 #include <Grindstone.RHI.OpenGL/include/GLImage.hpp>

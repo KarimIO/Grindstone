@@ -1,7 +1,7 @@
 #include <Grindstone.Script.CSharp/include/pch.hpp>
 #include <chrono>
 #include <string>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/EngineCore.hpp>

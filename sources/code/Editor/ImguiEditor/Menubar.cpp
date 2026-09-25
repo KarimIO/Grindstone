@@ -5,7 +5,7 @@
 #include <Common/Window/WindowManager.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
 #include <EngineCore/EngineCore.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <Editor/AssetPackSerializer.hpp>
 #include <Editor/EditorManager.hpp>
 
