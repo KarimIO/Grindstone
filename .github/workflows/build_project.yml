@@ -22,6 +22,7 @@ jobs:
           - os: windows-latest
             triplet: x64-windows
             cmake-preset: windows-release
+            config: Debug
 
     steps:
       - name: Checkout
@@ -47,7 +48,7 @@ jobs:
         shell: pwsh
         run: |
           cmake --install build/windows-release `
-            --config Release `
+            --config ${{ matrix.config }} `
             --prefix build/${{ matrix.os }}/package
 
       - name: Upload build
