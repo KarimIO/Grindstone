@@ -1,11 +1,14 @@
-#include <memory>
-#include <iostream>
-#include <sstream>
+#include <cstdarg>
+#include <limits>
+#include <string.h>
 
 #include <Common/Logger.hpp>
+#include <algorithm>
+#include <malloc.h>
 
+#include <Common/Assert.hpp>
+#include <Common/Logging.hpp>
 #include "DynamicAllocator.hpp"
-#include <Assert.hpp>
 
 using namespace Grindstone::Memory::Allocators;
 
@@ -56,10 +59,8 @@ static void FreeListRemove(DynamicAllocator::FreeHeader*& head, DynamicAllocator
 }
 
 static size_t CalculatePadding(size_t baseAddress, size_t alignment) {
-	size_t multiplier = (baseAddress / alignment) + 1;
-	size_t alignedAddress = multiplier * alignment;
-	size_t padding = alignedAddress - baseAddress;
-	return padding;
+	const size_t remainder = baseAddress % alignment;
+	return remainder == 0 ? 0 : alignment - remainder;
 }
 
 static size_t CalculatePaddingWithHeader(size_t baseAddress, size_t alignment, size_t headerSize) {
@@ -179,13 +180,6 @@ bool DynamicAllocator::Initialize(size_t size) {
 }
 
 DynamicAllocator::~DynamicAllocator() {
-#ifdef _DEBUG
-	for (auto& allocation : nameMap) {
-		AllocationHeader* header = reinterpret_cast<AllocationHeader*>(static_cast<char*>(allocation.first) - sizeof(AllocationHeader));
-		GPRINT_TRACE(LogSource::EngineCore, "Unfreed Memory - {} Size({}): {}", allocation.first, header->blockSize, allocation.second);
-	}
-#endif
-
 	if (startMemory && hasAllocatedOwnMemory) {
 		free(startMemory);
 	}
