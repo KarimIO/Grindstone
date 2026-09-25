@@ -49,7 +49,7 @@ jobs:
         run: |
           cmake --install build/windows-release `
             --config ${{ matrix.config }} `
-            --prefix build/${{ matrix.os }}/package
+            --prefix build/package/${{ matrix.os }}
 
       - name: Upload build
         uses: actions/upload-artifact@v7.0.1
