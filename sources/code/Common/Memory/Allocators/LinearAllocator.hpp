@@ -1,7 +1,6 @@
 #pragma once
-
-#include <stdint.h>
-
+#include <utility>
+#include <type_traits>
 
 namespace Grindstone::Memory::Allocators {
 	/**
@@ -17,14 +16,16 @@ namespace Grindstone::Memory::Allocators {
 
 		void Initialize(void* ownedMemory, size_t size);
 		bool Initialize(size_t size);
-		void* Allocate(size_t size);
+		void* AllocateRaw(size_t size, size_t alignment);
 		void Clear();
 		void ClearAndZero();
 		void Destroy();
 
 		template<typename T, typename... Args>
 		T* Allocate(Args&&... params) {
-			T* ptr = static_cast<T*>(Allocate(sizeof(T)));
+			static_assert(std::is_constructible_v<T, Args...>, "Type T must be constructible with given arguments.");
+
+			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T), alignof(T)));
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory
 				new (ptr) T(std::forward<Args>(params)...);
@@ -35,8 +36,10 @@ namespace Grindstone::Memory::Allocators {
 
 		template<typename T>
 		T* AllocateWithoutConstructor() {
-			return static_cast<T*>(Allocate(sizeof(T)));
+			return static_cast<T*>(Allocate(sizeof(T), alignof(T)));
 		}
+
+		size_t GetUsedSize() const;
 
 	private:
 		size_t totalMemorySize;
