@@ -64,3 +64,10 @@ message(STATUS
 - RENDERABLES_3D_LIB => ${RENDERABLES_3D_LIB}
 
 ")
+
+install(
+	TARGETS PluginRenderables3D
+	INCLUDES DESTINATION plugins/Grindstone.Renderables./$<CONFIG>3D/include
+	LIBRARY DESTINATION plugins/Grindstone.Renderables./$<CONFIG>3D/lib
+	RUNTIME DESTINATION plugins/Grindstone.Renderables./$<CONFIG>3D/bin
+)

@@ -59,3 +59,10 @@ message(STATUS
 - AUDIO_OPENAL_LIB => ${AUDIO_OPENAL_LIB}
 
 ")
+
+install(
+	TARGETS PluginAudioOpenAL
+	INCLUDES DESTINATION plugins/Grindstone.Audio.OpenAL/include/$<CONFIG>
+	LIBRARY DESTINATION plugins/Grindstone.Audio.OpenAL/lib/$<CONFIG>
+	RUNTIME DESTINATION plugins/Grindstone.Audio.OpenAL/bin/$<CONFIG>
+)

@@ -63,3 +63,10 @@ message(STATUS
 - RENDERER_DEFERRED_LIB => ${RENDERER_DEFERRED_LIB}
 
 ")
+
+install(
+	TARGETS PluginRendererDeferred
+	INCLUDES DESTINATION plugins/Grindstone.Renderer.Deferred/include/$<CONFIG>
+	LIBRARY DESTINATION plugins/Grindstone.Renderer.Deferred/lib/$<CONFIG>
+	RUNTIME DESTINATION plugins/Grindstone.Renderer.Deferred/bin/$<CONFIG>
+)

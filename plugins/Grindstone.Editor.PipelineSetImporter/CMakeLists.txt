@@ -100,3 +100,10 @@ message(STATUS
 - EDITOR_PIPELINESET_IMPORTER_LIB => ${EDITOR_PIPELINESET_IMPORTER_LIB}
 
 ")
+
+install(
+	TARGETS PluginEditorPipelineSetImporter
+	INCLUDES DESTINATION plugins/Grindstone.Editor.PipelineSetImporter/include/$<CONFIG>
+	LIBRARY DESTINATION plugins/Grindstone.Editor.PipelineSetImporter/lib/$<CONFIG>
+	RUNTIME DESTINATION plugins/Grindstone.Editor.PipelineSetImporter/bin/$<CONFIG>
+)

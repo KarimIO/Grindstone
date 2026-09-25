@@ -95,6 +95,8 @@ vcpkg_installed/*
 *CTestTestfile.cmake
 *CMakeFiles*
 cmake-*/*
+*install_manifest.txt
+*_include.cmake
 
 # Makefiles
 Makefile

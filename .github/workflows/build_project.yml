@@ -43,9 +43,16 @@ jobs:
           configurePreset: ${{ matrix.cmake-preset }}
           buildPreset: ${{ matrix.cmake-preset }}
 
+      - name: Package
+        shell: pwsh
+        run: |
+          cmake --install build/windows-release `
+            --config Release `
+            --prefix build/${{ matrix.os }}/package
+
       - name: Upload build
         uses: actions/upload-artifact@v7.0.1
         with:
           name: grindstone-${{ matrix.os }}-build
-          path: build/windows-tests/
+          path: build/package/${{ matrix.os }}
           if-no-files-found: error

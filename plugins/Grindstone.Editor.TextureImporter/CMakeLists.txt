@@ -55,3 +55,10 @@ message(STATUS
 - EDITOR_TEXTURE_IMPORTER_LIB => ${EDITOR_TEXTURE_IMPORTER_LIB}
 
 ")
+
+install(
+	TARGETS PluginEditorTextureImporter
+	INCLUDES DESTINATION plugins/Grindstone.Editor.TextureImporter/include/$<CONFIG>
+	LIBRARY DESTINATION plugins/Grindstone.Editor.TextureImporter/lib/$<CONFIG>
+	RUNTIME DESTINATION plugins/Grindstone.Editor.TextureImporter/bin/$<CONFIG>
+)

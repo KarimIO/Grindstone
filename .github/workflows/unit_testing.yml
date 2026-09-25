@@ -27,7 +27,7 @@ jobs:
         uses: actions/download-artifact@v8.0.1
         with:
           name: grindstone-windows-latest-build
-          path: build/windows-release/
+          path: build/package/windows-latest/
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
@@ -35,5 +35,5 @@ jobs:
         shell: pwsh
         run: |
           ctest `
-            --test-dir build/windows-release `
+            --test-dir build/package/windows-latest `
             --output-on-failure

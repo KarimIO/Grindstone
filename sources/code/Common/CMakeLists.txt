@@ -180,3 +180,19 @@ target_include_directories(Common.Test PUBLIC ${COMMON_DIR} ${CODE_DIR})
 target_link_libraries(Common.Test PRIVATE GTest::gtest_main Common)
 include(GoogleTest)
 gtest_discover_tests(Common.Test)
+
+install(
+    TARGETS
+    Common
+    Common.Test
+    LIBRARY DESTINATION bin/$<CONFIG>
+    RUNTIME DESTINATION bin/$<CONFIG>
+    ARCHIVE DESTINATION bin/$<CONFIG>
+)
+
+install(
+    FILES
+        "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/gtest.dll"
+        "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/gtest_main.dll"
+    DESTINATION bin/$<CONFIG>
+)

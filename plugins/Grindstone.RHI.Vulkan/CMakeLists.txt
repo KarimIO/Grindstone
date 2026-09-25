@@ -103,7 +103,7 @@ target_compile_definitions(PluginRhiVulkan PRIVATE GRAPHICS_VULKAN GRAPHICS_DLL)
 target_precompile_headers(PluginRhiVulkan PUBLIC ${INC}/pch.hpp)
 
 message(STATUS
-"Plugin RhiVulkan provides CMake targets:
+"PluginRhiVulkan provides CMake targets:
 
 - RHI_VULKAN_BASE => ${RHI_VULKAN_BASE}
 - RHI_VULKAN_INCLUDES => ${RHI_VULKAN_INCLUDES}
@@ -111,3 +111,10 @@ message(STATUS
 - RHI_VULKAN_LIB => ${RHI_VULKAN_LIB}
 
 ")
+
+install(
+	TARGETS PluginRhiVulkan
+	INCLUDES DESTINATION plugins/Grindstone.RHI.Vulkan/include/$<CONFIG>
+	LIBRARY DESTINATION plugins/Grindstone.RHI.Vulkan/lib/$<CONFIG>
+	RUNTIME DESTINATION plugins/Grindstone.RHI.Vulkan/bin/$<CONFIG>
+)

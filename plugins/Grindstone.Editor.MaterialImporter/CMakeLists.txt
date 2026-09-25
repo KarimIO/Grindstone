@@ -58,3 +58,10 @@ message(STATUS
 - EDITOR_MATERIAL_IMPORTER_LIB => ${EDITOR_MATERIAL_IMPORTER_LIB}
 
 ")
+
+install(
+	TARGETS PluginEditorMaterialImporter
+	INCLUDES DESTINATION plugins/Grindstone.Editor.MaterialImporter/include/$<CONFIG>
+	LIBRARY DESTINATION plugins/Grindstone.Editor.MaterialImporter/lib/$<CONFIG>
+	RUNTIME DESTINATION plugins/Grindstone.Editor.MaterialImporter/bin/$<CONFIG>
+)

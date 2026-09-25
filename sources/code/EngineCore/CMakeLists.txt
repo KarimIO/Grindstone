@@ -175,3 +175,4 @@ target_link_libraries(EngineCore
 )
 
 target_precompile_headers(EngineCore PUBLIC pch.hpp)
+install(TARGETS EngineCore LIBRARY DESTINATION bin/$<CONFIG> RUNTIME DESTINATION bin/$<CONFIG>)
