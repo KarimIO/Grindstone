@@ -177,7 +177,7 @@ file(
 enable_testing()
 add_executable(Common.Test ${SOURCE_CONTAINERS} ${SOURCE_ALLOCATORS} ${SOURCE_SMART_POINTERS} ${SOURCE_TEST})
 target_include_directories(Common.Test PUBLIC ${COMMON_DIR} ${CODE_DIR})
-target_link_libraries(Common.Test PRIVATE GTest::gtest_main Common)
+target_link_libraries(Common.Test PRIVATE GTest::gtest GTest::gtest_main GTest::gmock Common)
 include(GoogleTest)
 gtest_discover_tests(Common.Test)
 
@@ -191,8 +191,6 @@ install(
 )
 
 install(
-    FILES
-        "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/gtest.dll"
-        "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/gtest_main.dll"
+    FILES $<TARGET_RUNTIME_DLLS:Common.Test>
     DESTINATION bin/$<CONFIG>
 )
