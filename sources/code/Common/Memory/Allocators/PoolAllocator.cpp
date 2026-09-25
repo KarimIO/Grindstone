@@ -34,7 +34,6 @@ void* BasePoolAllocator::AllocateImpl() {
 #endif
 
 	if (headFreePtr == nullptr || usedChunkCount >= totalChunkCount) {
-		GS_BREAK_WITH_MESSAGE("Cannot allocate memory, pool is full.");
 		return nullptr;
 	}
 
