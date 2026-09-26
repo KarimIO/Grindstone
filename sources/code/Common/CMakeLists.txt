@@ -177,7 +177,7 @@ file(
 enable_testing()
 add_executable(Common.Test ${SOURCE_CONTAINERS} ${SOURCE_ALLOCATORS} ${SOURCE_SMART_POINTERS} ${SOURCE_TEST})
 target_include_directories(Common.Test PUBLIC ${COMMON_DIR} ${CODE_DIR})
-target_link_libraries(Common.Test PRIVATE GTest::gtest GTest::gtest_main GTest::gmock Common)
+target_link_libraries(Common.Test PRIVATE GTest::gtest GTest::gtest_main Common)
 include(GoogleTest)
 gtest_discover_tests(Common.Test)
 
