@@ -1,12 +1,12 @@
 #pragma once
 
-#include <string>
+#include <cstdint>
 #include <functional>
-#include <stdint.h>
 #include <map>
+#include <string>
 #include <utility>
 
-#include "../SmartPointers.hpp"
+#include <Common/Memory/SmartPointers.hpp>
 
 namespace Grindstone::Memory::Allocators {
 	/**

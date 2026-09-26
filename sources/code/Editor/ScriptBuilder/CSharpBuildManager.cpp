@@ -10,7 +10,7 @@
 
 #include <Editor/EditorManager.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include "CSharpProjectBuilder.hpp"
 #include "SolutionBuilder.hpp"

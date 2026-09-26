@@ -3,7 +3,7 @@
 #include <imgui.h>
 #include <imgui_stdlib.h>
 
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
 #include <Editor/EditorManager.hpp>
 #include <Editor/ImguiEditor/ImguiEditor.hpp>

@@ -1,6 +1,6 @@
 #include <assert.h>
 
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include <Grindstone.RHI.Vulkan/include/VulkanRenderPass.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanImage.hpp>

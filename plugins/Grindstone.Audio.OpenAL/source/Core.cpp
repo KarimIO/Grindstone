@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include <Grindstone.Audio.OpenAL/include/Core.hpp>
 

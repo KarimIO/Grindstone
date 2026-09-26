@@ -35,3 +35,5 @@ target_include_directories(ApplicationExecutable
 find_package(fmt CONFIG REQUIRED)
 
 target_link_libraries(ApplicationExecutable Common ${CMAKE_DL_LIBS} ${CORE_LIBS})
+
+install(TARGETS ApplicationExecutable LIBRARY DESTINATION bin/$<CONFIG> RUNTIME DESTINATION bin/$<CONFIG>)

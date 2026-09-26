@@ -8,7 +8,7 @@
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/EngineCore.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include "TextureImporter.hpp"
 

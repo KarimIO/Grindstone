@@ -77,3 +77,10 @@ message(STATUS
 - RHI_OPENGL_LIB => ${RHI_OPENGL_LIB}
 
 ")
+
+install(
+	TARGETS PluginRhiOpenGL
+	INCLUDES DESTINATION plugins/Grindstone.RHI.OpenGL/include/$<CONFIG>
+	LIBRARY DESTINATION plugins/Grindstone.RHI.OpenGL/lib/$<CONFIG>
+	RUNTIME DESTINATION plugins/Grindstone.RHI.OpenGL/bin/$<CONFIG>
+)

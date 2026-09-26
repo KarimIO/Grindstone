@@ -6,7 +6,7 @@
 #include <Grindstone.Ai.NavMesh/include/Components/NavAgentComponent.hpp>
 
 #include <DetourNavMeshQuery.h>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 using namespace Grindstone::Ai;
 

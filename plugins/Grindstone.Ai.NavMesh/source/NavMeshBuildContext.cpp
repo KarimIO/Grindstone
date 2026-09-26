@@ -1,5 +1,5 @@
 #include <Grindstone.Ai.NavMesh/include/NavMeshBuildContext.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 void Grindstone::Ai::GrindstoneRecastContext::doResetLog() {}
 

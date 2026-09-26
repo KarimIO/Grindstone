@@ -7,7 +7,7 @@
 #include <EngineCore/ECS/ComponentRegistrar.hpp>
 #include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <Common/Math.hpp>
 #include <Common/PhysicsLayer.hpp>
 

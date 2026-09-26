@@ -152,3 +152,5 @@ target_link_libraries(
 	${CMAKE_DL_LIBS}
 	Common EditorCommon
 )
+
+install(TARGETS Editor LIBRARY DESTINATION bin/$<CONFIG> RUNTIME DESTINATION bin/$<CONFIG>)

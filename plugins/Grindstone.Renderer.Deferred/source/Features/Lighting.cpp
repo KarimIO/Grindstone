@@ -1,4 +1,4 @@
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 #include <EngineCore/CoreComponents/EnvironmentMap/EnvironmentMapComponent.hpp>
 #include <EngineCore/CoreComponents/Lights/DirectionalLightComponent.hpp>

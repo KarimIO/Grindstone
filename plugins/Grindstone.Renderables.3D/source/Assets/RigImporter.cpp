@@ -1,6 +1,6 @@
 #include <EngineCore/Assets/Loaders/AssetLoader.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <Common/Formats/Rig.hpp>
 
 #include <Grindstone.Renderables.3D/include/Assets/RigImporter.hpp>

@@ -5,7 +5,8 @@
 namespace Grindstone {
 	template<typename Value, typename Error>
 	struct Result {
-		static_assert(std::is_trivially_copyable_v<Value>);
+		static_assert(std::is_copy_constructible_v<Value>);
+		static_assert(std::is_copy_assignable_v<Value>);
 		static_assert(std::is_trivially_copyable_v<Error>);
 
 		Result() = default;

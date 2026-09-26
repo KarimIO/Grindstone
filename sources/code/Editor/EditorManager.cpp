@@ -26,7 +26,7 @@
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/WorldContext/WorldContextManager.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/Rendering/RenderingPipeline.hpp>
 
 #include <Editor/RendererFeatures/Gizmos.hpp>

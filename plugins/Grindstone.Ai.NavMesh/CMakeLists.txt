@@ -63,3 +63,10 @@ message(STATUS
 - AI_NAVMESH_LIB => ${AI_NAVMESH_LIB}
 
 ")
+
+install(
+	TARGETS PluginNavigationMesh
+	INCLUDES DESTINATION plugins/Grindstone.Ai.NavMesh/include/$<CONFIG>
+	LIBRARY DESTINATION plugins/Grindstone.Ai.NavMesh/lib/$<CONFIG>
+	RUNTIME DESTINATION plugins/Grindstone.Ai.NavMesh/bin/$<CONFIG>
+)

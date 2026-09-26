@@ -54,3 +54,10 @@ message(STATUS
 - PHYSICS_BULLET_LIB => ${PHYSICS_BULLET_LIB}
 
 ")
+
+install(
+	TARGETS PluginBulletPhysics
+	INCLUDES DESTINATION plugins/Grindstone.Physics.Bullet/include/$<CONFIG>
+	LIBRARY DESTINATION plugins/Grindstone.Physics.Bullet/lib/$<CONFIG>
+	RUNTIME DESTINATION plugins/Grindstone.Physics.Bullet/bin/$<CONFIG>
+)

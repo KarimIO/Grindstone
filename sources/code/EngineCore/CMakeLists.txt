@@ -73,8 +73,8 @@ file(GLOB_RECURSE HEADER_MEMORY ${COMMON_DIR}/Memory/Allocators/LinearAllocator.
 source_group("Source Files\\Memory" FILES ${SOURCE_MEMORY})
 source_group("Header Files\\Memory" FILES ${HEADER_MEMORY})
 
-file(GLOB_RECURSE SOURCE_COMMON_UTILS ${CORE_UTILS} ${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINE_CORE_DIR}/Utils/Utilities.cpp ${COMMON_DIR}/ResourcePipeline/Uuid.cpp ${ENGINE_CORE_DIR}/Utils/WindowGlue.cpp ${COMMON_DIR}/HashedString.cpp)
-file(GLOB_RECURSE HEADER_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.hpp ${ENGINE_CORE_DIR}/Utils/Utilities.hpp ${COMMON_DIR}/ResourcePipeline/Uuid.hpp ${COMMON_DIR}/Buffer.hpp ${COMMON_DIR}/HashedString.hpp)
+file(GLOB_RECURSE SOURCE_COMMON_UTILS ${CORE_UTILS} ${COMMON_DIR}/Utilities/ModuleLoading.cpp ${ENGINE_CORE_DIR}/Utils/Utilities.cpp ${ENGINE_CORE_DIR}/Utils/WindowGlue.cpp)
+file(GLOB_RECURSE HEADER_COMMON_UTILS ${COMMON_DIR}/Utilities/ModuleLoading.hpp ${ENGINE_CORE_DIR}/Utils/Utilities.hpp)
 source_group("Source Files\\Utilities" FILES ${SOURCE_COMMON_UTILS})
 source_group("Header Files\\Utilities" FILES ${HEADER_COMMON_UTILS})
 
@@ -91,8 +91,8 @@ source_group("Header Files\\WorldContext" FILES ${HEADER_WORLDCONTEXT})
 source_group("Source Files\\Reflection" FILES ${SOURCE_REFLECTION})
 source_group("Header Files\\Reflection" FILES ${HEADER_REFLECTION})
 
-file(GLOB_RECURSE SOURCE_MAIN EngineCore.cpp Logger.cpp Profiling.cpp EntryPoint.cpp)
-file(GLOB_RECURSE HEADER_MAIN EngineCore.hpp Logger.hpp Profiling.hpp pch.hpp ${COMMON_DIR}/Display/Display.hpp)
+file(GLOB_RECURSE SOURCE_MAIN EngineCore.cpp Profiling.cpp EntryPoint.cpp)
+file(GLOB_RECURSE HEADER_MAIN EngineCore.hpp Profiling.hpp pch.hpp ${COMMON_DIR}/Display/Display.hpp)
 
 set(ENGINE_CORE_SOURCES
 	${SOURCE_MAIN}
@@ -175,3 +175,4 @@ target_link_libraries(EngineCore
 )
 
 target_precompile_headers(EngineCore PUBLIC pch.hpp)
+install(TARGETS EngineCore LIBRARY DESTINATION bin/$<CONFIG> RUNTIME DESTINATION bin/$<CONFIG>)

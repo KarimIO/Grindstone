@@ -1,7 +1,7 @@
 #include <EngineCore/Profiling.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
 #include <EngineCore/EngineCore.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <Editor/EditorManager.hpp>
 #include <Editor/ScriptBuilder/CSharpProjectBuilder.hpp>
 #include <Editor/ScriptBuilder/SolutionBuilder.hpp>

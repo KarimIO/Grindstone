@@ -10,7 +10,7 @@
 #include <EngineCore/Utils/Utilities.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <Grindstone.Audio.OpenAL/include/AudioClipImporter.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 using namespace Grindstone::Audio;
 

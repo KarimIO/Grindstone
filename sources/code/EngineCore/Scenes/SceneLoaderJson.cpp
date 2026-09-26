@@ -6,7 +6,7 @@
 #include "Common/Math.hpp"
 #include "EngineCore/Profiling.hpp"
 #include "EngineCore/EngineCore.hpp"
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include "EngineCore/ECS/ComponentRegistrar.hpp"
 #include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
 #include "EngineCore/Assets/AssetManager.hpp"

@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include <EngineCore/Profiling.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/ECS/SystemRegistrar.hpp>
 #include <EngineCore/ECS/ComponentRegistrar.hpp>

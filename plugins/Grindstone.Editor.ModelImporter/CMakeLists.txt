@@ -63,3 +63,10 @@ message(STATUS
 - EDITOR_MODEL_IMPORTER_LIB => ${EDITOR_MODEL_IMPORTER_LIB}
 
 ")
+
+install(
+	TARGETS PluginEditorModelImporter
+	INCLUDES DESTINATION plugins/Grindstone.Editor.ModelImporter/include/$<CONFIG>
+	LIBRARY DESTINATION plugins/Grindstone.Editor.ModelImporter/lib/$<CONFIG>
+	RUNTIME DESTINATION plugins/Grindstone.Editor.ModelImporter/bin/$<CONFIG>
+)

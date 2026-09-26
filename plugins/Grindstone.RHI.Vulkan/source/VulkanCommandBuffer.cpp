@@ -1,6 +1,6 @@
 #include <cstring>
 
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include <Grindstone.RHI.Vulkan/include/VulkanFormat.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanRenderPass.hpp>

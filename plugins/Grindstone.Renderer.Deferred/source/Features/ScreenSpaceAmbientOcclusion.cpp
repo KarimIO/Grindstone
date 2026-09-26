@@ -2,7 +2,7 @@
 
 #include <Common/Math.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include <Grindstone.Renderer.Deferred/include/Features/ScreenSpaceAmbientOcclusion.hpp>
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>

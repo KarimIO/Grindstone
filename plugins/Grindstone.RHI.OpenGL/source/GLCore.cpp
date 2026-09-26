@@ -2,7 +2,7 @@
 #include <GL/gl3w.h>
 
 #include <Common/Logging.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 
 #include <Grindstone.RHI.OpenGL/include/GLCore.hpp>

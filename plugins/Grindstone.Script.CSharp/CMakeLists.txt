@@ -130,3 +130,10 @@ add_custom_command(
 			"${DOTNET_ROOT}/nethost.dll"
 			"${SCRIPT_CSHARP_LIB}/$<CONFIG>/nethost.dll"
 )
+
+install(
+	TARGETS PluginScriptCSharp
+	INCLUDES DESTINATION plugins/Grindstone.Script.CSharp/include/$<CONFIG>
+	LIBRARY DESTINATION plugins/Grindstone.Script.CSharp/lib/$<CONFIG>
+	RUNTIME DESTINATION plugins/Grindstone.Script.CSharp/bin/$<CONFIG>
+)

@@ -71,3 +71,10 @@ message(STATUS
 - PHYSICS_JOLT_LIB => ${PHYSICS_JOLT_LIB}
 
 ")
+
+install(
+	TARGETS PluginJoltPhysics PluginJoltPhysicsEditor
+	INCLUDES DESTINATION plugins/Grindstone.Physics.Jolt/include/$<CONFIG>
+	LIBRARY DESTINATION plugins/Grindstone.Physics.Jolt/lib/$<CONFIG>
+	RUNTIME DESTINATION plugins/Grindstone.Physics.Jolt/bin/$<CONFIG>
+)

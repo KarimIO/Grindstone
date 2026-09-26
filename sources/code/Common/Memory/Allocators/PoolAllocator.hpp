@@ -111,6 +111,8 @@ namespace Grindstone::Memory::Allocators {
 
 		template<typename... Args>
 		SharedPtr<T> AllocateShared(Args&&... params) {
+			static_assert(std::is_constructible_v<T, Args...>, "Type T must be constructible with given arguments.");
+
 			T* ptr = static_cast<T*>(AllocateImpl());
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory
@@ -122,6 +124,8 @@ namespace Grindstone::Memory::Allocators {
 
 		template<typename... Args>
 		UniquePtr<T> AllocateUnique(Args&&... params) {
+			static_assert(std::is_constructible_v<T, Args...>, "Type T must be constructible with given arguments.");
+
 			T* ptr = static_cast<T*>(AllocateImpl());
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory
@@ -132,7 +136,9 @@ namespace Grindstone::Memory::Allocators {
 		}
 
 		template<typename... Args>
-		T* AllocateRaw(Args&&... params) {
+		T* Allocate(Args&&... params) {
+			static_assert(std::is_constructible_v<T, Args...>, "Type T must be constructible with given arguments.");
+
 			T* ptr = static_cast<T*>(AllocateImpl());
 			if (ptr != nullptr) {
 				// Call the constructor on the newly allocated memory

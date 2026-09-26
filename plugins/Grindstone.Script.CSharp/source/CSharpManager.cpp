@@ -7,7 +7,7 @@
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/ECS/Entity.hpp>
 #include <EngineCore/ECS/ComponentRegistrar.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/WorldContext/WorldContextManager.hpp>

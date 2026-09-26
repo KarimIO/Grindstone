@@ -55,3 +55,10 @@ message(STATUS
 - EDITOR_AUDIO_IMPORTER_LIB => ${EDITOR_AUDIO_IMPORTER_LIB}
 
 ")
+
+install(
+	TARGETS PluginEditorAudioImporter
+	INCLUDES DESTINATION plugins/Grindstone.Editor.AudioImporter/include/$<CONFIG>
+	LIBRARY DESTINATION plugins/Grindstone.Editor.AudioImporter/lib/$<CONFIG>
+	RUNTIME DESTINATION plugins/Grindstone.Editor.AudioImporter/bin/$<CONFIG>
+)

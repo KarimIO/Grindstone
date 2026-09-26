@@ -10,7 +10,7 @@
 #include "Editor/EditorManager.hpp"
 #include "Editor/ImguiEditor/ImguiEditor.hpp"
 
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 #include <Grindstone.RHI.Vulkan/include/VulkanDescriptorSet.hpp>
 

@@ -4,7 +4,7 @@
 
 #include <Grindstone.Renderer.Deferred/include/Features/Blur.hpp>
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 void Grindstone::Renderer::Blur::Initialize() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();

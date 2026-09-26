@@ -6,7 +6,7 @@
 #include <EngineCore/Rendering/RenderingPipeline.hpp>
 #include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
 #include <EngineCore/ECS/SystemRegistrar.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/WorldContext/WorldContextManager.hpp>

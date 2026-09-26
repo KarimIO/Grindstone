@@ -1,5 +1,5 @@
 #include <EngineCore/EngineCore.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <Common/Graphics/Core.hpp>
 
 #include "TransientResourceManager.hpp"

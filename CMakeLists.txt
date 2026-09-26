@@ -24,6 +24,7 @@ endif()
 
 set(CMAKE_CXX_STANDARD 20)
 
+find_package(GTest CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(RapidJSON CONFIG REQUIRED)
@@ -42,7 +43,6 @@ set(CORE_UTILS
 	${ENGINECORE_DIR}/EngineCoreInstance.cpp
 	${ENGINECORE_DIR}/Assets/AssetReference.cpp ${ENGINECORE_DIR}/Assets/AssetReference.hpp
 	${ENGINECORE_DIR}/ECS/Entity.cpp ${ENGINECORE_DIR}/ECS/Entity.hpp
-	${ENGINECORE_DIR}/Logger.cpp ${ENGINECORE_DIR}/Logger.hpp
 	${ENGINECORE_DIR}/Utils/MemoryAllocator.cpp ${ENGINECORE_DIR}/Utils/MemoryAllocator.hpp
 	${ENGINECORE_DIR}/Utils/DeferredDeletionQueue.cpp ${ENGINECORE_DIR}/Utils/DeferredDeletionQueue.hpp
 )

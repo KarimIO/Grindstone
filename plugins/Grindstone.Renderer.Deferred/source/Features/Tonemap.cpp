@@ -4,7 +4,7 @@
 
 #include <Grindstone.Renderer.Deferred/include/Features/Tonemap.hpp>
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 void Grindstone::Renderer::Tonemap::Initialize() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();

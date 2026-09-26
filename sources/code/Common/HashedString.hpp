@@ -1,15 +1,15 @@
 #pragma once
 
+#include <cstdint>
 #include <map>
 
-#include "String.hpp"
 #include "Hash.hpp"
+#include "String.hpp"
 
 namespace Grindstone {
 	class HashedString {
 	public:
 		using HashMap = std::map<Grindstone::HashValue, Grindstone::String>;
-		static void CreateHashMap();
 		static HashMap* GetHashedStringMap();
 		static void SetHashMap(HashMap* hashMap);
 		HashedString();

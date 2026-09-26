@@ -3,7 +3,7 @@
 #include <GL/gl3w.h>
 #include <glm/glm.hpp>
 
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 
 #include <Grindstone.RHI.OpenGL/include/GLImage.hpp>
 #include <Grindstone.RHI.OpenGL/include/GLFramebuffer.hpp>

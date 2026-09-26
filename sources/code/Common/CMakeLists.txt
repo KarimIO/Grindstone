@@ -23,6 +23,8 @@ file(
     ${COMMON_DIR}/Result.hpp
     ${COMMON_DIR}/Observable.hpp
     ${COMMON_DIR}/String.hpp
+    ${COMMON_DIR}/Logger.cpp
+    ${COMMON_DIR}/Logger.hpp
 )
 
 file(GLOB_RECURSE SOURCE_ASSETS "${COMMON_DIR}/Assets/*.cpp")
@@ -143,7 +145,7 @@ set_property(TARGET Common PROPERTY COMPILE_WARNING_AS_ERROR ON)
 target_compile_features(Common PRIVATE cxx_std_20)
 target_link_libraries(Common glfw)
 
-target_include_directories(Common PUBLIC ${COMMON_DIR} ${CODE_DIR} ${PLUGIN_DIR})
+target_include_directories(Common PUBLIC ${COMMON_DIR} ${CODE_DIR})
 target_compile_definitions(Common PUBLIC NOMINMAX GLM_ENABLE_EXPERIMENTAL)
 
 message(STATUS
@@ -155,3 +157,40 @@ message(STATUS
 - COMMON_LIB => ${COMMON_LIB}
 
 ")
+
+
+file(GLOB_RECURSE SOURCE_CONTAINERS "${COMMON_DIR}/Test/Containers/*.cpp")
+source_group("Source Files\\Containers" FILES ${SOURCE_CONTAINERS})
+
+file(GLOB_RECURSE SOURCE_ALLOCATORS "${COMMON_DIR}/Test/Memory/Allocators/*.cpp")
+source_group("Source Files\\Memory\\Allocator" FILES ${SOURCE_ALLOCATORS})
+
+file(GLOB_RECURSE SOURCE_SMART_POINTERS "${COMMON_DIR}/Test/Memory/SmartPointers/*.cpp")
+source_group("Source Files\\Memory\\SmartPointers" FILES ${SOURCE_SMART_POINTERS})
+
+file(
+    GLOB_RECURSE SOURCE_TEST
+    "${COMMON_DIR}/Test/HashedString.cpp"
+    "${COMMON_DIR}/Test/Result.cpp"
+)
+
+enable_testing()
+add_executable(Common.Test ${SOURCE_CONTAINERS} ${SOURCE_ALLOCATORS} ${SOURCE_SMART_POINTERS} ${SOURCE_TEST})
+target_include_directories(Common.Test PUBLIC ${COMMON_DIR} ${CODE_DIR})
+target_link_libraries(Common.Test PRIVATE GTest::gtest GTest::gtest_main Common)
+include(GoogleTest)
+gtest_discover_tests(Common.Test)
+
+install(
+    TARGETS
+    Common
+    Common.Test
+    LIBRARY DESTINATION bin/$<CONFIG>
+    RUNTIME DESTINATION bin/$<CONFIG>
+    ARCHIVE DESTINATION bin/$<CONFIG>
+)
+
+install(
+    FILES $<TARGET_RUNTIME_DLLS:Common.Test>
+    DESTINATION bin/$<CONFIG>
+)

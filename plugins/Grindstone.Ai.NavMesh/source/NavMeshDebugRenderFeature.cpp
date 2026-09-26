@@ -1,7 +1,7 @@
 #include <Common/Console/Cvars.hpp>
 #include <Common/Graphics/Buffer.hpp>
 #include <Editor/EditorManager.hpp>
-#include <EngineCore/Logger.hpp>
+#include <Common/Logger.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
 #include <EngineCore/Rendering/RenderPassRegistry.hpp>
