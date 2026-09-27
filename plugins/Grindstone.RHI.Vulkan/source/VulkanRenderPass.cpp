@@ -41,7 +41,7 @@ Vulkan::RenderPass::RenderPass(const CreateInfo& createInfo)
 }
 
 void Vulkan::RenderPass::Update(VkRenderPass newRenderPass) {
-  renderPass = newRenderPass;
+	renderPass = newRenderPass;
 }
 
 void Vulkan::RenderPass::Create() {
