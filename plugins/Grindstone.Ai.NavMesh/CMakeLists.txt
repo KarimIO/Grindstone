@@ -65,8 +65,20 @@ message(STATUS
 ")
 
 install(
+	FILES "plugins/Grindstone.Ai.NavMesh/CMakeLists.txt"
+		"plugins/Grindstone.Ai.NavMesh/plugin.meta.json"
+		"plugins/Grindstone.Ai.NavMesh/README.md"
+	DESTINATION plugins/Grindstone.Ai.NavMesh/
+)
+
+install(
 	TARGETS PluginNavigationMesh
 	INCLUDES DESTINATION plugins/Grindstone.Ai.NavMesh/include/$<CONFIG>
 	LIBRARY DESTINATION plugins/Grindstone.Ai.NavMesh/lib/$<CONFIG>
 	RUNTIME DESTINATION plugins/Grindstone.Ai.NavMesh/bin/$<CONFIG>
+)
+
+install(
+    FILES $<TARGET_RUNTIME_DLLS:PluginNavigationMesh>
+    DESTINATION plugins/Grindstone.Ai.NavMesh/lib/
 )

@@ -17,6 +17,7 @@
 #include <unordered_map>
 #include <vector>
 #include <thread>
+#include "PluginManifestData.hpp"
 
 using namespace Grindstone::Plugins;
 using namespace Grindstone::Utilities;
@@ -297,6 +298,7 @@ const std::vector<std::filesystem::path>& EditorPluginManager::GetPluginsFolders
 }
 
 void EditorPluginManager::AddPluginsFolder(const std::filesystem::path& path) {
+	GPRINT_INFO(LogSource::Editor, "Adding plugin seach folder: {}", path.string());
 	pluginsFolders.emplace_back(path);
 }
 

@@ -102,8 +102,20 @@ message(STATUS
 ")
 
 install(
+	FILES "plugins/Grindstone.Editor.PipelineSetImporter/CMakeLists.txt"
+		"plugins/Grindstone.Editor.PipelineSetImporter/plugin.meta.json"
+		"plugins/Grindstone.Editor.PipelineSetImporter/README.md"
+	DESTINATION plugins/Grindstone.Editor.PipelineSetImporter/
+)
+
+install(
 	TARGETS PluginEditorPipelineSetImporter
 	INCLUDES DESTINATION plugins/Grindstone.Editor.PipelineSetImporter/include/$<CONFIG>
 	LIBRARY DESTINATION plugins/Grindstone.Editor.PipelineSetImporter/lib/$<CONFIG>
 	RUNTIME DESTINATION plugins/Grindstone.Editor.PipelineSetImporter/bin/$<CONFIG>
+)
+
+install(
+    FILES $<TARGET_RUNTIME_DLLS:PluginEditorPipelineSetImporter>
+    DESTINATION plugins/Grindstone.Editor.PipelineSetImporter/lib/
 )

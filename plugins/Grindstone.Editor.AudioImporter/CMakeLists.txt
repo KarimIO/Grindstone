@@ -57,8 +57,20 @@ message(STATUS
 ")
 
 install(
+	FILES "plugins/Grindstone.Editor.AudioImporter/CMakeLists.txt"
+		"plugins/Grindstone.Editor.AudioImporter/plugin.meta.json"
+		"plugins/Grindstone.Editor.AudioImporter/README.md"
+	DESTINATION plugins/Grindstone.Editor.AudioImporter/
+)
+
+install(
 	TARGETS PluginEditorAudioImporter
 	INCLUDES DESTINATION plugins/Grindstone.Editor.AudioImporter/include/$<CONFIG>
 	LIBRARY DESTINATION plugins/Grindstone.Editor.AudioImporter/lib/$<CONFIG>
 	RUNTIME DESTINATION plugins/Grindstone.Editor.AudioImporter/bin/$<CONFIG>
+)
+
+install(
+    FILES $<TARGET_RUNTIME_DLLS:PluginEditorAudioImporter>
+    DESTINATION plugins/Grindstone.Editor.AudioImporter/lib/
 )

@@ -66,8 +66,20 @@ message(STATUS
 ")
 
 install(
+	FILES "plugins/Grindstone.Renderables.3D/CMakeLists.txt"
+		"plugins/Grindstone.Renderables.3D/plugin.meta.json"
+		"plugins/Grindstone.Renderables.3D/README.md"
+	DESTINATION plugins/Grindstone.Renderables.3D/
+)
+
+install(
 	TARGETS PluginRenderables3D
-	INCLUDES DESTINATION plugins/Grindstone.Renderables./$<CONFIG>3D/include
-	LIBRARY DESTINATION plugins/Grindstone.Renderables./$<CONFIG>3D/lib
-	RUNTIME DESTINATION plugins/Grindstone.Renderables./$<CONFIG>3D/bin
+	INCLUDES DESTINATION plugins/Grindstone.Renderables.3D/$<CONFIG>/include
+	LIBRARY DESTINATION plugins/Grindstone.Renderables.3D/$<CONFIG>/lib
+	RUNTIME DESTINATION plugins/Grindstone.Renderables.3D/$<CONFIG>/bin
+)
+
+install(
+    FILES $<TARGET_RUNTIME_DLLS:PluginRenderables3D>
+    DESTINATION plugins/Grindstone.Renderables.3D/lib
 )

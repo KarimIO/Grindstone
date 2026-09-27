@@ -79,8 +79,20 @@ message(STATUS
 ")
 
 install(
+	FILES "plugins/Grindstone.RHI.OpenGL/CMakeLists.txt"
+		"plugins/Grindstone.RHI.OpenGL/plugin.meta.json"
+		"plugins/Grindstone.RHI.OpenGL/README.md"
+	DESTINATION plugins/Grindstone.RHI.OpenGL/
+)
+
+install(
 	TARGETS PluginRhiOpenGL
 	INCLUDES DESTINATION plugins/Grindstone.RHI.OpenGL/include/$<CONFIG>
 	LIBRARY DESTINATION plugins/Grindstone.RHI.OpenGL/lib/$<CONFIG>
 	RUNTIME DESTINATION plugins/Grindstone.RHI.OpenGL/bin/$<CONFIG>
+)
+
+install(
+    FILES $<TARGET_RUNTIME_DLLS:PluginRhiOpenGL>
+    DESTINATION plugins/Grindstone.RHI.OpenGL/lib/
 )

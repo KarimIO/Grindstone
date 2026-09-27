@@ -108,6 +108,8 @@ find_package(gl3w CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 
 find_package(unofficial-imguizmo CONFIG REQUIRED)
+find_package(unofficial-pcre CONFIG REQUIRED)
+find_package(ZLIB REQUIRED)
 find_package(unofficial-libgit2 CONFIG REQUIRED)
 
 add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
@@ -144,6 +146,8 @@ target_link_libraries(
 	PUBLIC
 	${CORE_LIBS}
 	efsw::efsw
+	unofficial::pcre::pcre
+	ZLIB::ZLIB
 	unofficial::libgit2::libgit2
 	unofficial::gl3w::gl3w
 	glm::glm
@@ -154,3 +158,9 @@ target_link_libraries(
 )
 
 install(TARGETS Editor LIBRARY DESTINATION bin/$<CONFIG> RUNTIME DESTINATION bin/$<CONFIG>)
+
+install(
+    FILES $<TARGET_RUNTIME_DLLS:Editor>
+    "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/$<IF:$<CONFIG:Debug>,debug/,>bin/zlib1.dll"
+    DESTINATION bin/$<CONFIG>
+)

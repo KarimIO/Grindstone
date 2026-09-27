@@ -26,6 +26,7 @@
 		"joltphysics",
 		"libgit2",
 		"nethost",
+		"pcre",
 		"opengl",
 		"opengl-registry",
 		"rapidjson",
@@ -35,7 +36,8 @@
 		"vulkan",
 		"vulkan-headers",
 		"vulkan-memory-allocator",
-		"vulkan-utility-libraries"
+		"vulkan-utility-libraries",
+		"zlib"
 	],
 	"builtin-baseline": "f7423ee180c4b7f40d43402c2feb3859161ef625"
 }

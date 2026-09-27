@@ -113,8 +113,21 @@ message(STATUS
 ")
 
 install(
+	FILES "plugins/Grindstone.RHI.Vulkan/CMakeLists.txt"
+		"plugins/Grindstone.RHI.Vulkan/plugin.meta.json"
+		"plugins/Grindstone.RHI.Vulkan/README.md"
+	DESTINATION plugins/Grindstone.RHI.Vulkan/
+)
+
+install(
 	TARGETS PluginRhiVulkan
 	INCLUDES DESTINATION plugins/Grindstone.RHI.Vulkan/include/$<CONFIG>
 	LIBRARY DESTINATION plugins/Grindstone.RHI.Vulkan/lib/$<CONFIG>
 	RUNTIME DESTINATION plugins/Grindstone.RHI.Vulkan/bin/$<CONFIG>
+)
+
+install(
+    FILES $<TARGET_RUNTIME_DLLS:PluginRhiVulkan>
+	"${AFTERMATH_DLL}"
+    DESTINATION plugins/Grindstone.RHI.Vulkan/lib/$<CONFIG>
 )

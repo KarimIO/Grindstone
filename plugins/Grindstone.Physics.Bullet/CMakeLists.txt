@@ -56,8 +56,20 @@ message(STATUS
 ")
 
 install(
+	FILES "plugins/Grindstone.Physics.Bullet/CMakeLists.txt"
+		"plugins/Grindstone.Physics.Bullet/plugin.meta.json"
+		"plugins/Grindstone.Physics.Bullet/README.md"
+	DESTINATION plugins/Grindstone.Physics.Bullet/
+)
+
+install(
 	TARGETS PluginBulletPhysics
 	INCLUDES DESTINATION plugins/Grindstone.Physics.Bullet/include/$<CONFIG>
 	LIBRARY DESTINATION plugins/Grindstone.Physics.Bullet/lib/$<CONFIG>
 	RUNTIME DESTINATION plugins/Grindstone.Physics.Bullet/bin/$<CONFIG>
+)
+
+install(
+    FILES $<TARGET_RUNTIME_DLLS:PluginBulletPhysics>
+    DESTINATION plugins/Grindstone.Physics.Bullet/lib/
 )

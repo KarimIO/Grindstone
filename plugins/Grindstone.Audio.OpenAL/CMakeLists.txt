@@ -61,8 +61,21 @@ message(STATUS
 ")
 
 install(
+	FILES "plugins/Grindstone.Audio.OpenAL/CMakeLists.txt"
+		"plugins/Grindstone.Audio.OpenAL/plugin.meta.json"
+		"plugins/Grindstone.Audio.OpenAL/README.md"
+	DESTINATION plugins/Grindstone.Audio.OpenAL/
+)
+
+install(
 	TARGETS PluginAudioOpenAL
 	INCLUDES DESTINATION plugins/Grindstone.Audio.OpenAL/include/$<CONFIG>
 	LIBRARY DESTINATION plugins/Grindstone.Audio.OpenAL/lib/$<CONFIG>
 	RUNTIME DESTINATION plugins/Grindstone.Audio.OpenAL/bin/$<CONFIG>
 )
+
+install(
+    FILES $<TARGET_RUNTIME_DLLS:PluginAudioOpenAL>
+    DESTINATION plugins/Grindstone.Audio.OpenAL/lib/
+)
+

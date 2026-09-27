@@ -65,8 +65,20 @@ message(STATUS
 ")
 
 install(
+	FILES "plugins/Grindstone.Editor.ModelImporter/CMakeLists.txt"
+		"plugins/Grindstone.Editor.ModelImporter/plugin.meta.json"
+		"plugins/Grindstone.Editor.ModelImporter/README.md"
+	DESTINATION plugins/Grindstone.Editor.ModelImporter/
+)
+
+install(
 	TARGETS PluginEditorModelImporter
 	INCLUDES DESTINATION plugins/Grindstone.Editor.ModelImporter/include/$<CONFIG>
 	LIBRARY DESTINATION plugins/Grindstone.Editor.ModelImporter/lib/$<CONFIG>
 	RUNTIME DESTINATION plugins/Grindstone.Editor.ModelImporter/bin/$<CONFIG>
+)
+
+install(
+    FILES $<TARGET_RUNTIME_DLLS:PluginEditorModelImporter>
+    DESTINATION plugins/Grindstone.Editor.ModelImporter/lib/
 )

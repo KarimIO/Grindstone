@@ -57,6 +57,13 @@ message(STATUS
 ")
 
 install(
+	FILES "plugins/Grindstone.Editor.TextureImporter/CMakeLists.txt"
+		"plugins/Grindstone.Editor.TextureImporter/plugin.meta.json"
+		"plugins/Grindstone.Editor.TextureImporter/README.md"
+	DESTINATION plugins/Grindstone.Editor.TextureImporter/
+)
+
+install(
 	TARGETS PluginEditorTextureImporter
 	INCLUDES DESTINATION plugins/Grindstone.Editor.TextureImporter/include/$<CONFIG>
 	LIBRARY DESTINATION plugins/Grindstone.Editor.TextureImporter/lib/$<CONFIG>
