@@ -60,10 +60,10 @@ void Vulkan::Framebuffer::UpdateNativeFramebuffer(
 	uint32_t newWidth,
 	uint32_t newHeight
 ) {
-	newRenderPass = static_cast<Vulkan::RenderPass*>(renderPass);
-	newFramebuffer = framebuffer;
-	newWidth = width;
-	newHeight = height;
+	renderPass = newRenderPass;
+	framebuffer = newFramebuffer;
+	width = newWidth;
+	height = newHeight;
 
 	if (debugName.empty()) {
 		Vulkan::Core::Get().NameObject(VK_OBJECT_TYPE_FRAMEBUFFER, framebuffer, debugName.c_str());
@@ -88,8 +88,8 @@ Grindstone::GraphicsAPI::RenderPass* Vulkan::Framebuffer::GetRenderPass() const 
 void Vulkan::Framebuffer::Resize(uint32_t newWidth, uint32_t newHeight) {
 	Cleanup();
 
-	newWidth = width;
-	newHeight = height;
+	width = newWidth;
+	height = newHeight;
 	Create();
 }
 
