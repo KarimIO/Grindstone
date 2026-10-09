@@ -17,7 +17,7 @@ namespace Grindstone {
 
 	class BaseAssetRenderer;
 
-	class MaterialImporter : public SpecificAssetImporter<MaterialAsset, AssetType::Material> {
+	class MaterialImporter : public SpecificAssetImporter<MaterialAsset> {
 	public:
 		MaterialImporter();
 		virtual ~MaterialImporter() override;

@@ -5,6 +5,7 @@
 #include <Jolt/Jolt.h>
 #include <Jolt/RegisterTypes.h>
 
+#include <Editor/EditorManager.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/EngineCore.hpp>
@@ -153,6 +154,50 @@ namespace Grindstone::Physics {
 		glm::vec3 gravity = glm::vec3(0.0f, -9.81f, 0.0f);
 
 	};
+
+	static const glm::vec4 colliderColor = glm::vec4(1.0f, 0.8f, 0.0f, 1.0f);
+
+	static void RenderJoltPhysicsGizmos(Grindstone::Editor::GizmoRenderer& gizmoRenderer, Grindstone::Blackboard& blackboard, const Editor::Selection& selection) {
+		auto gizmoRenderingFlagsResponse = blackboard.GetValue<uint32_t>("GizmoRenderingFlags");
+		if (gizmoRenderingFlagsResponse.HasError()) {
+			GPRINT_ERROR(LogSource::Rendering, "Gizmos: Unable to get GizmoRenderingFlags: {}", gizmoRenderingFlagsResponse.GetError());
+			return;
+		}
+		uint32_t gizmoRenderingFlags = gizmoRenderingFlagsResponse.GetValue();
+		bool isColliderGizmoEnabled = (gizmoRenderingFlags & 8) > 0;
+
+		Physics::BoxColliderComponent* box = nullptr;
+		Physics::CapsuleColliderComponent* capsule = nullptr;
+		Physics::PlaneColliderComponent* plane = nullptr;
+		Physics::SphereColliderComponent* sphere = nullptr;
+
+		if (!isColliderGizmoEnabled) {
+			return;
+		}
+
+		for (const ECS::Entity& selectedEntity : selection.selectedEntities) {
+			if (selectedEntity.TryGetComponent<Physics::BoxColliderComponent>(box)) {
+				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+				gizmoRenderer.SubmitCubeGizmo(matrix, box->GetSize(), colliderColor);
+			}
+			else if (selectedEntity.TryGetComponent<Physics::CapsuleColliderComponent>(capsule)) {
+				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+				gizmoRenderer.SubmitCapsuleGizmo(matrix, capsule->GetHeight(), capsule->GetRadius(), colliderColor);
+			}
+			else if (selectedEntity.TryGetComponent<Physics::PlaneColliderComponent>(plane)) {
+				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+				gizmoRenderer.SubmitPlaneGizmo(matrix, plane->GetPlaneNormal(), plane->GetPositionAlongNormal(), colliderColor);
+			}
+			else if (selectedEntity.TryGetComponent<Physics::SphereColliderComponent>(sphere)) {
+				TransformComponent& transf = selectedEntity.GetComponent<TransformComponent>();
+				Math::Matrix4 matrix = TransformComponent::GetWorldTransformMatrix(selectedEntity);
+				gizmoRenderer.SubmitSphereGizmo(matrix, sphere->GetRadius(), colliderColor);
+			}
+		}
+	}
 }
 
 extern "C" {
@@ -167,6 +212,9 @@ extern "C" {
 
 		ImGui::SetCurrentContext(editorPluginInterface->GetImguiContext());
 		if (editorPluginInterface) {
+			Grindstone::Editor::Manager* editorManager = editorPluginInterface->GetEditorInstance();
+			Grindstone::Editor::GizmoRenderer& gizmoRenderer = editorManager->GetGizmoRenderer();
+			gizmoRenderer.RegisterGizmoCallback("Gizmo::JoltPhysics"_hash, Grindstone::Physics::RenderJoltPhysicsGizmos);
 			editorPluginInterface->RegisterProjectSettingsPage(
 				"Jolt Physics",
 				Grindstone::Memory::AllocatorCore::AllocateUnique<JoltPhysicsSettingsPage>()
@@ -179,6 +227,9 @@ extern "C" {
 			static_cast<Plugins::EditorPluginInterface*>(pluginInterface->GetEditorInterface());
 
 		if (editorPluginInterface) {
+			Grindstone::Editor::Manager* editorManager = editorPluginInterface->GetEditorInstance();
+			Grindstone::Editor::GizmoRenderer& gizmoRenderer = editorManager->GetGizmoRenderer();
+			gizmoRenderer.UnregisterGizmoCallback("Gizmo::JoltPhysics"_hash);
 			editorPluginInterface->DeregisterProjectSettingsPage("Jolt Physics");
 		}
 	}

@@ -3,9 +3,12 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <vector>
+#include <functional>
 
+#include <Common/Blackboard/Blackboard.hpp>
 #include <EngineCore/Assets/AssetReference.hpp>
 #include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
+#include <Editor/Selection.hpp>
 
 namespace Grindstone::GraphicsAPI {
 	class CommandBuffer;
@@ -18,15 +21,27 @@ namespace Grindstone::GraphicsAPI {
 }
 
 namespace Grindstone::Editor {
+	class GizmoRenderer;
+	using GizmoRendererCallback = std::function<void(Grindstone::Editor::GizmoRenderer& gizmoRenderer, Grindstone::Blackboard& blackboard, const Grindstone::Editor::Selection& selection)>;
+
 	class GizmoRenderer {
 	public:
 		void Initialize();
-		void SubmitCubeGizmo(const glm::mat4& transform, glm::vec3 size, glm::vec4 color = glm::vec4(1.0f));
-		void SubmitCapsuleGizmo(const glm::mat4& transform, float height, float radius, glm::vec4 color = glm::vec4(1.0f));
-		void SubmitPlaneGizmo(const glm::mat4& transform, glm::vec3 normal, float positionAlongNormal, glm::vec4 color = glm::vec4(1.0f));
-		void SubmitSphereGizmo(const glm::mat4& transform, float radius, glm::vec4 color = glm::vec4(1.0f));
+		virtual void SubmitCubeGizmo(const glm::mat4& transform, glm::vec3 size, glm::vec4 color = glm::vec4(1.0f));
+		virtual void SubmitCapsuleGizmo(const glm::mat4& transform, float height, float radius, glm::vec4 color = glm::vec4(1.0f));
+		virtual void SubmitPlaneGizmo(const glm::mat4& transform, glm::vec3 normal, float positionAlongNormal, glm::vec4 color = glm::vec4(1.0f));
+		virtual void SubmitSphereGizmo(const glm::mat4& transform, float radius, glm::vec4 color = glm::vec4(1.0f));
+		virtual void RegisterGizmoCallback(Grindstone::HashedString name, GizmoRendererCallback callback);
+		virtual void UnregisterGizmoCallback(Grindstone::HashedString name);
+
 		void Render(Grindstone::GraphicsAPI::CommandBuffer* commandBuffer, glm::mat4 projView);
+		void IterateOnGizmoCallbacks(Grindstone::Blackboard& blackboard, const Grindstone::Editor::Selection& selection);
 	protected:
+		struct GizmoRendererCallbackEntry {
+			Grindstone::HashedString name;
+			GizmoRendererCallback callback;
+		};
+		std::vector<GizmoRendererCallbackEntry> gizmoCallbacks;
 		std::array<Grindstone::GraphicsAPI::Buffer*, 3> gizmoUniformBuffers = {};
 		std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> gizmoDescriptorSets = {};
 		Grindstone::GraphicsAPI::DescriptorSetLayout* gizmoDescriptorSetLayout = nullptr;

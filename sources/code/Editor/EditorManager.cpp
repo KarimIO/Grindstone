@@ -251,6 +251,10 @@ const std::filesystem::path& Grindstone::Editor::Manager::GetEngineBinariesPath(
 	return engineBinariesPath;
 }
 
+GizmoRenderer& Grindstone::Editor::Manager::GetGizmoRenderer() {
+	return gizmoRenderer;
+}
+
 bool Manager::OnKeyPress(Grindstone::Events::BaseEvent* ev) {
 	const Events::KeyPressEvent* onKeyPressEvent = dynamic_cast<Events::KeyPressEvent*>(ev);
 
