@@ -298,7 +298,7 @@ const std::vector<std::filesystem::path>& EditorPluginManager::GetPluginsFolders
 }
 
 void EditorPluginManager::AddPluginsFolder(const std::filesystem::path& path) {
-	GPRINT_INFO(LogSource::Editor, "Adding plugin seach folder: {}", path.string());
+	GPRINT_INFO(LogSource::Editor, "Adding plugin search folder: {}", path.string());
 	pluginsFolders.emplace_back(path);
 }
 

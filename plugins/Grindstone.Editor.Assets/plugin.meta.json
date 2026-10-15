@@ -11,7 +11,7 @@
 			"loadStage": "EditorAssetImportEarly"
 		}
 	],
-	"dependencies": [],
+	"requiresPlugins": [],
 	"binaries": [],
 	"cmake": ""
 }

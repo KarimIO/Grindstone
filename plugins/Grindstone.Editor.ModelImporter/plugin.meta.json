@@ -5,12 +5,13 @@
 	"description": "Allows the editor to import model assets and convert them to a Grindstone-supported format.",
 	"author": "Grindstone Foundation",
 	"assets": [],
-	"dependencies": [],
+	"requiresPlugins": [],
 	"binaries": [
 		{
 			"path": "lib/{Configuration}/PluginEditorModelImporter",
 			"loadStage": "EditorEarly",
-			"cmakeTarget": "PluginEditorModelImporter"
+			"buildType": "CMake",
+			"buildTarget": "PluginEditorModelImporter"
 		}
 	],
 	"cmake": "CMakeLists.txt"

@@ -5,6 +5,8 @@
 #include <Common/Logger.hpp>
 
 #include "PluginMetaFileLoader.hpp"
+#include <algorithm>
+#include <cctype>
 
 static std::string ParseBinaryPath(const char* path) {
 	std::regex re("\\{Configuration\\}");
@@ -111,6 +113,24 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 				if (directoryJson.GetType() == rapidjson::Type::kObjectType) {
 					MetaData::AssetDirectory assetDirectory;
 
+					if (document.HasMember("name")) {
+						rapidjson::Value& nameJson = document["name"];
+						if (nameJson.GetType() == rapidjson::Type::kStringType) {
+							assetDirectory.name = nameJson.GetString();
+						} else {
+							errorMsg += std::vformat(
+								"Meta file {} has 'assetDirectories' element has 'name' which should be of type string.\n",
+								std::make_format_args(pathCstr)
+							);
+						}
+					}
+					else {
+						errorMsg += std::vformat(
+							"Meta file {} has 'assetDirectories' element has no required parameter 'name'.\n",
+							std::make_format_args(pathCstr)
+						);
+					}
+
 					if (directoryJson.HasMember("path")) {
 						rapidjson::Value& pathJson = directoryJson["path"];
 						if (pathJson.IsString()) {
@@ -162,24 +182,24 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 		}
 	}
 
-	if (document.HasMember("dependencies")) {
-		rapidjson::Value& dependenciesJson = document["dependencies"];
-		if (dependenciesJson.GetType() == rapidjson::Type::kArrayType) {
-			for (rapidjson::Value& dependencyJson : dependenciesJson.GetArray()) {
+	if (document.HasMember("requiresPlugins")) {
+		rapidjson::Value& requiresPluginsJson = document["requiresPlugins"];
+		if (requiresPluginsJson.GetType() == rapidjson::Type::kArrayType) {
+			for (rapidjson::Value& dependencyJson : requiresPluginsJson.GetArray()) {
 				if (dependencyJson.GetType() == rapidjson::Type::kObjectType) {
-					MetaData::Dependency dependency;
+					MetaData::PluginDependency dependency;
 
-					if (dependencyJson.HasMember("dependencyName")) {
-						rapidjson::Value& dependencyNameJson = dependencyJson["dependencyName"];
+					if (dependencyJson.HasMember("name")) {
+						rapidjson::Value& dependencyNameJson = dependencyJson["name"];
 						if (dependencyNameJson.IsString()) {
 							dependency.pluginName = dependencyNameJson.GetString();
 						}
 						else {
-							errorMsg += std::vformat("Meta file {} has 'dependencies' element has \'dependencyName\' which should be of type string.\n", std::make_format_args(pathCstr));
+							errorMsg += std::vformat("Meta file {} has 'requiresPlugins' element has \'name\' which should be of type string.\n", std::make_format_args(pathCstr));
 						}
 					}
 					else {
-						errorMsg += std::vformat("Meta file {} has 'dependencies' element has missing \'dependencyName\'.\n", std::make_format_args(pathCstr));
+						errorMsg += std::vformat("Meta file {} has 'requiresPlugins' element has missing \'name\'.\n", std::make_format_args(pathCstr));
 					}
 
 					if (dependencyJson.HasMember("version")) {
@@ -188,22 +208,19 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 							dependency.version = versionJson.GetString();
 						}
 						else {
-							errorMsg += std::vformat("Meta file {} has 'dependencies' element has \'version\' which should be of type string.\n", std::make_format_args(pathCstr));
+							errorMsg += std::vformat("Meta file {} has 'requiresPlugins' element has \'version\' which should be of type string.\n", std::make_format_args(pathCstr));
 						}
 					}
-					else {
-						errorMsg += std::vformat("Meta file {} has 'dependencies' element has missing \'version\'.\n", std::make_format_args(pathCstr));
-					}
 
-					metaData.dependencies.emplace_back(dependency);
+					metaData.requiresPlugins.emplace_back(dependency);
 				}
 				else {
-					errorMsg += std::vformat("Meta file {} has 'dependencies' has an element which should be of type object {{ \"dependencyName\": string, \"version\": string }}.\n", std::make_format_args(pathCstr));
+					errorMsg += std::vformat("Meta file {} has 'requiresPlugins' has an element which should be of type object {{ \"dependencyName\": string, \"version\": string }}.\n", std::make_format_args(pathCstr));
 				}
 			}
 		}
 		else {
-			errorMsg += std::vformat("Meta file {} has 'dependencies' which should be of type array.\n", std::make_format_args(pathCstr));
+			errorMsg += std::vformat("Meta file {} has 'requiresPlugins' which should be of type array.\n", std::make_format_args(pathCstr));
 		}
 	}
 
@@ -213,6 +230,24 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 			for (rapidjson::Value& binaryJson : binariesJson.GetArray()) {
 				if (binaryJson.GetType() == rapidjson::Type::kObjectType) {
 					MetaData::Binary binary;
+					
+					if (document.HasMember("name")) {
+						rapidjson::Value& nameJson = document["name"];
+						if (nameJson.GetType() == rapidjson::Type::kStringType) {
+							binary.name = nameJson.GetString();
+						} else {
+							errorMsg += std::vformat(
+								"Meta file {} has 'binaries' element has 'name' which should be of type string.\n",
+								std::make_format_args(pathCstr)
+							);
+						}
+					}
+					else {
+						errorMsg += std::vformat(
+							"Meta file {} has 'binaries' element has no required parameter 'name'.\n",
+							std::make_format_args(pathCstr)
+						);
+					}
 
 					if (binaryJson.HasMember("path")) {
 						rapidjson::Value& pathJson = binaryJson["path"];
@@ -240,26 +275,37 @@ bool Grindstone::Plugins::ReadMetaFile(std::filesystem::path metaDataFilePath, G
 						errorMsg += std::vformat("Meta file {} has 'binaries' element has missing \'loadStage\'.\n", std::make_format_args(pathCstr));
 					}
 
-					if (binaryJson.HasMember("dotnetTarget")) {
-						rapidjson::Value& buildTargetJson = binaryJson["dotnetTarget"];
-						if (buildTargetJson.IsString()) {
-							binary.buildType = MetaData::BinaryBuildType::Dotnet;
-							std::filesystem::path dotnetPath = buildTargetJson.GetString();
-							binary.buildTarget = dotnetPath.string();
+					if (binaryJson.HasMember("buildType")) {
+						rapidjson::Value& buildTypeJson = binaryJson["buildType"];
+						if (buildTypeJson.IsString()) {
+							std::string buildTypeLower = buildTypeJson.GetString();
+							std::transform(
+								buildTypeLower.begin(),
+								buildTypeLower.end(),
+								buildTypeLower.begin(),
+								[](unsigned char c) {
+									return std::tolower(c);
+								}
+							);
+							if (buildTypeLower == "cmake") {
+								binary.buildType = MetaData::BinaryBuildType::Cmake;
+							}
+							else if (buildTypeLower == "dotnet") {
+								binary.buildType = MetaData::BinaryBuildType::Dotnet;
+							}
 						}
 						else {
-							errorMsg += std::vformat("Meta file {} has 'binaries' element has \'dotnetTarget\' which should be of type string.\n", std::make_format_args(pathCstr));
+							errorMsg += std::vformat("Meta file {} has 'binaries' element has \'buildType\' which should be of type string.\n", std::make_format_args(pathCstr));
 						}
 					}
 
-					if (binaryJson.HasMember("cmakeTarget")) {
-						rapidjson::Value& buildTargetJson = binaryJson["cmakeTarget"];
+					if (binaryJson.HasMember("buildTarget")) {
+						rapidjson::Value& buildTargetJson = binaryJson["buildTarget"];
 						if (buildTargetJson.IsString()) {
-							binary.buildType = MetaData::BinaryBuildType::Cmake;
 							binary.buildTarget = buildTargetJson.GetString();
 						}
 						else {
-							errorMsg += std::vformat("Meta file {} has 'binaries' element has \'cmakeTarget\' which should be of type string.\n", std::make_format_args(pathCstr));
+							errorMsg += std::vformat("Meta file {} has 'binaries' element has \'buildTarget\' which should be of type string.\n", std::make_format_args(pathCstr));
 						}
 					}
 

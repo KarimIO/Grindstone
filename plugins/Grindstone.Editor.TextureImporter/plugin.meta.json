@@ -11,12 +11,13 @@
 			"loadStage": "EditorAssetImportEarly"
 		}
 	],
-	"dependencies": [],
+	"requiresPlugins": [],
 	"binaries": [
 		{
 			"path": "lib/{Configuration}/PluginEditorTextureImporter",
 			"loadStage": "EditorAssetImportLate",
-			"cmakeTarget": "PluginEditorTextureImporter"
+			"buildType": "CMake",
+			"buildTarget": "PluginEditorTextureImporter"
 		}
 	],
 	"cmake": "CMakeLists.txt"

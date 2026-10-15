@@ -5,12 +5,13 @@
 	"description": "Allows the editor to import pipeline sets (groups of shaders) assets and convert them to a Grindstone-supported format.",
 	"author": "Grindstone Foundation",
 	"assets": [],
-	"dependencies": [],
+	"requiresPlugins": [],
 	"binaries": [
 		{
 			"path": "lib/{Configuration}/PluginEditorPipelineSetImporter",
 			"loadStage": "EditorEarly",
-			"cmakeTarget": "PluginEditorPipelineSetImporter"
+			"buildType": "CMake",
+			"buildTarget": "PluginEditorPipelineSetImporter"
 		}
 	],
 	"cmake": "CMakeLists.txt"

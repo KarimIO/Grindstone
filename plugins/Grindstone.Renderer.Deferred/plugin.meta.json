@@ -12,12 +12,13 @@
 			"loadStage": "JustBeforeEndOfEngineSetup"
 		}
 	],
-	"dependencies": [],
+	"requiresPlugins": [],
 	"binaries": [
 		{
 			"path": "lib/{Configuration}/PluginRendererDeferred",
 			"loadStage": "EndOfEngineSetup",
-			"cmakeTarget": "PluginRendererDeferred"
+			"buildType": "CMake",
+			"buildTarget": "PluginRendererDeferred"
 		}
 	],
 	"cmake": "CMakeLists.txt"
