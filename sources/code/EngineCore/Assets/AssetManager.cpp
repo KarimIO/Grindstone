@@ -7,8 +7,8 @@
 
 // Assets
 #include "Materials/MaterialImporter.hpp"
-#include "PipelineSet/GraphicsPipelineImporter.hpp"
 #include "PipelineSet/ComputePipelineImporter.hpp"
+#include "PipelineSet/GraphicsPipelineImporter.hpp"
 #include "Textures/TextureImporter.hpp"
 
 #include "AssetManager.hpp"
@@ -72,8 +72,22 @@ AssetImporter* AssetManager::GetManager(AssetType assetType) {
 }
 
 void AssetManager::QueueReloadAsset(AssetType assetType, Uuid uuid) {
-	std::scoped_lock lock(reloadMutex);
-	queuedAssetReloads.emplace_back(assetType, uuid);
+	if (!uuid.IsValid()) {
+		return;
+	}
+
+	const size_t assetTypeSizeT = static_cast<size_t>(assetType);
+	if (assetTypeSizeT < 1 || assetTypeSizeT >= assetTypeImporters.size()) {
+		return;
+	}
+
+	AssetImporter* assetImporter = assetTypeImporters[assetTypeSizeT];
+
+	void* loadedAsset = nullptr;
+	if (assetImporter != nullptr && assetImporter->TryGetIfLoaded(uuid, loadedAsset)) {
+		std::scoped_lock lock(reloadMutex);
+		queuedAssetReloads.emplace_back(assetType, uuid);
+	}
 }
 
 void AssetManager::ReloadQueuedAssets() {

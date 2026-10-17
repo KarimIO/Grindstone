@@ -132,8 +132,21 @@ add_custom_command(
 )
 
 install(
+	FILES "plugins/Grindstone.Script.CSharp/CMakeLists.txt"
+		"plugins/Grindstone.Script.CSharp/plugin.meta.json"
+		"plugins/Grindstone.Script.CSharp/README.md"
+	DESTINATION plugins/Grindstone.Script.CSharp/
+)
+
+install(
 	TARGETS PluginScriptCSharp
 	INCLUDES DESTINATION plugins/Grindstone.Script.CSharp/include/$<CONFIG>
 	LIBRARY DESTINATION plugins/Grindstone.Script.CSharp/lib/$<CONFIG>
 	RUNTIME DESTINATION plugins/Grindstone.Script.CSharp/bin/$<CONFIG>
+)
+
+install(
+    FILES $<TARGET_RUNTIME_DLLS:PluginScriptCSharp>
+	"${DOTNET_ROOT}/nethost.dll"
+    DESTINATION plugins/Grindstone.Script.CSharp/lib/
 )

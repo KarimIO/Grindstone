@@ -1,25 +1,25 @@
 #include "EngineCore.hpp"
 #include "pch.hpp"
 
-#include <EngineCore/Utils/MemoryAllocator.hpp>
-#include <EngineCore/ECS/SystemRegistrar.hpp>
-#include <EngineCore/ECS/ComponentRegistrar.hpp>
-#include <EngineCore/CoreComponents/setupCoreComponents.hpp>
-#include <EngineCore/CoreSystems/setupCoreSystems.hpp>
-#include <EngineCore/Scenes/Manager.hpp>
-#include <EngineCore/PluginSystem/DefaultPluginManager.hpp>
-#include <EngineCore/Events/InputManager.hpp>
-#include <EngineCore/Events/Dispatcher.hpp>
-#include <EngineCore/Rendering/RenderingPipeline.hpp>
-#include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
-#include <EngineCore/Rendering/RenderPassRegistry.hpp>
-#include <EngineCore/WorldContext/WorldContextManager.hpp>
-#include <EngineCore/Assets/AssetManager.hpp>
-#include <EngineCore/Rendering/RenderGraphContextSet.hpp>
+#include <Common/Console/Cvars.hpp>
 #include <Common/Event/WindowEvent.hpp>
 #include <Common/Graphics/Core.hpp>
-#include <Common/Console/Cvars.hpp>
 #include <Common/Window/WindowManager.hpp>
+#include <EngineCore/AssetRenderer/AssetRendererManager.hpp>
+#include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/CoreComponents/setupCoreComponents.hpp>
+#include <EngineCore/CoreSystems/setupCoreSystems.hpp>
+#include <EngineCore/ECS/ComponentRegistrar.hpp>
+#include <EngineCore/ECS/SystemRegistrar.hpp>
+#include <EngineCore/Events/Dispatcher.hpp>
+#include <EngineCore/Events/InputManager.hpp>
+#include <EngineCore/PluginSystem/DefaultPluginManager.hpp>
+#include <EngineCore/Rendering/RenderGraphContextSet.hpp>
+#include <EngineCore/Rendering/RenderPassRegistry.hpp>
+#include <EngineCore/Rendering/RenderingPipeline.hpp>
+#include <EngineCore/Scenes/Manager.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
+#include <EngineCore/WorldContext/WorldContextManager.hpp>
 
 #include "Logger.hpp"
 #include "Profiling.hpp"
@@ -85,39 +85,54 @@ bool EngineCore::Initialize(LateCreateInfo& createInfo) {
 		pluginManager = createInfo.pluginManagerOverride;
 	}
 
-	pluginManager->LoadPluginsByStage("EarlyEngineSetup");
+	Grindstone::Window* mainWindow = nullptr;
+	{
+		GRIND_PROFILE_SCOPE("Initialize Graphics Core");
+		pluginManager->LoadPluginsByStage("EngineSystemsSetup");
+
+		{
+			GRIND_PROFILE_SCOPE("Set up InputManager and Window");
+			inputManager =
+				AllocatorCore::Allocate<Input::Manager>(eventDispatcher);
+
+			Window::CreateInfo windowCreationInfo;
+			windowCreationInfo.fullscreen = Window::FullscreenMode::Windowed;
+			windowCreationInfo.title = "Sandbox";
+			windowCreationInfo.width = 800;
+			windowCreationInfo.height = 600;
+			windowCreationInfo.engineCore = this;
+			windowCreationInfo.isSwapchainControlledByEngine = !isEditor;
+			mainWindow = windowManager->Create(windowCreationInfo);
+			eventDispatcher->AddEventListener(
+				Grindstone::Events::EventType::WindowTryQuit,
+				std::bind(&EngineCore::OnTryQuit, this, std::placeholders::_1));
+			eventDispatcher->AddEventListener(
+				Grindstone::Events::EventType::WindowForceQuit,
+				std::bind(&EngineCore::OnForceQuit, this,
+						  std::placeholders::_1));
+		}
+
+
+		GraphicsAPI::Core::CreateInfo graphicsCoreInfo{mainWindow, true};
+		if (!graphicsCore->Initialize(graphicsCoreInfo)) {
+			return false;
+		}
+	}
+
+	{
+		GRIND_PROFILE_SCOPE("Create Renderer");
+		renderpassRegistry =
+			AllocatorCore::Allocate<Grindstone::RenderPassRegistry>();
+	}
 
 	GS_ASSERT_ENGINE(windowManager != nullptr);
 	GS_ASSERT_ENGINE(graphicsCore != nullptr);
 	renderingPipeline = AllocatorCore::Allocate<Renderer::RenderingPipeline>();
 
-	Grindstone::Window* mainWindow = nullptr;
-	{
-		GRIND_PROFILE_SCOPE("Set up InputManager and Window");
-		inputManager = AllocatorCore::Allocate<Input::Manager>(eventDispatcher);
-
-		Window::CreateInfo windowCreationInfo;
-		windowCreationInfo.fullscreen = Window::FullscreenMode::Windowed;
-		windowCreationInfo.title = "Sandbox";
-		windowCreationInfo.width = 800;
-		windowCreationInfo.height = 600;
-		windowCreationInfo.engineCore = this;
-		windowCreationInfo.isSwapchainControlledByEngine = !isEditor;
-		mainWindow = windowManager->Create(windowCreationInfo);
-		eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowTryQuit, std::bind(&EngineCore::OnTryQuit, this, std::placeholders::_1));
-		eventDispatcher->AddEventListener(Grindstone::Events::EventType::WindowForceQuit, std::bind(&EngineCore::OnForceQuit, this, std::placeholders::_1));
-	}
-
 	worldContextManager = AllocatorCore::Allocate<Grindstone::WorldContextManager>();
 	pluginInterface->RegisterWorldContextFactory<Grindstone::Rendering::RenderGraphWorldContext>(Rendering::renderGraphWorldContextName);
 
 	{
-		GRIND_PROFILE_SCOPE("Initialize Graphics Core");
-		GraphicsAPI::Core::CreateInfo graphicsCoreInfo{ mainWindow, true };
-		if (!graphicsCore->Initialize(graphicsCoreInfo)) {
-			return false;
-		}
-
 		inputManager->SetMainWindow(mainWindow);
 	}
 
@@ -130,15 +145,13 @@ bool EngineCore::Initialize(LateCreateInfo& createInfo) {
 		assetRendererManager = AllocatorCore::Allocate<AssetRendererManager>();
 	}
 
-	{
-		GRIND_PROFILE_SCOPE("Create Renderer");
-		renderpassRegistry = AllocatorCore::Allocate<Grindstone::RenderPassRegistry>();
-	}
 
 	sceneManager = AllocatorCore::Allocate<SceneManagement::SceneManager>();
 
 	GPRINT_INFO(LogSource::EngineCore, "Application Initialized.");
 	GRIND_PROFILE_END_SESSION();
+
+	pluginManager->LoadPluginsByStage("EarlyEngineSetup");
 
 	pluginManager->LoadPluginsByStage("JustBeforeEndOfEngineSetup");
 	pluginManager->LoadPluginsByStage("EndOfEngineSetup");
@@ -233,13 +246,13 @@ EngineCore::~EngineCore() {
 		worldContextManager->ClearContextSets();
 	}
 
-	if (renderingPipeline != nullptr) {
-		AllocatorCore::Free(renderingPipeline);
-	}
-
 	if (pluginManager != nullptr) {
 		pluginManager->UnloadPluginsByStage("EndOfEngineSetup");
 		pluginManager->UnloadPluginsByStage("JustBeforeEndOfEngineSetup");
+	}
+
+	if (renderingPipeline != nullptr) {
+		AllocatorCore::Free(renderingPipeline);
 	}
 
 	AllocatorCore::Free(worldContextManager);
@@ -253,6 +266,7 @@ EngineCore::~EngineCore() {
 
 	if (pluginManager) {
 		pluginManager->UnloadPluginsByStage("EarlyEngineSetup");
+		pluginManager->UnloadPluginsByStage("EngineSystemsSetup");
 		AllocatorCore::Free(pluginManager);
 	}
 

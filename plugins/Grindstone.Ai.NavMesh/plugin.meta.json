@@ -5,17 +5,22 @@
 	"description": "Provides a set of tools to allow NavigationAgents to move through the world using Navigation Meshes.",
 	"author": "Grindstone Foundation",
 	"assets": [],
-	"dependencies": [],
+	"requiresPlugins": [{"name": "Grindstone.Script.CSharp"}],
 	"binaries": [
 		{
+			"name": "NavMesh",
 			"path": "lib/{Configuration}/PluginNavigationMesh",
 			"loadStage": "EditorAfterUiSetup",
-			"cmakeTarget": "PluginNavigationMesh"
+			"buildType": "CMake",
+			"buildTarget": "PluginNavigationMesh"
 		},
 		{
+			"name": "CSharpIntegration",
 			"path": "scripts/bin/{Configuration}/net10.0/Grindstone.Ai.NavMesh.CSharpIntegration",
 			"loadStage": "EditorAfterUiSetup",
-			"dotnetTarget": "scripts/CSharpIntegration.json"
+			"buildType": "Dotnet",
+			"buildTarget": "scripts/CSharpIntegration.json",
+			"dependencies": ["NavMesh", "Grindstone.Script.CSharp:CSharpCore"]
 		}
 	],
 	"cmake": "CMakeLists.txt"

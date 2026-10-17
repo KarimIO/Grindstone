@@ -234,7 +234,7 @@ static bool LoadGrindstoneCoreFunction(std::wstring_view dllPath, std::string_vi
 }
 
 static bool LoadGrindstoneCoreFunctions() {
-	auto coreDllPath = EngineCore::GetInstance().GetPluginManager()->GetLibraryPath("Grindstone.Script.CSharp", "Grindstone.Script.CSharpCore").string();
+	auto coreDllPath = EngineCore::GetInstance().GetPluginManager()->GetLibraryPath("Grindstone.Script.CSharp", "CSharpCore").string();
 	std::wstring coreDllWide = std::wstring(coreDllPath.begin(), coreDllPath.end());
 
 	if (!std::filesystem::exists(coreDllPath)) {
@@ -384,6 +384,12 @@ bool CSharpManager::LoadAssembly(const char* basePath, AssemblyData& outAssembly
 }
 
 bool CSharpManager::LoadAssemblyIntoMap(const std::string& assemblyIdentifier) {
+	auto it = assemblies.find(assemblyIdentifier);
+
+	if (it != assemblies.end()) {
+		return true;
+	}
+
 	std::string pluginName;
 	std::string assemblyName;
 	size_t separatorIndex = assemblyIdentifier.find(':');
@@ -397,10 +403,15 @@ bool CSharpManager::LoadAssemblyIntoMap(const std::string& assemblyIdentifier) {
 
 	auto dllPath = EngineCore::GetInstance().GetPluginManager()->GetLibraryPath(pluginName, assemblyName).string();
 
-	AssemblyData assemblyData;
-	if (LoadAssembly(dllPath.c_str(), assemblyData)) {
-		assemblies[assemblyIdentifier] = assemblyData;
-		return true;
+	if (dllPath.empty()) {
+		GPRINT_ERROR(LogSource::Scripting, "Could not find path to library: \"{}:{}\"", pluginName, assemblyName);
+	}
+	else {
+		AssemblyData assemblyData;
+		if (LoadAssembly(dllPath.c_str(), assemblyData)) {
+			assemblies[assemblyIdentifier] = assemblyData;
+			return true;
+		}
 	}
 
 	return false;

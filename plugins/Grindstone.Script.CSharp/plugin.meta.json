@@ -6,17 +6,22 @@
 	"author": "Grindstone Foundation",
 	"requiresRestart": true,
 	"assets": [],
-	"dependencies": [],
+	"requiresPlugins": [],
 	"binaries": [
 		{
+			"name": "ScriptCSharp",
 			"path": "lib/{Configuration}/PluginScriptCSharp",
 			"loadStage": "EndOfEngineSetup",
-			"cmakeTarget": "PluginScriptCSharp"
+			"buildType": "CMake",
+			"buildTarget": "PluginScriptCSharp"
 		},
 		{
+			"name": "CSharpCore",
 			"path": "CSharpCore/bin/{Configuration}/net10.0/Grindstone.Script.CSharpCore",
-			"loadStage": "",
-			"dotnetTarget": "CSharpCore/CSharpCore.json"
+			"loadStage": "EndOfEngineSetup",
+			"buildType": "Dotnet",
+			"buildTarget": "CSharpCore/CSharpCore.json",
+			"dependencies": ["ScriptCSharp"]
 		}
 	],
 	"cmake": "CMakeLists.txt"

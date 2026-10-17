@@ -1,11 +1,13 @@
 #pragma once
 
 #include <filesystem>
+#include <string>
+#include <string_view>
 
-#include <Common/ResourcePipeline/Uuid.hpp>
-#include <EditorCommon/Editor/Importer.hpp>
 #include <Common/ResourcePipeline/AssetType.hpp>
+#include <Common/ResourcePipeline/Uuid.hpp>
 #include <Editor/AssetRegistry.hpp>
+#include <EditorCommon/Editor/Importer.hpp>
 
 #include "ImporterSettings.hpp"
 
@@ -58,6 +60,7 @@ namespace Grindstone::Editor {
 		bool IsValid() const;
 		bool IsOutdatedImporterVersion(Grindstone::Editor::ImporterVersion currentImporterVersion) const;
 		bool IsOutdatedMetaVersion() const;
+		uint32_t GetMetaFileVersion() const;
 
 		Grindstone::Editor::ImporterSettings& GetImporterSettings() {
 			return importerSettings;

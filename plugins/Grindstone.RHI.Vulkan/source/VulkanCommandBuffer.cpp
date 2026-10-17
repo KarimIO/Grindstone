@@ -218,8 +218,6 @@ void Vulkan::CommandBuffer::BeginRendering(
 
 	if (depthAttachment != nullptr) {
 		Grindstone::GraphicsAPI::Vulkan::Image* depthImage = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(depthAttachment->image);
-		VkImageView depthImageView = depthImage->GetImageView();
-		GS_ASSERT(depthImageView != nullptr);
 		depthAttachmentInfo = VkRenderingAttachmentInfoKHR{
 			.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
 			.imageView = depthImage->GetImageView(),

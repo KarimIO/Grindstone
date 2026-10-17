@@ -5,22 +5,32 @@
 	"description": "A world context for simulating physics, and components to add physics objects to the scene.",
 	"author": "Grindstone Foundation",
 	"assets": [],
-	"dependencies": [],
+	"requiresPlugins": [
+		{ "name": "Grindstone.Script.CSharp" }
+	],
 	"binaries": [
 		{
+			"name": "Jolt",
 			"path": "lib/{Configuration}/PluginJoltPhysics",
 			"loadStage": "EndOfEngineSetup",
-			"cmakeTarget": "PluginJoltPhysics"
+			"buildType": "CMake",
+			"buildTarget": "PluginJoltPhysics"
 		},
 		{
+			"name": "Editor",
 			"path": "lib/{Configuration}/PluginJoltPhysicsEditor",
 			"loadStage": "EditorAfterUiSetup",
-			"cmakeTarget": "PluginJoltPhysicsEditor"
+			"buildType": "CMake",
+			"buildTarget": "PluginJoltPhysicsEditor",
+			"dependencies": ["Jolt"]
 		},
 		{
+			"name": "CSharpIntegration",
 			"path": "scripts/bin/{Configuration}/net10.0/Grindstone.Physics.Jolt.CSharpIntegration",
 			"loadStage": "EndOfEngineSetup",
-			"dotnetTarget": "scripts/CSharpIntegration.json"
+			"buildType": "Dotnet",
+			"buildTarget": "scripts/CSharpIntegration.json",
+			"dependencies": ["Jolt", "Grindstone.Script.CSharp:CSharpCore"]
 		}
 	],
 	"cmake": "CMakeLists.txt"

@@ -73,8 +73,20 @@ message(STATUS
 ")
 
 install(
+	FILES "plugins/Grindstone.Physics.Jolt/CMakeLists.txt"
+		"plugins/Grindstone.Physics.Jolt/plugin.meta.json"
+		"plugins/Grindstone.Physics.Jolt/README.md"
+	DESTINATION plugins/Grindstone.Physics.Jolt/
+)
+
+install(
 	TARGETS PluginJoltPhysics PluginJoltPhysicsEditor
 	INCLUDES DESTINATION plugins/Grindstone.Physics.Jolt/include/$<CONFIG>
 	LIBRARY DESTINATION plugins/Grindstone.Physics.Jolt/lib/$<CONFIG>
 	RUNTIME DESTINATION plugins/Grindstone.Physics.Jolt/bin/$<CONFIG>
+)
+
+install(
+    FILES $<TARGET_RUNTIME_DLLS:PluginJoltPhysics> $<TARGET_RUNTIME_DLLS:PluginJoltPhysicsEditor>
+    DESTINATION plugins/Grindstone.Physics.Jolt/lib/
 )

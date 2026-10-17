@@ -5,12 +5,14 @@
 	"description": "Allows the editor to import audio assets and convert them to a Grindstone-supported format.",
 	"author": "Grindstone Foundation",
 	"assets": [],
-	"dependencies": [],
+	"requiresPlugins": [],
 	"binaries": [
 		{
+			"name": "Importer",
 			"path": "lib/{Configuration}/PluginEditorAudioImporter",
-			"loadStage": "EditorEarly",
-			"cmakeTarget": "PluginEditorAudioImporter"
+			"loadStage": "EarlyEngineSetup",
+			"buildType": "CMake",
+			"buildTarget": "PluginEditorAudioImporter"
 		}
 	],
 	"cmake": "CMakeLists.txt"
