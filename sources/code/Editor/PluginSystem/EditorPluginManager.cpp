@@ -157,8 +157,6 @@ static void CompileBinaries(const std::filesystem::path& solutionPath, const std
 		}
 	}
 
-	return;
-
 	if (!cmakeTargetsToCompile.empty()) {
 		RunCMakeCommand(cmakeTargetsToCompile);
 	}
@@ -609,7 +607,7 @@ bool EditorPluginManager::BuildLoadOrder(
 
 	for (size_t stage = 0; stage < stageOrder.size(); ++stage) {
 		const std::string_view stageName = stageOrder[stage];
-		if (SortStage(stageName, stage, nodesByStage, nodes, orderedItemsByStage[std::string(stageName)])) {
+		if (!SortStage(stageName, stage, nodesByStage, nodes, orderedItemsByStage[std::string(stageName)])) {
 			hasError = true;
 		}
 	}
