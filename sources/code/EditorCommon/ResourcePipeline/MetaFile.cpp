@@ -128,7 +128,18 @@ void MetaFile::Load(AssetRegistry& assetRegistry, const std::filesystem::path& b
 }
 
 void MetaFile::Save(uint32_t currentImporterVersion) {
-	if (importerVersion != currentImporterVersion || isDirty || importerSettings.isDirty) {
+	bool hasMissingSubasset = false;
+	if (!defaultSubasset.isUpdated) {
+		hasMissingSubasset = true;
+	}
+
+	for (Subasset& subasset : subassets) {
+		if (!subasset.isUpdated) {
+			hasMissingSubasset = true;
+		}
+	}
+
+	if (importerVersion != currentImporterVersion || isDirty || importerSettings.isDirty || hasMissingSubasset) {
 		importerVersion = currentImporterVersion;
 
 		rapidjson::StringBuffer documentStringBuffer;
@@ -145,7 +156,11 @@ void MetaFile::Save(uint32_t currentImporterVersion) {
 			documentWriter.Uint(currentMetaFileVersion);
 
 			documentWriter.Key("defaultUuid");
-			documentWriter.String(defaultSubasset.uuid.ToString().c_str());
+			if (defaultSubasset.isUpdated) {
+				documentWriter.String(defaultSubasset.uuid.ToString().c_str());
+			} else {
+				documentWriter.String("");
+			}
 
 			{
 				documentWriter.Key("subassets");
@@ -217,6 +232,7 @@ void MetaFile::Save(uint32_t currentImporterVersion) {
 	// AssetRegistry can get out of sync.
 	if (defaultSubasset.subassetIdentifier != "") {
 		assetRegistry->UpdateEntry(
+			Editor::AssetEntryStatus::Imported,
 			baseAssetPath,
 			defaultSubasset.subassetIdentifier,
 			defaultSubasset.displayName,
@@ -234,6 +250,7 @@ void MetaFile::Save(uint32_t currentImporterVersion) {
 
 	for (auto& subasset : subassets) {
 		assetRegistry->UpdateEntry(
+			Editor::AssetEntryStatus::Imported,
 			baseAssetPath,
 			subasset.subassetIdentifier,
 			subasset.displayName,
@@ -344,6 +361,10 @@ bool MetaFile::IsOutdatedImporterVersion(Grindstone::Editor::ImporterVersion cur
 
 bool MetaFile::IsOutdatedMetaVersion() const {
 	return metaVersion < currentMetaFileVersion;
+}
+
+uint32_t MetaFile::GetMetaFileVersion() const {
+	return metaVersion;
 }
 
 Grindstone::Uuid MetaFile::GetOrCreateSubassetUuid(const std::string& subassetName, AssetType assetType) {

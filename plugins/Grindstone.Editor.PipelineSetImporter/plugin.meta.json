@@ -8,8 +8,9 @@
 	"requiresPlugins": [],
 	"binaries": [
 		{
+			"name": "Importer",
 			"path": "lib/{Configuration}/PluginEditorPipelineSetImporter",
-			"loadStage": "EditorEarly",
+			"loadStage": "EarlyEngineSetup",
 			"buildType": "CMake",
 			"buildTarget": "PluginEditorPipelineSetImporter"
 		}

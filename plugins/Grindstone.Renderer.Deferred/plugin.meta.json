@@ -5,20 +5,27 @@
 	"description": "The deferred renderer is a way of drawing the scene that focuses on drawing many lights simultaneously.",
 	"author": "Grindstone Foundation",
 	"requiresRestart": true,
+	"requiresPlugins": [
+		{ "name": "Grindstone.Editor.TextureImporter" },
+		{ "name": "Grindstone.Editor.PipelineSetImporter" }
+	],
 	"assetDirectories": [
 		{
+			"name": "Assets",
 			"path": "assets",
 			"mountPoint": "GRINDSTONE.RENDERER.DEFERRED",
-			"loadStage": "JustBeforeEndOfEngineSetup"
+			"loadStage": "JustBeforeEndOfEngineSetup",
+			"dependencies": ["Grindstone.Editor.TextureImporter:Importer", "Grindstone.Editor.PipelineSetImporter:Importer"]
 		}
 	],
-	"requiresPlugins": [],
 	"binaries": [
 		{
+			"name": "DeferredRenderer",
 			"path": "lib/{Configuration}/PluginRendererDeferred",
 			"loadStage": "EndOfEngineSetup",
 			"buildType": "CMake",
-			"buildTarget": "PluginRendererDeferred"
+			"buildTarget": "PluginRendererDeferred",
+			"dependencies": ["Assets"]
 		}
 	],
 	"cmake": "CMakeLists.txt"

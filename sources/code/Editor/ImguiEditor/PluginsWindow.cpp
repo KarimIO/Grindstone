@@ -1,18 +1,15 @@
 #include <fstream>
 #include <imgui.h>
-#include <imgui_stdlib.h>
 
-#include <EngineCore/EngineCore.hpp>
-#include <EngineCore/Utils/Utilities.hpp>
-#include <EngineCore/Events/Dispatcher.hpp>
-#include <Editor/ImguiEditor/Components/ListEditor.hpp>
 #include <Editor/EditorManager.hpp>
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
 #include <Editor/PluginSystem/EditorPluginManager.hpp>
 #include <Editor/PluginSystem/PluginMetaFileLoader.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Utils/Utilities.hpp>
 
-#include "imgui_markdown.h"
 #include "PluginsWindow.hpp"
+#include "imgui_markdown.h"
 using namespace Grindstone::Editor::ImguiEditor;
 
 bool isPluginPopupShown = false;
@@ -23,7 +20,7 @@ std::vector<std::string> unusedPlugins;
 const ImVec2 PLUGIN_LIST_WINDOW_SIZE = { 300.f, 400.f };
 
 static bool WritePluginFile(const std::vector<PluginListElement>& pluginsList) {
-	std::filesystem::path pluginListFile = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings/pluginsManifest.txt";
+	std::filesystem::path pluginListFile = Grindstone::Editor::Manager::GetInstance().GetProjectPath() / "buildSettings/pluginsManifest.txt";
 
 	std::ofstream outputFile(pluginListFile);
 	if (!outputFile) {
@@ -58,7 +55,7 @@ static void RestartApp() {
 	);
 
 	if (ok) {
-		Editor::Manager::GetInstance().OnTryQuit(nullptr);
+		Grindstone::Editor::Manager::GetInstance().OnTryQuit(nullptr);
 	}
 }
 

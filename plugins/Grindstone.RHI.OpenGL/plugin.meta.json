@@ -9,8 +9,9 @@
 	"requiresPlugins": [],
 	"binaries": [
 		{
+			"name": "OpenGL",
 			"path": "lib/{Configuration}/PluginRhiOpenGL",
-			"loadStage": "EarlyEngineSetup",
+			"loadStage": "EngineSystemsSetup",
 			"buildType": "CMake",
 			"buildTarget": "PluginRhiOpenGL"
 		}

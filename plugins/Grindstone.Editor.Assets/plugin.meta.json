@@ -6,12 +6,15 @@
 	"author": "Grindstone Foundation",
 	"assetDirectories": [
 		{
+			"name": "Assets",
 			"path": "assets",
 			"mountPoint": "GRINDSTONE.EDITOR.ASSETS",
 			"loadStage": "EditorAssetImportEarly"
 		}
 	],
-	"requiresPlugins": [],
+	"requiresPlugins": [
+		{ "name": "Grindstone.Editor.TextureImporter" }
+	],
 	"binaries": [],
 	"cmake": ""
 }

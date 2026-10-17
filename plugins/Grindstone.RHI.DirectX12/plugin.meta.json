@@ -9,8 +9,9 @@
 	"requiresPlugins": [],
 	"binaries": [
 		{
+			"name": "DirectX12",
 			"path": "lib/{Configuration}/PluginRhiDirectX12",
-			"loadStage": "EarlyEngineSetup",
+			"loadStage": "EngineSystemsSetup",
 			"buildType": "CMake",
 			"buildTarget": "PluginRhiDirectX12"
 		}

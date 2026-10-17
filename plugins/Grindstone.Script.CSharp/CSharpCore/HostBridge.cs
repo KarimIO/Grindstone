@@ -94,12 +94,19 @@ namespace Grindstone {
 		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
 		public static IntPtr CreateComponent(int assemblyHashName, IntPtr classNamePtr, uint entity) {
 			string className = Marshal.PtrToStringAnsi(classNamePtr)!;
+			Assembly? assembly = null;
 			try {
-				if (!loadedAssemblies.TryGetValue(assemblyHashName, out Assembly? assembly) || assembly == null) {
+				if (!loadedAssemblies.TryGetValue(assemblyHashName, out assembly) || assembly == null) {
 					Grindstone.Logger.PrintError($"Invalid assembly hash: {assemblyHashName}.");
 					return 0;
 				}
+			}
+			catch (Exception ex) {
+				Grindstone.Logger.PrintError($"Failed to get type '{className}' from assembly with hashed name '{assemblyHashName}': {ex.Message}");
+				return 0;
+			}
 
+			try {
 				Type? type = assembly.GetType(className);
 				if (type == null) {
 					Grindstone.Logger.PrintError($"Failed to find class '{className}' in assembly '{assembly.GetName()}'");
@@ -112,7 +119,7 @@ namespace Grindstone {
 
 				FieldInfo? field = type.GetField("entity", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 				if (field == null) {
-					Grindstone.Logger.PrintError($"Trying to create a non-smart component of type '{classNamePtr}' as a smart component. Cannot set entity ({entity}).");
+					Grindstone.Logger.PrintError($"Trying to create a non-smart component of type '{classNamePtr}' as a smart component. Cannot set entity ({entity}) in assembly '{assembly.GetName()}'.");
 				}
 				else {
 					field.SetValue(instance, new Entity(entity, new Scene(0)));
@@ -121,7 +128,7 @@ namespace Grindstone {
 				return instancePtr;
 			}
 			catch (Exception ex) {
-				Grindstone.Logger.PrintError($"Failed to get type {className} from assembly: {ex.Message}");
+				Grindstone.Logger.PrintError($"Failed to get type '{className}' from assembly '{assembly.GetName()}': {ex.Message}");
 				return 0;
 			}
 		}

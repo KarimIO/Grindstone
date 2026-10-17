@@ -18,9 +18,10 @@
 		{
 			"name": "CSharpCore",
 			"path": "CSharpCore/bin/{Configuration}/net10.0/Grindstone.Script.CSharpCore",
-			"loadStage": "",
+			"loadStage": "EndOfEngineSetup",
 			"buildType": "Dotnet",
-			"buildTarget": "CSharpCore/CSharpCore.json"
+			"buildTarget": "CSharpCore/CSharpCore.json",
+			"dependencies": ["ScriptCSharp"]
 		}
 	],
 	"cmake": "CMakeLists.txt"

@@ -1,20 +1,18 @@
 #include <filesystem>
 #include <fstream>
-#include <iosfwd>
-#include <iterator>
 #include <string>
 
-#include <Common/Graphics/Core.hpp>
+#include <Common/Logger.hpp>
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
+#include <EngineCore/Assets/Loaders/AssetLoader.hpp>
 #include <EngineCore/EngineCore.hpp>
-#include <EngineCore/Utils/Utilities.hpp>
-#include <Common/Logger.hpp>
-#include <EngineCore/Utils/MemoryAllocator.hpp>
 
 #include "AssetRegistry.hpp"
 #include "EditorManager.hpp"
 #include "FileAssetLoader.hpp"
+#include <chrono>
+#include <thread>
 
 using namespace Grindstone::Assets;
 
@@ -56,10 +54,27 @@ static AssetLoadTextResult LoadText(Grindstone::Editor::AssetRegistry::Entry& en
 }
 
 AssetLoadBinaryResult FileAssetLoader::LoadBinaryByUuid(AssetType assetType, Uuid uuid) {
+	using namespace std::chrono_literals;
 	const Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
 
 	Editor::AssetRegistry::Entry outEntry;
 	if (!assetRegistry.TryGetAssetData(uuid, outEntry)) {
+		GPRINT_ERROR(LogSource::Editor, "Could not get asset: {}", uuid.ToString());
+		return std::move(AssetLoadBinaryResult{ AssetLoadStatus::AssetNotInRegistry, {} });
+	}
+
+	while (outEntry.status == Editor::AssetEntryStatus::DiscoveredNeedsReimport) {
+		std::this_thread::sleep_for(10ms);
+
+		if (!assetRegistry.TryGetAssetData(uuid, outEntry)) {
+			GPRINT_ERROR(LogSource::Editor, "Could not get asset: {}",
+						 uuid.ToString());
+			return std::move(
+				AssetLoadBinaryResult{AssetLoadStatus::AssetNotInRegistry, {}});
+		}
+	}
+
+	if (outEntry.status == Editor::AssetEntryStatus::Undiscovered) {
 		GPRINT_ERROR(LogSource::Editor, "Could not get asset: {}", uuid.ToString());
 		return std::move(AssetLoadBinaryResult{ AssetLoadStatus::AssetNotInRegistry, {} });
 	}
@@ -69,10 +84,25 @@ AssetLoadBinaryResult FileAssetLoader::LoadBinaryByUuid(AssetType assetType, Uui
 
 
 AssetLoadTextResult FileAssetLoader::LoadTextByUuid(AssetType assetType, Uuid uuid) {
+	using namespace std::chrono_literals;
 	const Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
 
 	Editor::AssetRegistry::Entry outEntry;
 	if (!assetRegistry.TryGetAssetData(uuid, outEntry)) {
+		GPRINT_ERROR(LogSource::Editor, "Could not get asset: {}", uuid.ToString());
+		return std::move(AssetLoadTextResult{ AssetLoadStatus::AssetNotInRegistry, {} });
+	}
+
+	while (outEntry.status == Editor::AssetEntryStatus::DiscoveredNeedsReimport) {
+		std::this_thread::sleep_for(10ms);
+		
+		if (!assetRegistry.TryGetAssetData(uuid, outEntry)) {
+			GPRINT_ERROR(LogSource::Editor, "Could not get asset: {}", uuid.ToString());
+			return std::move(AssetLoadTextResult{ AssetLoadStatus::AssetNotInRegistry, {} });
+		}
+	}
+
+	if (outEntry.status == Editor::AssetEntryStatus::Undiscovered) {
 		GPRINT_ERROR(LogSource::Editor, "Could not get asset: {}", uuid.ToString());
 		return std::move(AssetLoadTextResult{ AssetLoadStatus::AssetNotInRegistry, {} });
 	}

@@ -1,10 +1,11 @@
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
 #include <map>
 #include <string>
-#include <vector>
 #include <unordered_set>
+#include <vector>
 
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
@@ -12,9 +13,16 @@
 namespace Grindstone::Editor {
 	class MetaFile;
 
+	enum class AssetEntryStatus {
+		Undiscovered,
+		DiscoveredNeedsReimport,
+		Imported
+	};
+
 	class AssetRegistry {
 	public:
 		struct Entry {
+			AssetEntryStatus status;
 			Uuid uuid;
 			std::string displayName;
 			std::string subassetIdentifier;
@@ -35,6 +43,7 @@ namespace Grindstone::Editor {
 		void Initialize(const std::filesystem::path& projectPath);
 		virtual void Cleanup();
 		virtual void UpdateEntry(
+			AssetEntryStatus status,
 			const std::filesystem::path& path,
 			const std::string_view subassetIdentifier,
 			const std::string_view displayName,

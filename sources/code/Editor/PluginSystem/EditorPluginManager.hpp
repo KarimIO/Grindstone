@@ -1,19 +1,25 @@
 #pragma once
 
-#include <set>
 #include <map>
+#include <set>
+#include <span>
 #include <string>
+#include <unordered_map>
+#include <variant>
 #include <vector>
 
 #include <Common/Utilities/ModuleLoading.hpp>
-#include <Editor/PluginSystem/PluginMetaData.hpp>
 #include <Editor/PluginSystem/PluginManifestData.hpp>
+#include <Editor/PluginSystem/PluginMetaData.hpp>
 #include <EngineCore/PluginSystem/IPluginManager.hpp>
-
-#include "EditorPluginInterface.hpp"
 
 namespace Grindstone::Plugins {
 	class Interface;
+
+	struct LoadItem {
+		const Grindstone::Plugins::MetaData* plugin = nullptr;
+		std::variant<const MetaData::Binary*, const MetaData::AssetDirectory*> loadable;
+	};
 
 	class EditorPluginManager : public IPluginManager {
 	public:
@@ -42,12 +48,15 @@ namespace Grindstone::Plugins {
 	protected:
 		bool LoadModule(const std::filesystem::path& path);
 		void UnloadModule(const std::filesystem::path& path);
+
 		void ResolvePlugins(std::vector<Grindstone::Plugins::ManifestData>& manifestResults);
+		bool BuildLoadOrder(std::span<const std::string_view> stageOrder);
 
 		std::map<std::filesystem::path, Utilities::Modules::Handle> pluginModules;
 		std::set<std::filesystem::path> queuedInstalls{};
 		std::set<std::filesystem::path> queuedUninstalls{};
 		std::vector<Grindstone::Plugins::MetaData> resolvedPluginManifest{};
+		std::unordered_map<std::string, std::vector<LoadItem>> orderedItemsByStage;
 		std::vector<std::filesystem::path> pluginsFolders{};
 	};
 }

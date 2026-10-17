@@ -9,6 +9,7 @@
 	"requiresPlugins": [],
 	"binaries": [
 		{
+			"name": "Renderables3d",
 			"path": "lib/{Configuration}/PluginRenderables3D",
 			"loadStage": "EndOfEngineSetup",
 			"buildType": "CMake",

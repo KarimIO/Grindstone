@@ -8,6 +8,7 @@
 	"requiresPlugins": [],
 	"binaries": [
 		{
+			"name": "Audio",
 			"path": "lib/{Configuration}/PluginAudioOpenAL",
 			"loadStage": "EndOfEngineSetup",
 			"buildType": "CMake",

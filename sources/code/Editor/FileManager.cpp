@@ -1,3 +1,4 @@
+#include "FileManager.hpp"
 #include <filesystem>
 #include <string_view>
 #include <unordered_set>
@@ -104,6 +105,11 @@ void FileManager::MountDirectory(std::string_view mountPoint, const std::filesys
 	mountPointEntry.path = path;
 
 	auto directoryIterator = std::filesystem::directory_entry(path);
+	DiscoverFilesOnMount(
+		mountPointEntry,
+		std::filesystem::directory_iterator(directoryIterator)
+	);
+
 	PreprocessFilesOnMount(
 		mountPointEntry,
 		std::filesystem::directory_iterator(directoryIterator)
@@ -267,6 +273,27 @@ bool FileManager::TryGetAbsolutePathFromMountedPath(const std::filesystem::path&
 	return false;
 }
 
+void FileManager::DiscoverFilesOnMount(
+	const MountPoint& mountPoint,
+	std::filesystem::directory_iterator directoryIterator
+) {
+	for (const std::filesystem::directory_entry& directoryEntry : directoryIterator) {
+		if (directoryEntry.is_directory()) {
+			DiscoverFilesOnMount(
+				mountPoint,
+				std::filesystem::directory_iterator(directoryEntry)
+			);
+		}
+		else {
+			const std::filesystem::path& filePath = directoryEntry.path();
+			std::string extension = filePath.extension().string();
+			if (extension != ".meta") {
+				DiscoverFile(mountPoint, filePath);
+			}
+		}
+	}
+}
+
 void FileManager::PreprocessFilesOnMount(
 	const MountPoint& mountPoint,
 	std::filesystem::directory_iterator directoryIterator
@@ -296,22 +323,28 @@ static bool IsSubassetValid(
 	size_t metaFileSize,
 	const std::filesystem::path& mountedPath,
 	Editor::AssetRegistry& assetRegistry,
-	MetaFile::Subasset& subasset
+	MetaFile::Subasset& subasset,
+	std::string& outErrorMessage
 ) {
 	AssetRegistry::Entry outEntry;
 	if (!assetRegistry.TryGetAssetData(subasset.uuid, outEntry)) {
-		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} not having an AssetRegistry entry.", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString());
+		outErrorMessage = std::format("Importing '{}' due to subasset '{}' with uuid {} not having an AssetRegistry entry.", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString());
+		return false;
+	}
+	
+	if (outEntry.status == Editor::AssetEntryStatus::DiscoveredNeedsReimport) {
+		outErrorMessage = std::format("Importing '{}' due to subasset '{}' of type '{}' with uuid {} because it is not yet imported.", mountedPath.string().c_str(), subasset.displayName.c_str(), GetAssetTypeToString(subasset.assetType), subasset.uuid.ToString());
 		return false;
 	}
 
 	if (outEntry.assetType != subasset.assetType) {
-		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching asset types (meta file says {} but AssetRegistry says {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), GetAssetTypeToString(subasset.assetType), GetAssetTypeToString(outEntry.assetType));
+		outErrorMessage = std::format("Importing '{}' due to subasset '{}' with uuid {} having mismatching asset types (meta file says {} but AssetRegistry says {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), GetAssetTypeToString(subasset.assetType), GetAssetTypeToString(outEntry.assetType));
 		return false;
 	}
 
 	// TODO: Fix this so path uses mount point
 	if (outEntry.path != mountedPath) {
-		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} mismatching path {}.", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.path.string().c_str());
+		outErrorMessage = std::format("Importing '{}' due to subasset '{}' with uuid {} mismatching path {}.", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.path.string().c_str());
 		return false;
 	}
 
@@ -321,32 +354,32 @@ static bool IsSubassetValid(
 
 	std::filesystem::path assetPath = Editor::Manager::GetInstance().GetCompiledAssetsPath() / subasset.uuid.ToString();
 	if (!std::filesystem::exists(assetPath)) {
-		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} not having a compiledAsset file.", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString());
+		outErrorMessage = std::format("Importing '{}' due to subasset '{}' with uuid {} not having a compiledAsset file.", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString());
 		return false;
 	}
 
 	if (importerVersion != outEntry.assetImporterVersion) {
-		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching version ({} should be {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.assetImporterVersion, importerVersion);
+		outErrorMessage = std::format("Importing '{}' due to subasset '{}' with uuid {} having mismatching version ({} should be {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.assetImporterVersion, importerVersion);
 		return false;
 	}
 
 	if (assetFileLastWriteTime != outEntry.sourceFileWrite) {
-		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching source asset file write times ({} should be {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.sourceFileWrite, assetFileLastWriteTime);
+		outErrorMessage = std::format("Importing '{}' due to subasset '{}' with uuid {} having mismatching source asset file write times ({} should be {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.sourceFileWrite, assetFileLastWriteTime);
 		return false;
 	}
 
 	if (metaFileLastWriteTime != outEntry.metaFileWrite) {
-		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching meta file write times ({} should be {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.metaFileWrite, metaFileLastWriteTime);
+		outErrorMessage = std::format("Importing '{}' due to subasset '{}' with uuid {} having mismatching meta file write times ({} should be {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.metaFileWrite, metaFileLastWriteTime);
 		return false;
 	}
 
 	if (assetFileSize != outEntry.assetFileSize) {
-		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching source asset size (cached is {} but actual is {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.assetFileSize, assetFileSize);
+		outErrorMessage = std::format("Importing '{}' due to subasset '{}' with uuid {} having mismatching source asset size (cached is {} but actual is {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.assetFileSize, assetFileSize);
 		return false;
 	}
 
 	if (metaFileSize != outEntry.metaFileSize) {
-		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to subasset '{}' with uuid {} having mismatching meta file size (cached is {} but actual is {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.metaFileSize, metaFileSize);
+		outErrorMessage = std::format("Importing '{}' due to subasset '{}' with uuid {} having mismatching meta file size (cached is {} but actual is {}).", mountedPath.string().c_str(), subasset.displayName.c_str(), subasset.uuid.ToString(), outEntry.metaFileSize, metaFileSize);
 		return false;
 	}
 
@@ -390,20 +423,123 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(const MountPoint& mountPoi
 
 	std::filesystem::path mountedPath = std::filesystem::path(mountPoint.mountPoint) / std::filesystem::relative(path, mountPoint.path);
 	Grindstone::Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
+	std::string errorMessage;
 	for (MetaFile::Subasset& subasset : metaFile) {
-		if (!IsSubassetValid(importerVersion, assetFileLastWriteTime, metaFileLastWriteTime, assetFileSize, metaFileSize, mountedPath, assetRegistry, subasset)) {
+		if (!IsSubassetValid(importerVersion, assetFileLastWriteTime, metaFileLastWriteTime, assetFileSize, metaFileSize, mountedPath, assetRegistry, subasset, errorMessage)) {
+			GPRINT_TRACE(LogSource::Editor, "{}", errorMessage.c_str());
 			return true;
 		}
 	}
 
 	MetaFile::Subasset defaultSubasset;
 	if (metaFile.TryGetDefaultSubasset(defaultSubasset)) {
-		if (!IsSubassetValid(importerVersion, assetFileLastWriteTime, metaFileLastWriteTime, assetFileSize, metaFileSize, mountedPath, assetRegistry, defaultSubasset)) {
+		if (!IsSubassetValid(importerVersion, assetFileLastWriteTime, metaFileLastWriteTime, assetFileSize, metaFileSize, mountedPath, assetRegistry, defaultSubasset, errorMessage)) {
+			GPRINT_TRACE(LogSource::Editor, "{}", errorMessage.c_str());
 			return true;
 		}
 	}
 
 	return false;
+}
+
+// TODO: This is too similar to CheckIfCompiledFileNeedsToBeUpdated - deduplicate.
+void FileManager::DiscoverFile(const MountPoint& mountPoint, const std::filesystem::path& path) {
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
+	Importers::ImporterManager& importManager = editorManager.GetImporterManager();
+	Grindstone::Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
+
+	bool fileRequiresReimport = false;
+	bool canDiscoverMetaFile = true;
+
+	if (!importManager.HasImporterForPath(path)) {
+		fileRequiresReimport = true;
+	}
+
+	std::filesystem::path metaFilePath = path.string() + ".meta";
+	if (!std::filesystem::exists(metaFilePath)) {
+		fileRequiresReimport = true;
+		canDiscoverMetaFile = false;
+	}
+
+	Grindstone::Editor::ImporterVersion importerVersion = importManager.GetImporterVersionByPath(path);
+	MetaFile metaFile(assetRegistry, path);
+	if (metaFile.IsOutdatedMetaVersion()) {
+		fileRequiresReimport = true;
+		canDiscoverMetaFile = false; // TODO: How can we discover despite meta version misalignment - we may have useful UUIDs here.
+	}
+
+	if (!metaFile.IsValid()) {
+		fileRequiresReimport = true;
+		canDiscoverMetaFile = false; // TODO: Can we discover despite potential invalid - we may have useful UUIDs here.
+	}
+
+	if (metaFile.IsOutdatedImporterVersion(importerVersion)) {
+		fileRequiresReimport = true;
+	}
+
+	if (canDiscoverMetaFile) {
+		std::filesystem::file_time_type assetFileLastWriteTime = std::filesystem::last_write_time(path);
+		std::filesystem::file_time_type metaFileLastWriteTime = std::filesystem::last_write_time(metaFilePath);
+		size_t assetFileSize = std::filesystem::file_size(path);
+		size_t metaFileSize = std::filesystem::file_size(metaFilePath);
+
+		std::string errorMessage;
+		std::filesystem::path mountedPath = std::filesystem::path(mountPoint.mountPoint) / std::filesystem::relative(path, mountPoint.path);
+		for (MetaFile::Subasset& subasset : metaFile) {
+			Editor::AssetEntryStatus assetEntryStatus = Editor::AssetEntryStatus::Imported;
+
+			if (!IsSubassetValid(importerVersion, assetFileLastWriteTime, metaFileLastWriteTime, assetFileSize, metaFileSize, mountedPath, assetRegistry, subasset, errorMessage)) {
+				fileRequiresReimport = true;
+				assetEntryStatus = Editor::AssetEntryStatus::DiscoveredNeedsReimport;
+			}
+			
+			assetRegistry.UpdateEntry(
+				assetEntryStatus,
+				path,
+				subasset.subassetIdentifier,
+				subasset.displayName,
+				subasset.address,
+				subasset.uuid,
+				subasset.assetType,
+				assetFileLastWriteTime,
+				metaFileLastWriteTime,
+				importerVersion,
+				metaFile.GetMetaFileVersion(),
+				assetFileSize,
+				metaFileSize
+			);
+		}
+
+		MetaFile::Subasset defaultSubasset;
+		if (metaFile.TryGetDefaultSubasset(defaultSubasset)) {
+			Editor::AssetEntryStatus assetEntryStatus = Editor::AssetEntryStatus::Imported;
+
+			if (!IsSubassetValid(importerVersion, assetFileLastWriteTime, metaFileLastWriteTime, assetFileSize, metaFileSize, mountedPath, assetRegistry, defaultSubasset, errorMessage)) {
+				fileRequiresReimport = true;
+				assetEntryStatus = Editor::AssetEntryStatus::DiscoveredNeedsReimport;
+			}
+
+			assetRegistry.UpdateEntry(
+				assetEntryStatus,
+				path,
+				defaultSubasset.subassetIdentifier,
+				defaultSubasset.displayName,
+				defaultSubasset.address,
+				defaultSubasset.uuid,
+				defaultSubasset.assetType,
+				assetFileLastWriteTime,
+				metaFileLastWriteTime,
+				importerVersion,
+				metaFile.GetMetaFileVersion(),
+				assetFileSize,
+				metaFileSize
+			);
+		}
+	}
+
+	if (fileRequiresReimport) {
+		filesToImport.emplace_back(path);
+	}
 }
 
 void FileManager::UpdateCompiledFileIfNecessary(const MountPoint& mountPoint, const std::filesystem::path& path) const {

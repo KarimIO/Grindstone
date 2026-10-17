@@ -9,8 +9,9 @@
 	"requiresPlugins": [],
 	"binaries": [
 		{
+			"name": "Vulkan",
 			"path": "lib/{Configuration}/PluginRhiVulkan",
-			"loadStage": "EarlyEngineSetup",
+			"loadStage": "EngineSystemsSetup",
 			"buildType": "CMake",
 			"buildTarget": "PluginRhiVulkan"
 		}

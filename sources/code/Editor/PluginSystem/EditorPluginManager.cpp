@@ -1,23 +1,28 @@
-#include <EngineCore/Profiling.hpp>
-#include <EngineCore/Utils/Utilities.hpp>
-#include <EngineCore/EngineCore.hpp>
+#include <Common/Graphics/Core.hpp>
 #include <Common/Logger.hpp>
 #include <Editor/EditorManager.hpp>
 #include <Editor/ScriptBuilder/CSharpProjectBuilder.hpp>
 #include <Editor/ScriptBuilder/SolutionBuilder.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Utils/Utilities.hpp>
 #include <Grindstone.Script.CSharp/include/CSharpManager.hpp>
 
 #include "EditorPluginManager.hpp"
-#include "PluginMetaFileLoader.hpp"
 #include "PluginManifestFileLoader.hpp"
 #include "PluginManifestLockFileLoader.hpp"
+#include "PluginMetaFileLoader.hpp"
 
+#include <queue>
+#include <ranges>
 #include <rapidjson/document.h>
-#include <windows.h>
+#include <string_view>
+#include <thread>
 #include <unordered_map>
 #include <vector>
-#include <thread>
+#include <windows.h>
+
 #include "PluginManifestData.hpp"
+#include <variant>
 
 using namespace Grindstone::Plugins;
 using namespace Grindstone::Utilities;
@@ -345,67 +350,336 @@ bool EditorPluginManager::PreprocessPlugins() {
 	std::filesystem::path solutionPath = Editor::Manager::GetInstance().GetProjectPath();
 	solutionPath = solutionPath / (solutionPath.filename().string() + ".slnx");
 
+	std::vector<std::string_view> stageOrder{
+		"EngineSystemsSetup",
+		"EarlyEngineSetup",
+		"JustBeforeEndOfEngineSetup",
+		"EndOfEngineSetup",
+		"EditorAfterEarlyInitialize",
+		"EditorEarly",
+		"EditorAssetImportEarly",
+		"EditorAssetImportLate",
+		"EditorAssetRegistryInitialization",
+		"EditorBeforeSceneInitialization",
+		"EditorAfterSceneInitialization",
+		"EditorAfterUiSetup"
+	};
+	std::vector<std::string> outErrors;
+
 	ResolvePlugins(manifestResults);
+	if (!BuildLoadOrder(stageOrder)) {
+		return false;
+	}
 	MakeProjectsAndSolutions(solutionPath, resolvedPluginManifest);
 	CompileBinaries(solutionPath, resolvedPluginManifest);
 
 	return true;
 }
 
-void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
-	Editor::Manager& editorManager = Editor::Manager::GetInstance();
-	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
-		for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
-			if (binary.loadStage == stageName) {
 
-				switch (binary.buildType) {
-				case Grindstone::Plugins::MetaData::BinaryBuildType::Cmake: {
-					std::filesystem::path binaryPath = metaData.pluginResolvedPath / binary.libraryRelativePath;
-					std::filesystem::path parentPath = binaryPath.parent_path();
-					DLL_DIRECTORY_COOKIE dllCookie = AddDllDirectory(parentPath.wstring().c_str());
-					GPRINT_INFO(LogSource::Editor, "[PluginSystem] In stage {}, mounting C++ (cmake) plugin: {}", stageName, binary.libraryRelativePath.string());
-					LoadModule(binaryPath);
-					RemoveDllDirectory(dllCookie);
-					break;
-				}
-				case Grindstone::Plugins::MetaData::BinaryBuildType::Dotnet: {
-					auto scriptManager = Grindstone::EngineCore::GetInstance().TryGetService<Grindstone::Scripting::CSharp::CSharpManager>();
-					GPRINT_INFO(LogSource::Editor, "[PluginSystem] In stage {}, mounting C# (dotnet) plugin: {}", stageName, binary.libraryRelativePath.string());
-					scriptManager->LoadAssemblyIntoMap(metaData.name + ":" + binary.libraryRelativePath.filename().string());
-					break;
-				}
-				}
-			}
+static std::vector<int> TopoSort(std::vector<std::vector<int>>& adj) {
+	int n = adj.size();
+	std::vector<int> indegree(n, 0);
+	std::queue<int> q;
+	std::vector<int> list;
+
+	// Compute indegrees
+	for (int i = 0; i < n; i++) {
+		for (int next : adj[i]) indegree[next]++;
+	}
+
+	// Add all nodes with indegree 0 into the queue
+	for (int i = 0; i < n; i++)
+		if (indegree[i] == 0) q.push(i);
+
+	// Kahn’s Algorithm (BFS)
+	while (!q.empty()) {
+		int top = q.front();
+		q.pop();
+		list.push_back(top);
+		for (int next : adj[top]) {
+			indegree[next]--;
+			if (indegree[next] == 0) q.push(next);
+		}
+	}
+
+	return list;
+}
+
+// Plugin-level reachability via requiresPlugins. Cycles are fine here,
+// since this graph only decides inclusion, so a visited set is enough.
+static bool IsPluginReachable(
+	const std::unordered_map<std::string, const MetaData*>& pluginsByName,
+	const std::string& from,
+	const std::string& to
+) {
+	std::unordered_set<std::string> visited;
+	std::vector<std::string> stack{from};
+	while (!stack.empty()) {
+		std::string current = std::move(stack.back());
+		stack.pop_back();
+		if (current == to) {
+			return true;
 		}
 
-		for (Grindstone::Plugins::MetaData::AssetDirectory& assetDir : metaData.assetDirectories) {
-			if (assetDir.loadStage == stageName) {
-				std::filesystem::path assetsPath = metaData.pluginResolvedPath / assetDir.assetDirectoryRelativePath;
-				Editor::FileManager& fileManager = editorManager.GetFileManager();
-				GPRINT_INFO(LogSource::Editor, "[PluginSystem] In stage {}, mounted plugin asset directory {} to path: {}", stageName, assetDir.mountPoint, assetsPath.string());
-				fileManager.MountDirectory(assetDir.mountPoint, assetsPath);
+		if (!visited.insert(current).second) {
+			continue;
+		}
+
+		auto it = pluginsByName.find(current);
+		if (it == pluginsByName.end()) {
+			continue;
+		}
+
+		for (const auto& req : it->second->requiresPlugins) {
+			stack.push_back(req.pluginName);
+		}
+	}
+	return false;
+};
+
+struct Node {
+	LoadItem item;
+	std::string qualifiedId;  // "Plugin:item"
+	size_t stageIndex = 0;
+	const std::vector<std::string>* dependencies = nullptr;
+	std::vector<size_t> dependents;
+	size_t pendingDependencies = 0;
+};
+
+static bool SortStage(
+	const std::string_view stageName,
+	size_t stage,
+	const std::vector<std::vector<size_t>>& nodesByStage,
+	std::vector<Node>& nodes,
+	std::vector<LoadItem>& outSorted
+) {
+	std::priority_queue<size_t, std::vector<size_t>, std::greater<size_t>> ready;
+	for (size_t i : nodesByStage[stage]) {
+		if (nodes[i].pendingDependencies == 0) {
+			ready.push(i);
+		}
+	}
+
+	outSorted.clear();
+	outSorted.reserve(nodesByStage[stage].size());
+
+	while (!ready.empty()) {
+		size_t current = ready.top();
+		ready.pop();
+		outSorted.push_back(nodes[current].item);
+
+		for (size_t dependent : nodes[current].dependents) {
+			if (--nodes[dependent].pendingDependencies == 0) {
+				ready.push(dependent);
 			}
+		}
+	}
+
+	if (outSorted.size() != nodesByStage[stage].size()) {
+		std::string message = std::format("Dependency cycle in stage '{}' involving: ", stageName);
+		for (size_t i : nodesByStage[stage]) {
+			if (nodes[i].pendingDependencies > 0) {
+				message += " " + nodes[i].qualifiedId;
+			}
+		}
+		GPRINT_ERROR(LogSource::Editor, "{}", std::move(message));
+		return false;
+	}
+
+	return true;
+}
+
+bool EditorPluginManager::BuildLoadOrder(
+	std::span<const std::string_view> stageOrder
+) {
+	using MetaData = Grindstone::Plugins::MetaData;
+
+	orderedItemsByStage.clear();
+
+	std::unordered_map<std::string_view, size_t> stageIndices;
+	for (size_t i = 0; i < stageOrder.size(); ++i) {
+		stageIndices.emplace(stageOrder[i], i);
+	}
+
+	std::unordered_map<std::string, const MetaData*> pluginsByName;
+	for (const MetaData& plugin : resolvedPluginManifest) {
+		pluginsByName.emplace(plugin.name, &plugin);
+	}
+
+	std::vector<Node> nodes;
+	std::unordered_map<std::string, size_t> nodeIndexById;
+	bool hasError = false;
+
+	auto AddNode = [&stageIndices, &nodeIndexById, &nodes](
+					   LoadItem item,
+					   const std::string& itemName, const std::string& stage,
+					   const std::vector<std::string>& dependencies) -> bool {
+		std::string id = item.plugin->name + ":" + itemName;
+
+		auto stageIt = stageIndices.find(stage);
+		if (stageIt == stageIndices.end()) {
+			GPRINT_ERROR(LogSource::Editor, "{}: unknown loadStage '{}'.", id, stage);
+			return false;
+		}
+
+		if (!nodeIndexById.emplace(id, nodes.size()).second) {
+			GPRINT_ERROR(LogSource::Editor, "{}: duplicate item name within plugin");
+			return false;
+		}
+
+		Node node;
+		node.item = item;
+		node.qualifiedId = std::move(id);
+		node.stageIndex = stageIt->second;
+		node.dependencies = &dependencies;
+		nodes.push_back(std::move(node));
+
+		return true;
+	};
+
+	// Pass 1: Create nodes.
+	for (const MetaData& plugin : resolvedPluginManifest) {
+		for (const auto& binary : plugin.binaries) {
+			LoadItem item{&plugin, &binary};
+			if (!AddNode(item, binary.name, binary.loadStage, binary.dependencies)) {
+				hasError = true;
+			}
+		}
+		for (const auto& dir : plugin.assetDirectories) {
+			LoadItem item{&plugin, &dir};
+			if (!AddNode(item, dir.name, dir.loadStage, dir.dependencies)) {
+				hasError = true;
+			}
+		}
+	}
+
+	// Pass 2: Resolve & Validate edges within and between stages.
+	for (size_t nodeIndex = 0; nodeIndex < nodes.size(); ++nodeIndex) {
+		Node& node = nodes[nodeIndex];
+		const std::string& ownerPlugin = node.item.plugin->name;
+
+		for (const std::string& dependency : *node.dependencies) {
+			// Bare name = same plugin, "Plugin:item" = cross-plugin.
+			std::string depId = dependency.find(':') == std::string::npos
+									? ownerPlugin + ":" + dependency
+									: dependency;
+
+			auto depIt = nodeIndexById.find(depId);
+			if (depIt == nodeIndexById.end()) {
+				GPRINT_ERROR(LogSource::PluginSystem, "{}: unknown dependency '{}'.", node.qualifiedId, dependency);
+				hasError = true;
+				continue;
+			}
+
+			size_t depIndex = depIt->second;
+			const Node& depNode = nodes[depIndex];
+			const std::string& depPlugin = depNode.item.plugin->name;
+
+			if (depPlugin != ownerPlugin &&
+				!IsPluginReachable(pluginsByName, ownerPlugin, depPlugin)) {
+				GPRINT_ERROR(LogSource::PluginSystem, "{}: depends on '{}' but plugin '{}' does not require plugin '{}'.",
+							 node.qualifiedId, depId, ownerPlugin, depPlugin);
+				hasError = true;
+				continue;
+			}
+
+			if (depNode.stageIndex > node.stageIndex) {
+				GPRINT_ERROR(LogSource::PluginSystem, "{}: depends on '{}' which loads in a later stage",
+							 node.qualifiedId, depId);
+				hasError = true;
+			}
+			else if (depNode.stageIndex == node.stageIndex) {
+				nodes[depIndex].dependents.push_back(nodeIndex);
+				node.pendingDependencies++;
+			}
+			// If we have a dependency on an earlier stage, we don't need to worry about it as the stages are loaded independently..
+		}
+	}
+
+	if (hasError) {
+		return false;
+	}
+
+	// Pass 3: Sort stages independently.
+	std::vector<std::vector<size_t>> nodesByStage(stageOrder.size());
+	for (size_t i = 0; i < nodes.size(); ++i) {
+		nodesByStage[nodes[i].stageIndex].push_back(i);
+	}
+
+	for (size_t stage = 0; stage < stageOrder.size(); ++stage) {
+		const std::string_view stageName = stageOrder[stage];
+		if (SortStage(stageName, stage, nodesByStage, nodes, orderedItemsByStage[std::string(stageName)])) {
+			hasError = true;
+		}
+	}
+
+	return !hasError;
+}
+
+void EditorPluginManager::LoadPluginsByStage(std::string_view stageName) {
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
+
+	auto it = orderedItemsByStage.find(std::string(stageName));
+	if (it == orderedItemsByStage.end()) {
+		return;
+	}
+
+	for (const LoadItem& item : it->second) {
+		if (std::holds_alternative<const MetaData::Binary*>(item.loadable)) {
+			const MetaData::Binary& binary = *std::get<const MetaData::Binary*>(item.loadable);
+
+			switch (binary.buildType) {
+			case Grindstone::Plugins::MetaData::BinaryBuildType::Cmake: {
+				std::filesystem::path binaryPath = item.plugin->pluginResolvedPath / binary.libraryRelativePath;
+				std::filesystem::path parentPath = binaryPath.parent_path();
+				DLL_DIRECTORY_COOKIE dllCookie = AddDllDirectory(parentPath.wstring().c_str());
+				GPRINT_INFO(LogSource::Editor, "[PluginSystem] In stage {}, mounting C++ (cmake) plugin: {}", stageName, binary.libraryRelativePath.string());
+				LoadModule(binaryPath);
+				RemoveDllDirectory(dllCookie);
+				break;
+			}
+			case Grindstone::Plugins::MetaData::BinaryBuildType::Dotnet: {
+				auto scriptManager = Grindstone::EngineCore::GetInstance().TryGetService<Grindstone::Scripting::CSharp::CSharpManager>();
+				GPRINT_INFO(LogSource::Editor, "[PluginSystem] In stage {}, mounting C# (dotnet) plugin: {}", stageName, binary.libraryRelativePath.string());
+				scriptManager->LoadAssemblyIntoMap(item.plugin->name + ":" + binary.name);
+				break;
+			}
+			}
+		}
+		else if (std::holds_alternative<const MetaData::AssetDirectory*>(item.loadable)) {
+			const MetaData::AssetDirectory& assetDir = *std::get<const MetaData::AssetDirectory*>(item.loadable);
+			std::filesystem::path assetsPath = item.plugin->pluginResolvedPath / assetDir.assetDirectoryRelativePath;
+			Editor::FileManager& fileManager = editorManager.GetFileManager();
+			GPRINT_INFO(LogSource::Editor, "[PluginSystem] In stage {}, mounted plugin asset directory {} to path: {}", stageName, assetDir.mountPoint, assetsPath.string());
+			fileManager.MountDirectory(assetDir.mountPoint, assetsPath);
+		}
+		else {
+			GS_ASSERT(false);
 		}
 	}
 }
 
 void EditorPluginManager::UnloadPluginsByStage(std::string_view stageName) {
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
-	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
-		std::filesystem::path pluginPath = metaData.pluginResolvedPath;
-		for (Grindstone::Plugins::MetaData::AssetDirectory& assetDir : metaData.assetDirectories) {
-			if (assetDir.loadStage == stageName) {
-				std::filesystem::path assetsPath = pluginPath / assetDir.assetDirectoryRelativePath;
-				Editor::FileManager& fileManager = editorManager.GetFileManager();
-				fileManager.UnmountDirectory(assetDir.mountPoint);
-			}
-		}
 
-		for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
-			if (binary.loadStage == stageName) {
-				std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
-				UnloadModule(binaryPath);
-			}
+	auto it = orderedItemsByStage.find(std::string(stageName));
+	if (it == orderedItemsByStage.end()) {
+		return;
+	}
+
+	for (const LoadItem& item : it->second | std::ranges::views::reverse) {
+		const std::filesystem::path& pluginPath = item.plugin->pluginResolvedPath;
+		if (std::holds_alternative<const MetaData::Binary*>(item.loadable)) {
+			const MetaData::Binary& binary = *std::get<const MetaData::Binary*>(item.loadable);
+			std::filesystem::path binaryPath = pluginPath / binary.libraryRelativePath;
+			UnloadModule(binaryPath);
+		}
+		else if (std::holds_alternative<const MetaData::AssetDirectory*>(item.loadable)) {
+			const MetaData::AssetDirectory& assetDir = *std::get<const MetaData::AssetDirectory*>(item.loadable);
+			std::filesystem::path assetsPath = pluginPath / assetDir.assetDirectoryRelativePath;
+			Editor::FileManager& fileManager = editorManager.GetFileManager();
+			fileManager.UnmountDirectory(assetDir.mountPoint);
 		}
 	}
 }
@@ -414,8 +688,8 @@ std::filesystem::path Grindstone::Plugins::EditorPluginManager::GetLibraryPath(s
 	for (Grindstone::Plugins::MetaData& metaData : resolvedPluginManifest) {
 		if (metaData.name == pluginName) {
 			for (Grindstone::Plugins::MetaData::Binary& binary : metaData.binaries) {
-				std::filesystem::path filename = binary.libraryRelativePath.filename();
-				if (filename.string() == libraryName) {
+				if (binary.name == libraryName) {
+					std::filesystem::path filename = binary.libraryRelativePath.filename();
 					filename = metaData.pluginResolvedPath / binary.libraryRelativePath.parent_path() / (filename.string() + ".dll");
 					return filename;
 				}
