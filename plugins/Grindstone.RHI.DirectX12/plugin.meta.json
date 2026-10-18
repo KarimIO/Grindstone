@@ -6,12 +6,14 @@
 	"author": "Grindstone Foundation",
 	"requiresRestart": true,
 	"assets": [],
-	"dependencies": [],
+	"requiresPlugins": [],
 	"binaries": [
 		{
+			"name": "DirectX12",
 			"path": "lib/{Configuration}/PluginRhiDirectX12",
-			"loadStage": "EarlyEngineSetup",
-			"cmakeTarget": "PluginRhiDirectX12"
+			"loadStage": "EngineSystemsSetup",
+			"buildType": "CMake",
+			"buildTarget": "PluginRhiDirectX12"
 		}
 	],
 	"cmake": "CMakeLists.txt"

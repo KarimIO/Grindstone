@@ -7,13 +7,13 @@
 #include <string>
 #include <vector>
 
-#include <Common/ResourcePipeline/AssetType.hpp>
-#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
-#include <Common/ResourcePipeline/Uuid.hpp>
-#include <EngineCore/Utils/Utilities.hpp>
 #include <Common/Logger.hpp>
-#include <Editor/Importers/ImporterManager.hpp>
+#include <Common/ResourcePipeline/AssetType.hpp>
+#include <Common/ResourcePipeline/Uuid.hpp>
 #include <Editor/EditorManager.hpp>
+#include <Editor/Importers/ImporterManager.hpp>
+#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
+#include <EngineCore/Utils/Utilities.hpp>
 
 #include "AssetRegistry.hpp"
 
@@ -35,6 +35,7 @@ void AssetRegistry::Cleanup() {
 }
 
 void AssetRegistry::UpdateEntry(
+	AssetEntryStatus status,
 	const std::filesystem::path& path,
 	const std::string_view subassetIdentifier,
 	const std::string_view displayName,
@@ -53,6 +54,7 @@ void AssetRegistry::UpdateEntry(
 	Utils::FixPathSlashes(mountedPath);
 
 	assets[uuid] = Entry{
+		.status = status,
 		.uuid = uuid,
 		.displayName = std::string(displayName),
 		.subassetIdentifier = std::string(subassetIdentifier),

@@ -6,12 +6,14 @@
 	"author": "Grindstone Foundation",
 	"requiresRestart": true,
 	"assets": [],
-	"dependencies": [],
+	"requiresPlugins": [],
 	"binaries": [
 		{
+			"name": "OpenGL",
 			"path": "lib/{Configuration}/PluginRhiOpenGL",
-			"loadStage": "EarlyEngineSetup",
-			"cmakeTarget": "PluginRhiOpenGL"
+			"loadStage": "EngineSystemsSetup",
+			"buildType": "CMake",
+			"buildTarget": "PluginRhiOpenGL"
 		}
 	],
 	"cmake": "CMakeLists.txt"

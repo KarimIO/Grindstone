@@ -44,12 +44,13 @@ Grindstone.Script.CSharp\n")
 	\"author\" : \"\",\n\
 	\"assetDirectories\" : [\n\
 		{\n\
+			\"name\": \"Assets\",\n\
 			\"path\": \"assets\",\n\
-				\"mountPoint\" : \"" + folderNameToUpper + ".MAIN\", \n\
-				\"loadStage\" : \"EditorAssetImportEarly\"\n\
+			\"mountPoint\" : \"" + folderNameToUpper + ".MAIN\", \n\
+			\"loadStage\" : \"EditorAssetImportEarly\"\n\
 		}\n\
 	], \n\
-	\"dependencies\": [],\n\
+	\"requiresPlugins\": [],\n\
 	\"binaries\" : [],\n\
 	\"cmake\": \"\"\n\
 }\n\

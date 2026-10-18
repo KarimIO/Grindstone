@@ -6,12 +6,14 @@
 	"author": "Grindstone Foundation",
 	"requiresRestart": true,
 	"assets": [],
-	"dependencies": [],
+	"requiresPlugins": [],
 	"binaries": [
 		{
+			"name": "Vulkan",
 			"path": "lib/{Configuration}/PluginRhiVulkan",
-			"loadStage": "EarlyEngineSetup",
-			"cmakeTarget": "PluginRhiVulkan"
+			"loadStage": "EngineSystemsSetup",
+			"buildType": "CMake",
+			"buildTarget": "PluginRhiVulkan"
 		}
 	],
 	"cmake": "CMakeLists.txt"

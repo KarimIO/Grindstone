@@ -57,6 +57,10 @@ void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::As
 				: metaFile.GetOrCreateSubassetUuid(pipelineName, assetType);
 			std::filesystem::path outputPath = assetRegistry.GetCompiledAssetsPath() / uuid.ToString();
 
+			if (!std::filesystem::exists(assetRegistry.GetCompiledAssetsPath())) {
+				std::filesystem::create_directories(assetRegistry.GetCompiledAssetsPath());
+			}
+
 			std::ofstream outStream(outputPath, std::ios::binary);
 			if (outStream.fail()) {
 				GPRINT_ERROR(Grindstone::LogSource::EditorImporter, "{} - Unable to write shader {} to file {}.", path.string(), pout.name, outputPath.string());

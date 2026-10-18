@@ -391,11 +391,11 @@ Manager::~Manager() {
 			}
 		}
 
-		Plugins::Interface* pluginInterface = engineCore->GetPluginInterface();
-		Grindstone::Memory::AllocatorCore::Free(pluginInterface->GetEditorInterface());
-		Grindstone::Memory::AllocatorCore::Free(assetLoader);
-
 		engineCore->GetPluginManager()->UnloadPluginsByStage("EditorAfterEarlyInitialize");
+
+		Plugins::Interface* pluginInterface = engineCore->GetPluginInterface();
+		Plugins::IEditorInterface* editorPluginInterface = pluginInterface->GetEditorInterface();
+		Grindstone::Memory::AllocatorCore::Free(assetLoader);
 
 		if (engineCoreLibraryHandle) {
 			using DestroyEngineFunction = void *();
@@ -409,5 +409,7 @@ Manager::~Manager() {
 			Grindstone::Utilities::Modules::Unload(engineCoreLibraryHandle);
 			engineCoreLibraryHandle = nullptr;
 		}
+
+		Grindstone::Memory::AllocatorCore::Free(editorPluginInterface);
 	}
 }

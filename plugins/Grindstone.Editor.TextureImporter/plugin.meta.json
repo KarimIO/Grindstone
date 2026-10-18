@@ -6,17 +6,22 @@
 	"author": "Grindstone Foundation",
 	"assetDirectories": [
 		{
+			"name": "Assets",
 			"path": "assets",
 			"mountPoint": "GRINDSTONE.EDITOR.TEXTUREIMPORTER",
-			"loadStage": "EditorAssetImportEarly"
+			"loadStage": "EarlyEngineSetup",
+			"dependencies": ["Grindstone.Editor.PipelineSetImporter:Importer"]
 		}
 	],
-	"dependencies": [],
+	"requiresPlugins": [{"name": "Grindstone.Editor.PipelineSetImporter"}],
 	"binaries": [
 		{
+			"name": "Importer",
 			"path": "lib/{Configuration}/PluginEditorTextureImporter",
-			"loadStage": "EditorAssetImportLate",
-			"cmakeTarget": "PluginEditorTextureImporter"
+			"loadStage": "EarlyEngineSetup",
+			"buildType": "CMake",
+			"buildTarget": "PluginEditorTextureImporter",
+			"dependencies": ["Assets"]
 		}
 	],
 	"cmake": "CMakeLists.txt"

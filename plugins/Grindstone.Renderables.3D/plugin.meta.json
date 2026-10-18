@@ -6,12 +6,14 @@
 	"author": "Grindstone Foundation",
 	"requiresRestart": false,
 	"assets": [],
-	"dependencies": [],
+	"requiresPlugins": [],
 	"binaries": [
 		{
+			"name": "Renderables3d",
 			"path": "lib/{Configuration}/PluginRenderables3D",
 			"loadStage": "EndOfEngineSetup",
-			"cmakeTarget": "PluginRenderables3D"
+			"buildType": "CMake",
+			"buildTarget": "PluginRenderables3D"
 		}
 	],
 	"cmake": "CMakeLists.txt"

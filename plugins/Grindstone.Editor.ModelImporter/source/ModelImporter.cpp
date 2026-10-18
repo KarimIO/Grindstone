@@ -19,6 +19,7 @@
 
 #include <Grindstone.Editor.ModelImporter/include/ModelImporter.hpp>
 #include <Grindstone.Editor.ModelImporter/include/ModelMaterialImporter.hpp>
+#include <algorithm>
 
 using namespace Grindstone::Editor::Importers;
 
@@ -625,6 +626,14 @@ void ModelImporter::NormalizeBoneWeights(OutputMesh& outputMesh) {
 void ModelImporter::AddBoneData(OutputMesh& outputMesh, unsigned int vertexId, BoneIndex boneId, float vertexWeight) {
 	unsigned int baseIndex = vertexId * NUM_BONES_PER_VERTEX;
 	unsigned int lastIndex = baseIndex + NUM_BONES_PER_VERTEX;
+
+	size_t maxSize = std::min(outputMesh.vertexArray.boneWeights.size(),
+							  outputMesh.vertexArray.boneIds.size());
+
+	if (lastIndex > maxSize) {
+		return;
+	}
+
 	for (unsigned int i = baseIndex; i < lastIndex; i++) {
 		if (outputMesh.vertexArray.boneWeights[i] == 0.0f) {
 			outputMesh.vertexArray.boneIds[i] = boneId;

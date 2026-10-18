@@ -33,8 +33,7 @@ namespace Grindstone::Editor {
 
 		virtual bool TryGetAbsolutePathFromMountedPath(
 			const std::filesystem::path& mountedPath,
-			std::filesystem::path& outAbsolutePath
-		) const;
+			std::filesystem::path& outAbsolutePath) const;
 
 		void CleanupStaleFiles();
 
@@ -54,11 +53,22 @@ namespace Grindstone::Editor {
 			const MountPoint& mountPoint,
 			std::filesystem::directory_iterator directoryIterator
 		) const;
-		bool CheckIfCompiledFileNeedsToBeUpdated(const MountPoint& mountPoint, const std::filesystem::path& path) const;
+
+		void DiscoverFilesOnMount(
+			const MountPoint& mountPoint,
+			std::filesystem::directory_iterator directoryIterator);
+
+		bool CheckIfCompiledFileNeedsToBeUpdated(
+			const MountPoint& mountPoint,
+			const std::filesystem::path& path
+		) const;
+
+		void DiscoverFile(const MountPoint& mountPoint, const std::filesystem::path& path);
 		void UpdateCompiledFileIfNecessary(const MountPoint& mountPoint, const std::filesystem::path& path) const;
 		std::filesystem::directory_entry GetFileFromMetaPath(const std::filesystem::directory_entry& entry);
 
 		efsw_watcher watcher;
 		std::vector<MountPoint> mountedDirectories;
+		std::vector<std::filesystem::path> filesToImport;
 	};
 }

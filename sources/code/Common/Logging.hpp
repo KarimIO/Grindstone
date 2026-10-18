@@ -8,6 +8,7 @@ namespace Grindstone {
 	enum class LogSource : uint16_t {
 		Unknown,
 		EngineCore,
+		PluginSystem,
 		Editor,
 		EditorImporter,
 		GraphicsAPI,
@@ -22,6 +23,7 @@ namespace Grindstone {
 	constexpr const char* logSourceStrings[] = {
 		"Unknown",
 		"Engine Core",
+		"Plugin System",
 		"Editor",
 		"Editor Importer",
 		"Graphics API",

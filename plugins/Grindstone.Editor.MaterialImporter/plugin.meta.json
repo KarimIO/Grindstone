@@ -5,12 +5,14 @@
 	"description": "Allows the editor to import material assets and convert them to a Grindstone-supported format.",
 	"author": "Grindstone Foundation",
 	"assets": [],
-	"dependencies": [],
+	"requiresPlugins": [],
 	"binaries": [
 		{
+			"name": "Importer",
 			"path": "lib/{Configuration}/PluginEditorMaterialImporter",
-			"loadStage": "EditorEarly",
-			"cmakeTarget": "PluginEditorMaterialImporter"
+			"loadStage": "EarlyEngineSetup",
+			"buildType": "CMake",
+			"buildTarget": "PluginEditorMaterialImporter"
 		}
 	],
 	"cmake": "CMakeLists.txt"

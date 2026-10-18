@@ -65,8 +65,20 @@ message(STATUS
 ")
 
 install(
+	FILES "plugins/Grindstone.Renderer.Deferred/CMakeLists.txt"
+		"plugins/Grindstone.Renderer.Deferred/plugin.meta.json"
+		"plugins/Grindstone.Renderer.Deferred/README.md"
+	DESTINATION plugins/Grindstone.Renderer.Deferred/
+)
+
+install(
 	TARGETS PluginRendererDeferred
 	INCLUDES DESTINATION plugins/Grindstone.Renderer.Deferred/include/$<CONFIG>
 	LIBRARY DESTINATION plugins/Grindstone.Renderer.Deferred/lib/$<CONFIG>
 	RUNTIME DESTINATION plugins/Grindstone.Renderer.Deferred/bin/$<CONFIG>
+)
+
+install(
+    FILES $<TARGET_RUNTIME_DLLS:PluginRendererDeferred>
+    DESTINATION plugins/Grindstone.Renderer.Deferred/lib/
 )
