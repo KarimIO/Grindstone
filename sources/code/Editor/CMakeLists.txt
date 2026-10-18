@@ -160,7 +160,8 @@ target_link_libraries(
 install(TARGETS Editor LIBRARY DESTINATION bin/$<CONFIG> RUNTIME DESTINATION bin/$<CONFIG>)
 
 install(
-    FILES $<TARGET_RUNTIME_DLLS:Editor>
-    "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/$<IF:$<CONFIG:Debug>,debug/,>bin/zlib1.dll"
+    FILES
+        $<TARGET_RUNTIME_DLLS:Editor>
+        "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/$<IF:$<CONFIG:Debug>,debug/,>bin/zlib$<$<CONFIG:Debug>:d>1.dll"
     DESTINATION bin/$<CONFIG>
 )
