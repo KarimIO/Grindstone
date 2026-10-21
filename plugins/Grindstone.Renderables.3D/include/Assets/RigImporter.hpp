@@ -5,7 +5,7 @@
 #include <Grindstone.Renderables.3D/include/Assets/RigAsset.hpp>
 
 namespace Grindstone {
-	class RigImporter : public SpecificAssetImporter<RigAsset, AssetType::Rig> {
+	class RigImporter : public SpecificAssetImporter<RigAsset> {
 	public:
 		virtual ~RigImporter() override;
 

@@ -5,7 +5,7 @@
 #include <Grindstone.Renderables.3D/include/Assets/AnimationClipAsset.hpp>
 
 namespace Grindstone {
-	class AnimationClipImporter : public SpecificAssetImporter<AnimationClipAsset, AssetType::AnimationClip> {
+	class AnimationClipImporter : public SpecificAssetImporter<AnimationClipAsset> {
 	public:
 		virtual ~AnimationClipImporter() override;
 

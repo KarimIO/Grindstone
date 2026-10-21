@@ -270,6 +270,11 @@ EngineCore::~EngineCore() {
 		AllocatorCore::Free(pluginManager);
 	}
 
+
+	if (renderingPipeline != nullptr) {
+		AllocatorCore::Free(renderingPipeline);
+	}
+
 	AllocatorCore::Free(pluginInterface);
 
 	AllocatorCore::Free(componentRegistrar);

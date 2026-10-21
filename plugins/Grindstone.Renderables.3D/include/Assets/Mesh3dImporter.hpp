@@ -16,7 +16,7 @@ namespace Grindstone {
 
 	class EngineCore;
 
-	class Mesh3dImporter : public SpecificAssetImporter<Mesh3dAsset, AssetType::Mesh3d> {
+	class Mesh3dImporter : public SpecificAssetImporter<Mesh3dAsset> {
 		public:
 			Mesh3dImporter(EngineCore* engineCore);
 			virtual ~Mesh3dImporter() override;

@@ -16,6 +16,38 @@
 #include "Menubar.hpp"
 using namespace Grindstone::Editor::ImguiEditor;
 
+static void RenderMenuNode(Menubar::MenuNode& node) {
+	if (node.fnPtr != nullptr) {
+		if (ImGui::MenuItem(
+			node.name.c_str(),
+			node.shortcut.empty() ? nullptr : node.shortcut.c_str()
+		)) {
+			node.fnPtr();
+		}
+
+		return;
+	}
+
+	if (ImGui::BeginMenu(node.name.c_str())) {
+		if (node.fnPtr != nullptr) {
+			if (ImGui::MenuItem(
+				node.name.c_str(),
+				node.shortcut.empty() ? nullptr : node.shortcut.c_str()
+			)) {
+				node.fnPtr();
+			}
+
+			ImGui::Separator();
+		}
+
+		for (Menubar::MenuNode& child : node.children) {
+			RenderMenuNode(child);
+		}
+
+		ImGui::EndMenu();
+	}
+}
+
 Menubar::Menubar(ImguiEditor* editor) : editor(editor) {}
 
 void Menubar::Render() {
@@ -35,15 +67,8 @@ void Menubar::Render() {
 		RenderViewMenu();
 	}
 
-	if (!menuItems.empty()) {
-		if (ImGui::BeginMenu("Custom Commands")) {
-			for (Menubar::MenubarItem& item : menuItems) {
-				if (ImGui::MenuItem(item.text.c_str(), item.shortcut.c_str(), false)) {
-					item.fnPtr();
-				}
-			}
-			ImGui::EndMenu();
-		}
+	for (Menubar::MenuNode& menuItem : menuItems) {
+		RenderMenuNode(menuItem);
 	}
 
 	ImGui::EndMenuBar();
@@ -186,15 +211,99 @@ void Menubar::SaveFile(const std::filesystem::path& path) {
 	}
 }
 
-void Menubar::RegisterMenuItem(const char* menuItem, void(*fn)(), const char* shortcut) {
-	menuItems.emplace_back(Menubar::MenubarItem{ .text = menuItem, .shortcut = shortcut == nullptr ? "" : shortcut, .fnPtr = fn});
-}
+void Menubar::RegisterMenuItem(const char* menuPath, void(*fn)(), const char* shortcut) {
+	std::vector<MenuNode>* currentNodeList = &menuItems;
+	MenuNode* currentMenuNode = nullptr;
 
-void Menubar::DeregisterMenuItem(const char* menuItem) {
-	for (auto it = menuItems.rbegin(); it < menuItems.rend(); it++) {
-		if (it->text == menuItem) {
-			menuItems.erase((it + 1).base());
+	std::string_view path(menuPath);
+	size_t start = 0;
+
+	while (true) {
+		size_t separator = path.find('/', start);
+
+		std::string_view part =
+			separator == std::string_view::npos
+			? path.substr(start)
+			: path.substr(start, separator - start);
+
+		if (!part.empty()) {
+			MenuNode* child = nullptr;
+
+			for (MenuNode& existing : *currentNodeList) {
+				if (existing.name == part) {
+					currentMenuNode = &existing;
+					break;
+				}
+			}
+
+			if (child == nullptr) {
+				currentNodeList->emplace_back();
+				child = &currentNodeList->back();
+				child->name = part;
+			}
+
+			currentMenuNode = child;
+			currentNodeList = &child->children;
+		}
+
+		if (separator == std::string_view::npos) {
 			break;
 		}
+
+		start = separator + 1;
 	}
+
+	GS_ASSERT(currentMenuNode != nullptr);
+	currentMenuNode->shortcut = shortcut != nullptr ? shortcut : "";
+	currentMenuNode->fnPtr = fn;
+}
+
+static bool DeregisterMenuItem(std::vector<Menubar::MenuNode>& nodes, std::string_view path) {
+	size_t separator = path.find('/');
+
+	std::string_view part =
+		separator == std::string_view::npos
+		? path
+		: path.substr(0, separator);
+
+	for (size_t i = 0; i < nodes.size(); ++i) {
+		Menubar::MenuNode& child = nodes[i];
+
+		if (child.name != part) {
+			continue;
+		}
+
+		if (separator == std::string_view::npos) {
+			// Reset leaf functionality
+			child.shortcut = "";
+			child.fnPtr = nullptr;
+
+			// Remove the node if it no longer represents anything.
+			if (child.children.empty()) {
+				nodes.erase(nodes.begin() + i);
+			}
+
+			return true;
+		}
+
+		bool childWasRemoved = DeregisterMenuItem(
+			child.children,
+			path.substr(separator + 2)
+		);
+
+		// If this submenu became empty, remove it too.
+		if (childWasRemoved &&
+			child.fnPtr == nullptr &&
+			child.children.empty()) {
+			nodes.erase(nodes.begin() + i);
+		}
+
+		return childWasRemoved;
+	}
+
+	return false;
+}
+
+void Menubar::DeregisterMenuItem(const char* menuPath) {
+	::DeregisterMenuItem(menuItems, menuPath);
 }

@@ -16,9 +16,9 @@ namespace Grindstone::Editor::RendererFeatures {
 			Grindstone::Renderer::RenderGraphBuilder& renderGraphBuilder,
 			Grindstone::Renderer::RenderFrameContext& context
 		) override;
+		virtual ~Gizmos() override;
 
 	private:
 		Grindstone::GraphicsAPI::Sampler* screenSampler = nullptr;
-		Grindstone::Editor::GizmoRenderer gizmoRenderer;
 	};
 }
