@@ -110,4 +110,5 @@ struct ParseTree {
 	std::map<std::string, Configuration> genericConfigurations;
 	std::map<std::string, Pass> genericPasses;
 	std::map<std::string, ShaderBlock> genericShaderBlocks;
+	std::set<std::filesystem::path> dependencyFiles;
 };

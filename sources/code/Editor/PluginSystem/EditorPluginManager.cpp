@@ -157,6 +157,8 @@ static void CompileBinaries(const std::filesystem::path& solutionPath, const std
 		}
 	}
 
+	return;
+
 	if (!cmakeTargetsToCompile.empty()) {
 		RunCMakeCommand(cmakeTargetsToCompile);
 	}

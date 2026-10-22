@@ -2,18 +2,16 @@
 
 #include <Common/HashedString.hpp>
 #include <EditorCommon/Editor/Importer.hpp>
-#include <Editor/AssetRegistry.hpp>
-#include <EngineCore/Assets/AssetManager.hpp>
 
 #include <filesystem>
 #include <map>
 #include <string>
 
 namespace Grindstone::Importers {
-	class ImporterManager {
+	class ImporterRegistry {
 	public:
 		void Initialize();
-		bool Import(const std::filesystem::path& path);
+		Grindstone::Editor::ImporterFactory GetImporter(const std::filesystem::path& path);
 		void MapExtensionToImporterType(const std::string& extension, Grindstone::HashedString importerType);
 		void AddImporterFactory(Grindstone::HashedString importerType, Grindstone::Editor::ImporterData importerData);
 		void UnmapExtensionToImporterType(const std::string& extension);

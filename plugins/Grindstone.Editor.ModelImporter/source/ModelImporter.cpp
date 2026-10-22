@@ -483,7 +483,8 @@ void ModelImporter::ProcessMaterial(size_t materialIndex, aiMaterial* inputMater
 	outputMaterialUuids[materialIndex] = uuid.ToString();
 
 	std::filesystem::path outputPath = assetRegistry->GetCompiledAssetsPath() / outputMaterialUuids[materialIndex];
-	CreateStandardMaterial(*assetRegistry, newMaterial, outputPath);
+	Grindstone::Editor::AssetRegistry::Dependency dependency = CreateStandardMaterial(*assetRegistry, newMaterial, outputPath);
+	assetRegistry->LinkHardDependencies(uuid, {dependency});
 }
 
 void ModelImporter::InitSubmeshes(aiMesh* inputMesh, OutputMesh& outputMesh, bool hasBones) {

@@ -967,6 +967,7 @@ bool ParsePipelineSet(LogCallback logFn, const std::filesystem::path& path, Toke
 			std::string_view includePath;
 			if (ExpectTokenWithString(context, Token::String, includePath, "Expected a string after the keyword 'include'.")) {
 				unprocessedFiles.insert(includePath);
+				parseTree.dependencyFiles.insert(includePath);
 			}
 			break;
 		}

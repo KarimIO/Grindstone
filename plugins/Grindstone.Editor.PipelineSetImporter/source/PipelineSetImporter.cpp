@@ -41,8 +41,10 @@ void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::As
 	options.isDebug = false;
 	options.target = CompilationOptions::Target::Vulkan;
 
-	WriteCallback writeCallback = [&assetRegistry, &assetManager] (const std::filesystem::path& path, const std::vector<PipelineOutput>& pipelines) {
+	WriteCallback writeCallback = [&assetRegistry, &assetManager] (const std::filesystem::path& path, const std::vector<PipelineOutput>& pipelines, std::set<std::filesystem::path> dependencies) {
 		Grindstone::Editor::MetaFile metaFile = assetRegistry.GetMetaFileByPath(path);
+
+		std::vector<Grindstone::Uuid> pipelineSetUuid(pipelines.size());
 
 		for (size_t index = 0; index < pipelines.size(); ++index) {
 			const PipelineOutput& pout = pipelines[index];
@@ -55,6 +57,8 @@ void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::As
 			Grindstone::Uuid uuid = index == 0
 				? metaFile.GetOrCreateDefaultSubassetUuid(pipelineName, assetType)
 				: metaFile.GetOrCreateSubassetUuid(pipelineName, assetType);
+
+			pipelineSetUuid[index] = uuid;
 			std::filesystem::path outputPath = assetRegistry.GetCompiledAssetsPath() / uuid.ToString();
 
 			if (!std::filesystem::exists(assetRegistry.GetCompiledAssetsPath())) {
@@ -75,6 +79,19 @@ void Grindstone::Editor::Importers::ImportShadersFromGlsl(Grindstone::Editor::As
 		}
 
 		metaFile.Save(pipelineSetImporterVersion);
+
+		for (size_t index = 0; index < pipelines.size(); ++index) {
+			const PipelineOutput& pipeline = pipelines[index];
+			Grindstone::Uuid pipelineUuid = pipelineSetUuid[index];
+
+			std::set<AssetRegistry::Dependency> dependencySet;
+			for (const std::filesystem::path& dependency : dependencies) {
+				dependencySet.insert(dependency.string());
+			}
+			assetRegistry.LinkHardDependencies(pipelineUuid, dependencySet);
+		}
+
+		assetRegistry.WriteFile();
 	};
 
 	ResolvePathCallback resolveCallback = [&assetRegistry](const std::filesystem::path& path) {

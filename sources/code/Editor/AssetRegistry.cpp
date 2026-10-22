@@ -1,21 +1,27 @@
+#include <algorithm>
+#include <cstdint>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <mutex>
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 #include <string>
+#include <unordered_set>
+#include <variant>
 #include <vector>
 
 #include <Common/Logger.hpp>
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <Editor/EditorManager.hpp>
-#include <Editor/Importers/ImporterManager.hpp>
+#include <Editor/Importers/ImporterRegistry.hpp>
 #include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
 
 #include "AssetRegistry.hpp"
+#include "Importers/ImportScheduler.hpp"
 
 using namespace Grindstone::Editor;
 
@@ -39,44 +45,102 @@ void AssetRegistry::UpdateEntry(
 	const std::filesystem::path& path,
 	const std::string_view subassetIdentifier,
 	const std::string_view displayName,
-	const std::string_view address,
-	Uuid& uuid,
+	const std::string_view address, Uuid& uuid,
 	AssetType assetType,
 	std::filesystem::file_time_type sourceFileWrite,
 	std::filesystem::file_time_type metaFileWrite,
 	uint32_t assetImporterVersion,
 	uint32_t metaFileVersion,
-	uint64_t assetFileSize,
-	uint64_t metaFileSize
-	std::vector<Grindstone::Uuid> dependencies
+	uint64_t assetFileSize, uint64_t metaFileSize
 ) {
+	std::scoped_lock lck(mutex);
 	std::filesystem::path mountedPath;
 	TryGetPathWithMountPoint(path, mountedPath);
 	Utils::FixPathSlashes(mountedPath);
 
-	auto& insertedAsset = assets[uuid] = Entry{
-		.status = status,
-		.uuid = uuid,
-		.displayName = std::string(displayName),
-		.subassetIdentifier = std::string(subassetIdentifier),
-		.address = std::string(address),
-		.path = mountedPath,
-		.assetType = assetType,
-		.sourceFileWrite = sourceFileWrite,
-		.metaFileWrite = metaFileWrite,
-		.assetImporterVersion = assetImporterVersion,
-		.metaFileVersion = metaFileVersion,
-		.assetFileSize = assetFileSize,
-		.metaFileSize = metaFileSize,
-		.dependencies = std::moved(dependencies)
-	};
+	AssetRegistry::Entry* entry = nullptr;
+	auto assetIt = assets.find(uuid);
 
-	for (Grindstone::Uuid dependencyUuid : dependencies) {
-		insertedAsset.reverseDependencies.insert(dependencyUuid);
+	bool isImport = false;
+	if (assetIt != assets.end()) {
+		entry = &(assetIt->second);
+		isImport = entry->status == AssetEntryStatus::DiscoveredNeedsReimport ||
+				   entry->status == AssetEntryStatus::Imported;
+	} else {
+		entry = &assets[uuid];
+	}
+
+	entry->status = status;
+	entry->uuid = uuid;
+	entry->displayName = std::string(displayName);
+	entry->subassetIdentifier = std::string(subassetIdentifier);
+	entry->address = std::string(address);
+	entry->path = mountedPath;
+	entry->assetType = assetType;
+	entry->sourceFileWrite = sourceFileWrite;
+	entry->metaFileWrite = metaFileWrite;
+	entry->assetImporterVersion = assetImporterVersion;
+	entry->metaFileVersion = metaFileVersion;
+	entry->assetFileSize = assetFileSize;
+	entry->metaFileSize = metaFileSize;
+
+	Editor::Manager& editorManager = Editor::Manager::GetInstance();
+	Editor::FileManager& fileManager = editorManager.GetFileManager();
+
+	if (isImport) {
+		for (Uuid dep : entry->reverseDependencies) {
+			auto assetIt = assets.find(dep);
+			if (assetIt != assets.end()) {
+				std::filesystem::path mountedPath;
+				TryGetAbsolutePathFromMountedPath(assetIt->second.path, mountedPath);
+
+				fileManager.DispatchTask(mountedPath);
+			}
+		}
+	}
+}
+
+void Grindstone::Editor::AssetRegistry::LinkHardDependencies(Uuid dependentUuid, const std::set<Dependency>& newDependencies) {
+	std::scoped_lock lck(mutex);
+	LinkHardDependenciesLocked(dependentUuid, newDependencies);
+}
+
+void Grindstone::Editor::AssetRegistry::LinkHardDependenciesLocked(Uuid dependentUuid, const std::set<Dependency>& newDependencies) {
+	AssetRegistry::Entry& thisAsset = assets[dependentUuid];
+
+	std::set<Dependency> missingNewDependencies;
+	std::set<Dependency> missingOldDependencies;
+	std::set_difference(thisAsset.dependencies.begin(), thisAsset.dependencies.end(), newDependencies.begin(), newDependencies.end(), std::inserter(missingOldDependencies, missingOldDependencies.end()));
+	std::set_difference(newDependencies.begin(), newDependencies.end(), thisAsset.dependencies.begin(), thisAsset.dependencies.end(), std::inserter(missingNewDependencies, missingNewDependencies.end()));
+
+	thisAsset.dependencies = newDependencies;
+	
+	for (const Dependency& dependency : missingNewDependencies) {
+		if (std::holds_alternative<Grindstone::Uuid>(dependency)) {
+			Grindstone::Uuid dependencyUuid = std::get<Grindstone::Uuid>(dependency);
+			AssetRegistry::Entry& dependencyAsset = assets[dependencyUuid];
+			dependencyAsset.reverseDependencies.insert(dependentUuid);
+		}
+		else {
+			std::string dependencyAddress = std::get<std::string>(dependency);
+			fileReverseDependencies[dependencyAddress].insert(dependentUuid);
+		}
+	}
+
+	for (const Dependency& dependency : missingOldDependencies) {
+		if (std::holds_alternative<Grindstone::Uuid>(dependency)) {
+			Grindstone::Uuid dependencyUuid = std::get<Grindstone::Uuid>(dependency);
+			AssetRegistry::Entry& dependencyAsset = assets[dependencyUuid];
+			dependencyAsset.reverseDependencies.erase(dependentUuid);
+		} else {
+			std::string dependencyAddress = std::get<std::string>(dependency);
+			fileReverseDependencies[dependencyAddress].erase(dependentUuid);
+		}
 	}
 }
 
 void AssetRegistry::WriteFile() {
+	std::scoped_lock lck(mutex);
 	rapidjson::StringBuffer documentStringBuffer;
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> documentWriter = rapidjson::PrettyWriter<rapidjson::StringBuffer>(documentStringBuffer);
 
@@ -112,8 +176,15 @@ void AssetRegistry::WriteFile() {
 		if (entry.dependencies.size() > 0) {
 			documentWriter.Key("dependencies");
 			documentWriter.StartArray();
-			for (const Grindstone::Uuid& uuid : entry.dependencies) {
-				documentWriter.String(uuid.ToString().c_str());
+			for (const auto& dependency : entry.dependencies) {
+				if (std::holds_alternative<Grindstone::Uuid>(dependency)) {
+					Grindstone::Uuid uuid = std::get<Grindstone::Uuid>(dependency);
+					documentWriter.String(uuid.ToString().c_str());
+				}
+				else {
+					std::string path = std::get<std::string>(dependency);
+					documentWriter.String(path.c_str());
+				}
 			}
 			documentWriter.EndArray();
 		}
@@ -129,6 +200,7 @@ void AssetRegistry::WriteFile() {
 }
 
 void AssetRegistry::ReadFile() {
+	std::scoped_lock lck(mutex);
 	assets.clear();
 	if (!std::filesystem::exists(assetRegistryPath)) {
 		return;
@@ -149,10 +221,10 @@ void AssetRegistry::ReadFile() {
 		++assetIterator
 	) {
 		rapidjson::Value& asset = *assetIterator;
-		const char* subassetIdentifier = asset.HasMember("subassetIdentifier") ? asset["subassetIdentifier"].GetString() : "";
-		const char* displayName = asset.HasMember("displayName") ? asset["displayName"].GetString() : "";
-		const char* address = asset.HasMember("address") ? asset["address"].GetString() : "";
-		const char* path = asset.HasMember("path") ? asset["path"].GetString() : "";
+		const std::string subassetIdentifier = asset.HasMember("subassetIdentifier") ? asset["subassetIdentifier"].GetString() : "";
+		std::string displayName = asset.HasMember("displayName") ? asset["displayName"].GetString() : "";
+		const std::string address = asset.HasMember("address") ? asset["address"].GetString() : "";
+		const std::filesystem::path path = asset.HasMember("path") ? asset["path"].GetString() : "";
 
 		int64_t sourceFileWriteTime = asset.HasMember("sourceFileWriteTime") ? asset["sourceFileWriteTime"].GetInt64() : 0;
 		int64_t metaFileWriteTime = asset.HasMember("metaFileWriteTime") ? asset["metaFileWriteTime"].GetInt64() : 0;
@@ -189,9 +261,9 @@ void AssetRegistry::ReadFile() {
 
 		auto& insertedAsset = assets[uuid] = Entry{
 			.uuid = uuid,
-			.displayName = std::string(displayName),
-			.subassetIdentifier = std::string(subassetIdentifier),
-			.address = std::string(address),
+			.displayName = displayName,
+			.subassetIdentifier = subassetIdentifier,
+			.address = address,
 			.path = path,
 			.assetType = assetType,
 			.sourceFileWrite = sourceFileDuration,
@@ -203,26 +275,36 @@ void AssetRegistry::ReadFile() {
 		};
 
 		if (asset.HasMember("dependencies")) {
+			std::set<Dependency> deserializedDependencies;
 			rapidjson::Value& dependencies = asset["dependencies"];
 			for (rapidjson::Value& dependency : dependencies.GetArray()) {
-				const char* depAsStr = dependency.GetString();
+				if (!dependency.IsString()) {
+					GPRINT_FATAL(Grindstone::LogSource::EngineCore, "Found dependency that is not a string for asset {}.", uuidAsStr);
+				}
+
+				const char* depAsCstr = dependency.GetString();
 				Uuid depUuid;
-				if (Grindstone::Uuid::MakeFromString(depAsStr, depUuid)) {
-					insertedAsset.dependencies.emplace_back(depUuid);
+				if (Grindstone::Uuid::MakeFromString(depAsCstr, depUuid)) {
+					deserializedDependencies.emplace(depUuid);
 				}
 				else {
-					GPRINT_FATAL_V(Grindstone::LogSource::EngineCore, "Unable to make uuid for dependency {} for asset from {}", depAsStr, uuidStr);
+					std::string depAsString = depAsCstr;
+					deserializedDependencies.emplace(depAsString);
 				}
+
 			}
+
+			LinkHardDependenciesLocked(uuid, deserializedDependencies);
 		}
 	}
 }
 
 Grindstone::Uuid AssetRegistry::Import(const std::filesystem::path& path) {
 	Grindstone::Editor::Manager& editor = Grindstone::Editor::Manager::GetInstance();
-	Grindstone::Importers::ImporterManager& importerManager = editor.GetImporterManager();
+	Grindstone::Importers::ImportScheduler& importScheduler = editor.GetImportScheduler();
 
-	if (importerManager.Import(path)) {
+	if (importScheduler.Import(path)) {
+		std::scoped_lock lck(mutex);
 		std::filesystem::path mountedPath;
 		TryGetPathWithMountPoint(path, mountedPath);
 		Utils::FixPathSlashes(mountedPath);
@@ -244,6 +326,7 @@ const std::filesystem::path& AssetRegistry::GetCompiledAssetsPath() const {
 }
 
 bool AssetRegistry::RemoveEntry(Uuid uuid) {
+	std::scoped_lock lck(mutex);
 	return assets.erase(uuid) != 0;
 }
 

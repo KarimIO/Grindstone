@@ -264,7 +264,7 @@ void PipelineSetConditioner::Convert(CompilationOptions options) {
 			}
 		}
 
-		writeFileCallback(mainFilePath, outputFiles);
+		writeFileCallback(mainFilePath, outputFiles, parseTree.dependencyFiles);
 	}
 
 	unprocessedFiles.clear();

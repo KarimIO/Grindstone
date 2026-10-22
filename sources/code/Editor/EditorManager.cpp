@@ -1,8 +1,8 @@
+#include <Windows.h>
 #include <filesystem>
 #include <functional>
 #include <iostream>
 #include <string>
-#include <Windows.h>
 
 #include <Common/Console/Cvars.hpp>
 #include <Common/Event/BaseEvent.hpp>
@@ -11,37 +11,34 @@
 #include <Common/Event/KeyPressCode.hpp>
 #include <Common/Input/CursorMode.hpp>
 #include <Common/Input/InputInterface.hpp>
+#include <Common/Logger.hpp>
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Common/Utilities/ModuleLoading.hpp>
+#include <Editor/AssetRegistry.hpp>
+#include <Editor/AssetTemplateRegistry.hpp>
 #include <Editor/Commands/CommandList.hpp>
+#include <Editor/EditorManager.hpp>
+#include <Editor/FileAssetLoader.hpp>
+#include <Editor/FileManager.hpp>
+#include <Editor/GitManager.hpp>
 #include <Editor/ImguiEditor/ImguiEditor.hpp>
-#include <Editor/Importers/ImporterManager.hpp>
-#include <Editor/ScriptBuilder/CSharpBuildManager.hpp>
+#include <Editor/Importers/ImporterRegistry.hpp>
 #include <Editor/PluginSystem/EditorPluginInterface.hpp>
 #include <Editor/PluginSystem/EditorPluginManager.hpp>
-#include <Editor/ImguiEditor/ViewportPanel.hpp>
-#include <EngineCore/EngineCore.hpp>
-#include <EngineCore/Scenes/Manager.hpp>
-#include <EngineCore/Events/Dispatcher.hpp>
-#include <EngineCore/PluginSystem/Interface.hpp>
-#include <EngineCore/Utils/MemoryAllocator.hpp>
-#include <EngineCore/WorldContext/WorldContextManager.hpp>
-#include <Common/Logger.hpp>
-#include <EngineCore/Rendering/RenderingPipeline.hpp>
-
 #include <Editor/RendererFeatures/Gizmos.hpp>
 #include <Editor/RendererFeatures/Grid.hpp>
 #include <Editor/RendererFeatures/MousePick.hpp>
 #include <Editor/RendererFeatures/SelectionOutline.hpp>
-#include "EditorCamera.hpp"
-#include "AssetRegistry.hpp"
-#include "AssetTemplateRegistry.hpp"
-#include "EditorManager.hpp"
-#include "FileAssetLoader.hpp"
-#include "FileManager.hpp"
-#include "GitManager.hpp"
-#include "Selection.hpp"
-#include "TaskSystem.hpp"
+#include <Editor/ScriptBuilder/CSharpBuildManager.hpp>
+#include <Editor/Selection.hpp>
+#include <Editor/TaskSystem.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/Events/Dispatcher.hpp>
+#include <EngineCore/PluginSystem/Interface.hpp>
+#include <EngineCore/Rendering/RenderingPipeline.hpp>
+#include <EngineCore/Scenes/Manager.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
+#include <EngineCore/WorldContext/WorldContextManager.hpp>
 
 using namespace Grindstone;
 using namespace Grindstone::Editor;
@@ -49,8 +46,12 @@ using namespace Grindstone::Memory;
 
 static Grindstone::Editor::Manager* editorManagerInstance = nullptr;
 
-Grindstone::Importers::ImporterManager& Manager::GetImporterManager() {
-	return importerManager;
+Grindstone::Importers::ImporterRegistry& Manager::GetImporterRegistry() {
+	return importerRegistry;
+}
+
+Grindstone::Importers::ImportScheduler& Manager::GetImportScheduler() {
+	return importScheduler;
 }
 
 ImguiEditor::ImguiEditor& Manager::GetImguiEditor() {
@@ -123,7 +124,7 @@ bool Manager::Initialize(const std::unordered_map<std::string, std::string>& cmd
 		reinterpret_cast<const void*>(materialContent.c_str()), materialContent.size()
 	);
 
-	importerManager.Initialize();
+	importerRegistry.Initialize();
 
 	engineCore->GetPluginManager()->LoadPluginsByStage("EditorAssetImportEarly");
 	thumbnailManager.Initialize();

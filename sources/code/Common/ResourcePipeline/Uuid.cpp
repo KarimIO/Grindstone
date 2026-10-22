@@ -19,7 +19,6 @@ bool Grindstone::Uuid::MakeFromString(const char* str, Grindstone::Uuid& outUuid
 	}
 
 	if (UuidFromString((unsigned char*)str, (::UUID*)&outUuid.asUint64[0]) != RPC_S_OK) {
-		GS_BREAK_WITH_MESSAGE("Could not make guid from an empty string.");
 		memset(&outUuid.asUint64[0], 0, sizeof(uint64_t) * 2);
 		return false;
 	}

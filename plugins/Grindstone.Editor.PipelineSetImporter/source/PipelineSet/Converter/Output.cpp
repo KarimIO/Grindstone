@@ -115,7 +115,7 @@ static bool VerifyConsistentMaterialBufferForBinding(
 	bool hasConsistentMaterialBuffer = true;
 
 	if (block.variableCount != firstMaterialBlock.variableCount) {
-		errorLog += std::vformat("\nInconsistent number of variables - {} != {}.", std::make_format_args(block.variableCount, firstMaterialBlock.variableCount));
+		errorLog += std::format("\nInconsistent number of variables - {} != {}.", block.variableCount, firstMaterialBlock.variableCount);
 		hasConsistentMaterialBuffer = false;
 	}
 
@@ -128,38 +128,38 @@ static bool VerifyConsistentMaterialBufferForBinding(
 		const ReflectedBlockVariable& cmpVariable = variables[i + firstMaterialBlock.startVariableIndex];
 
 		if (srcVariable.name != cmpVariable.name) {
-			errorLog += std::vformat("\nName mismatch for variable {} - \"{}\" != \"{}\".", std::make_format_args(i, srcVariable.name, cmpVariable.name));
+			errorLog += std::format("\nName mismatch for variable {} - \"{}\" != \"{}\".", i, srcVariable.name, cmpVariable.name);
 			hasConsistentMaterialBuffer = false;
 
 			// We have an inconsistent name, so use the index for these errors.
 			if (srcVariable.offset != cmpVariable.offset) {
-				errorLog += std::vformat("\nName mismatch for variable {} - {} != {}.", std::make_format_args(i, srcVariable.offset, cmpVariable.offset));
+				errorLog += std::format("\nName mismatch for variable {} - {} != {}.", i, srcVariable.offset, cmpVariable.offset);
 			}
 
 			if (srcVariable.size != cmpVariable.size) {
-				errorLog += std::vformat("\nName mismatch for variable {} - {} != {}.", std::make_format_args(i, srcVariable.size, cmpVariable.size));
+				errorLog += std::format("\nName mismatch for variable {} - {} != {}.", i, srcVariable.size, cmpVariable.size);
 			}
 
 			if (srcVariable.type != cmpVariable.type) {
 				// TODO: Get the name of these variable types.
-				errorLog += std::vformat("\nType mismatch for variable {}.", std::make_format_args(i));
+				errorLog += std::format("\nType mismatch for variable {}.", i);
 			}
 		}
 		else {
 			// We have a consistent name, so just use the name for these errors.
 			if (srcVariable.offset != cmpVariable.offset) {
-				errorLog += std::vformat("\nName mismatch for variable {} - {} != {}.", std::make_format_args(i, srcVariable.offset, cmpVariable.offset));
+				errorLog += std::format("\nName mismatch for variable {} - {} != {}.", i, srcVariable.offset, cmpVariable.offset);
 				hasConsistentMaterialBuffer = false;
 			}
 
 			if (srcVariable.size != cmpVariable.size) {
-				errorLog += std::vformat("\nName mismatch for variable {} - {} != {}.", std::make_format_args(i, srcVariable.size, cmpVariable.size));
+				errorLog += std::format("\nName mismatch for variable {} - {} != {}.", i, srcVariable.size, cmpVariable.size);
 				hasConsistentMaterialBuffer = false;
 			}
 
 			if (srcVariable.type != cmpVariable.type) {
 				// TODO: Get the name of these variable types.
-				errorLog += std::vformat("\nType mismatch for variable {}.", std::make_format_args(srcVariable.name));
+				errorLog += std::format("\nType mismatch for variable {}.", srcVariable.name);
 				hasConsistentMaterialBuffer = false;
 			}
 		}
@@ -189,7 +189,7 @@ static bool VerifyConsistentMaterialBuffer(
 					) {
 						const ReflectedBlock& reflectedBlock = stage.reflectedBlocks[blockBinding.blockIndex];
 						const char* stageName = GetShaderStageName(stage.stage);
-						std::string configPassName = std::vformat("{}:{}:{}", std::make_format_args(configName, passName, stageName));
+						std::string configPassName = std::format("{}:{}:{}", configName, passName, stageName);
 						std::string errorLog;
 
 						if (firstMaterialBlock == nullptr) {
@@ -197,7 +197,7 @@ static bool VerifyConsistentMaterialBuffer(
 							firstMaterialBlock = &reflectedBlock;
 						}
 						else if (!VerifyConsistentMaterialBufferForBinding(errorLog, reflectedBlock, stage.reflectedBlockVariables, *firstMaterialBlock)) {
-							std::string formattedMessage = std::vformat("Mismatch between material buffers between {} and {}!{}", std::make_format_args(firstPipelinePassWithMaterialBufferName, configPassName, errorLog));
+							std::string formattedMessage = std::format("Mismatch between material buffers between {} and {}!{}", firstPipelinePassWithMaterialBufferName, configPassName, errorLog);
 							logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Output, formattedMessage.c_str(), pipelineSetName, UNDEFINED_LINE, UNDEFINED_COLUMN);
 							hasConsistentMaterialBuffer = false;
 						}
@@ -232,7 +232,7 @@ static bool VerifyConsistentMaterialResources(
 				for (const auto& [passName, pass] : config.passes) {
 					for (const auto& stage : pass.stages) {
 						const char* stageName = GetShaderStageName(stage.stage);
-						std::string configPassName = std::vformat("{}:{}:{}", std::make_format_args(configName, passName, stageName));
+						std::string configPassName = std::format("{}:{}:{}", configName, passName, stageName);
 						for (auto& descriptorSet : stage.reflectedDescriptorSets) {
 							for (uint32_t i = 0; i < descriptorSet.bindingCount; ++i) {
 								const ShaderReflectDescriptorBinding& binding =
@@ -243,7 +243,7 @@ static bool VerifyConsistentMaterialResources(
 										if (setIndex != descriptorSet.setIndex ||
 											bindingIndex != binding.bindingIndex
 										) {
-											std::string formattedMessage = std::vformat("\nMaterial resource \"{}\" should be bound to {}:{}, but in {} it is bound to {}:{}.", std::make_format_args(param.name, setIndex, bindingIndex, configPassName, descriptorSet.setIndex, binding.bindingIndex));
+											std::string formattedMessage = std::format("\nMaterial resource \"{}\" should be bound to {}:{}, but in {} it is bound to {}:{}.", param.name, setIndex, bindingIndex, configPassName, descriptorSet.setIndex, binding.bindingIndex);
 											resourceErrorLog += formattedMessage;
 											isConsistent = false;
 										}
@@ -260,7 +260,7 @@ static bool VerifyConsistentMaterialResources(
 									setIndex == descriptorSet.setIndex &&
 									bindingIndex == binding.bindingIndex
 								) {
-									std::string formattedMessage = std::vformat("\nMaterial resource bound to {}:{} should be named \"{}\" but in \"{}\" it is named \"{}\".", std::make_format_args(setIndex, bindingIndex, param.name, configPassName, binding.name));
+									std::string formattedMessage = std::format("\nMaterial resource bound to {}:{} should be named \"{}\" but in \"{}\" it is named \"{}\".", setIndex, bindingIndex, param.name, configPassName, binding.name);
 									resourceErrorLog += formattedMessage;
 									isConsistent = false;
 								}
@@ -279,7 +279,7 @@ static bool VerifyConsistentMaterialResources(
 				WriteBytes(blobWriter, param.name.data(), param.name.size() + 1);
 			}
 			else {
-				std::string formattedMessage = std::vformat("\nMaterial resource \"{}\" not found in any shaders.", std::make_format_args(param.name));
+				std::string formattedMessage = std::format("\nMaterial resource \"{}\" not found in any shaders.", param.name);
 				resourceErrorLog += formattedMessage;
 				isConsistent = false;
 			}
@@ -324,7 +324,7 @@ static void ExtractGraphicsPipelineSet(
 
 		std::string resourceErrorLog;
 		if (!VerifyConsistentMaterialResources(resourceErrorLog, pipelineSet.name, compilationArtifacts, pipelineSet.parameters, materialResources, blobWriter)) {
-			std::string formattedMessage = std::vformat("Mismatch found in material resources!{}", std::make_format_args(resourceErrorLog));
+			std::string formattedMessage = std::format("Mismatch found in material resources!{}", resourceErrorLog);
 			logCallback(Grindstone::LogSeverity::Error, PipelineConverterLogSource::Output, formattedMessage.c_str(), pipelineSet.name, UNDEFINED_LINE, UNDEFINED_COLUMN);
 		}
 	}

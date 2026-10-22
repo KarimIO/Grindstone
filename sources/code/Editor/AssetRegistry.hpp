@@ -3,8 +3,11 @@
 #include <cstdint>
 #include <filesystem>
 #include <map>
+#include <mutex>
+#include <set>
 #include <string>
 #include <unordered_set>
+#include <variant>
 #include <vector>
 
 #include <Common/ResourcePipeline/AssetType.hpp>
@@ -21,6 +24,8 @@ namespace Grindstone::Editor {
 
 	class AssetRegistry {
 	public:
+		using Dependency = std::variant<Grindstone::Uuid, std::string>;
+
 		struct Entry {
 			AssetEntryStatus status;
 			Uuid uuid;
@@ -35,8 +40,8 @@ namespace Grindstone::Editor {
 			uint32_t metaFileVersion;
 			uint64_t assetFileSize;
 			uint64_t metaFileSize;
-			std::vector<Grindstone::Uuid> dependencies;
-			std::unordered_set<Grindstone::Uuid> reverseDependencies;
+			std::set<Dependency> dependencies;
+			std::set<Grindstone::Uuid> reverseDependencies;
 		};
 
 	public:
@@ -57,9 +62,10 @@ namespace Grindstone::Editor {
 			uint32_t assetImporterVersion,
 			uint32_t metaFileVersion,
 			uint64_t assetFileSize,
-			uint64_t metaFileSize,
-			std::vector<Grindstone::Uuid> dependencies
+			uint64_t metaFileSize
 		);
+		virtual void LinkHardDependencies(Uuid dependent, const std::set<Dependency>& dependencies);
+		virtual void LinkHardDependenciesLocked(Uuid dependent, const std::set<Dependency>& dependencies);
 		virtual void WriteFile();
 		virtual void ReadFile();
 		virtual Uuid Import(const std::filesystem::path& path);
@@ -79,7 +85,9 @@ namespace Grindstone::Editor {
 
 		virtual std::unordered_set<Grindstone::Uuid> GetUsedUuids() const;
 	private:
+		std::mutex mutex;
 		std::map<Uuid, Entry> assets;
+		std::map<std::string, std::unordered_set<Uuid>> fileReverseDependencies;
 		std::filesystem::path assetsPath;
 		std::filesystem::path compiledAssetsPath;
 		std::filesystem::path assetRegistryPath;

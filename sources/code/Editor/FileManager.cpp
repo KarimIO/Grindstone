@@ -1,15 +1,14 @@
-#include "FileManager.hpp"
 #include <filesystem>
 #include <string_view>
 #include <unordered_set>
 
-#include <Common/Logging.hpp>
-#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
-#include <Editor/Importers/ImporterManager.hpp>
 #include <Common/Logger.hpp>
+#include <Common/Logging.hpp>
+#include <Editor/EditorManager.hpp>
+#include <Editor/Importers/ImportScheduler.hpp>
+#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 
 #include "FileManager.hpp"
-#include "EditorManager.hpp"
 
 using namespace Grindstone;
 using namespace Grindstone::Editor;
@@ -220,17 +219,9 @@ const FileManager::MountPoint& FileManager::GetPrimaryMountPoint() const {
 }
 
 void FileManager::DispatchTask(const std::filesystem::path& path) const {
-	TaskSystem& taskSystem = Editor::Manager::GetInstance().GetTaskSystem();
-
-	std::string jobName = "Importing " + path.filename().string();
-	taskSystem.Execute(jobName, [path] {
-		std::filesystem::path nPath = path;
-		Grindstone::Editor::Manager& editorManager = Editor::Manager::GetInstance();
-		Grindstone::Editor::AssetRegistry& assetRegistry = editorManager.GetAssetRegistry();
-		Grindstone::Importers::ImporterManager& importManager = editorManager.GetImporterManager();
-		importManager.Import(nPath);
-		GPRINT_TRACE(LogSource::Editor, "Finished importing {}", path.string().c_str());
-	});
+	Grindstone::Editor::Manager& editorManager = Editor::Manager::GetInstance();
+	Grindstone::Importers::ImportScheduler& importScheduler = editorManager.GetImportScheduler();
+	importScheduler.QueueImport(path);
 }
 
 bool FileManager::TryGetPathWithMountPoint(const std::filesystem::path& path, std::filesystem::path& outMountedPath) const {
@@ -390,8 +381,8 @@ static bool IsSubassetValid(
 
 bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(const MountPoint& mountPoint, const std::filesystem::path& path) const {
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
-	Importers::ImporterManager& importManager = editorManager.GetImporterManager();
-	if (!importManager.HasImporterForPath(path)) {
+	Importers::ImporterRegistry& importerRegistry = editorManager.GetImporterRegistry();
+	if (!importerRegistry.HasImporterForPath(path)) {
 		return false;
 	}
 
@@ -401,7 +392,7 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(const MountPoint& mountPoi
 		return true;
 	}
 
-	Grindstone::Editor::ImporterVersion importerVersion = importManager.GetImporterVersionByPath(path);
+	Grindstone::Editor::ImporterVersion importerVersion = importerRegistry.GetImporterVersionByPath(path);
 	MetaFile metaFile(editorManager.GetAssetRegistry(), path);
 	if (metaFile.IsOutdatedMetaVersion()) {
 		GPRINT_TRACE(LogSource::Editor, "Importing '{}' due to outdated meta file version.", path.string().c_str());
@@ -447,13 +438,13 @@ bool FileManager::CheckIfCompiledFileNeedsToBeUpdated(const MountPoint& mountPoi
 // TODO: This is too similar to CheckIfCompiledFileNeedsToBeUpdated - deduplicate.
 void FileManager::DiscoverFile(const MountPoint& mountPoint, const std::filesystem::path& path) {
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
-	Importers::ImporterManager& importManager = editorManager.GetImporterManager();
+	Importers::ImporterRegistry& importerRegistry = editorManager.GetImporterRegistry();
 	Grindstone::Editor::AssetRegistry& assetRegistry = Editor::Manager::GetInstance().GetAssetRegistry();
 
 	bool fileRequiresReimport = false;
 	bool canDiscoverMetaFile = true;
 
-	if (!importManager.HasImporterForPath(path)) {
+	if (!importerRegistry.HasImporterForPath(path)) {
 		fileRequiresReimport = true;
 	}
 
@@ -463,7 +454,7 @@ void FileManager::DiscoverFile(const MountPoint& mountPoint, const std::filesyst
 		canDiscoverMetaFile = false;
 	}
 
-	Grindstone::Editor::ImporterVersion importerVersion = importManager.GetImporterVersionByPath(path);
+	Grindstone::Editor::ImporterVersion importerVersion = importerRegistry.GetImporterVersionByPath(path);
 	MetaFile metaFile(assetRegistry, path);
 	if (metaFile.IsOutdatedMetaVersion()) {
 		fileRequiresReimport = true;

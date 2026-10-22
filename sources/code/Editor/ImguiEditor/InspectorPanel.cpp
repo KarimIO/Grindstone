@@ -81,8 +81,8 @@ void InspectorPanel::Render() {
 	}
 	else if (!inspectorState.lastSelectedAssetPath.empty()) {
 		Grindstone::Editor::Manager& editorInstance = Grindstone::Editor::Manager::GetInstance();
-		Grindstone::Importers::ImporterManager& importerManager = editorInstance.GetImporterManager();
-		Grindstone::Editor::ImporterData lastImporterData = importerManager.GetImporterFactoryByPath(inspectorState.lastSelectedAssetPath);
+		Grindstone::Importers::ImporterRegistry& importerRegistry = editorInstance.GetImporterRegistry();
+		Grindstone::Editor::ImporterData lastImporterData = importerRegistry.GetImporterFactoryByPath(inspectorState.lastSelectedAssetPath);
 
 		if (lastImporterData.onMenuCleanup != nullptr) {
 			lastImporterData.onMenuCleanup(inspectorState.importerMenuPayload);
@@ -93,7 +93,7 @@ void InspectorPanel::Render() {
 void InspectorPanel::RenderContents() {
 	Grindstone::Editor::Manager& editorInstance = Grindstone::Editor::Manager::GetInstance();
 	Selection& selection = editorInstance.GetSelection();
-	Grindstone::Importers::ImporterManager& importerManager = editorInstance.GetImporterManager();
+	Grindstone::Importers::ImporterRegistry& importerRegistry = editorInstance.GetImporterRegistry();
 
 	bool hasHandledSelected = false;
 	size_t selectedEntityCount = selection.GetSelectedEntityCount();
@@ -103,7 +103,7 @@ void InspectorPanel::RenderContents() {
 		ImGui::Text("Nothing selected.");
 
 		if (!inspectorState.lastSelectedAssetPath.empty()) {
-			Grindstone::Editor::ImporterData lastImporterData = importerManager.GetImporterFactoryByPath(inspectorState.lastSelectedAssetPath);
+			Grindstone::Editor::ImporterData lastImporterData = importerRegistry.GetImporterFactoryByPath(inspectorState.lastSelectedAssetPath);
 
 			if (lastImporterData.onMenuCleanup != nullptr) {
 				lastImporterData.onMenuCleanup(inspectorState.importerMenuPayload);
@@ -118,10 +118,10 @@ void InspectorPanel::RenderContents() {
 			RenderGenericFile(path);
 			std::string extension = path.extension().string();
 
-			Grindstone::Editor::ImporterData importerData = importerManager.GetImporterFactoryByPath(path);
+			Grindstone::Editor::ImporterData importerData = importerRegistry.GetImporterFactoryByPath(path);
 			if (inspectorState.lastSelectedAssetPath != path) {
 				if (!inspectorState.lastSelectedAssetPath.empty()) {
-					Grindstone::Editor::ImporterData lastImporterData = importerManager.GetImporterFactoryByPath(inspectorState.lastSelectedAssetPath);
+					Grindstone::Editor::ImporterData lastImporterData = importerRegistry.GetImporterFactoryByPath(inspectorState.lastSelectedAssetPath);
 					if (lastImporterData.onMenuCleanup != nullptr) {
 						lastImporterData.onMenuCleanup(inspectorState.importerMenuPayload);
 					}
@@ -147,7 +147,7 @@ void InspectorPanel::RenderContents() {
 		}
 
 		if (!inspectorState.lastSelectedAssetPath.empty()) {
-			Grindstone::Editor::ImporterData lastImporterData = importerManager.GetImporterFactoryByPath(inspectorState.lastSelectedAssetPath);
+			Grindstone::Editor::ImporterData lastImporterData = importerRegistry.GetImporterFactoryByPath(inspectorState.lastSelectedAssetPath);
 
 			if (lastImporterData.onMenuCleanup != nullptr) {
 				lastImporterData.onMenuCleanup(inspectorState.importerMenuPayload);

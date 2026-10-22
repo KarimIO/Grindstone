@@ -1,11 +1,10 @@
 #pragma once
 
-#include <Common/ResourcePipeline/AssetType.hpp>
 #include <Common/HashedString.hpp>
 #include <Common/Memory/SmartPointers/UniquePtr.hpp>
-#include <Common/Rendering/RenderGraphBuilder.hpp>
-#include <Editor/Importers/ImporterManager.hpp>
+#include <Common/ResourcePipeline/AssetType.hpp>
 #include <Editor/ImguiEditor/Settings/BaseSettingsPage.hpp>
+#include <EditorCommon/Editor/Importer.hpp>
 #include <EngineCore/PluginSystem/Interface.hpp>
 
 struct ImGuiContext;

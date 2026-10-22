@@ -1,5 +1,6 @@
 #include <fstream>
 
+#include <Common/Logger.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <Editor/AssetRegistry.hpp>
 
@@ -17,7 +18,7 @@ static void ImportTextureAndMakeOutputStr(Grindstone::Editor::AssetRegistry& ass
 	arr.push_back("\t\t\"" + textureName + "\": \"" + textureUuid.ToString());
 }
 
-static void CreateStandardOrCutoutMaterial(Grindstone::Editor::AssetRegistry& assetRegistry, StandardMaterialCreateInfo& createInfo, std::filesystem::path outputPath, bool isCutout) {
+static Grindstone::Editor::AssetRegistry::Dependency CreateStandardOrCutoutMaterial(Grindstone::Editor::AssetRegistry& assetRegistry, StandardMaterialCreateInfo& createInfo, std::filesystem::path outputPath, bool isCutout) {
 	std::filesystem::path p = outputPath;
 
 	std::ofstream output(outputPath);
@@ -26,11 +27,20 @@ static void CreateStandardOrCutoutMaterial(Grindstone::Editor::AssetRegistry& as
 
 	output << "\t\"name\": \"" << createInfo.materialName << "\",\n";
 
+	Grindstone::Editor::AssetRegistry::Dependency dependency;
 	if (isCutout) {
 		output << "\t\"shader\": \"cutout\",\n";
 	}
 	else {
-		output << "\t\"shader\": \"ad5ad34e-2017-487d-b2c3-489e26e63b3e\",\n";
+		std::string uuidStr = "ad5ad34e-2017-487d-b2c3-489e26e63b3e";
+		output << std::format("\t\"shader\": \"{}\",\n", uuidStr);
+		Grindstone::Uuid outUuid;
+		if (Grindstone::Uuid::MakeFromString(uuidStr.c_str(), outUuid)) {
+			dependency = outUuid;
+		}
+		else {
+			GPRINT_ERROR(Grindstone::LogSource::EditorImporter, "Unable to make uuid '{}'.", uuidStr.c_str());
+		}
 	}
 
 	output << "\t\"parameters\": {\n";
@@ -62,12 +72,10 @@ static void CreateStandardOrCutoutMaterial(Grindstone::Editor::AssetRegistry& as
 
 	output << "}";
 	output.close();
+
+	return dependency;
 }
 
-void Grindstone::Editor::Importers::CreateStandardMaterial(Grindstone::Editor::AssetRegistry& assetRegistry, StandardMaterialCreateInfo& ci, std::filesystem::path path) {
-	CreateStandardOrCutoutMaterial(assetRegistry, ci, path, false);
-}
-
-void Grindstone::Editor::Importers::CreateCutoutMaterial(Grindstone::Editor::AssetRegistry& assetRegistry, StandardMaterialCreateInfo& ci, std::filesystem::path path) {
-	CreateStandardOrCutoutMaterial(assetRegistry, ci, path, true);
+Grindstone::Editor::AssetRegistry::Dependency Grindstone::Editor::Importers::CreateStandardMaterial(Grindstone::Editor::AssetRegistry& assetRegistry, StandardMaterialCreateInfo& ci, std::filesystem::path path) {
+	return CreateStandardOrCutoutMaterial(assetRegistry, ci, path, false);
 }

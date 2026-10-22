@@ -1,23 +1,25 @@
 #include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <string>
-#include <cctype>
 
 #include <imgui.h>
 #include <imgui_stdlib.h>
-#include <entt/entt.hpp>
 
-#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
+#include <Common/Logger.hpp>
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Common/Window/WindowManager.hpp>
-#include <Editor/ImguiEditor/ImguiEditor.hpp>
 #include <Editor/EditorManager.hpp>
+#include <Editor/ImguiEditor/AssetBrowserPanel.hpp>
+#include <Editor/ImguiEditor/ImguiEditor.hpp>
+#include <Editor/ImguiEditor/ImguiRenderer.hpp>
+#include <Editor/Importers/ImportScheduler.hpp>
+#include <Editor/Importers/ImporterRegistry.hpp>
 #include <Editor/PluginSystem/EditorPluginManager.hpp>
-#include <Common/Logger.hpp>
+#include <EditorCommon/ResourcePipeline/MetaFile.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Scenes/Manager.hpp>
 
-#include "ImguiRenderer.hpp"
 #include "AssetBrowserPanel.hpp"
 
 using namespace Grindstone::Editor::ImguiEditor;
@@ -301,11 +303,12 @@ void AssetBrowserPanel::RenderContextMenuFileTypeSpecificEntries(const std::file
 	std::string firstDotExtension = pathStr.substr(firstDot);
 	EngineCore& engineCore = Editor::Manager::GetEngineCore();
 
-	auto& importerManager = Editor::Manager::GetInstance().GetImporterManager();
-	auto importerFactory = importerManager.GetImporterFactoryByExtension(firstDotExtension).factory;
-	if (importerFactory != nullptr) {
+	const Importers::ImporterRegistry& importerRegistry = Editor::Manager::GetInstance().GetImporterRegistry();
+	Importers::ImportScheduler& importScheduler = Editor::Manager::GetInstance().GetImportScheduler();
+
+	if (importerRegistry.HasImporterForExtension(firstDotExtension)) {
 		if (ImGui::MenuItem("Import")) {
-			importerManager.Import(path);
+			importScheduler.QueueImport(path);
 			Editor::Manager::GetInstance().GetAssetRegistry().WriteFile();
 		}
 	}

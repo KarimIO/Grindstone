@@ -8,7 +8,8 @@
 
 #include "EngineCore/EngineCore.hpp"
 #include "Commands/CommandList.hpp"
-#include "Importers/ImporterManager.hpp"
+#include "Importers/ImportScheduler.hpp"
+#include "Importers/ImporterRegistry.hpp"
 #include "ScriptBuilder/CSharpBuildManager.hpp"
 #include "AssetTemplateRegistry.hpp"
 #include "FileManager.hpp"
@@ -50,7 +51,8 @@ namespace Grindstone::Editor {
 		Manager() = default;
 		static Manager& GetInstance();
 		static void SetInstance(Grindstone::Editor::Manager* editorManager);
-		Grindstone::Importers::ImporterManager& GetImporterManager();
+		Grindstone::Importers::ImporterRegistry& GetImporterRegistry();
+		Grindstone::Importers::ImportScheduler& GetImportScheduler();
 		ImguiEditor::ImguiEditor& GetImguiEditor();
 		virtual AssetRegistry& GetAssetRegistry();
 		virtual CommandList& GetCommandList();
@@ -106,7 +108,8 @@ namespace Grindstone::Editor {
 		GitManager gitManager;
 		AssetTemplateRegistry assetTemplateRegistry;
 		Grindstone::Utilities::Modules::Handle engineCoreLibraryHandle;
-		Grindstone::Importers::ImporterManager importerManager;
+		Grindstone::Importers::ImporterRegistry importerRegistry;
+		Grindstone::Importers::ImportScheduler importScheduler;
 		Grindstone::WorldContextSet* runtimeWorldContext = nullptr;
 		Grindstone::WorldContextSet* editorWorldContext = nullptr;
 		Grindstone::Editor::ThumbnailManager thumbnailManager;
