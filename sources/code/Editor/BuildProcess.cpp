@@ -1,118 +1,271 @@
-#include <iostream>
+#include <atomic>
+#include <filesystem>
+#include <fstream>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include <Common/Window/WindowManager.hpp>
+
 #include <Common/Logger.hpp>
+#include <Common/Window/Window.hpp>
+#include <Common/Window/WindowManager.hpp>
+#include <Editor/EditorManager.hpp>
+#include <Editor/PluginSystem/EditorPluginManager.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
-#include <Editor/EditorManager.hpp>
 
 #include "AssetPackSerializer.hpp"
 #include "BuildProcess.hpp"
 
 namespace Grindstone::Editor {
-	static void CopyFileTo(const std::filesystem::path& srcBase, const std::filesystem::path& dstBase, const std::string_view file) {
-		std::filesystem::path src = srcBase / file;
-		std::filesystem::path dst = dstBase / file;
+	static const char* configurationPath = CMAKE_INTDIR;
 
-		if (!std::filesystem::exists(src)) {
-			return;
+	static bool CopyFileTo(
+		const std::filesystem::path& srcFile,
+		const std::filesystem::path& dstFile
+	) {
+
+		if (!std::filesystem::exists(srcFile)) {
+			GPRINT_ERROR(LogSource::Editor, "Failed to copy '{}'.", srcFile.string().c_str());
+			return false;
 		}
 
-		std::filesystem::copy(src, dst, std::filesystem::copy_options::update_existing);
+		std::filesystem::copy(srcFile, dstFile, std::filesystem::copy_options::update_existing);
+		return true;
 	}
+	
+	static bool CopyFileTo(
+		const std::filesystem::path& srcBase,
+		const std::filesystem::path& dstBase,
+		const std::filesystem::path& file
+	) {
+		const std::filesystem::path& srcFile = srcBase / file;
+		const std::filesystem::path& dstFile = dstBase / file;
 
-	static void CopyLibrary(const std::filesystem::path& srcBase, const std::filesystem::path dstBase, const std::string_view file) {
-		std::string filename = std::string(file) + ".dll";
-		std::filesystem::copy(srcBase / filename, dstBase / filename, std::filesystem::copy_options::update_existing);
-	}
-
-	static void CopyExecutable(const std::filesystem::path& srcBase, const std::filesystem::path& dstBase, const std::string_view file) {
-		std::string filename = std::string(file) + ".exe";
-		std::filesystem::copy(srcBase / filename, dstBase / filename, std::filesystem::copy_options::update_existing);
-	}
-
-	static void CopyPlugins(const std::filesystem::path& enginePath, const std::filesystem::path& targetBuildSettingsPath, const std::filesystem::path& targetPath) {
-		auto& editorManager = Editor::Manager::GetInstance();
-		std::filesystem::path prefabListFile = editorManager.GetProjectPath() / "buildSettings/pluginsManifest.txt";
-		auto prefabListFilePath = prefabListFile.string();
-		auto fileContents = Utils::LoadFileText(prefabListFilePath.c_str());
-
-		size_t start = 0, end;
-		std::string runtimePluginList;
-		std::string pluginName;
-		while (true) {
-			end = fileContents.find("\n", start);
-			if (end == std::string::npos) {
-				pluginName = fileContents.substr(start);
-				if (!pluginName.empty() && pluginName.find("Editor") == std::string::npos) {
-					runtimePluginList += pluginName + '\n';
-					CopyLibrary(enginePath, targetPath, pluginName);
-				}
-
-				break;
-			}
-
-			pluginName = fileContents.substr(start, end - start);
-
-			if (pluginName.find("Editor") == std::string::npos) {
-				runtimePluginList += pluginName + '\n';
-				CopyLibrary(enginePath, targetPath, pluginName);
-			}
-
-			start = end + 1;
+		if (!std::filesystem::exists(srcFile)) {
+			GPRINT_ERROR(LogSource::Editor, "Failed to copy '{}'.", file.string().c_str());
+			return false;
 		}
 
-		std::filesystem::path runtimePluginListPath = (targetBuildSettingsPath / "pluginsManifest.txt");
-		std::ofstream pluginlistStream(runtimePluginListPath);
-		if (pluginlistStream.fail()) {
-			GPRINT_ERROR(LogSource::Editor, "Failed to write plugin manifest to '{}'.", runtimePluginListPath.string());
-			return;
-		}
-
-		pluginlistStream << runtimePluginList;
-		pluginlistStream.close();
+		std::filesystem::copy(srcFile, dstFile, std::filesystem::copy_options::update_existing);
+		return true;
 	}
-
-	static void CopyBinaries(const std::filesystem::path& enginePath, const std::filesystem::path& projectPath, const std::filesystem::path& targetBuildSettingsPath, const std::filesystem::path& targetPath) {
-		CopyExecutable(enginePath, targetPath, "Application");
-		CopyLibrary(enginePath, targetPath, "EngineCore");
-		CopyLibrary(enginePath, targetPath, "fmtd");
-		CopyLibrary(enginePath, targetPath, "gl3w");
-		CopyLibrary(enginePath, targetPath, "glfw3");
-		CopyLibrary(enginePath, targetPath, "nethost");
-		CopyLibrary(enginePath, targetPath, "OpenAL32");
-		CopyLibrary(enginePath, targetPath, "GrindstoneCSharpCore");
-
-		// TODO: Build with all necessary graphics dlls
-		CopyLibrary(enginePath, targetPath, "PluginGraphicsVulkan");
-
-		// TODO: Build from assets folders
-		CopyLibrary(projectPath, targetPath, "Application-CSharp");
-
-		CopyPlugins(enginePath, targetBuildSettingsPath, targetPath);
-	}
-
-	static void CopyMetaData(const std::filesystem::path& sourceBuildSettingsPath, const std::filesystem::path& targetBuildSettingsPath) {
-		CopyFileTo(sourceBuildSettingsPath, targetBuildSettingsPath, "scenesManifest.txt");
-	}
-
+	
 	static std::filesystem::path GetBuildPath() {
 		WindowManager* windowManager = Editor::Manager::GetEngineCore().windowManager;
 		Window* window = windowManager->GetWindowByIndex(0);
 
-		if (window == nullptr) {
-			GPRINT_ERROR(LogSource::Editor, "StartBuild - Could not get window.");
-			return "";
-		}
+		GS_ASSERT_ENGINE_WITH_MESSAGE(window != nullptr, "StartBuild - Could not get window.");
 
 		std::filesystem::path defaultBuildPath = Editor::Manager::GetInstance().GetProjectPath();
 		return window->BrowseFolder(defaultBuildPath);
 	}
 
-	void BuildGame(BuildProcessStats* processStatus) {
-		if (processStatus == nullptr) {
-			return;
+	struct InstallCopyFile {
+		std::filesystem::path source;
+		std::filesystem::path destination;
+		InstallCopyFile(const std::filesystem::path& path) : source(path), destination(path) {};
+		InstallCopyFile(const std::filesystem::path& src, const std::filesystem::path& dst) : source(src), destination(dst) {};
+
+		friend bool operator<(const InstallCopyFile& lhs, const InstallCopyFile& rhs) {
+			return lhs.source < rhs.source && lhs.destination < rhs.destination;
 		}
+	};
+
+	struct InstallCopyFolder {
+		std::filesystem::path sourceFolderPath;
+		std::filesystem::path destinationFolderPath;
+		std::set<InstallCopyFile> installFiles;
+	};
+
+	struct InstallStage {
+		std::string displayName;
+		float stageSize01; // The amount of the total progress bar this stage should represent.
+		std::vector<InstallCopyFolder> installFolders;
+	};
+
+	struct InstallPlan {
+		std::vector<InstallStage> stages;
+	};
+
+	#define EXE_EXT ".exe"
+	#define DLL_EXT ".dll"
+
+	static InstallStage MarkAppBinaries(const std::filesystem::path& targetPath) {
+		InstallStage stage;
+		stage.displayName = "Application Binaries";
+		stage.stageSize01 = 0.1f;
+
+		const EngineCore& engine = Grindstone::Editor::Manager::GetEngineCore();
+		const std::filesystem::path engineBinPath = engine.GetEngineBinaryPath();
+
+		InstallCopyFolder& folder = stage.installFolders.emplace_back();
+		folder.sourceFolderPath = engineBinPath / configurationPath;
+		folder.destinationFolderPath = targetPath / "bin" / configurationPath;
+
+		folder.installFiles.emplace(InstallCopyFile("Application" EXE_EXT));
+		folder.installFiles.emplace(InstallCopyFile("EngineCore" DLL_EXT));
+
+		return stage;
+	}
+
+	static InstallStage MarkPluginBinaries(const std::filesystem::path& targetPath) {
+		InstallStage stage {
+			.displayName = "Plugin Binaries",
+			.stageSize01 = 0.1f
+		};
+
+		const EngineCore& engine = Grindstone::Editor::Manager::GetEngineCore();
+		const std::filesystem::path engineBinPath = engine.GetEngineBinaryPath();
+		Grindstone::Plugins::EditorPluginManager& pluginManager = *static_cast<Grindstone::Plugins::EditorPluginManager*>(engine.GetPluginManager());
+
+		for (const Plugins::MetaData& plugin : pluginManager) {
+			for (const Plugins::MetaData::Binary& binary : plugin.binaries) {
+				std::string lower = Grindstone::Utils::ToLower(binary.libraryRelativePath.string());
+				if (lower.find("editor") != std::string::npos) {
+					continue;
+				}
+
+				std::filesystem::path binaryPath = plugin.pluginResolvedPath / binary.libraryRelativePath;
+				std::filesystem::path parentPath = binaryPath.parent_path();
+
+				InstallCopyFolder& folder = stage.installFolders.emplace_back();
+				folder.sourceFolderPath = parentPath;
+				folder.destinationFolderPath = targetPath / "bin" / configurationPath;
+
+				folder.installFiles.emplace(InstallCopyFile(binary.libraryRelativePath.filename().string() + DLL_EXT));
+			}
+		}
+
+		return stage;
+	}
+
+	static InstallStage MarkMetaFiles(const std::filesystem::path& targetPath) {
+		InstallStage stage {
+			.displayName = "Configuration Files",
+			.stageSize01 = 0.1f
+		};
+
+		Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+		const std::filesystem::path engineBinPath = engineCore.GetEngineBinaryPath();
+
+		InstallCopyFolder& folder = stage.installFolders.emplace_back();
+		folder.sourceFolderPath = engineBinPath;
+		folder.destinationFolderPath = targetPath / "bin" / configurationPath;
+
+		return stage;
+	}
+
+	static bool MarkNecessaryFiles(const std::filesystem::path& targetPath, InstallPlan& installPlan) {
+		const EngineCore& engine = Grindstone::Editor::Manager::GetEngineCore();
+		const std::filesystem::path engineBinPath = engine.GetEngineBinaryPath();
+		const std::filesystem::path projectBinPath = engine.GetBinaryPath();
+		const std::filesystem::path sourceBuildSettingsPath = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings";
+
+		const std::filesystem::path targetCompiledAssetsPath = "archives";
+		const std::filesystem::path targetBuildSettingsPath = "buildSettings";
+
+		installPlan.stages.emplace_back(MarkAppBinaries(targetPath));
+		installPlan.stages.emplace_back(MarkPluginBinaries(targetPath));
+		installPlan.stages.emplace_back(MarkMetaFiles(targetPath));
+
+		return true;
+	}
+
+	static bool CommitCopies(
+		BuildProcessStats* processStatus,
+		const InstallPlan& installPlan
+	) {
+		bool isSuccessful = true;
+
+		float accumulatedStagesProgress = 0.0f;
+		for (const InstallStage& stage : installPlan.stages) {
+			{
+				std::scoped_lock scopedLock(processStatus->stringMutex);
+				processStatus->stageText = stage.displayName;
+				processStatus->detailText = "";
+				processStatus->progress = accumulatedStagesProgress;
+			}
+
+			for (const InstallCopyFolder& folder : stage.installFolders) {
+				float perFileProgressIncrement = stage.stageSize01 / folder.installFiles.size();
+
+				if (!std::filesystem::exists(folder.destinationFolderPath)) {
+					std::filesystem::create_directories(folder.destinationFolderPath);
+				}
+
+				for (const InstallCopyFile& file : folder.installFiles) {
+					{
+						std::scoped_lock scopedLock(processStatus->stringMutex);
+						processStatus->detailText = file.source.string();
+						processStatus->progress = accumulatedStagesProgress + perFileProgressIncrement;
+					}
+
+					if (!CopyFileTo(folder.sourceFolderPath / file.source, folder.destinationFolderPath / file.destination)) {
+						isSuccessful = false;
+					}
+				}
+			}
+
+			accumulatedStagesProgress += stage.stageSize01;
+		}
+
+		return isSuccessful;
+	}
+
+	static bool BuildPluginManifest(const std::filesystem::path& targetPath) {
+		const EngineCore& engine = Grindstone::Editor::Manager::GetEngineCore();
+		const std::filesystem::path engineBinPath = engine.GetEngineBinaryPath();
+		Grindstone::Plugins::EditorPluginManager& pluginManager = *static_cast<Grindstone::Plugins::EditorPluginManager*>(engine.GetPluginManager());
+
+		std::map<std::string, std::vector<std::string>> pluginBinaries;
+		for (const Plugins::MetaData& plugin : pluginManager) {
+			for (const Plugins::MetaData::Binary& binary : plugin.binaries) {
+				pluginBinaries[binary.loadStage].emplace_back(binary.libraryRelativePath.string());
+			}
+		}
+
+		std::filesystem::path parentDir = targetPath / "buildSettings";
+		if (!std::filesystem::exists(parentDir)) {
+			std::filesystem::create_directories(parentDir);
+		}
+
+		std::ofstream writeStream(parentDir / "pluginsManifest.txt");
+		if (!writeStream.is_open()) {
+			return false;
+		}
+
+		bool hasWrittenNoStages = true;
+		writeStream << "{";
+		for (const auto& loadStage : pluginBinaries) {
+			if (hasWrittenNoStages) {
+				hasWrittenNoStages = false;
+			} else {
+				writeStream << ",";
+			}
+
+			writeStream << "\n\t\"" << loadStage.first << "\": [\n\t\t";
+			size_t loadStateBinaryCount = loadStage.second.size();
+			for (size_t i = 0; i < loadStateBinaryCount; ++i) {
+				writeStream << "\"" << loadStage.second[i] << "\"";
+				if (i < loadStateBinaryCount - 1) {
+					writeStream << ",\n\t\t";
+				}
+				else {
+					writeStream << "\n\t";
+				}
+			}
+			writeStream << "]";
+		}
+		writeStream << "\n}\n";
+		writeStream.close();
+
+		return true;
+	}
+
+	void BuildGame(BuildProcessStats* processStatus) {
+		GS_ASSERT_ENGINE(processStatus != nullptr);
 
 		const std::filesystem::path targetPath = GetBuildPath();
 
@@ -124,41 +277,56 @@ namespace Grindstone::Editor {
 			std::filesystem::remove_all(targetPath);
 		}
 
-		const EngineCore& engine = Grindstone::Editor::Manager::GetEngineCore();
-		std::filesystem::path engineBinPath = engine.GetEngineBinaryPath();
-		std::filesystem::path projectBinPath = engine.GetBinaryPath();
-		std::filesystem::path sourceBuildSettingsPath = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings";
+		std::filesystem::create_directories(targetPath);
 
-		std::filesystem::path targetBinPath = targetPath / "bin";
-		std::filesystem::path targetCompiledAssetsPath = targetPath / "archives";
-		std::filesystem::path targetBuildSettingsPath = targetPath / "buildSettings";
+		InstallPlan installPlan;
+		if (!MarkNecessaryFiles(targetPath, installPlan)) {
+			GPRINT_ERROR(LogSource::Editor, "Unable to copy all necessary files - build failed.");
+			{
+				std::scoped_lock scopedLock(processStatus->stringMutex);
+				processStatus->stageText = "Build Failed";
+				processStatus->detailText = "";
+				processStatus->progress = 1.0f;
+			}
 
-		std::filesystem::create_directories(targetBinPath);
-		std::filesystem::create_directories(targetBuildSettingsPath);
-		std::filesystem::create_directories(targetCompiledAssetsPath);
-
-		{
-			std::scoped_lock scopedLock(processStatus->stringMutex);
-			processStatus->stageText = "Copying Binaries";
-			processStatus->detailText = "";
-			processStatus->progress = 0.0f;
+			return;
 		}
-		CopyBinaries(engineBinPath, projectBinPath, targetBuildSettingsPath, targetBinPath);
-		{
+
+		if (!CommitCopies(processStatus, installPlan)) {
+			GPRINT_ERROR(LogSource::Editor, "Unable to copy all necessary files - build failed.");
+			
 			std::scoped_lock scopedLock(processStatus->stringMutex);
-			processStatus->stageText = "Copying Meta Assets";
+			processStatus->stageText = "Build Failed";
 			processStatus->detailText = "";
+			processStatus->progress = 1.0f;
+
+			return;
 		}
-		CopyMetaData(sourceBuildSettingsPath, targetBuildSettingsPath);
+
+		if (!BuildPluginManifest(targetPath)) {
+			GPRINT_ERROR(LogSource::Editor, "Unable to copy all necessary files - build failed.");
+
+			std::scoped_lock scopedLock(processStatus->stringMutex);
+			processStatus->stageText = "Build Failed";
+			processStatus->detailText = "";
+			processStatus->progress = 1.0f;
+
+			return;
+		}
+
+		float compilingAssetArchivesProgress = processStatus->progress;
+
 		{
 			std::scoped_lock scopedLock(processStatus->stringMutex);
 			processStatus->stageText = "Compiling Asset Archives";
-			processStatus->progress = 0.25f;
 		}
-		Grindstone::Assets::AssetPackSerializer::SerializeAllAssets(targetCompiledAssetsPath, processStatus, 0.25f, 0.75f);
+
+		const std::filesystem::path targetCompiledAssetsPath = targetPath / "archives";
+		Grindstone::Assets::AssetPackSerializer::SerializeAllAssets(targetCompiledAssetsPath, processStatus, compilingAssetArchivesProgress, 1.0f - compilingAssetArchivesProgress);
+
 		{
 			std::scoped_lock scopedLock(processStatus->stringMutex);
-			processStatus->stageText = "Done";
+			processStatus->stageText = "Build Successful";
 			processStatus->detailText = "";
 			processStatus->progress = 1.0f;
 		}
