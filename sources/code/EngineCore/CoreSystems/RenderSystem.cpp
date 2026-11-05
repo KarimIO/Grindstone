@@ -1,21 +1,90 @@
-#include <iostream>
 #include <chrono>
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
 
-#include <Common/Window/WindowManager.hpp>
+#include <Common/Graphics/Buffer.hpp>
 #include <Common/Graphics/Core.hpp>
-#include <EngineCore/Rendering/RenderingPipeline.hpp>
-#include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
+#include <Common/Window/WindowManager.hpp>
 #include <EngineCore/CoreComponents/Camera/CameraComponent.hpp>
+#include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Profiling.hpp>
+#include <EngineCore/Rendering/RenderingPipeline.hpp>
 
 #include "RenderSystem.hpp"
 
 std::vector<Grindstone::GraphicsAPI::CommandBuffer*> commandBuffers;
 static std::array<Grindstone::Renderer::TransientResourceManager*, 3> transientResourceManagers{};
+Grindstone::GraphicsAPI::Buffer* gpuGlobalUniformBufferObject = nullptr;
+Grindstone::GraphicsAPI::DescriptorSetLayout* globalDescriptorSetLayout;
+Grindstone::GraphicsAPI::Buffer* globalStagingUniformBufferObject;
+std::array<Grindstone::GraphicsAPI::Buffer*, 3> globalUniformBufferObject;
+std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> globalDescriptorSet;
+
+struct EngineUboStruct {
+	glm::mat4 projectionMatrix;
+	glm::mat4 viewMatrix;
+	glm::mat4 inverseProjectionMatrix;
+	glm::mat4 inverseViewMatrix;
+	glm::vec3 eyePos;
+	float alignmentBufferForPreviousVec3;
+	glm::vec2 framebufferResolution;
+	glm::vec2 renderResolution;
+	glm::vec2 renderScale;
+	float time;
+};
+
+static void SetupGlobalUbos() {
+	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+	Grindstone::GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+
+	Grindstone::GraphicsAPI::Buffer::CreateInfo globalUboCreateInfo{
+		.content = nullptr,
+		.bufferSize = sizeof(EngineUboStruct),
+		.bufferUsage =
+			Grindstone::GraphicsAPI::BufferUsage::TransferDst |
+			Grindstone::GraphicsAPI::BufferUsage::TransferSrc |
+			Grindstone::GraphicsAPI::BufferUsage::Uniform,
+		.memoryUsage = Grindstone::GraphicsAPI::MemoryUsage::CPUToGPU,
+	};
+
+	Grindstone::GraphicsAPI::DescriptorSetLayout::Binding globalDescriptorSetLayoutBinding{
+		.bindingId = 0,
+		.count = 1,
+		.type = Grindstone::GraphicsAPI::BindingType::UniformBuffer,
+		.stages = Grindstone::GraphicsAPI::ShaderStageBit::All,
+	};
+
+	Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo globalDescriptorSetLayoutCreateInfo{
+		.debugName = "Global UBO Descriptor Set Layout",
+		.bindings = &globalDescriptorSetLayoutBinding,
+		.bindingCount = 1u,
+	};
+
+	globalDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(globalDescriptorSetLayoutCreateInfo);
+
+	Grindstone::GraphicsAPI::DescriptorSet::CreateInfo globalDescriptorSetsCreateInfo{
+		.layout = globalDescriptorSetLayout,
+		.bindingCount = 1u
+	};
+
+	globalUboCreateInfo.debugName = "Global Staging UBO";
+	globalStagingUniformBufferObject = graphicsCore->CreateBuffer(globalUboCreateInfo);
+
+	for (size_t i = 0; i < 3; ++i) {
+		std::string uboDebugName = std::vformat("Global UBO [{}]", std::make_format_args(i));
+		globalUboCreateInfo.debugName = uboDebugName.c_str();
+		globalUniformBufferObject[i] = graphicsCore->CreateBuffer(globalUboCreateInfo);
+
+		std::string descriptorSetDebugName = std::vformat("Global UBO [{}]", std::make_format_args(i));
+		Grindstone::GraphicsAPI::DescriptorSet::Binding binding = Grindstone::GraphicsAPI::DescriptorSet::Binding::UniformBuffer(globalUniformBufferObject[i]);
+		globalDescriptorSetsCreateInfo.bindings = &binding;
+		globalDescriptorSetsCreateInfo.debugName = descriptorSetDebugName.c_str();
+		globalDescriptorSet[i] = graphicsCore->CreateDescriptorSet(globalDescriptorSetsCreateInfo);
+	}
+}
 
 namespace Grindstone {
 	void RenderSystem(Grindstone::WorldContextSet& worldContextSet) {
@@ -35,6 +104,8 @@ namespace Grindstone {
 		}
 
 		if (commandBuffers.size() == 0) {
+			SetupGlobalUbos();
+
 			commandBuffers.resize(wgb->GetMaxFramesInFlight());
 			GraphicsAPI::CommandBuffer::CreateInfo commandBufferCreateInfo{};
 
@@ -58,6 +129,7 @@ namespace Grindstone {
 				const TransformComponent& transformComponent,
 				const CameraComponent& cameraComponent
 			) {
+				Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 				uint32_t width = wgb->GetCurrentFramebuffer()->GetWidth();
 				uint32_t height = wgb->GetCurrentFramebuffer()->GetHeight();
 				uint32_t swapchainIndex = wgb->GetCurrentImageIndex();
@@ -97,7 +169,35 @@ namespace Grindstone {
 					cameraComponent.farPlaneDistance
 				);
 
-				Grindstone::GraphicsAPI::Image* image = wgb->GetCurrentFramebuffer()->GetRenderTarget(0);
+				glm::mat4 adjustedPerspectiveMatrix = projectionMatrix;
+				graphicsCore->AdjustPerspective( &adjustedPerspectiveMatrix[0][0]);
+
+				glm::vec2 renderResolution = glm::vec2(width, height);
+
+				EngineUboStruct engineUboStruct{
+					.projectionMatrix = adjustedPerspectiveMatrix,
+					.viewMatrix = viewMatrix,
+					.inverseProjectionMatrix = glm::inverse(adjustedPerspectiveMatrix),
+					.inverseViewMatrix = glm::inverse(viewMatrix),
+					.eyePos = pos,
+					.framebufferResolution = renderResolution,
+					.renderResolution = renderResolution,
+					.renderScale = glm::vec2(1.0f, 1.0f),
+					.time = static_cast<float>(engineCore.GetTimeSinceLaunch())};
+
+				globalStagingUniformBufferObject->UploadData(&engineUboStruct);
+				currentCommandBuffer->CopyBufferRegion(
+					globalStagingUniformBufferObject,
+					globalUniformBufferObject[swapchainIndex]);
+
+				GraphicsAPI::RenderPass* renderPass = wgb->GetRenderPass();
+				GraphicsAPI::Framebuffer* framebuffer = wgb->GetCurrentFramebuffer();
+
+				GraphicsAPI::ClearColor clearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+				Grindstone::Math::IntRect2D viewport(0, 0, framebuffer->GetWidth(), framebuffer->GetHeight());
+
+				Grindstone::GraphicsAPI::Image* image = wgb->GetCurrentSwapchainImage();
 				Grindstone::GraphicsAPI::RenderAttachment attachment{
 					.image = image,
 					.imageLayout = Grindstone::GraphicsAPI::ImageLayout::ColorAttachment,
@@ -117,9 +217,8 @@ namespace Grindstone {
 						.renderArea = Math::IntRect2D(width, height),
 					},
 					.transientResourceManager = transientResourceManager,
-					// TODO: RenderGraph2.0 Set GlobalDescriptorSets
-					// .globalDescriptorSetLayout = globalDescriptorSetLayout,
-					// .globalDescriptorSet = globalDescriptorSet[imageIndex],
+					.globalDescriptorSetLayout = globalDescriptorSetLayout,
+					.globalDescriptorSet = globalDescriptorSet[swapchainIndex],
 					.swapchainSize = Math::Extent2D(width, height),
 					.commandBuffer = currentCommandBuffer,
 					.worldContextSet = &worldContextSet,
@@ -150,9 +249,46 @@ namespace Grindstone {
 					}
 				);
 
+				Renderer::RenderGraphBuilderResourceRef depthImageRef = renderGraphBuilder.AddImage(
+					Grindstone::Renderer::ImageDescription{
+						.name = "Depth Image",
+						.size = Grindstone::Renderer::MetaSize2D::Viewport(),
+						.samples = 1,
+						.mipLevels = 1,
+						.depth = 1,
+						.arrayLayers = 1,
+						.format = Grindstone::GraphicsAPI::Format::D32_SFLOAT,
+						.imageDimensions = GraphicsAPI::ImageDimension::Dimension2D,
+						.memoryUsage = GraphicsAPI::MemoryUsage::GPUOnly,
+						.imageUsage = GraphicsAPI::ImageUsageFlags::DepthStencil | GraphicsAPI::ImageUsageFlags::Sampled,
+						.externalGetterCallback = nullptr
+					}
+				);
+
 				Grindstone::Renderer::RenderFrameContext renderFrameContext(worldContextSet);
+				renderFrameContext.imageIndex = wgb->GetCurrentSwapchainIndex();
+				renderFrameContext.imageSize = {width, height};
+				renderFrameContext.colorRef = colorImageRef;
+				renderFrameContext.depthRef = depthImageRef;
+				renderFrameContext.views.emplace_back(
+					Renderer::RenderFrameViewContext{
+						.projectionMatrix = projectionMatrix,
+						.viewMatrix = viewMatrix,
+						.projectionViewMatrix = projectionMatrix * viewMatrix,
+						.inverseProjectionMatrix = glm::inverse(projectionMatrix),
+						.inverseViewMatrix = glm::inverse(viewMatrix),
+						.inverseProjectionViewMatrix = glm::inverse(projectionMatrix * viewMatrix),
+						.eyePos = pos,
+						.nearDistance = cameraComponent.nearPlaneDistance,
+						.farDistance = cameraComponent.farPlaneDistance
+					}
+				);
+
 
 				renderPipeline->Render(renderGraphBuilder, renderFrameContext);
+
+				auto renderGraph = renderGraphBuilder.Compile();
+				renderGraph.ExecuteGraph(context);
 
 				currentCommandBuffer->EndCommandBuffer();
 				wgb->SubmitCommandBufferForCurrentFrame(currentCommandBuffer);
