@@ -130,6 +130,12 @@ bool EngineCore::Initialize(LateCreateInfo& createInfo) {
 	renderingPipeline = AllocatorCore::Allocate<Renderer::RenderingPipeline>();
 
 	worldContextManager = AllocatorCore::Allocate<Grindstone::WorldContextManager>();
+
+	if (!isEditor) {
+		Grindstone::WorldContextSet* worldContext = worldContextManager->Create("Runtime");
+		worldContextManager->SetActiveWorldContextSet(worldContext);
+	}
+
 	pluginInterface->RegisterWorldContextFactory<Grindstone::Rendering::RenderGraphWorldContext>(Rendering::renderGraphWorldContextName);
 
 	{
