@@ -25,5 +25,6 @@ namespace Grindstone::Plugins {
 		void UnloadModule(const std::string& path);
 
 		std::map<std::string, Utilities::Modules::Handle> pluginModules;
+		std::map<std::string, std::vector<std::string>> pluginsMapByLoadStage;
 	};
 }
