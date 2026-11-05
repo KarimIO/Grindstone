@@ -55,8 +55,13 @@ Grindstone::Uuid ArchiveAssetLoader::GetUuidByAddress(AssetType assetType, std::
 	}
 
 	ArchiveDirectory::AssetTypeIndex& assetTypeSegment = archiveDirectory.assetTypeIndices[static_cast<size_t>(assetType)];
+	auto addressToUuidIterator = assetTypeSegment.assetUuidByAddress.find(address);
 
-	return assetTypeSegment.assetUuidByAddress[address];
+	if (addressToUuidIterator == assetTypeSegment.assetUuidByAddress.end()) {
+		return Grindstone::Uuid();
+	}
+
+	return addressToUuidIterator->second;
 }
 
 AssetLoadBinaryResult ArchiveAssetLoader::LoadAsset(const ArchiveDirectory::AssetInfo& assetInfo) {
