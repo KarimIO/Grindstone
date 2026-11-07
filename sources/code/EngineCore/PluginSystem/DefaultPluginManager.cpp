@@ -9,6 +9,8 @@
 #include <Windows.h>
 #endif
 
+#include "../../../../plugins/Grindstone.Script.CSharp/include/CSharpManager.hpp"
+
 #include "DefaultPluginManager.hpp"
 #include "Interface.hpp"
 
@@ -63,19 +65,48 @@ bool DefaultPluginManager::PreprocessPlugins() {
 
 	GS_ASSERT_ENGINE_WITH_MESSAGE(document.IsObject(), "Plugin Manifest document does not start with an object.");
 
-	for (auto parameter = document.MemberBegin(); parameter != document.MemberEnd(); parameter++) {
-		GS_ASSERT_ENGINE(parameter->name.IsString());
-		GS_ASSERT_ENGINE(parameter->value.IsArray());
+	for (auto loadStageIterator = document.MemberBegin(); loadStageIterator != document.MemberEnd(); loadStageIterator++) {
+		GS_ASSERT_ENGINE(loadStageIterator->name.IsString());
+		GS_ASSERT_ENGINE(loadStageIterator->value.IsArray());
 
-		const char* loadStage = parameter->name.GetString();
-		rapidjson::GenericArray array = parameter->value.GetArray();
+		const char* loadStage = loadStageIterator->name.GetString();
+		rapidjson::GenericArray loadStageBinaries = loadStageIterator->value.GetArray();
 
-		std::vector<std::string>& pluginsForLoadStage = pluginsMapByLoadStage[loadStage];
+		LoadStageList& pluginsForLoadStage = pluginsMapByLoadStage[loadStage];
 
-		for (const rapidjson::Value& binary : array) {
-			GS_ASSERT_ENGINE(binary.IsString());
-			std::string binaryName = std::filesystem::path(binary.GetString()).filename().string();
-			pluginsForLoadStage.emplace_back(binaryName);
+		for (size_t i = 0; i < loadStageBinaries.Size(); i++) {
+			rapidjson::Value& entry = loadStageBinaries[i];
+			GS_ASSERT_ENGINE(entry.IsObject());
+			GS_ASSERT_ENGINE(entry.HasMember("identifier"));
+			GS_ASSERT_ENGINE(entry.HasMember("filename"));
+			GS_ASSERT_ENGINE(entry.HasMember("binaryType"));
+
+			rapidjson::Value& identifierJsonValue = entry["identifier"];
+			rapidjson::Value& filenameJsonValue = entry["filename"];
+			rapidjson::Value& binaryTypeJsonValue = entry["binaryType"];
+			GS_ASSERT_ENGINE(identifierJsonValue.IsString());
+			GS_ASSERT_ENGINE(filenameJsonValue.IsString());
+			GS_ASSERT_ENGINE(binaryTypeJsonValue.IsString());
+
+			const char* identifierStr = identifierJsonValue.GetString();
+			const char* filenameStr = filenameJsonValue.GetString();
+			const char* binaryTypeStr = binaryTypeJsonValue.GetString();
+
+			BinaryType binaryType = BinaryType::NoBuild;
+			if (strcmp(binaryTypeStr, "cpp") == 0) {
+				binaryType = BinaryType::Cpp;
+			}
+			else if (strcmp(binaryTypeStr, "dotnet") == 0) {
+				binaryType = BinaryType::Dotnet;
+			}
+
+			pluginsForLoadStage.emplace_back(
+				BinaryEntry{
+					.binaryIdentifier = identifierStr,
+					.binaryFilename = filenameStr,
+					.buildType = binaryType
+				}
+			);
 		}
 	}
 
@@ -88,9 +119,18 @@ void DefaultPluginManager::LoadPluginsByStage(std::string_view stageName) {
 		return;
 	}
 
-	std::vector<std::string>& pluginsForLoadStage = loadStageIterator->second;
-	for (const std::string& binaryFilename : pluginsForLoadStage) {
-		LoadModule(binaryFilename);
+	const LoadStageList& pluginsForLoadStage = loadStageIterator->second;
+	for (const BinaryEntry& entry : pluginsForLoadStage) {
+		if (entry.buildType == BinaryType::Cpp) {
+			GPRINT_INFO(LogSource::Editor, "[PluginSystem] In stage {}, mounting C++ (cmake) plugin: {}", stageName, entry.binaryIdentifier);
+			LoadModule(entry.binaryFilename);
+		}
+		else {
+			auto scriptManager = Grindstone::EngineCore::GetInstance().TryGetService<Grindstone::Scripting::CSharp::CSharpManager>();
+			GPRINT_INFO(LogSource::Editor, "[PluginSystem] In stage {}, mounting C# (dotnet) plugin: {}", stageName, entry.binaryIdentifier);
+			scriptManager->LoadAssemblyIntoMap(entry.binaryIdentifier);
+			break;
+		}
 	}
 }
 
@@ -100,14 +140,27 @@ void DefaultPluginManager::UnloadPluginsByStage(std::string_view stageName) {
 		return;
 	}
 
-	std::vector<std::string>& pluginsForLoadStage = loadStageIterator->second;
-	for (const std::string& binaryFilename : pluginsForLoadStage) {
-		UnloadModule(binaryFilename);
+	const LoadStageList& pluginsForLoadStage = loadStageIterator->second;
+	for (const BinaryEntry& entry : pluginsForLoadStage) {
+		UnloadModule(entry.binaryFilename);
 	}
 }
 
 std::filesystem::path Grindstone::Plugins::DefaultPluginManager::GetLibraryPath(std::string_view pluginName, std::string_view libraryName) {
-	return std::filesystem::path(); // TODO: Implement
+	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+
+	std::string searchBinaryName = std::string(pluginName) + std::string(":") + std::string(libraryName);
+	for (const auto& loadStageIterator : pluginsMapByLoadStage) {
+		const std::string& pluginName = loadStageIterator.first;
+		const LoadStageList& pluginsForLoadStage = loadStageIterator.second;
+		for (const BinaryEntry& entry : pluginsForLoadStage) {
+			if (entry.binaryIdentifier == searchBinaryName) {
+				return engineCore.GetBinaryPath() / CMAKE_INTDIR /  (entry.binaryFilename + ".dll");
+			}
+		}
+	}
+
+	return "";
 }
 
 bool DefaultPluginManager::LoadModule(const std::string& path) {

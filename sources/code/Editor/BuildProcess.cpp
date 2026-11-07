@@ -6,6 +6,8 @@
 #include <utility>
 #include <vector>
 
+#include "rapidjson/document.h"
+#include "rapidjson/prettywriter.h"
 
 #include <Common/Logger.hpp>
 #include <Common/Window/Window.hpp>
@@ -122,7 +124,7 @@ namespace Grindstone::Editor {
 
 		for (const Plugins::MetaData& plugin : pluginManager) {
 			for (const Plugins::MetaData::Binary& binary : plugin.binaries) {
-				std::string lower = Grindstone::Utils::ToLower(binary.libraryRelativePath.string());
+				std::string lower = Grindstone::Utils::ToLower(binary.name);
 				if (lower.find("editor") != std::string::npos) {
 					continue;
 				}
@@ -142,17 +144,19 @@ namespace Grindstone::Editor {
 	}
 
 	static InstallStage MarkMetaFiles(const std::filesystem::path& targetPath) {
-		InstallStage stage {
+		InstallStage stage{
 			.displayName = "Configuration Files",
 			.stageSize01 = 0.1f
 		};
 
 		Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
-		const std::filesystem::path engineBinPath = engineCore.GetEngineBinaryPath();
+		const std::filesystem::path projectPath = engineCore.GetProjectPath();
 
 		InstallCopyFolder& folder = stage.installFolders.emplace_back();
-		folder.sourceFolderPath = engineBinPath;
-		folder.destinationFolderPath = targetPath / "bin" / configurationPath;
+		folder.sourceFolderPath = projectPath / "buildSettings";
+		folder.destinationFolderPath = targetPath / "buildSettings";
+
+		folder.installFiles.emplace(InstallCopyFile("scenesManifest.txt"));
 
 		return stage;
 	}
@@ -214,15 +218,52 @@ namespace Grindstone::Editor {
 		return isSuccessful;
 	}
 
+	enum class BinaryType {
+		Unknown,
+		Cpp,
+		Dotnet
+	};
+
+	struct BuildBinaryEntry {
+		std::string identifier;
+		std::string filename;
+		BinaryType binaryType;
+	};
+
 	static bool BuildPluginManifest(const std::filesystem::path& targetPath) {
 		const EngineCore& engine = Grindstone::Editor::Manager::GetEngineCore();
 		const std::filesystem::path engineBinPath = engine.GetEngineBinaryPath();
 		Grindstone::Plugins::EditorPluginManager& pluginManager = *static_cast<Grindstone::Plugins::EditorPluginManager*>(engine.GetPluginManager());
 
-		std::map<std::string, std::vector<std::string>> pluginBinaries;
+		std::map<std::string, std::vector<BuildBinaryEntry>> pluginBinaries;
 		for (const Plugins::MetaData& plugin : pluginManager) {
+			std::string pluginNameLower = Grindstone::Utils::ToLower(plugin.name);
+			if (pluginNameLower.find("editor") != std::string::npos) {
+				continue;
+			}
+
 			for (const Plugins::MetaData::Binary& binary : plugin.binaries) {
-				pluginBinaries[binary.loadStage].emplace_back(binary.libraryRelativePath.string());
+				std::string binaryNameLower = Grindstone::Utils::ToLower(binary.name);
+				if (binaryNameLower.find("editor") != std::string::npos) {
+					continue;
+				}
+
+				BinaryType binaryType;
+				switch (binary.buildType) {
+					default:
+						binaryType = BinaryType::Unknown;
+						break;
+					case Plugins::MetaData::BinaryBuildType::Cmake:
+						binaryType = BinaryType::Cpp;
+						break;
+					case Plugins::MetaData::BinaryBuildType::Dotnet:
+						binaryType = BinaryType::Dotnet;
+						break;
+				}
+
+				std::string binaryIdentifier = plugin.name + ":" + binary.name;
+				std::string binaryFilename = binary.libraryRelativePath.filename().string();
+				pluginBinaries[binary.loadStage].emplace_back(binaryIdentifier, binaryFilename, binaryType);
 			}
 		}
 
@@ -235,30 +276,42 @@ namespace Grindstone::Editor {
 		if (!writeStream.is_open()) {
 			return false;
 		}
+		
+		rapidjson::StringBuffer documentStringBuffer;
+		rapidjson::PrettyWriter<rapidjson::StringBuffer> documentWriter(documentStringBuffer);
 
-		bool hasWrittenNoStages = true;
-		writeStream << "{";
+		documentWriter.StartObject();
+
 		for (const auto& loadStage : pluginBinaries) {
-			if (hasWrittenNoStages) {
-				hasWrittenNoStages = false;
-			} else {
-				writeStream << ",";
-			}
-
-			writeStream << "\n\t\"" << loadStage.first << "\": [\n\t\t";
-			size_t loadStateBinaryCount = loadStage.second.size();
-			for (size_t i = 0; i < loadStateBinaryCount; ++i) {
-				writeStream << "\"" << loadStage.second[i] << "\"";
-				if (i < loadStateBinaryCount - 1) {
-					writeStream << ",\n\t\t";
+			documentWriter.Key(loadStage.first.c_str());
+			documentWriter.StartArray();
+			for (size_t i = 0; i < loadStage.second.size(); ++i) {
+				const BuildBinaryEntry& loadStageBinaryEntry = loadStage.second[i];
+				documentWriter.StartObject();
+				documentWriter.Key("identifier");
+				documentWriter.String(loadStageBinaryEntry.identifier.c_str());
+				documentWriter.Key("filename");
+				documentWriter.String(loadStageBinaryEntry.filename.c_str());
+				documentWriter.Key("buildType");
+				switch (loadStage.second[i].binaryType) {
+					default:
+						documentWriter.String("unknown");
+						break;
+					case BinaryType::Cpp:
+						documentWriter.String("cpp");
+						break;
+					case BinaryType::Dotnet:
+						documentWriter.String("dotnet");
+						break;
 				}
-				else {
-					writeStream << "\n\t";
-				}
+				documentWriter.EndObject();
 			}
-			writeStream << "]";
+			documentWriter.EndArray();
 		}
-		writeStream << "\n}\n";
+		
+		documentWriter.EndObject();
+
+		writeStream << documentStringBuffer.GetString();
 		writeStream.close();
 
 		return true;

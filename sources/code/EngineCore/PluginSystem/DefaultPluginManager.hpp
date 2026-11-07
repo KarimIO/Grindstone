@@ -13,6 +13,18 @@ namespace Grindstone::Plugins {
 
 	class DefaultPluginManager : public Grindstone::Plugins::IPluginManager {
 	public:
+		enum class BinaryType {
+			NoBuild,
+			Cpp,
+			Dotnet,
+		};
+
+		struct BinaryEntry {
+			std::string binaryIdentifier;
+			std::string binaryFilename;
+			BinaryType buildType;
+		};
+		using LoadStageList = std::vector<BinaryEntry>;
 		virtual ~DefaultPluginManager();
 	
 		virtual bool PreprocessPlugins() override;
@@ -25,6 +37,6 @@ namespace Grindstone::Plugins {
 		void UnloadModule(const std::string& path);
 
 		std::map<std::string, Utilities::Modules::Handle> pluginModules;
-		std::map<std::string, std::vector<std::string>> pluginsMapByLoadStage;
+		std::map<std::string, LoadStageList> pluginsMapByLoadStage;
 	};
 }
