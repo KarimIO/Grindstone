@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -106,31 +102,47 @@ namespace Grindstone {
 				return 0;
 			}
 
+			Type? type = assembly.GetType(className, false, true);
+			if (type == null) {
+				Grindstone.Logger.PrintError($"Failed to find class '{className}' in assembly '{assembly.GetName()}'");
+				return 0;
+			}
+			
+			object instance;
+			IntPtr instancePtr;
+
 			try {
-				Type? type = assembly.GetType(className);
-				if (type == null) {
-					Grindstone.Logger.PrintError($"Failed to find class '{className}' in assembly '{assembly.GetName()}'");
-					return 0;
-				}
-
-				object instance = Activator.CreateInstance(type)!;
+				instance = Activator.CreateInstance(type)!;
 				GCHandle handle = GCHandle.Alloc(instance);
-				IntPtr instancePtr = GCHandle.ToIntPtr(handle);
-
-				FieldInfo? field = type.GetField("entity", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-				if (field == null) {
-					Grindstone.Logger.PrintError($"Trying to create a non-smart component of type '{classNamePtr}' as a smart component. Cannot set entity ({entity}) in assembly '{assembly.GetName()}'.");
-				}
-				else {
-					field.SetValue(instance, new Entity(entity, new Scene(0)));
-				}
-
-				return instancePtr;
+				instancePtr = GCHandle.ToIntPtr(handle);
 			}
 			catch (Exception ex) {
 				Grindstone.Logger.PrintError($"Failed to get type '{className}' from assembly '{assembly.GetName()}': {ex.Message}");
 				return 0;
 			}
+			
+			try {
+				FieldInfo? field = type.GetField("entity", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+				if (field == null) {
+					Grindstone.Logger.PrintError($"Trying to create a non-smart component of type '{classNamePtr}' as a smart component. Cannot set entity ({entity}) in assembly '{assembly.GetName()}'.");
+				}
+				else {
+					Type targetEntityType = field.FieldType;
+
+					FieldInfo? sceneField = targetEntityType.GetField("scene", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+					Type targetSceneType = sceneField!.FieldType;
+
+					object targetSceneInstance = Activator.CreateInstance(targetSceneType, new object[] { (System.IntPtr)0 })!;
+					object targetEntityInstance = Activator.CreateInstance(targetEntityType, new object[] { entity, targetSceneInstance })!;
+					
+					field.SetValue(instance, targetEntityInstance);
+				}
+			}
+			catch (Exception ex) {
+				Grindstone.Logger.PrintError($"Failed to set entity in '{className}' from assembly '{assembly.GetName()}': {ex.Message}");
+			}
+
+			return instancePtr;
 		}
 
 		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
