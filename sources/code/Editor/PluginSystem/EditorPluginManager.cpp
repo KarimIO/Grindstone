@@ -1,24 +1,22 @@
 #include <Common/Graphics/Core.hpp>
 #include <Common/Logger.hpp>
+#include <Common/Logging.hpp>
+#include <Common/Platform/Build.hpp>
 #include <Editor/EditorManager.hpp>
+#include <Editor/PluginSystem/EditorPluginManager.hpp>
+#include <Editor/PluginSystem/PluginManifestFileLoader.hpp>
+#include <Editor/PluginSystem/PluginManifestLockFileLoader.hpp>
+#include <Editor/PluginSystem/PluginMetaFileLoader.hpp>
 #include <Editor/ScriptBuilder/CSharpProjectBuilder.hpp>
 #include <Editor/ScriptBuilder/SolutionBuilder.hpp>
 #include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/Utilities.hpp>
 #include <Grindstone.Script.CSharp/include/CSharpManager.hpp>
 
-#include <Common/Logging.hpp>
-
-#include "EditorPluginManager.hpp"
-#include "PluginManifestFileLoader.hpp"
-#include "PluginManifestLockFileLoader.hpp"
-#include "PluginMetaFileLoader.hpp"
-
 #include <queue>
 #include <ranges>
 #include <rapidjson/document.h>
 #include <string_view>
-#include <thread>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -28,123 +26,6 @@
 
 using namespace Grindstone::Plugins;
 using namespace Grindstone::Utilities;
-
-constexpr const char* configuration = CMAKE_INTDIR;
-
-static void PrintInferredSeverity(const std::string& line) {
-	std::string lineLower = Grindstone::Utils::ToLower(line);
-	Grindstone::LogSeverity severity = Grindstone::LogSeverity::Info;
-	if (lineLower.find("error") != std::string::npos) {
-		severity = Grindstone::LogSeverity::Error;
-	}
-	else if (lineLower.find("warn") != std::string::npos) {
-		severity = Grindstone::LogSeverity::Warning;
-	}
-
-	GPRINT(severity, Grindstone::LogSource::Editor, line.c_str());
-}
-
-static void ReadPipeLoop(HANDLE pipe, Grindstone::LogSeverity severity) {
-	DWORD bytesRead;
-	char buffer[4096]{ 0 };
-	std::string partial;
-	while (ReadFile(pipe, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
-		partial.append(buffer, bytesRead);
-		size_t pos;
-		while ((pos = partial.find('\n')) != std::string::npos) {
-			std::string line = partial.substr(0, pos);
-			PrintInferredSeverity(line);
-			partial.erase(0, pos + 1);
-		}
-	}
-	if (!partial.empty()) {
-		PrintInferredSeverity(partial);  // final line without newline
-	}
-}
-
-static bool RunCommand(char* commandLine, const char* workingDirectory) {
-	SECURITY_ATTRIBUTES securityAttribs{
-		.nLength = sizeof(securityAttribs),
-		.lpSecurityDescriptor = NULL,
-		.bInheritHandle = TRUE
-	};
-
-	HANDLE stdoutRead, stdoutWrite, stderrRead, stderrWrite;
-	CreatePipe(&stdoutRead, &stdoutWrite, &securityAttribs, 0);
-	SetHandleInformation(stdoutRead, HANDLE_FLAG_INHERIT, 0);
-	CreatePipe(&stderrRead, &stderrWrite, &securityAttribs, 0);
-	SetHandleInformation(stderrRead, HANDLE_FLAG_INHERIT, 0);
-
-	STARTUPINFOA si{
-		.cb = sizeof(si),
-		.dwFlags = STARTF_USESTDHANDLES,
-		.hStdInput = NULL,
-		.hStdOutput = stdoutWrite,
-		.hStdError = stderrWrite,
-	};
-
-	PROCESS_INFORMATION pi{};
-	BOOL success = CreateProcessA(
-		NULL,
-		static_cast<LPSTR>(commandLine),
-		NULL,
-		NULL,
-		TRUE,
-		0,
-		NULL,
-		workingDirectory,
-		&si,
-		&pi
-	);
-
-	CloseHandle(stdoutWrite);
-	CloseHandle(stderrWrite);
-
-	if (!success) {
-		CloseHandle(stdoutRead);
-		CloseHandle(stderrRead);
-		return false;
-	}
-
-	std::thread readInfoThread(ReadPipeLoop, stdoutRead, Grindstone::LogSeverity::Info);
-	std::thread readErrThread(ReadPipeLoop, stderrRead, Grindstone::LogSeverity::Error);
-
-	WaitForSingleObject(pi.hProcess, INFINITE);
-	CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);
-
-	readInfoThread.join();
-	readErrThread.join();
-
-	return true;
-}
-
-static bool RunCMakeCommand(const std::vector<std::string>& cmakeTargets) {
-	std::string workingDirectory = EngineCore::GetInstance().GetEngineBinaryPath().parent_path().string();
-
-	std::ostringstream cmdStream;
-	cmdStream << "cmake";
-	cmdStream << " --build .";
-	cmdStream << " --config " << configuration;
-	cmdStream << " --parallel";
-	cmdStream << " --target";
-	for (const std::string& target : cmakeTargets) {
-		cmdStream << " \"" << target << "\"";
-	}
-	std::string commandLine = cmdStream.str();
-	return RunCommand(commandLine.data(), workingDirectory.empty() ? nullptr : workingDirectory.c_str());
-}
-
-static bool RunDotnetCommand(const std::filesystem::path& path) {
-	std::string workingDirectory = (EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins").string();
-
-	std::ostringstream cmdStream;
-	cmdStream << "dotnet build ";
-	cmdStream << "--configuration " << configuration << " ";
-	cmdStream << '\"' << path.string() << '\"';
-	std::string commandLine = cmdStream.str();
-	return RunCommand(commandLine.data(), workingDirectory.empty() ? nullptr : workingDirectory.c_str());
-}
 
 static void CompileBinaries(const std::filesystem::path& solutionPath, const std::vector<Grindstone::Plugins::MetaData>& resolvedPluginManifest) {
 	std::vector<std::string> cmakeTargetsToCompile;
@@ -173,10 +54,10 @@ static void CompileBinaries(const std::filesystem::path& solutionPath, const std
 	}
 
 	if (!cmakeTargetsToCompile.empty()) {
-		RunCMakeCommand(cmakeTargetsToCompile);
+		Grindstone::Platform::BuildCmakeSolution(Platform::Configuration::Auto, cmakeTargetsToCompile);
 	}
 
-	RunDotnetCommand(solutionPath);
+	Grindstone::Platform::BuildDotnetSolution(Platform::Configuration::Auto, solutionPath);
 }
 
 struct AssemblyReference {
