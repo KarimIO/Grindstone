@@ -7,6 +7,8 @@
 #include <EngineCore/Utils/Utilities.hpp>
 #include <Grindstone.Script.CSharp/include/CSharpManager.hpp>
 
+#include <Common/Logging.hpp>
+
 #include "EditorPluginManager.hpp"
 #include "PluginManifestFileLoader.hpp"
 #include "PluginManifestLockFileLoader.hpp"
@@ -18,16 +20,29 @@
 #include <string_view>
 #include <thread>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 #include <windows.h>
 
 #include "PluginManifestData.hpp"
-#include <variant>
 
 using namespace Grindstone::Plugins;
 using namespace Grindstone::Utilities;
 
 constexpr const char* configuration = CMAKE_INTDIR;
+
+static void PrintInferredSeverity(const std::string& line) {
+	std::string lineLower = Grindstone::Utils::ToLower(line);
+	Grindstone::LogSeverity severity = Grindstone::LogSeverity::Info;
+	if (lineLower.find("error") != std::string::npos) {
+		severity = Grindstone::LogSeverity::Error;
+	}
+	else if (lineLower.find("warn") != std::string::npos) {
+		severity = Grindstone::LogSeverity::Warning;
+	}
+
+	GPRINT(severity, Grindstone::LogSource::Editor, line.c_str());
+}
 
 static void ReadPipeLoop(HANDLE pipe, Grindstone::LogSeverity severity) {
 	DWORD bytesRead;
@@ -38,12 +53,12 @@ static void ReadPipeLoop(HANDLE pipe, Grindstone::LogSeverity severity) {
 		size_t pos;
 		while ((pos = partial.find('\n')) != std::string::npos) {
 			std::string line = partial.substr(0, pos);
-			GPRINT(severity, Grindstone::LogSource::Editor, line.c_str());
+			PrintInferredSeverity(line);
 			partial.erase(0, pos + 1);
 		}
 	}
 	if (!partial.empty()) {
-		GPRINT(severity, Grindstone::LogSource::Editor, partial.c_str()); // final line without newline
+		PrintInferredSeverity(partial);  // final line without newline
 	}
 }
 
