@@ -70,7 +70,6 @@ namespace Grindstone::Editor {
 		void SetPlayMode(PlayMode newPlayMode);
 		PlayMode GetPlayMode() const;
 		const std::filesystem::path& GetProjectPath() const;
-		const std::filesystem::path& GetAssetsPath() const;
 		const std::filesystem::path& GetCompiledAssetsPath() const;
 		const std::filesystem::path& GetEngineBinariesPath() const;
 		bool OnKeyPress(Grindstone::Events::BaseEvent* ev);
@@ -86,7 +85,6 @@ namespace Grindstone::Editor {
 		void TransferPlayMode(PlayMode newPlayMode);
 	private:
 		std::filesystem::path projectPath;
-		std::filesystem::path assetsPath;
 		std::filesystem::path compiledAssetsPath;
 		std::filesystem::path engineBinariesPath;
 		bool shouldClose = false;

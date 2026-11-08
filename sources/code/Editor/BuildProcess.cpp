@@ -6,10 +6,10 @@
 #include <utility>
 #include <vector>
 
-#include "rapidjson/document.h"
-#include "rapidjson/prettywriter.h"
+#include <rapidjson/prettywriter.h>
 
 #include <Common/Logger.hpp>
+#include <Common/Platform/Build.hpp>
 #include <Common/Window/Window.hpp>
 #include <Common/Window/WindowManager.hpp>
 #include <Editor/EditorManager.hpp>
@@ -119,7 +119,6 @@ namespace Grindstone::Editor {
 		};
 
 		const EngineCore& engine = Grindstone::Editor::Manager::GetEngineCore();
-		const std::filesystem::path engineBinPath = engine.GetEngineBinaryPath();
 		Grindstone::Plugins::EditorPluginManager& pluginManager = *static_cast<Grindstone::Plugins::EditorPluginManager*>(engine.GetPluginManager());
 
 		for (const Plugins::MetaData& plugin : pluginManager) {
@@ -162,14 +161,6 @@ namespace Grindstone::Editor {
 	}
 
 	static bool MarkNecessaryFiles(const std::filesystem::path& targetPath, InstallPlan& installPlan) {
-		const EngineCore& engine = Grindstone::Editor::Manager::GetEngineCore();
-		const std::filesystem::path engineBinPath = engine.GetEngineBinaryPath();
-		const std::filesystem::path projectBinPath = engine.GetBinaryPath();
-		const std::filesystem::path sourceBuildSettingsPath = Editor::Manager::GetInstance().GetProjectPath() / "buildSettings";
-
-		const std::filesystem::path targetCompiledAssetsPath = "archives";
-		const std::filesystem::path targetBuildSettingsPath = "buildSettings";
-
 		installPlan.stages.emplace_back(MarkAppBinaries(targetPath));
 		installPlan.stages.emplace_back(MarkPluginBinaries(targetPath));
 		installPlan.stages.emplace_back(MarkMetaFiles(targetPath));
@@ -232,7 +223,6 @@ namespace Grindstone::Editor {
 
 	static bool BuildPluginManifest(const std::filesystem::path& targetPath) {
 		const EngineCore& engine = Grindstone::Editor::Manager::GetEngineCore();
-		const std::filesystem::path engineBinPath = engine.GetEngineBinaryPath();
 		Grindstone::Plugins::EditorPluginManager& pluginManager = *static_cast<Grindstone::Plugins::EditorPluginManager*>(engine.GetPluginManager());
 
 		std::map<std::string, std::vector<BuildBinaryEntry>> pluginBinaries;
@@ -331,6 +321,17 @@ namespace Grindstone::Editor {
 		}
 
 		std::filesystem::create_directories(targetPath);
+
+		Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+		Grindstone::Editor::Manager& editorManager = Editor::Manager::GetInstance();
+		std::filesystem::path solutionPath = editorManager.GetProjectPath();
+		solutionPath = solutionPath / (solutionPath.filename().string() + ".slnx");
+
+		std::filesystem::path installPath = engineCore.GetEngineBasePath() / "build" / "package";
+
+		Grindstone::Platform::BuildCmakeSolution(Platform::Configuration::Release);
+		Grindstone::Platform::BuildDotnetSolution(Platform::Configuration::Release, solutionPath);
+		Grindstone::Platform::InstallCmakeBinaries(Platform::Configuration::Release, installPath);
 
 		InstallPlan installPlan;
 		if (!MarkNecessaryFiles(targetPath, installPlan)) {

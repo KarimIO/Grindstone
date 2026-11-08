@@ -12,4 +12,5 @@ namespace Grindstone::Platform {
 	};
 
 	const char* ConfigurationToString(Grindstone::Platform::Configuration configuration);
+	const char* ConfigurationToStringLower(Grindstone::Platform::Configuration configuration);
 }

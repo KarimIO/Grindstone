@@ -54,7 +54,7 @@ static void CompileBinaries(const std::filesystem::path& solutionPath, const std
 	}
 
 	if (!cmakeTargetsToCompile.empty()) {
-		Grindstone::Platform::BuildCmakeSolution(Platform::Configuration::Auto, cmakeTargetsToCompile);
+		Grindstone::Platform::BuildCmakeTargets(Platform::Configuration::Auto, cmakeTargetsToCompile);
 	}
 
 	Grindstone::Platform::BuildDotnetSolution(Platform::Configuration::Auto, solutionPath);
@@ -202,7 +202,7 @@ void EditorPluginManager::AddPluginsFolder(const std::filesystem::path& path) {
 }
 
 void EditorPluginManager::ResolvePlugins(std::vector<Grindstone::Plugins::ManifestData>& manifestResults) {
-	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path();
+	std::filesystem::path basePath = Grindstone::EngineCore::GetInstance().GetEngineBasePath();
 
 	// TODO: Get dependencies that weren't in the lock file by passing to a queue in a while loop and checking each plugin's deps.
 	for (Grindstone::Plugins::ManifestData& manifestData : manifestResults) {

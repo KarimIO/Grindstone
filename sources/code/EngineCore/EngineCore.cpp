@@ -33,9 +33,8 @@ bool EngineCore::EarlyInitialize(EarlyCreateInfo& createInfo) {
 	isEditor = createInfo.isEditor;
 	projectPath = createInfo.projectPath;
 	engineBinaryPath = createInfo.engineBinaryPath;
+	engineBasePath = engineBinaryPath.parent_path().parent_path();
 	binaryPath = projectPath / "bin";
-	assetsPath = projectPath / "compiledAssets";
-	engineAssetsPath = engineBinaryPath.parent_path() / "engineassets";
 
 	const size_t megabytesInGig = 1024u;
 	if (!AllocatorCore::Initialize(megabytesInGig * 2u)) {
@@ -350,20 +349,12 @@ std::filesystem::path EngineCore::GetBinaryPath() const {
 	return binaryPath;
 }
 
+std::filesystem::path EngineCore::GetEngineBasePath() const {
+	return engineBasePath;
+}
+
 std::filesystem::path EngineCore::GetEngineBinaryPath() const {
 	return engineBinaryPath;
-}
-
-std::filesystem::path EngineCore::GetAssetsPath() const {
-	return assetsPath;
-}
-
-std::filesystem::path EngineCore::GetEngineAssetsPath() const {
-	return engineAssetsPath;
-}
-
-std::filesystem::path EngineCore::GetAssetPath(std::string subPath) const {
-	return assetsPath / subPath;
 }
 
 Profiler::Manager* EngineCore::GetProfiler() const {
@@ -371,16 +362,12 @@ Profiler::Manager* EngineCore::GetProfiler() const {
 }
 
 bool EngineCore::OnTryQuit(Grindstone::Events::BaseEvent* ev) {
-	const auto castedEv = dynamic_cast<Grindstone::Events::WindowTryQuitEvent*>(ev);
 	shouldClose = true;
-
 	return false;
 }
 
 bool EngineCore::OnForceQuit(Grindstone::Events::BaseEvent* ev) {
-	const auto castedEv = dynamic_cast<Grindstone::Events::WindowTryQuitEvent*>(ev);
 	shouldClose = true;
-
 	return false;
 }
 

@@ -165,7 +165,7 @@ bool ImguiEditor::OnWindowResize(Events::BaseEvent* ev) {
 void ImguiEditor::SetupFonts() {
 	auto& io = ImGui::GetIO();
 
-	std::filesystem::path fontFolder = engineCore->GetEngineBinaryPath().parent_path() / "engineassets/editor/fonts";
+	std::filesystem::path fontFolder = engineCore->GetEngineBasePath() / "engineassets/editor/fonts";
 	std::filesystem::path openSansBoldPath = fontFolder / "OpenSans-Bold.ttf";
 	std::filesystem::path openSansItalicPath = fontFolder / "OpenSans-Italic.ttf";
 	std::filesystem::path openSansRegularPath = fontFolder / "OpenSans-Regular.ttf";
