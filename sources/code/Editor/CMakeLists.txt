@@ -107,10 +107,10 @@ find_package(efsw CONFIG REQUIRED)
 find_package(gl3w CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 
-find_package(unofficial-imguizmo CONFIG REQUIRED)
+find_package(imguizmo CONFIG REQUIRED)
 find_package(unofficial-pcre CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(unofficial-libgit2 CONFIG REQUIRED)
+find_package(libgit2 CONFIG REQUIRED)
 
 add_executable(Editor ${EDITOR_HEADERS} ${EDITOR_SOURCES})
 
@@ -148,11 +148,11 @@ target_link_libraries(
 	efsw::efsw
 	unofficial::pcre::pcre
 	ZLIB::ZLIB
-	unofficial::libgit2::libgit2
+	libgit2::libgit2package
 	unofficial::gl3w::gl3w
 	glm::glm
 	opengl32
-	imgui::imgui unofficial::imguizmo::imguizmo
+	imgui::imgui imguizmo::imguizmo
 	${CMAKE_DL_LIBS}
 	Common EditorCommon
 )

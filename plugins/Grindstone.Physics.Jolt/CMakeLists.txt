@@ -45,8 +45,8 @@ set_target_properties(PluginJoltPhysics PROPERTIES
 )
 target_precompile_headers(PluginJoltPhysics PUBLIC ${INC}/pch.hpp)
 
-find_package(unofficial-joltphysics CONFIG REQUIRED)
-target_link_libraries(PluginJoltPhysics ${CORE_LIBS} Common unofficial::joltphysics::Jolt)
+find_package(Jolt CONFIG REQUIRED)
+target_link_libraries(PluginJoltPhysics ${CORE_LIBS} Common Jolt::Jolt)
 
 add_library(PluginJoltPhysicsEditor MODULE ${SRC}/Editor.cpp ${SRC}/PhysicsSettings.cpp ${INC}/PhysicsSettings.hpp ${CORE_UTILS} ${SOURCE_REFLECTION} ${HEADER_REFLECTION})
 set_property(TARGET PluginJoltPhysicsEditor PROPERTY COMPILE_WARNING_AS_ERROR ON)
