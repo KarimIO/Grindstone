@@ -1,13 +1,14 @@
 {
   "name": "grindstone",
   "version": "0.15.2",
+  "builtin-baseline": "aadc0260e4a9f3bd6c89a3f988c9c8f6de10d286",
   "dependencies": [
     "assimp",
     "bullet3",
     "directx-dxc",
     "drlibs",
-    "entt",
     "efsw",
+    "entt",
     "fmt",
     "gl3w",
     "glfw3",
@@ -26,9 +27,9 @@
     "joltphysics",
     "libgit2",
     "nethost",
-    "pcre",
     "opengl",
     "opengl-registry",
+    "pcre",
     "rapidjson",
     "recastnavigation",
     "spirv-reflect",
@@ -38,6 +39,5 @@
     "vulkan-memory-allocator",
     "vulkan-utility-libraries",
     "zlib"
-  ],
-  "builtin-baseline": "aadc0260e4a9f3bd6c89a3f988c9c8f6de10d286"
+  ]
 }
