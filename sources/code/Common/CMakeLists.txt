@@ -32,7 +32,6 @@ file(GLOB_RECURSE HEADER_ASSETS "${COMMON_DIR}/Assets/*.hpp")
 source_group("Source Files\\Assets" FILES ${SOURCE_ASSETS})
 source_group("Header Files\\Assets" FILES ${HEADER_ASSETS})
 
-
 file(GLOB_RECURSE SOURCE_BLACKBOARD "${COMMON_DIR}/Blackboard/*.cpp")
 file(GLOB_RECURSE HEADER_BLACKBOARD "${COMMON_DIR}/Blackboard/*.hpp")
 source_group("Source Files\\Blackboard" FILES ${SOURCE_BLACKBOARD})
@@ -78,6 +77,11 @@ file(GLOB_RECURSE HEADER_MEMORY "${COMMON_DIR}/Memory/*.hpp")
 source_group("Source Files\\Memory" FILES ${SOURCE_MEMORY})
 source_group("Header Files\\Memory" FILES ${HEADER_MEMORY})
 
+file(GLOB_RECURSE SOURCE_PLATFORM "${COMMON_DIR}/Platform/*.cpp")
+file(GLOB_RECURSE HEADER_PLATFORM "${COMMON_DIR}/Platform/*.hpp")
+source_group("Source Files\\Platform" FILES ${SOURCE_PLATFORM})
+source_group("Header Files\\Platform" FILES ${HEADER_PLATFORM})
+
 file(GLOB_RECURSE SOURCE_RENDERING "${COMMON_DIR}/Rendering/*.cpp")
 file(GLOB_RECURSE HEADER_RENDERING "${COMMON_DIR}/Rendering/*.hpp")
 source_group("Source Files\\Rendering" FILES ${SOURCE_RENDERING})
@@ -110,6 +114,7 @@ set(COMMON_SOURCES
     ${SOURCE_GRAPHICS}
     ${SOURCE_INPUT}
     ${SOURCE_MEMORY}
+    ${SOURCE_PLATFORM}
     ${SOURCE_RENDERING}
     ${SOURCE_RESOURCE_PIPELINE}
     ${SOURCE_UTILITIES}
@@ -127,6 +132,7 @@ set(COMMON_HEADERS
     ${HEADER_GRAPHICS}
     ${HEADER_INPUT}
     ${HEADER_MEMORY}
+    ${HEADER_PLATFORM}
     ${HEADER_RENDERING}
     ${HEADER_RESOURCE_PIPELINE}
     ${HEADER_UTILITIES}

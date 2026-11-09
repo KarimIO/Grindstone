@@ -1,23 +1,24 @@
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <thread>
 
 #include <Common/Logger.hpp>
 #include <Common/ResourcePipeline/AssetType.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <EngineCore/Assets/Loaders/AssetLoader.hpp>
-#include <EngineCore/EngineCore.hpp>
 
 #include "AssetRegistry.hpp"
 #include "EditorManager.hpp"
 #include "FileAssetLoader.hpp"
-#include <chrono>
-#include <thread>
 
 using namespace Grindstone::Assets;
 
 static AssetLoadBinaryResult LoadBinary(Grindstone::Editor::AssetRegistry::Entry& entry) {
-	std::filesystem::path path = Grindstone::Editor::Manager::GetEngineCore().GetAssetPath(entry.uuid.ToString());
+	const Grindstone::Editor::Manager& editorManager = Grindstone::Editor::Manager::GetInstance();
+	const std::filesystem::path& compiledAssetsPath =  Grindstone::Editor::Manager::GetInstance().GetCompiledAssetsPath();
+	const std::filesystem::path path = compiledAssetsPath / entry.uuid.ToString();
 
 	if (!std::filesystem::exists(path)) {
 		return { AssetLoadStatus::FileNotFound, {} };
@@ -37,7 +38,9 @@ static AssetLoadBinaryResult LoadBinary(Grindstone::Editor::AssetRegistry::Entry
 }
 
 static AssetLoadTextResult LoadText(Grindstone::Editor::AssetRegistry::Entry& entry) {
-	std::filesystem::path path = Grindstone::Editor::Manager::GetEngineCore().GetAssetPath(entry.uuid.ToString());
+	const Grindstone::Editor::Manager& editorManager = Grindstone::Editor::Manager::GetInstance();
+	const std::filesystem::path& compiledAssetsPath =  Grindstone::Editor::Manager::GetInstance().GetCompiledAssetsPath();
+	const std::filesystem::path path = compiledAssetsPath / entry.uuid.ToString();
 
 	GPRINT_INFO(Grindstone::LogSource::Editor, "Loading text asset '{}' of type {}", entry.displayName, GetAssetTypeToString(entry.assetType));
 

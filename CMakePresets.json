@@ -2,10 +2,35 @@
     "version": 6,
     "configurePresets": [
         {
-            "name": "windows-release",
+            "name": "WindowsDebug",
             "generator": "Visual Studio 18 2026",
             "architecture": "x64",
-            "binaryDir": "${sourceDir}/build/windows-release",
+            "binaryDir": "${sourceDir}/build/WindowsDebug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            },
+            "vendor": {
+                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                    "enableMicrosoftCodeAnalysis": true,
+                    "enableClangTidyCodeAnalysis": true
+                }
+            }
+        },
+
+        {
+            "name": "LinuxDebug",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/LinuxDebug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+
+        {
+            "name": "WindowsRelease",
+            "generator": "Visual Studio 18 2026",
+            "architecture": "x64",
+            "binaryDir": "${sourceDir}/build/WindowsRelease",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             },
@@ -18,9 +43,9 @@
         },
 
         {
-            "name": "linux-release",
+            "name": "LinuxRelease",
             "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/linux-release",
+            "binaryDir": "${sourceDir}/build/LinuxRelease",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
@@ -28,8 +53,20 @@
     ],
     "buildPresets": [
         {
-            "name": "windows-release",
-            "configurePreset": "windows-release"
+            "name": "WindowsDebug",
+            "configurePreset": "WindowsDebug"
+        },
+        {
+            "name": "WindowsRelease",
+            "configurePreset": "WindowsRelease"
+        },
+        {
+            "name": "LinuxDebug",
+            "configurePreset": "LinuxDebug"
+        },
+        {
+            "name": "LinuxRelease",
+            "configurePreset": "LinuxRelease"
         }
     ]
 }

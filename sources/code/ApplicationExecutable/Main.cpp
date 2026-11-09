@@ -13,7 +13,7 @@ extern "C" {
 
 int main(int argc, char** argv) {
 	try {
-		std::string projectPath = std::filesystem::current_path().parent_path().string();
+		std::string projectPath = std::filesystem::current_path().parent_path().parent_path().string();
 		for (int i = 1; i < argc; ++i) {
 			if (strcmp(argv[i], "-projectpath") == 0 && argc > i + 1) {
 				projectPath = argv[i + 1];
@@ -47,14 +47,14 @@ int main(int argc, char** argv) {
 		earlyCreateInfo.engineBinaryPath = currentPath.c_str();
 		EngineCore* engineCore = createEngineFn();
 
-		if (engineCore->EarlyInitialize(earlyCreateInfo)) {
+		if (!engineCore->EarlyInitialize(earlyCreateInfo)) {
 			std::cerr << "Failed to initialize EngineCore Module.";
 			return 1;
 		}
 
 		EngineCore::LateCreateInfo lateCreateInfo{};
 
-		if (engineCore->Initialize(lateCreateInfo)) {
+		if (!engineCore->Initialize(lateCreateInfo)) {
 			std::cerr << "Failed to initialize EngineCore Module.";
 			return 1;
 		}

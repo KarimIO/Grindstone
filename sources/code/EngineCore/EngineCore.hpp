@@ -104,10 +104,8 @@ namespace Grindstone {
 		virtual WorldContextManager* GetWorldContextManager() const;
 		virtual std::filesystem::path GetProjectPath() const;
 		virtual std::filesystem::path GetBinaryPath() const;
+		virtual std::filesystem::path GetEngineBasePath() const;
 		virtual std::filesystem::path GetEngineBinaryPath() const;
-		virtual std::filesystem::path GetAssetsPath() const;
-		virtual std::filesystem::path GetEngineAssetsPath() const;
-		virtual std::filesystem::path GetAssetPath(std::string subPath) const;
 		virtual entt::registry& GetEntityRegistry();
 		virtual Renderer::RenderingPipeline* GetRenderingPipeline() const;
 
@@ -182,8 +180,7 @@ namespace Grindstone {
 		bool shouldClose = false;
 		std::filesystem::path projectPath;
 		std::filesystem::path binaryPath;
+		std::filesystem::path engineBasePath;
 		std::filesystem::path engineBinaryPath;
-		std::filesystem::path engineAssetsPath;
-		std::filesystem::path assetsPath;
 	};
 }

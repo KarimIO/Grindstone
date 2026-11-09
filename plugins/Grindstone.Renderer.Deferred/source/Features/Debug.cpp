@@ -82,7 +82,9 @@ void Grindstone::Renderer::Debug::Bind(
 ) {
 	auto renderModeResponse = context.blackboard.GetValue<uint32_t>("RenderMode");
 	if (renderModeResponse.HasError()) {
-		GPRINT_ERROR(LogSource::Rendering, "Debug: Unable to get render mode: {}", renderModeResponse.GetError());
+		if (renderModeResponse.GetError() != Blackboard::BlackboardError::KeyNotFound) {
+			GPRINT_ERROR(LogSource::Rendering, "Debug: Unable to get render mode: {}", renderModeResponse.GetError());
+		}
 		return;
 	}
 

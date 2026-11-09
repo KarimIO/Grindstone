@@ -142,6 +142,10 @@ namespace Grindstone::Assets::AssetPackSerializer {
 		const std::string outputFilename = archiveName + "_" + std::to_string(bufferIndex) + ".garc";
 		const std::filesystem::path outputPath = outputDirectory / outputFilename;
 
+		if (!std::filesystem::exists(outputDirectory)) {
+			std::filesystem::create_directories(outputDirectory);
+		}
+
 		std::ofstream output(outputPath, std::ios::binary);
 
 		if (!output.is_open()) {

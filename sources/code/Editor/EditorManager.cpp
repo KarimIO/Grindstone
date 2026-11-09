@@ -99,7 +99,6 @@ EngineCore& Manager::GetEngineCore() {
 
 bool Manager::Initialize(const std::unordered_map<std::string, std::string>& cmdLineArgs, std::filesystem::path projectPath) {
 	this->projectPath = projectPath;
-	assetsPath = this->projectPath / "assets";
 	compiledAssetsPath = this->projectPath / "compiledAssets";
 	engineBinariesPath = std::filesystem::current_path();
 
@@ -239,10 +238,6 @@ const std::filesystem::path& Manager::GetProjectPath() const {
 	return projectPath;
 }
 
-const std::filesystem::path& Manager::GetAssetsPath() const {
-	return assetsPath;
-}
-
 const std::filesystem::path& Manager::GetCompiledAssetsPath() const {
 	return compiledAssetsPath;
 }
@@ -331,7 +326,7 @@ bool Manager::LoadEngine() {
 	assetLoader = lateCreateInfo.assetLoader = Grindstone::Memory::AllocatorCore::Allocate<Assets::FileAssetLoader>();
 	Grindstone::Plugins::EditorPluginManager* pluginManager = Grindstone::Memory::AllocatorCore::Allocate<Grindstone::Plugins::EditorPluginManager>();
 	lateCreateInfo.pluginManagerOverride = pluginManager;
-	pluginManager->AddPluginsFolder(Grindstone::EngineCore::GetInstance().GetEngineBinaryPath().parent_path() / "plugins");
+	pluginManager->AddPluginsFolder(Grindstone::EngineCore::GetInstance().GetEngineBasePath() / "plugins");
 	pluginManager->AddPluginsFolder(Grindstone::Editor::Manager::GetInstance().GetProjectPath() / "plugins");
 	
 	pluginManager->PreprocessPlugins();
