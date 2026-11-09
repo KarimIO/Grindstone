@@ -1,43 +1,43 @@
 {
-	"name": "grindstone",
-	"version": "0.15.2",
-	"dependencies": [
-		"assimp",
-		"bullet3",
-		"directx-dxc",
-		"drlibs",
-		"entt",
-		"efsw",
-		"fmt",
-		"gl3w",
-		"glfw3",
-		"glm",
-		"gtest",
-		{
-			"name": "imgui",
-			"features": [
-				"docking-experimental",
-				"glfw-binding",
-				"opengl3-binding",
-				"vulkan-binding"
-			]
-		},
-		"imguizmo",
-		"joltphysics",
-		"libgit2",
-		"nethost",
-		"pcre",
-		"opengl",
-		"opengl-registry",
-		"rapidjson",
-		"recastnavigation",
-		"spirv-reflect",
-		"stb",
-		"vulkan",
-		"vulkan-headers",
-		"vulkan-memory-allocator",
-		"vulkan-utility-libraries",
-		"zlib"
-	],
-	"builtin-baseline": "f7423ee180c4b7f40d43402c2feb3859161ef625"
+  "name": "grindstone",
+  "version": "0.15.2",
+  "dependencies": [
+    "assimp",
+    "bullet3",
+    "directx-dxc",
+    "drlibs",
+    "entt",
+    "efsw",
+    "fmt",
+    "gl3w",
+    "glfw3",
+    "glm",
+    "gtest",
+    {
+      "name": "imgui",
+      "features": [
+        "docking-experimental",
+        "glfw-binding",
+        "opengl3-binding",
+        "vulkan-binding"
+      ]
+    },
+    "imguizmo",
+    "joltphysics",
+    "libgit2",
+    "nethost",
+    "pcre",
+    "opengl",
+    "opengl-registry",
+    "rapidjson",
+    "recastnavigation",
+    "spirv-reflect",
+    "stb",
+    "vulkan",
+    "vulkan-headers",
+    "vulkan-memory-allocator",
+    "vulkan-utility-libraries",
+    "zlib"
+  ],
+  "builtin-baseline": "aadc0260e4a9f3bd6c89a3f988c9c8f6de10d286"
 }
