@@ -46,7 +46,7 @@ void SettingsWindow::Render() {
 
 void SettingsWindow::RenderSideBar() {
 	ImGuiID assetTopBar = ImGui::GetID("#SettingsSidebar");
-	ImGui::BeginChildFrame(assetTopBar, ImVec2(), ImGuiWindowFlags_NoBackground);
+	ImGui::BeginChild(assetTopBar, ImVec2(), ImGuiWindowFlags_NoBackground);
 	float availWidth = ImGui::GetContentRegionAvail().x;
 	ImVec2 size = ImVec2{ availWidth , 0 };
 
@@ -62,7 +62,7 @@ void SettingsWindow::RenderSideBar() {
 		}
 	}
 
-	ImGui::EndChildFrame();
+	ImGui::EndChild();
 }
 
 void SettingsWindow::RenderSettingsPage() {

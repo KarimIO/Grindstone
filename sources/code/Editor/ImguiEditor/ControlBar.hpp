@@ -12,8 +12,8 @@ namespace Grindstone {
 				ControlBar(ImguiRenderer* imguiRenderer);
 				void Render();
 			private:
-				bool RenderButton(ImTextureID icon, bool isSelected);
-				void RenderManipulationButton(ImTextureID icon, ManipulationMode& selectedMode, ManipulationMode buttonMode);
+				bool RenderButton(const char* name, ImTextureID icon, bool isSelected);
+				void RenderManipulationButton(const char* name, ImTextureID icon, ManipulationMode& selectedMode, ManipulationMode buttonMode);
 				
 				ImVec4 selectedColor;
 				ImVec4 deselectedColor;

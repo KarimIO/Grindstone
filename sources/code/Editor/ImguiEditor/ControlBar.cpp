@@ -7,6 +7,24 @@ using namespace Grindstone;
 using namespace Grindstone::Editor;
 using namespace Grindstone::Editor::ImguiEditor;
 
+bool ControlBar::RenderButton(const char* name, ImTextureID icon, bool isSelected) {
+	ImGui::PushStyleColor(ImGuiCol_Button, isSelected ? selectedColor : deselectedColor);
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, isSelected ? selectedActiveColor : deselectedActiveColor);
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, isSelected ? selectedHighlightColor : deselectedHighlightColor);
+
+	int isPressed = ImGui::ImageButton(name, icon, ImVec2(16, 16), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0.0f, 0.0f, 0.0f, 0.0f), ImVec4(1.f, 1.f, 1.f, 1.f));
+
+	ImGui::PopStyleColor(3);
+
+	return isPressed;
+}
+
+void ControlBar::RenderManipulationButton(const char* name, ImTextureID icon, ManipulationMode& selectedMode, ManipulationMode buttonMode) {
+	if (RenderButton(name, icon, buttonMode == selectedMode)) {
+		selectedMode = buttonMode;
+	}
+}
+
 ControlBar::ControlBar(ImguiRenderer* imguiRenderer) {
 	pauseIcon = imguiRenderer->CreateTexture("controlbarIcons/PauseButton");
 	playIcon = imguiRenderer->CreateTexture("controlbarIcons/PlayButton");
@@ -31,11 +49,11 @@ void ControlBar::Render() {
 		deselectedActiveColor = ImVec4(1.f, 1.f, 1.f, 0.3f);
 
 		ManipulationMode& manipulationMode = editorManager.manipulationMode;
-		RenderManipulationButton(translateIcon, manipulationMode, ManipulationMode::Translate);
+		RenderManipulationButton("Translate", translateIcon, manipulationMode, ManipulationMode::Translate);
 		ImGui::SameLine();
-		RenderManipulationButton(rotateIcon, manipulationMode, ManipulationMode::Rotate);
+		RenderManipulationButton("Rotate", rotateIcon, manipulationMode, ManipulationMode::Rotate);
 		ImGui::SameLine();
-		RenderManipulationButton(scaleIcon, manipulationMode, ManipulationMode::Scale);
+		RenderManipulationButton("Scale", scaleIcon, manipulationMode, ManipulationMode::Scale);
 		ImGui::SameLine();
 
 		bool& isManipulatingInWorldSpace = editorManager.isManipulatingInWorldSpace;
@@ -49,29 +67,11 @@ void ControlBar::Render() {
 		ImGui::SetCursorPosX(centerX);
 		PlayMode playMode = editorManager.GetPlayMode();
 		bool isPlayMode = playMode == PlayMode::Play;
-		if (RenderButton(playIcon, isPlayMode)) {
+		if (RenderButton("Play", playIcon, isPlayMode)) {
 			PlayMode newMode = isPlayMode ? PlayMode::Editor : PlayMode::Play;
 			editorManager.SetPlayMode(newMode);
 		}
 
 		ImGui::End();
-	}
-}
-
-bool ControlBar::RenderButton(ImTextureID icon, bool isSelected) {
-	ImGui::PushStyleColor(ImGuiCol_Button, isSelected ? selectedColor : deselectedColor);
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, isSelected ? selectedActiveColor : deselectedActiveColor);
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, isSelected ? selectedHighlightColor : deselectedHighlightColor);
-
-	int isPressed = ImGui::ImageButton(icon, ImVec2(16, 16), ImVec2(0, 0), ImVec2(1, 1), 4, ImVec4(0.0f, 0.0f, 0.0f, 0.0f), ImVec4(1.f, 1.f, 1.f, 1.f));
-
-	ImGui::PopStyleColor(3);
-
-	return isPressed;
-}
-
-void ControlBar::RenderManipulationButton(ImTextureID icon, ManipulationMode& selectedMode, ManipulationMode buttonMode) {
-	if (RenderButton(icon, buttonMode == selectedMode)) {
-		selectedMode = buttonMode;
 	}
 }

@@ -69,7 +69,7 @@ void ConsolePanel::RenderButton(const char* title, ImTextureID icon, uint8_t sev
 
 void ConsolePanel::RenderTopbar() {
 	ImGuiID consoleTopBar = ImGui::GetID("#consoleTopBar");
-	ImGui::BeginChildFrame(consoleTopBar, ImVec2(0, 32), ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar);
+	ImGui::BeginChild(consoleTopBar, ImVec2(0, 32), ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar);
 
 	selectedColor = ImGui::GetStyleColorVec4(ImGuiCol_Button);
 	selectedHighlightColor = ImGui::GetStyleColorVec4(ImGuiCol_ButtonHovered);
@@ -160,7 +160,7 @@ void ConsolePanel::RenderTopbar() {
 			FilterSearch();
 		}
 	}
-	ImGui::EndChildFrame();
+	ImGui::EndChild();
 }
 
 ImTextureID ConsolePanel::GetLogSeverityIcon(LogSeverity severity) const {
@@ -216,7 +216,7 @@ void ConsolePanel::Render() {
 		RenderTopbar();
 
 		ImGuiID consoleMainArea = ImGui::GetID("#consoleMainArea");
-		ImGui::BeginChildFrame(consoleMainArea, ImVec2(0, height), ImGuiWindowFlags_NoBackground);
+		ImGui::BeginChild(consoleMainArea, ImVec2(0, height), ImGuiWindowFlags_NoBackground);
 
 		if (filteredMessage.size() == 0) {
 			ImGui::Text("No console messages found.");
@@ -233,7 +233,7 @@ void ConsolePanel::Render() {
 			ImGui::EndTable();
 		}
 
-		ImGui::EndChildFrame();
+		ImGui::EndChild();
 
 		ImGui::End();
 	}

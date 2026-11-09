@@ -99,7 +99,6 @@ void StatusBar::RenderGitWhenLoaded() {
 	ImGui::Image(gitBranchIcon, ImVec2(iconSize, iconSize));
 	ImGui::SetCursorPosY(cursorY);
 	ImGui::Text(gitBranchName.c_str());
-	ImGui::SetCursorPosY(cursorY);
 }
 
 void StatusBar::AlignToRight(float widthNeeded) {
