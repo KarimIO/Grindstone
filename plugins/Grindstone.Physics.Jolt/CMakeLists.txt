@@ -35,7 +35,7 @@ set_target_properties(PluginJoltPhysics PROPERTIES FOLDER Plugins/Physics)
 
 find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")
 target_compile_definitions(PluginJoltPhysics PUBLIC "JOLT_PHYSICS;PHYSICS_DLL;GLM_ENABLE_EXPERIMENTAL")
-target_compile_definitions(PluginJoltPhysics PUBLIC "$<$<CONFIG:Debug>:JPH_DEBUG_RENDERER;JPH_PROFILE_ENABLED>")
+#target_compile_definitions(PluginJoltPhysics PUBLIC "$<$<CONFIG:Debug>:JPH_DEBUG_RENDERER;JPH_PROFILE_ENABLED>")
 target_include_directories(PluginJoltPhysics PUBLIC ${CODE_DIR} ${ENTT_INCLUDE_DIRS} ${PLUGIN_DIR})
 
 set_target_properties(PluginJoltPhysics PROPERTIES
