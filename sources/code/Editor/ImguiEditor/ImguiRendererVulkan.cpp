@@ -344,13 +344,15 @@ ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
 }
 
 ImTextureID ImguiRendererVulkan::GetThumbnailAtlas() {
-	Editor::Manager& editorManager = Editor::Manager::GetInstance();
-	Grindstone::Editor::ThumbnailManager& thumbnailManager = editorManager.GetThumbnailManager();
-	Grindstone::GraphicsAPI::Image* image = thumbnailManager.GetThumbnailImage();
-	auto vkImage = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(image);
-	VkDescriptorSet descriptorSet = ImGui_ImplVulkan_AddTexture(vkImage->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	if (thumbnailDescriptorSet == nullptr) {
+		Editor::Manager& editorManager = Editor::Manager::GetInstance();
+		Grindstone::Editor::ThumbnailManager& thumbnailManager = editorManager.GetThumbnailManager();
+		Grindstone::GraphicsAPI::Image* image = thumbnailManager.GetThumbnailImage();
+		auto vkImage = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(image);
+		thumbnailDescriptorSet = ImGui_ImplVulkan_AddTexture(vkImage->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	}
 	
-	return (ImTextureID)descriptorSet;
+	return (ImTextureID)thumbnailDescriptorSet;
 }
 
 void ImguiRendererVulkan::CreateOrResizeWindow(
