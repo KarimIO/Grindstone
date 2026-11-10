@@ -1,8 +1,10 @@
 #pragma once
 
-#include "EngineCore/ECS/Entity.hpp"
-#include "EngineCore/CoreComponents/Tag/TagComponent.hpp"
-#include "EngineCore/CoreComponents/Parent/ParentComponent.hpp"
+#include <entt/entity/fwd.hpp>
+
+#include <EngineCore/CoreComponents/Parent/ParentComponent.hpp>
+#include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
+#include <EngineCore/ECS/Entity.hpp>
 
 namespace Grindstone {
 	namespace SceneManagement {
@@ -17,12 +19,11 @@ namespace Grindstone {
 
 			using EntityParentTagView = entt::basic_view<
 				entt::get_t<
-				entt::sigh_mixin<entt::basic_storage<entt::entity, entt::entity, std::allocator<entt::entity>, void>>,
-				entt::sigh_mixin<entt::basic_storage<Grindstone::TagComponent, entt::entity, std::allocator<Grindstone::TagComponent>, void>>,
-				entt::sigh_mixin<entt::basic_storage<Grindstone::ParentComponent, entt::entity, std::allocator<Grindstone::ParentComponent>, void>>
+					entt::sigh_mixin<entt::basic_storage<entt::entity, entt::entity, std::allocator<entt::entity>>>,
+					entt::sigh_mixin<entt::basic_storage<Grindstone::TagComponent, entt::entity, std::allocator<Grindstone::TagComponent>>>,
+					entt::sigh_mixin<entt::basic_storage<Grindstone::ParentComponent, entt::entity, std::allocator<Grindstone::ParentComponent>>>
 				>,
-				entt::exclude_t<>,
-				void
+				entt::exclude_t<>
 			>;
 
 			class SceneHeirarchyPanel {

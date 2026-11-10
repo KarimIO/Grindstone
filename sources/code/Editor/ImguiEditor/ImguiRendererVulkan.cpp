@@ -87,13 +87,14 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 
 	VkDescriptorPoolSize poolSizes[] = {
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
-		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1 }
+		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1 },
+		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 64 }
 	};
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-	poolInfo.maxSets = 2;
+	poolInfo.maxSets = 64;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(std::size(poolSizes));
 	poolInfo.pPoolSizes = poolSizes;
 
@@ -110,22 +111,28 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 
 	VkFormat colorFormat = static_cast<Grindstone::GraphicsAPI::Vulkan::WindowGraphicsBinding*>(wgb)->GetSwapchainVulkanFormat();
 
-	ImGui_ImplVulkan_InitInfo imguiInitInfo{};
-	imguiInitInfo.Instance = vulkanCore->GetInstance();
-	imguiInitInfo.RenderPass = nullptr;
-	imguiInitInfo.UseDynamicRendering = true;
-	imguiInitInfo.PipelineRenderingCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
-	imguiInitInfo.PipelineRenderingCreateInfo.pColorAttachmentFormats = &colorFormat;
-	imguiInitInfo.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
-	imguiInitInfo.PipelineRenderingCreateInfo.stencilAttachmentFormat = VkFormat::VK_FORMAT_UNDEFINED;
-	imguiInitInfo.PipelineRenderingCreateInfo.depthAttachmentFormat = VkFormat::VK_FORMAT_UNDEFINED;
-	imguiInitInfo.PhysicalDevice = vulkanCore->GetPhysicalDevice();
-	imguiInitInfo.Device = vulkanCore->GetDevice();
-	imguiInitInfo.Queue = vulkanCore->graphicsQueue;
-	imguiInitInfo.DescriptorPool = imguiPool;
-	imguiInitInfo.MinImageCount = 3;
-	imguiInitInfo.ImageCount = 3;
-	imguiInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+	ImGui_ImplVulkan_InitInfo imguiInitInfo{
+		.Instance = vulkanCore->GetInstance(),
+		.PhysicalDevice = vulkanCore->GetPhysicalDevice(),
+		.Device = vulkanCore->GetDevice(),
+		.Queue = vulkanCore->graphicsQueue,
+		.DescriptorPool = imguiPool,
+		.MinImageCount = 3,
+		.ImageCount = 3,
+		.PipelineInfoMain = ImGui_ImplVulkan_PipelineInfo{
+			.PipelineRenderingCreateInfo = VkPipelineRenderingCreateInfoKHR{
+				.sType = VkStructureType::VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
+				.colorAttachmentCount = 1,
+				.pColorAttachmentFormats = &colorFormat,
+				.depthAttachmentFormat = VkFormat::VK_FORMAT_UNDEFINED,
+				.stencilAttachmentFormat = VkFormat::VK_FORMAT_UNDEFINED
+			}
+		},
+		.PipelineInfoForViewports = {
+
+		},
+		.UseDynamicRendering = true
+	};
 
 	ImGui_ImplVulkan_Init(&imguiInitInfo);
 
@@ -139,7 +146,6 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 	}
 
 	VkCommandBuffer commandBuffer = vulkanCore->BeginSingleTimeCommands("Imgui::CreateFontsTexture");
-	ImGui_ImplVulkan_CreateFontsTexture();
 	vulkanCore->EndSingleTimeCommands(commandBuffer);
 
 	GraphicsAPI::DescriptorSetLayout::Binding layoutBinding{};
@@ -263,6 +269,16 @@ void ImguiRendererVulkan::PostRender() {
 	auto currentCommandBuffer = commandBuffers[window->GetCurrentImageIndex()];
 	ImGui::Render();
 
+
+	ImDrawData* imDrawData = ImGui::GetDrawData();
+	if (imDrawData->Textures != nullptr) {
+		for (ImTextureData* tex : *imDrawData->Textures) {
+			if (tex->Status != ImTextureStatus_OK) {
+				ImGui_ImplVulkan_UpdateTexture(tex);
+			}
+		}
+	}
+
 	auto vkCB = static_cast<GraphicsAPI::Vulkan::CommandBuffer*>(currentCommandBuffer);
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vkCB->GetCommandBuffer());
 
@@ -321,29 +337,22 @@ ImTextureID ImguiRendererVulkan::CreateTexture(std::filesystem::path path) {
 		return 0;
 	}
 
-	std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> samplerPair = { textureAsset->image, textureAsset->defaultSampler };
-	GraphicsAPI::DescriptorSet::Binding binding = GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler( &samplerPair );
+	auto vkImage = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(textureAsset->image);
 
-	auto pathAsStr = path.filename().string() + " Descriptor Set";
-	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
-	descriptorSetCreateInfo.debugName = pathAsStr.c_str();
-	descriptorSetCreateInfo.bindings = &binding;
-	descriptorSetCreateInfo.bindingCount = 1;
-	descriptorSetCreateInfo.layout = textureDescriptorLayout;
-	auto dset = Editor::Manager::GetEngineCore().GetGraphicsCore()->CreateDescriptorSet(descriptorSetCreateInfo);
-
-	auto descriptor = static_cast<Vulkan::DescriptorSet*>(dset)->GetDescriptorSet();
-
-	return (ImTextureID)(uintptr_t)descriptor;
+	VkDescriptorSet descriptorSet = ImGui_ImplVulkan_AddTexture(vkImage->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	return (ImTextureID)descriptorSet;
 }
 
 ImTextureID ImguiRendererVulkan::GetThumbnailAtlas() {
-	Editor::Manager& editorManager = Editor::Manager::GetInstance();
-	Grindstone::Editor::ThumbnailManager& thumbnailManager = editorManager.GetThumbnailManager();
-	Grindstone::GraphicsAPI::DescriptorSet* dset = thumbnailManager.GetAtlasTextureDescriptorSet();
-	Grindstone::GraphicsAPI::Vulkan::DescriptorSet* vkDset = static_cast<GraphicsAPI::Vulkan::DescriptorSet*>(dset);
+	if (thumbnailDescriptorSet == nullptr) {
+		Editor::Manager& editorManager = Editor::Manager::GetInstance();
+		Grindstone::Editor::ThumbnailManager& thumbnailManager = editorManager.GetThumbnailManager();
+		Grindstone::GraphicsAPI::Image* image = thumbnailManager.GetThumbnailImage();
+		auto vkImage = static_cast<Grindstone::GraphicsAPI::Vulkan::Image*>(image);
+		thumbnailDescriptorSet = ImGui_ImplVulkan_AddTexture(vkImage->GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	}
 	
-	return (ImTextureID)(uintptr_t)vkDset->GetDescriptorSet();
+	return (ImTextureID)thumbnailDescriptorSet;
 }
 
 void ImguiRendererVulkan::CreateOrResizeWindow(
@@ -356,7 +365,7 @@ void ImguiRendererVulkan::CreateOrResizeWindow(
 	VkDevice device = graphicsCore->GetDevice();
 	uint32_t graphicsFamily = graphicsCore->GetGraphicsFamily();
 
-	ImGui_ImplVulkanH_CreateOrResizeWindow(instance, physicalDevice, device, &g_MainWindowData, graphicsFamily, nullptr, width, height, wgb->GetMaxFramesInFlight());
+	ImGui_ImplVulkanH_CreateOrResizeWindow(instance, physicalDevice, device, &g_MainWindowData, graphicsFamily, nullptr, width, height, wgb->GetMaxFramesInFlight(), VkImageUsageFlagBits::VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 
 	// Send new imgui window data to window
 	std::vector<Vulkan::ImageSetNative> imguiImageSets;

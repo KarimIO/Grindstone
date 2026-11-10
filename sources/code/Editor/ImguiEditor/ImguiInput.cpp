@@ -38,13 +38,47 @@ bool ImguiInput::OnMouseScrolled(BaseEvent* ev) {
 	return true;
 }
 
+static ImGuiKey TranslateKeycodeToImgui(Grindstone::Events::KeyPressCode keycode) {
+	switch (keycode) {
+		case Grindstone::Events::KeyPressCode::Tab: return ImGuiKey_Tab;
+		case Grindstone::Events::KeyPressCode::ArrowLeft: return ImGuiKey_LeftArrow;
+		case Grindstone::Events::KeyPressCode::ArrowRight: return ImGuiKey_RightArrow;
+		case Grindstone::Events::KeyPressCode::ArrowUp: return ImGuiKey_UpArrow;
+		case Grindstone::Events::KeyPressCode::ArrowDown: return ImGuiKey_DownArrow;
+		case Grindstone::Events::KeyPressCode::PageUp: return ImGuiKey_PageUp;
+		case Grindstone::Events::KeyPressCode::PageDown: return ImGuiKey_PageDown;
+		case Grindstone::Events::KeyPressCode::Home: return ImGuiKey_Home;
+		case Grindstone::Events::KeyPressCode::End: return ImGuiKey_End;
+		case Grindstone::Events::KeyPressCode::Insert: return ImGuiKey_Insert;
+		case Grindstone::Events::KeyPressCode::Delete: return ImGuiKey_Delete;
+		case Grindstone::Events::KeyPressCode::Backspace: return ImGuiKey_Backspace;
+		case Grindstone::Events::KeyPressCode::Space: return ImGuiKey_Space;
+		case Grindstone::Events::KeyPressCode::Enter: return ImGuiKey_Enter;
+		case Grindstone::Events::KeyPressCode::Escape: return ImGuiKey_Escape;
+		case Grindstone::Events::KeyPressCode::A: return ImGuiKey_A;
+		case Grindstone::Events::KeyPressCode::C: return ImGuiKey_C;
+		case Grindstone::Events::KeyPressCode::V: return ImGuiKey_V;
+		case Grindstone::Events::KeyPressCode::X: return ImGuiKey_X;
+		case Grindstone::Events::KeyPressCode::Y: return ImGuiKey_Y;
+		case Grindstone::Events::KeyPressCode::Z: return ImGuiKey_Z;
+	}
+
+	return ImGuiKey_None;
+}
+
 bool ImguiInput::OnKeyPressed(BaseEvent* ev) {
 	KeyPressEvent* evCast = (KeyPressEvent*)ev;
-	io.KeysDown[(int)evCast->code] = evCast->isPressed;
 
-	io.KeyCtrl = io.KeysDown[(int)KeyPressCode::LeftControl] || io.KeysDown[(int)KeyPressCode::Control];
-	io.KeyShift = io.KeysDown[(int)KeyPressCode::LeftShift] || io.KeysDown[(int)KeyPressCode::Shift];
-	io.KeyAlt = io.KeysDown[(int)KeyPressCode::LeftAlt] || io.KeysDown[(int)KeyPressCode::Alt];
+	ImGuiKey keycode = TranslateKeycodeToImgui(evCast->code);
+	if (keycode == ImGuiKey_None) {
+		return false;
+	}
+
+	io.AddKeyEvent(keycode, evCast->isPressed);
+
+	// io.KeyCtrl = io.KeysData[(int)KeyPressCode::LeftControl] || io.KeysData[(int)KeyPressCode::Control];
+	// io.KeyShift = io.KeysData[(int)KeyPressCode::LeftShift] || io.KeysData[(int)KeyPressCode::Shift];
+	// io.KeyAlt = io.KeysData[(int)KeyPressCode::LeftAlt] || io.KeysData[(int)KeyPressCode::Alt];
 	// io.KeySuper = io.KeysDown[(int)KeyPressCode:] || io.KeysDown[(int)KeyPressCode::RIGHT_SUPER];
 
 	return true;
@@ -64,26 +98,4 @@ ImguiInput::ImguiInput(ImGuiIO& io, EngineCore* engineCore) : io(io) {
 	eventDispatcher->AddEventListener(EventType::MouseScrolled, std::bind(&ImguiInput::OnMouseScrolled, this, _1));
 	eventDispatcher->AddEventListener(EventType::KeyPress, std::bind(&ImguiInput::OnKeyPressed, this, _1));
 	eventDispatcher->AddEventListener(EventType::CharacterTyped, std::bind(&ImguiInput::OnCharacterTyped, this, _1));
-
-	io.KeyMap[ImGuiKey_Tab] = (int)Events::KeyPressCode::Tab;
-	io.KeyMap[ImGuiKey_LeftArrow] = (int)Events::KeyPressCode::ArrowLeft;
-	io.KeyMap[ImGuiKey_RightArrow] = (int)Events::KeyPressCode::ArrowRight;
-	io.KeyMap[ImGuiKey_UpArrow] = (int)Events::KeyPressCode::ArrowUp;
-	io.KeyMap[ImGuiKey_DownArrow] = (int)Events::KeyPressCode::ArrowDown;
-	io.KeyMap[ImGuiKey_PageUp] = (int)Events::KeyPressCode::PageUp;
-	io.KeyMap[ImGuiKey_PageDown] = (int)Events::KeyPressCode::PageDown;
-	io.KeyMap[ImGuiKey_Home] = (int)Events::KeyPressCode::Home;
-	io.KeyMap[ImGuiKey_End] = (int)Events::KeyPressCode::End;
-	io.KeyMap[ImGuiKey_Insert] = (int)Events::KeyPressCode::Insert;
-	io.KeyMap[ImGuiKey_Delete] = (int)Events::KeyPressCode::Delete;
-	io.KeyMap[ImGuiKey_Backspace] = (int)Events::KeyPressCode::Backspace;
-	io.KeyMap[ImGuiKey_Space] = (int)Events::KeyPressCode::Space;
-	io.KeyMap[ImGuiKey_Enter] = (int)Events::KeyPressCode::Enter;
-	io.KeyMap[ImGuiKey_Escape] = (int)Events::KeyPressCode::Escape;
-	io.KeyMap[ImGuiKey_A] = (int)Events::KeyPressCode::A;
-	io.KeyMap[ImGuiKey_C] = (int)Events::KeyPressCode::C;
-	io.KeyMap[ImGuiKey_V] = (int)Events::KeyPressCode::V;
-	io.KeyMap[ImGuiKey_X] = (int)Events::KeyPressCode::X;
-	io.KeyMap[ImGuiKey_Y] = (int)Events::KeyPressCode::Y;
-	io.KeyMap[ImGuiKey_Z] = (int)Events::KeyPressCode::Z;
 }

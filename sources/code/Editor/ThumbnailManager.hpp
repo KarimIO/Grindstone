@@ -29,6 +29,7 @@ namespace Grindstone::Editor {
 
 		bool Initialize();
 
+		Grindstone::GraphicsAPI::Image* GetThumbnailImage();
 		Grindstone::GraphicsAPI::DescriptorSet* GetAtlasTextureDescriptorSet();
 
 		AtlasCoords GetCoordsByIndex(uint32_t index) const;

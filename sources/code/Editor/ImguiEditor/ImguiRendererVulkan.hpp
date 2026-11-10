@@ -41,6 +41,7 @@ namespace Grindstone::Editor::ImguiEditor {
 		);
 
 		VkDescriptorPool imguiPool = nullptr;
+		VkDescriptorSet thumbnailDescriptorSet = nullptr;
 		Grindstone::GraphicsAPI::DescriptorSetLayout* textureDescriptorLayout = nullptr;
 		std::vector<GraphicsAPI::CommandBuffer*> commandBuffers;
 

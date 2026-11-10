@@ -35,7 +35,7 @@ set_target_properties(PluginJoltPhysics PROPERTIES FOLDER Plugins/Physics)
 
 find_path(ENTT_INCLUDE_DIRS "entt/entt.hpp")
 target_compile_definitions(PluginJoltPhysics PUBLIC "JOLT_PHYSICS;PHYSICS_DLL;GLM_ENABLE_EXPERIMENTAL")
-target_compile_definitions(PluginJoltPhysics PUBLIC "$<$<CONFIG:Debug>:JPH_DEBUG_RENDERER;JPH_PROFILE_ENABLED>")
+#target_compile_definitions(PluginJoltPhysics PUBLIC "$<$<CONFIG:Debug>:JPH_DEBUG_RENDERER;JPH_PROFILE_ENABLED>")
 target_include_directories(PluginJoltPhysics PUBLIC ${CODE_DIR} ${ENTT_INCLUDE_DIRS} ${PLUGIN_DIR})
 
 set_target_properties(PluginJoltPhysics PROPERTIES
@@ -45,8 +45,8 @@ set_target_properties(PluginJoltPhysics PROPERTIES
 )
 target_precompile_headers(PluginJoltPhysics PUBLIC ${INC}/pch.hpp)
 
-find_package(unofficial-joltphysics CONFIG REQUIRED)
-target_link_libraries(PluginJoltPhysics ${CORE_LIBS} Common unofficial::joltphysics::Jolt)
+find_package(Jolt CONFIG REQUIRED)
+target_link_libraries(PluginJoltPhysics ${CORE_LIBS} Common Jolt::Jolt)
 
 add_library(PluginJoltPhysicsEditor MODULE ${SRC}/Editor.cpp ${SRC}/PhysicsSettings.cpp ${INC}/PhysicsSettings.hpp ${CORE_UTILS} ${SOURCE_REFLECTION} ${HEADER_REFLECTION})
 set_property(TARGET PluginJoltPhysicsEditor PROPERTY COMPILE_WARNING_AS_ERROR ON)

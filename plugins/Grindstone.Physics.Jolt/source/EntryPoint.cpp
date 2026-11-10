@@ -3,6 +3,7 @@
 #include <string>
 
 #include <Jolt/Jolt.h>
+#include <Jolt/Core/Factory.h>
 #include <Jolt/Core/Memory.h>
 #include <Jolt/RegisterTypes.h>
 
@@ -67,6 +68,11 @@ static void* JoltPhysAllocate(size_t inSize) {
 	constexpr size_t defaultAlignment = JPH_VECTOR_ALIGNMENT;
 	return AllocatorCore::AllocateRaw(inSize, defaultAlignment, "Jolt Allocation");
 }
+static void* JoltPhysReallocate(void* inBlock, size_t inOldSize, size_t inNewSize) {
+	constexpr size_t defaultAlignment = JPH_VECTOR_ALIGNMENT;
+	// TODO: Handle Rallocate
+	return AllocatorCore::AllocateRaw(inNewSize, defaultAlignment, "Jolt Reallocation");
+}
 static void JoltPhysFree(void* inBlock) { AllocatorCore::Free(inBlock); }
 static void* JoltPhysAlignedAllocate(size_t inSize, size_t inAlignment) { return AllocatorCore::AllocateRaw(inSize, inAlignment, "Jolt Allocation"); }
 static void JoltPhysAlignedFree(void* inBlock) { AllocatorCore::Free(inBlock); }
@@ -79,6 +85,7 @@ extern "C" {
 		EngineCore::SetInstance(*pluginInterface->GetEngineCore());
 
 		JPH::Allocate = JoltPhysAllocate;
+		JPH::Reallocate = JoltPhysReallocate;
 		JPH::Free = JoltPhysFree;
 		JPH::AlignedAllocate = JoltPhysAlignedAllocate;
 		JPH::AlignedFree = JoltPhysAlignedFree;

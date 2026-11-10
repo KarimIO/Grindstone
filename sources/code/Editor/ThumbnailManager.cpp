@@ -370,3 +370,7 @@ void Grindstone::Editor::ThumbnailManager::CreateRequestedThumbnails() {
 
 	requestedThumbnails.clear();
 }
+
+Grindstone::GraphicsAPI::Image* Grindstone::Editor::ThumbnailManager::GetThumbnailImage() {
+	return thumbnailAtlasImage;
+}

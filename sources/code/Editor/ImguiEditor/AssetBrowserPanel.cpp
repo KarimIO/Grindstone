@@ -51,18 +51,16 @@ static void RenderAssetElement(bool isSelected, const char* buttonString, float 
 	ImGui::PushStyleColor(ImGuiCol_Button, mainColor);
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoveredColor);
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, activeColor);
-	ImGui::PushID(buttonString);
 	ImGui::SetCursorPosX(cursorX + THUMBNAIL_SPACING);
 
 	ImTextureID textureIcon = Editor::Manager::GetInstance().GetImguiEditor().GetImguiRenderer().GetThumbnailAtlas();
 	ImGui::ImageButton(
+		buttonString,
 		textureIcon,
 		ImVec2{ THUMBNAIL_SIZE, THUMBNAIL_SIZE },
 		ImVec2{ atlasCoords.uv0x, atlasCoords.uv0y },
-		ImVec2{ atlasCoords.uv1x, atlasCoords.uv1y },
-		(int)THUMBNAIL_PADDING
+		ImVec2{ atlasCoords.uv1x, atlasCoords.uv1y }
 	);
-	ImGui::PopID();
 	ImGui::PopStyleColor(3);
 }
 
@@ -232,7 +230,7 @@ void AssetBrowserPanel::RenderTopBar() {
 		return;
 	}
 
-	ImGui::BeginChildFrame(ImGui::GetID("#assetpathbar"), ImVec2(0, 32), ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground);
+	ImGui::BeginChild(ImGui::GetID("#assetpathbar"), ImVec2(0, 32), ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground);
 	
 	RenderPath();
 
@@ -258,7 +256,7 @@ void AssetBrowserPanel::RenderTopBar() {
 			FilterSearch();
 		}
 	}
-	ImGui::EndChildFrame();
+	ImGui::EndChild();
 }
 
 void AssetBrowserPanel::RenderPathPart(const std::filesystem::path& path) {
@@ -746,17 +744,15 @@ void AssetBrowserPanel::RenderFile(size_t fileIndex) {
 				ImGui::TableNextColumn();
 				auto iconCoords = thumbnailManager.RequestThumbnail(subasset.assetType, subasset.uuid);
 				buttonString = item.filepath.string() + subasset.uuid.ToString();
-				ImGui::PushID(buttonString.c_str());
 				ImGui::SetCursorPosX(ImGui::GetCursorPosX() + THUMBNAIL_SPACING);
 				ImTextureID textureIcon = Editor::Manager::GetInstance().GetImguiEditor().GetImguiRenderer().GetThumbnailAtlas();
 				ImGui::ImageButton(
+					buttonString.c_str(),
 					textureIcon, // TODO: We may not want to pass DescriptorSets for non-Vulkan builds
 					ImVec2{ THUMBNAIL_SIZE, THUMBNAIL_SIZE },
 					ImVec2{ iconCoords.uv0x, iconCoords.uv0y },
-					ImVec2{ iconCoords.uv1x, iconCoords.uv1y },
-					(int)THUMBNAIL_PADDING
+					ImVec2{ iconCoords.uv1x, iconCoords.uv1y }
 				);
-				ImGui::PopID();
 
 				if (ImGui::BeginDragDropSource()) {
 					Uuid myUuid = subasset.uuid;
@@ -784,7 +780,7 @@ void AssetBrowserPanel::RenderAssets(float height) {
 	}
 
 	auto assetPanel = ImGui::GetID("#assetsPanel");
-	ImGui::BeginChildFrame(assetPanel, ImVec2(0, height), ImGuiWindowFlags_NoBackground);
+	ImGui::BeginChild(assetPanel, ImVec2(0, height), ImGuiWindowFlags_NoBackground);
 	RenderCurrentDirectoryContextMenu();
 
 	if (assetBrowserInspectType == AssetBrowserInspectType::Directory && folders.empty() && files.empty()) {
@@ -822,13 +818,13 @@ void AssetBrowserPanel::RenderAssets(float height) {
 		pathRenameNewName = "";
 	}
 
-	ImGui::EndChildFrame();
+	ImGui::EndChild();
 }
 
 void AssetBrowserPanel::RenderSidebar(float height) {
 	auto sidebarId = ImGui::GetID("#assetSidebar");
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
-	ImGui::BeginChildFrame(sidebarId, ImVec2(0, height), ImGuiWindowFlags_NoBackground);
+	ImGui::BeginChild(sidebarId, ImVec2(0, height), ImGuiWindowFlags_NoBackground);
 	ImGui::PopStyleVar();
 
 	Editor::FileManager& fileManager = Editor::Manager::GetFileManager();
@@ -881,7 +877,7 @@ void AssetBrowserPanel::RenderSidebar(float height) {
 		}
 	}
 
-	ImGui::EndChildFrame();
+	ImGui::EndChild();
 }
 
 void AssetBrowserPanel::RenderSidebarSubdirectory(const std::filesystem::directory_entry& entry) {

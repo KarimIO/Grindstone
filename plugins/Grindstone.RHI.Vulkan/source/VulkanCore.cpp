@@ -55,6 +55,7 @@ const std::vector<const char*> validationLayers = {
 };
 
 std::vector<const char*> requiredDeviceExtensions = {
+	VK_KHR_COMPUTE_SHADER_DERIVATIVES_EXTENSION_NAME,
 	VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 	VK_GOOGLE_HLSL_FUNCTIONALITY_1_EXTENSION_NAME,
@@ -360,8 +361,16 @@ void Vulkan::Core::CreateLogicalDevice() {
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
+	VkPhysicalDeviceComputeShaderDerivativesFeaturesKHR computeShaderDerivativeFeatures{
+		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_KHR,
+		.pNext = nullptr,
+		.computeDerivativeGroupQuads = VK_TRUE,
+		.computeDerivativeGroupLinear = VK_TRUE
+	};
+
 	VkPhysicalDeviceVulkan13Features deviceFeatures13 {
 		.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+		.pNext = &computeShaderDerivativeFeatures,
 		.synchronization2 = VK_TRUE,
 		.dynamicRendering = VK_TRUE,
 	};
