@@ -87,6 +87,9 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 	markdownConfig.imageCallback = ImageCallback;
 	markdownConfig.linkCallback = LinkCallback;
 
+	// Disabled due to using GLFW - when we go back to Native windowing, re-enable.
+	// input = AllocatorCore::Allocate<ImguiInput>(ImGui::GetIO(), engineCore);
+
 	SetupFonts();
 	SetupStyles();
 	SetupColors();
