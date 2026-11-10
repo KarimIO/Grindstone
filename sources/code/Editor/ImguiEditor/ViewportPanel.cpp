@@ -154,7 +154,7 @@ bool ViewportPanel::HandleSelection() {
 	Selection& selection = editorManager.GetSelection();
 	if (selection.GetSelectedEntityCount() == 1 && selection.GetSelectedFileCount() == 0) {
 		ImGuizmo::SetOrthographic(false);
-		ImGuizmo::SetDrawlist();
+		ImGuizmo::SetDrawlist(ImGui::GetWindowDrawList());
 
 		auto pos = ImGui::GetWindowPos();
 		ImGuizmo::SetRect(pos.x, pos.y, ImGui::GetWindowWidth(), ImGui::GetWindowHeight());
@@ -233,7 +233,7 @@ void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 
 	hasRenderedThisFrame = true;
 
-	if (isHoveringLastFrame) {
+	if (ImGui::GetIO().WantCaptureMouse && isHoveringLastFrame) {
 		entt::entity entityId = static_cast<entt::entity>(Grindstone::Editor::RendererFeatures::MousePick::GetMousePickedEntity(commandBuffer));
 		if (shouldMousePickClickLastFrame) {
 			shouldMousePickClickLastFrame = false;
@@ -326,6 +326,7 @@ void ViewportPanel::Render() {
 		if (hasRenderedThisFrame) {
 			DisplayCameraToPanel();
 		}
+
 		DisplayOptions();
 
 		if (isEditorMode) {
