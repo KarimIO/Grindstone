@@ -751,6 +751,10 @@ void EditorPluginManager::ProcessQueuedPluginInstallsAndUninstalls() {
 	}
 }
 
+size_t EditorPluginManager::GetPluginCount() const {
+	return resolvedPluginManifest.size();
+}
+
 EditorPluginManager::Iterator EditorPluginManager::begin() noexcept {
 	return resolvedPluginManifest.begin();
 }

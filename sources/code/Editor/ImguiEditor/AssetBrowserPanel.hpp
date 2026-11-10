@@ -3,7 +3,10 @@
 #include <chrono>
 #include <filesystem>
 #include <vector>
+
 #include <entt/entt.hpp>
+
+#include <Editor/FileManager.hpp>
 
 namespace Grindstone {
 	class EngineCore;
@@ -58,7 +61,7 @@ namespace Grindstone::Editor::ImguiEditor {
 		void ProcessFileClicks(AssetBrowserItem& item);
 		void RenderTopBar();
 		void RenderPathPart(const std::filesystem::path& path);
-		void RenderPath();
+		void RenderBreadcrumbs();
 		void RenderContextMenuFileTypeSpecificEntries(const std::filesystem::path& path);
 		void RenderAssetContextMenu(bool isFolder, const std::filesystem::path& path, size_t index);
 		void RenderCurrentDirectoryContextMenu();
@@ -71,13 +74,14 @@ namespace Grindstone::Editor::ImguiEditor {
 		void RenderFiles();
 		void RenderAssets(float height);
 		void RenderSidebar(float height);
-		void RenderSidebarSubdirectory(const std::filesystem::directory_entry& entry);
+		void RenderSidebarSubdirectory(const std::string& pluginName, const std::filesystem::directory_entry& entry);
 		void RenderFile(size_t fileIndex);
 		void FilterSearch();
 		void AfterCreate(const std::filesystem::path& path);
 	private:
 		AssetBrowserInspectType assetBrowserInspectType;
 		std::filesystem::directory_entry currentDirectory;
+		std::string currentPluginName;
 		// TODO: Handle when the current mounting point
 		const Grindstone::Editor::FileManager::MountPoint* currentMountingPoint = nullptr;
 

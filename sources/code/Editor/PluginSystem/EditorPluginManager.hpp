@@ -35,6 +35,7 @@ namespace Grindstone::Plugins {
 		virtual void QueueInstall(const std::filesystem::path& path);
 		virtual void QueueUninstall(const std::filesystem::path& path);
 		virtual void ProcessQueuedPluginInstallsAndUninstalls();
+		size_t GetPluginCount() const;
 
 		using Iterator = std::vector<Grindstone::Plugins::MetaData>::iterator;
 		using ConstIterator = std::vector<Grindstone::Plugins::MetaData>::const_iterator;

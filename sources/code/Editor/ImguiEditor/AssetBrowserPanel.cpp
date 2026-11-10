@@ -115,6 +115,7 @@ void AssetBrowserPanel::AddFilePath(const std::filesystem::directory_entry& file
 
 void AssetBrowserPanel::SetAllPlugins() {
 	assetBrowserInspectType = AssetBrowserInspectType::All;
+	currentPluginName = "";
 	currentMountingPoint = nullptr;
 	currentDirectory = std::filesystem::directory_entry();
 	searchText = "";
@@ -126,6 +127,7 @@ void AssetBrowserPanel::SetAllPlugins() {
 void AssetBrowserPanel::SetCurrentPlugin(const std::string& pluginName) {
 	assetBrowserInspectType = AssetBrowserInspectType::Plugin;
 	currentMountingPoint = nullptr;
+	currentPluginName = pluginName;
 	currentDirectory = std::filesystem::directory_entry(pluginName);
 	searchText = "";
 	Editor::Manager::GetInstance().GetSelection().ClearFiles();
@@ -226,13 +228,14 @@ void AssetBrowserPanel::ProcessFileClicks(AssetBrowserItem& item) {
 }
 
 void AssetBrowserPanel::RenderTopBar() {
-	if (assetBrowserInspectType != AssetBrowserInspectType::Directory) {
-		return;
-	}
-
 	ImGui::BeginChild(ImGui::GetID("#assetpathbar"), ImVec2(0, 32), ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground);
 	
-	RenderPath();
+	RenderBreadcrumbs();
+
+	if (assetBrowserInspectType != AssetBrowserInspectType::Directory) {
+		ImGui::EndChild();
+		return;
+	}
 
 	float totalAvailWidth = ImGui::GetContentRegionAvail().x;
 	const float searchWidth = 160.0f;
@@ -261,7 +264,8 @@ void AssetBrowserPanel::RenderTopBar() {
 
 void AssetBrowserPanel::RenderPathPart(const std::filesystem::path& path) {
 	const std::filesystem::path& parent = path.parent_path();
-	if (path != currentMountingPoint->path && parent != currentMountingPoint->path) {
+
+	if (path != currentMountingPoint->path) {
 		RenderPathPart(parent);
 	}
 
@@ -274,7 +278,7 @@ void AssetBrowserPanel::RenderPathPart(const std::filesystem::path& path) {
 	ImGui::SameLine();
 } 
 
-void AssetBrowserPanel::RenderPath() {
+void AssetBrowserPanel::RenderBreadcrumbs() {
 	if (!searchText.empty()) {
 		ImGui::Text("Showing search results:");
 		return;
@@ -283,13 +287,38 @@ void AssetBrowserPanel::RenderPath() {
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1.0f, 1.0f, 1.0f, 0.15f));
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered]);
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyle().Colors[ImGuiCol_ButtonActive]);
-	const std::filesystem::path& path = currentDirectory.path();
-	if (path != currentMountingPoint->path) {
-		RenderPathPart(path.parent_path());
-		ImGui::SameLine();
+
+	if (ImGui::Button("Project")) {
+		SetAllPlugins();
 	}
-	std::string finalPart = path.filename().string() + "##PathPart";
-	ImGui::Button(finalPart.c_str());
+
+	if (assetBrowserInspectType == AssetBrowserInspectType::All) {
+		ImGui::PopStyleColor(3);
+		return;
+	}
+
+	ImGui::SameLine();
+	ImGui::Text("/");
+	ImGui::SameLine();
+	if (ImGui::Button(currentPluginName.c_str())) {
+		SetCurrentPlugin(currentPluginName);
+	}
+
+	const std::filesystem::path& path = currentDirectory.path();
+	if (assetBrowserInspectType == AssetBrowserInspectType::Directory && !path.empty()) {
+		ImGui::SameLine();
+		ImGui::Text("/");
+		ImGui::SameLine();
+		if (currentMountingPoint && path != currentMountingPoint->path) {
+
+			RenderPathPart(path.parent_path());
+			ImGui::SameLine();
+		}
+
+		std::string finalPart = path.filename().string() + "##PathPart";
+		ImGui::Button(finalPart.c_str());
+	}
+
 	ImGui::PopStyleColor(3);
 }
 
@@ -581,7 +610,7 @@ void AssetBrowserPanel::RenderAllPlugins() {
 		float cursorX = ImGui::GetCursorPosX();
 		auto iconCoords = Editor::Manager::GetInstance().GetThumbnailManager().GetPluginIconCoords();
 		RenderAssetElement(false, buttonString.c_str(), cursorX, iconCoords);
-		if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+		if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 			SetCurrentPlugin(plugin.name);
 		}
 		ImGui::TextWrapped(plugin.name.c_str());
@@ -607,7 +636,7 @@ void AssetBrowserPanel::RenderPlugins() {
 			std::string buttonString = assetDirectoryString + "##AssetButton";
 			auto iconCoords = thumbnailManager.GetFolderIconCoords();
 			RenderAssetElement(false, buttonString.c_str(), ImGui::GetCursorPosX(), iconCoords);
-			if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 				std::filesystem::path path(plugin.pluginResolvedPath / asset.assetDirectoryRelativePath);
 				SetCurrentAssetDirectory(path);
 			}
@@ -828,14 +857,29 @@ void AssetBrowserPanel::RenderSidebar(float height) {
 	ImGui::PopStyleVar();
 
 	Editor::FileManager& fileManager = Editor::Manager::GetFileManager();
-	const auto& mountPoints = fileManager.GetMountedDirectories();
-
-	if (mountPoints.empty()) {
-		ImGui::Text("This folder is empty.");
-	}
 
 	EngineCore& engineCore = EngineCore::GetInstance();
 	Grindstone::Plugins::EditorPluginManager& pluginManager = static_cast<Grindstone::Plugins::EditorPluginManager&>(*engineCore.GetPluginManager());
+
+	ImGuiTreeNodeFlags rootNodeFlags = ImGuiTreeNodeFlags_OpenOnArrow;
+	if (assetBrowserInspectType == AssetBrowserInspectType::All) {
+		rootNodeFlags |= ImGuiTreeNodeFlags_Selected;
+	}
+
+	bool isRootExpanded = ImGui::TreeNodeEx("Project Plugins", rootNodeFlags);
+	if (ImGui::IsItemClicked()) {
+		SetAllPlugins();
+	}
+
+	if (!isRootExpanded) {
+		ImGui::EndChild();
+		return;
+	}
+
+	if (pluginManager.GetPluginCount() == 0) {
+		ImGui::Text("There are no plugins in this project.");
+	}
+
 	for (Grindstone::Plugins::MetaData& plugin : pluginManager) {
 		ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow;
 
@@ -849,38 +893,28 @@ void AssetBrowserPanel::RenderSidebar(float height) {
 			nodeFlags |= ImGuiTreeNodeFlags_Selected;
 		}
 
-		if (ImGui::TreeNodeEx(plugin.name.c_str(), nodeFlags)) {
-			if (ImGui::IsItemClicked()) {
-				SetCurrentPlugin(plugin.name);
-			}
+		bool isPluginExpanded = ImGui::TreeNodeEx(plugin.name.c_str(), nodeFlags);
+		if (ImGui::IsItemClicked()) {
+			SetCurrentPlugin(plugin.name);
+		}
 
+		if (isPluginExpanded) {
 			for (Grindstone::Plugins::MetaData::AssetDirectory& asset : plugin.assetDirectories) {
 				std::filesystem::path path(plugin.pluginResolvedPath / asset.assetDirectoryRelativePath);
 				std::filesystem::directory_entry directoryEntry(path);
-				RenderSidebarSubdirectory(directoryEntry);
-			}
-
-			for (Grindstone::Plugins::MetaData::Binary& binary : plugin.binaries) {
-				std::filesystem::path path(plugin.pluginResolvedPath / binary.libraryRelativePath);
-				std::filesystem::directory_entry directoryEntry(path);
-
-				ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_Leaf;
-				if (ImGui::TreeNodeEx(binary.buildTarget.c_str(), nodeFlags)) {
-					ImGui::TreePop();
-				}
+				RenderSidebarSubdirectory(plugin.name, directoryEntry);
 			}
 
 			ImGui::TreePop();
 		}
-		else if (ImGui::IsItemClicked()) {
-			SetCurrentPlugin(plugin.name);
-		}
 	}
+
+	ImGui::TreePop();
 
 	ImGui::EndChild();
 }
 
-void AssetBrowserPanel::RenderSidebarSubdirectory(const std::filesystem::directory_entry& entry) {
+void AssetBrowserPanel::RenderSidebarSubdirectory(const std::string& pluginName, const std::filesystem::directory_entry& entry) {
 	std::string path = entry.path().filename().string();
 
 	if (path.empty()) {
@@ -903,21 +937,20 @@ void AssetBrowserPanel::RenderSidebarSubdirectory(const std::filesystem::directo
 		nodeFlags |= ImGuiTreeNodeFlags_Selected;
 	}
 
-	if (ImGui::TreeNodeEx(path.c_str(), nodeFlags)) {
-		if (ImGui::IsItemClicked()) {
-			SetCurrentAssetDirectory(entry);
-		}
+	bool isExpanded = ImGui::TreeNodeEx(path.c_str(), nodeFlags);
+	if (ImGui::IsItemClicked()) {
+		currentPluginName = pluginName;
+		SetCurrentAssetDirectory(entry);
+	}
 
+	if (isExpanded) {
 		for (const std::filesystem::directory_entry& child : std::filesystem::directory_iterator(entry)) {
 			if (child.is_directory()) {
-				RenderSidebarSubdirectory(child);
+				RenderSidebarSubdirectory(pluginName, child);
 			}
 		}
 
 		ImGui::TreePop();
-	}
-	else if (ImGui::IsItemClicked()) {
-		SetCurrentAssetDirectory(entry);
 	}
 }
 
