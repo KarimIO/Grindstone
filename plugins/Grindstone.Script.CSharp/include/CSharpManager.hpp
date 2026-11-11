@@ -2,8 +2,8 @@
 
 #include <entt/entt.hpp>
 
-#include <EngineCore/ECS/ComponentFunctions.hpp>
 #include <Common/Buffer.hpp>
+#include <EngineCore/ECS/ComponentFunctions.hpp>
 
 namespace Grindstone {
 	class EngineCore;
@@ -52,9 +52,6 @@ namespace Grindstone {
 			virtual void DestroyComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity, ScriptComponent& component);
 			void RegisterComponents();
 			void RegisterComponent(const Grindstone::String& csharpClass, ECS::ComponentFunctions& fns);
-			void CallCreateComponent(SceneManagement::Scene* scene, entt::entity entityHandle);
-			void CallHasComponent(SceneManagement::Scene* scene, entt::entity entityHandle);
-			void CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entityHandle);
 			void QueueReload();
 			void PerformReload();
 			void Update(entt::registry& registry);

@@ -1,48 +1,55 @@
+#include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
+#include <EngineCore/ECS/ComponentRegistrar.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/WorldContext/WorldContextSet.hpp>
+
 #include "Entity.hpp"
-#include "EngineCore/CoreComponents/Transform/TransformComponent.hpp"
-#include "EngineCore/ECS/ComponentRegistrar.hpp"
-#include "EngineCore/Scenes/Scene.hpp"
+
 using namespace Grindstone::ECS;
 
+inline static ComponentRegistrar* GetEngineComponentRegistrar() {
+	return EngineCore::GetInstance().GetComponentRegistrar();;
+}
+
 entt::registry& Entity::GetSceneEntityRegistry() const {
-	return scene->GetEntityRegistry();
+	return worldContextSet->GetEntityRegistry();
 }
 
 void* Entity::AddComponent(Grindstone::HashedString componentType) {
-	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
+	ComponentRegistrar* componentRegistrar = GetEngineComponentRegistrar();
 	return componentRegistrar->CreateComponentWithSetup(componentType, *this);
 }
 
 void* Entity::AddComponentWithoutSetup(Grindstone::HashedString componentType) {
-	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
+	ComponentRegistrar* componentRegistrar = GetEngineComponentRegistrar();
 	return componentRegistrar->CreateComponent(componentType, *this);
 }
 
 bool Entity::HasComponent(Grindstone::HashedString componentType) const {
-	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
+	ComponentRegistrar* componentRegistrar = GetEngineComponentRegistrar();
 	return componentRegistrar->HasComponent(componentType, *this);
 }
 
 void* Entity::GetComponent(Grindstone::HashedString componentType) const {
 	void* outComponent = nullptr;
-	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
+	ComponentRegistrar* componentRegistrar = GetEngineComponentRegistrar();
 	componentRegistrar->TryGetComponent(componentType, *this, outComponent);
 
 	return outComponent;
 }
 
 bool Entity::TryGetComponent(Grindstone::HashedString componentType, void*& outComponent) const {
-	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
+	ComponentRegistrar* componentRegistrar = GetEngineComponentRegistrar();
 	return componentRegistrar->TryGetComponent(componentType, *this, outComponent);
 }
 
 void Entity::RemoveComponent(Grindstone::HashedString componentType) {
-	ComponentRegistrar* componentRegistrar = scene->GetComponentRegistrar();
+	ComponentRegistrar* componentRegistrar = GetEngineComponentRegistrar();
 	componentRegistrar->RemoveComponent(componentType, *this);
 }
 
 bool Entity::IsChildOf(const Entity& possibleParent) const {
-	if (scene != possibleParent.scene) {
+	if (worldContextSet != possibleParent.worldContextSet) {
 		return false;
 	}
 
@@ -71,7 +78,7 @@ bool Entity::IsChildOf(const Entity& possibleParent) const {
 Entity Entity::GetParent() const {
 	entt::registry& registry = GetSceneEntityRegistry();
 	const entt::entity parentNode = registry.get<ParentComponent>(entityId).parentEntity;
-	return Entity(parentNode, scene);
+	return Entity(parentNode, worldContextSet);
 }
 
 bool Entity::SetParent(const Entity newParent) {
@@ -176,7 +183,7 @@ Math::Float3 Entity::GetWorldUp() const {
 
 
 void Entity::Destroy() {
-	scene->GetEntityRegistry().destroy(entityId);
+	worldContextSet->GetEntityRegistry().destroy(entityId);
 	entityId = entt::null;
-	scene = nullptr;
+	worldContextSet = nullptr;
 }

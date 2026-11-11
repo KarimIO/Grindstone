@@ -222,6 +222,7 @@ void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 	camera->ResizeViewport(width, height);
 
 	Grindstone::EngineCore& engineCore = Editor::Manager::GetEngineCore();
+	Grindstone::WorldContextSet* worldContextSet = engineCore.GetWorldContextManager()->GetActiveWorldContextSet();
 	Editor::Manager& editorManager = Editor::Manager::GetInstance();
 	PlayMode playMode = editorManager.GetPlayMode();
 	if (playMode == PlayMode::Editor) {
@@ -238,17 +239,16 @@ void ViewportPanel::RenderCamera(GraphicsAPI::CommandBuffer* commandBuffer) {
 		if (shouldMousePickClickLastFrame) {
 			shouldMousePickClickLastFrame = false;
 			shouldMousePickClick = false;
-			Grindstone::SceneManagement::Scene* scene = engineCore.GetSceneManager()->scenes.begin()->second;
 
 			if (ImGui::GetIO().KeyCtrl || ImGui::GetIO().KeyShift) {
 				if (entityId != entt::null) {
-					ECS::Entity entity(entityId, scene);
+					ECS::Entity entity(entityId, worldContextSet);
 					editorManager.GetSelection().AddEntity(entity);
 				}
 			}
 			else {
 				if (entityId != entt::null) {
-					ECS::Entity entity(entityId, scene);
+					ECS::Entity entity(entityId, worldContextSet);
 					editorManager.GetSelection().SetSelectedEntity(entity);
 				}
 				else {

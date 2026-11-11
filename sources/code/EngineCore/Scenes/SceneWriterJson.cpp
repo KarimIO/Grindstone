@@ -59,10 +59,11 @@ void SceneWriterJson::ProcessEntities() {
 	documentWriter.Key("entities");
 	documentWriter.StartArray();
 
-	entt::registry& registry = scene->GetEntityRegistry();
+	Grindstone::WorldContextSet* worldContextSet = Grindstone::EngineCore::GetInstance().GetWorldContextManager()->GetActiveWorldContextSet();
+	entt::registry& registry = worldContextSet->GetEntityRegistry();
 	for (entt::entity entityId : registry.storage<entt::entity>()) {
 		if (registry.valid(entityId)) {
-			ProcessEntity(registry, ECS::Entity(entityId, scene));
+			ProcessEntity(registry, ECS::Entity(entityId, worldContextSet));
 		}
 	}
 
@@ -80,6 +81,7 @@ void SceneWriterJson::ProcessEntity(entt::registry& registry, ECS::Entity entity
 	documentWriter.StartArray();
 
 	auto& engineCore = EngineCore::GetInstance();
+	Grindstone::WorldContextSet* worldContextSet = engineCore.GetWorldContextManager()->GetActiveWorldContextSet();
 	ECS::ComponentRegistrar componentRegistrar = *engineCore.GetComponentRegistrar();
 	for (auto& componentEntry : componentRegistrar) {
 		Grindstone::HashedString componentTypeName = componentEntry.first;
@@ -87,7 +89,7 @@ void SceneWriterJson::ProcessEntity(entt::registry& registry, ECS::Entity entity
 		auto tryGetComponentFn = componentEntry.second.TryGetComponentFn;
 
 		void* outComponent = nullptr;
-		if (tryGetComponentFn(registry, entity.GetHandle(), outComponent)) {
+		if (tryGetComponentFn(*worldContextSet, entity.GetHandle(), outComponent)) {
 			ProcessComponent(entity, componentTypeName, componentReflectionData, outComponent);
 		}
 	}

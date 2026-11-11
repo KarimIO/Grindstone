@@ -538,18 +538,6 @@ void CSharpManager::RegisterComponent(const Grindstone::String& componentName, E
 	std::string csharpClass = "Grindstone." + componentName + "Component";
 }
 
-// TODO: Shouldn't this be !=?
-void CSharpManager::CallCreateComponent(SceneManagement::Scene* scene, entt::entity entity) {
-}
-
-// TODO: Shouldn't this be !=?
-void CSharpManager::CallHasComponent(SceneManagement::Scene* scene, entt::entity entity) {
-}
-
-// TODO: Shouldn't this be !=?
-void CSharpManager::CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entity) {
-}
-
 void CSharpManager::QueueReload() {
 	isReloadQueued = true;
 }

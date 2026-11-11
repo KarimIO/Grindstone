@@ -1,26 +1,27 @@
 #pragma once
 
-#include <Common/Math.hpp>
 #include <Common/HashedString.hpp>
-#include <EngineCore/CoreComponents/Parent/ParentComponent.hpp>
+#include <Common/Math.hpp>
+
+#include <entt/entity/entity.hpp>
+#include <entt/entity/fwd.hpp>
+#include <entt/entity/registry.hpp>
 
 #include "EntityHandle.hpp"
 
 namespace Grindstone {
-	namespace SceneManagement {
-		class Scene;
-	}
+	class WorldContextSet;
 
 	namespace ECS {
 		class Entity {
 		private:
 			EntityHandle entityId = entt::null;
-			SceneManagement::Scene* scene = nullptr;
+			Grindstone::WorldContextSet* worldContextSet = nullptr;
 		public:
 			Entity() = default;
 			Entity(const Entity& other) = default;
-			Entity(entt::entity entityId, SceneManagement::Scene * scene)
-				: entityId(entityId), scene(scene) {}
+			Entity(entt::entity entityId, Grindstone::WorldContextSet* worldContextSet)
+				: entityId(entityId), worldContextSet(worldContextSet) {}
 
 			virtual void* AddComponent(Grindstone::HashedString componentType);
 			virtual void* AddComponentWithoutSetup(Grindstone::HashedString componentType);
@@ -88,16 +89,18 @@ namespace Grindstone {
 				return entityId;
 			}
 
-			virtual SceneManagement::Scene* GetScene() const {
-				return scene;
+			virtual Grindstone::WorldContextSet* GetWorldContextSet() const {
+				return worldContextSet;
 			}
 
 			explicit operator bool() const {
-				return entityId != entt::null && scene != nullptr && GetSceneEntityRegistry().valid(entityId);
+				return entityId != entt::null &&
+						worldContextSet != nullptr &&
+						GetSceneEntityRegistry().valid(entityId);
 			}
 
 			bool operator==(const Entity& other) const {
-				return (entityId == other.entityId) && (scene == other.scene);
+				return (entityId == other.entityId) && (worldContextSet == other.worldContextSet);
 			}
 
 			bool operator!=(const Entity& other) const {
@@ -106,9 +109,9 @@ namespace Grindstone {
 		};
 
 		inline bool operator < (const ECS::Entity& lhs, const ECS::Entity& rhs) {
-			const bool isSceneLess = lhs.GetScene() < rhs.GetScene();
+			const bool isCxtSetLess = lhs.GetWorldContextSet() < rhs.GetWorldContextSet();
 			const bool isEntityLess = lhs.GetHandle() < rhs.GetHandle();
-			return isSceneLess || isEntityLess;
+			return isCxtSetLess || isEntityLess;
 		}
 	}
 }

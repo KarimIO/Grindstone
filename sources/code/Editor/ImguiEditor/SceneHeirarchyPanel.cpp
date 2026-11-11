@@ -14,10 +14,7 @@
 
 using namespace Grindstone::Editor::ImguiEditor;
 
-SceneHeirarchyPanel::SceneHeirarchyPanel(
-	SceneManagement::SceneManager* sceneManager,
-	ImguiEditor* editor
-) : sceneManager(sceneManager), editor(editor) {}
+SceneHeirarchyPanel::SceneHeirarchyPanel(ImguiEditor* editor) : editor(editor) {}
 
 void SceneHeirarchyPanel::Render() {
 	if (isShowingPanel) {
@@ -36,6 +33,7 @@ void SceneHeirarchyPanel::Render() {
 			Editor::Manager::GetInstance().GetSelection().Clear();
 		}
 
+		/*
 		auto numScenes = sceneManager->scenes.size();
 		if (numScenes == 0) {
 			ImGui::Text("No scenes mounted.");
@@ -54,6 +52,12 @@ void SceneHeirarchyPanel::Render() {
 				}
 			}
 		}
+		*/
+
+		Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
+		Grindstone::WorldContextManager* cxtMgr = engineCore.GetWorldContextManager();
+		Grindstone::WorldContextSet* worldContextSet = cxtMgr->GetActiveWorldContextSet();
+		RenderScene(worldContextSet);
 
 		ImGui::EndChild();
 
@@ -71,16 +75,15 @@ void SceneHeirarchyPanel::Render() {
 	}
 }
 
-void SceneHeirarchyPanel::RenderScene(SceneManagement::Scene* scene) {
+void SceneHeirarchyPanel::RenderScene(Grindstone::WorldContextSet* worldContextSet) {
 	if (ImGui::BeginPopupContextWindow()) {
 		if (ImGui::MenuItem("Add new entity")) {
-			Editor::Manager::GetInstance().GetCommandList().AddNewEntity(scene);
+			Editor::Manager::GetInstance().GetCommandList().AddNewEntity(worldContextSet);
 		}
 		ImGui::EndPopup();
 	}
 
-	WorldContextSet* cxtSet = EngineCore::GetInstance().GetWorldContextManager()->GetActiveWorldContextSet();
-	entt::registry& registry = cxtSet->GetEntityRegistry();
+	entt::registry& registry = worldContextSet->GetEntityRegistry();
 	bool hasEntities = false;
 
 	EntityParentTagView view = registry.view<entt::entity, TagComponent, ParentComponent>();
@@ -92,7 +95,7 @@ void SceneHeirarchyPanel::RenderScene(SceneManagement::Scene* scene) {
 			ParentComponent& parentComponent
 		) {
 			if (parentComponent.parentEntity == entt::null) {
-				RenderEntity(view, { entity, scene }, tagComponent, parentComponent);
+				RenderEntity(view, { entity, worldContextSet }, tagComponent, parentComponent);
 				hasEntities = true;
 			}
 		}
@@ -209,7 +212,7 @@ void SceneHeirarchyPanel::RenderEntity(
 		}
 		if (ImGui::MenuItem("Delete")) {
 			selection.RemoveEntity(entity);
-			entity.GetScene()->DestroyEntity(entity);
+			entity.Destroy();
 		}
 		ImGui::EndPopup();
 	}
@@ -219,8 +222,9 @@ void SceneHeirarchyPanel::RenderEntity(
 	ImGui::PopStyleColor();
 
 	if (isOpened) {
+		Grindstone::WorldContextSet* worldContextSet = entity.GetWorldContextSet();
 		for (ChildEntity& child : children) {
-			RenderEntity(view, { child.childEntity, entity.GetScene() }, *child.tagComponent, *child.parentComponent);
+			RenderEntity(view, { child.childEntity, worldContextSet }, *child.tagComponent, *child.parentComponent);
 		}
 
 		ImGui::TreePop();

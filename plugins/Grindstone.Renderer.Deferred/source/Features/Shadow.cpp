@@ -415,8 +415,6 @@ void Grindstone::Renderer::Shadow::Bind(
 
 		Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 
-		Grindstone::SceneManagement::Scene* scene = engineCore.GetSceneManager()->scenes.begin()->second;
-
 		uint32_t totalShadowMapCount = 0;
 
 		entt::registry& registry = worldContextSet.GetEntityRegistry();
@@ -447,8 +445,8 @@ void Grindstone::Renderer::Shadow::Bind(
 		PrepareAtlas(totalShadowMapCount);
 
 		spotLightView.each(
-			[this, &renderGraphBuilder, &shadowAtlasRef, scene, pushRenderingStatsCallback](const entt::entity entityHandle, const Grindstone::TagComponent& tag, Grindstone::SpotLightComponent& spotLightComponent) {
-				const ECS::Entity entity = ECS::Entity(entityHandle, scene);
+			[this, &renderGraphBuilder, &shadowAtlasRef, &worldContextSet, pushRenderingStatsCallback](const entt::entity entityHandle, const Grindstone::TagComponent& tag, Grindstone::SpotLightComponent& spotLightComponent) {
+				const ECS::Entity entity = ECS::Entity(entityHandle, &worldContextSet);
 				Grindstone::Math::IntRect2D renderArea;
 				if (GetAtlasRenderArea(renderArea)) {
 					Grindstone::Renderer::MetaRect metaRect = MetaRect::Pixels(
@@ -474,7 +472,7 @@ void Grindstone::Renderer::Shadow::Bind(
 
 			// TODO: Storing these matrices kind of breaks things when we have multiple cameras viewing multiple lights.
 			directionalLightView.each(
-				[this, &renderGraphBuilder, &shadowAtlasRef, &cameraFrustumCorners, &cameraProjectionMatrix, &cameraViewMatrix, eyePos, scene, nearDistance, farDistance](
+				[this, &renderGraphBuilder, &shadowAtlasRef, &cameraFrustumCorners, &cameraProjectionMatrix, &cameraViewMatrix, &worldContextSet, eyePos, nearDistance, farDistance](
 					const entt::entity entityHandle,
 					const Grindstone::TagComponent& tag,
 					DirectionalLightComponent& directionalLightComponent
@@ -482,7 +480,7 @@ void Grindstone::Renderer::Shadow::Bind(
 					directionalLightComponent.eyePosForShadowing = eyePos;
 					directionalLightComponent.debugCameraProjectionMatrix = cameraProjectionMatrix;
 					directionalLightComponent.debugCameraViewMatrix = cameraViewMatrix;
-					const ECS::Entity entity = ECS::Entity(entityHandle, scene);
+					const ECS::Entity entity = ECS::Entity(entityHandle, &worldContextSet);
 					uint32_t cascadeCount = glm::clamp(directionalLightComponent.cascadeCount, 0u, 8u);
 
 					float cascadeDistances[9]{};
@@ -514,12 +512,12 @@ void Grindstone::Renderer::Shadow::Bind(
 		}
 
 		directionalLightView.each(
-			[this, &renderGraphBuilder, &shadowAtlasRef, scene, pushRenderingStatsCallback](
+			[this, &renderGraphBuilder, &shadowAtlasRef, &worldContextSet, pushRenderingStatsCallback](
 				const entt::entity entityHandle,
 				const Grindstone::TagComponent& tag,
 				DirectionalLightComponent& directionalLightComponent
 			) {
-				const ECS::Entity entity = ECS::Entity(entityHandle, scene);
+				const ECS::Entity entity = ECS::Entity(entityHandle, &worldContextSet);
 
 				Grindstone::Math::IntRect2D renderArea;
 				// TODO: should freeze cascadeCount
@@ -549,8 +547,8 @@ void Grindstone::Renderer::Shadow::Bind(
 		);
 
 		pointLightView.each(
-			[this, &renderGraphBuilder, &shadowAtlasRef, scene, pushRenderingStatsCallback](const entt::entity entityHandle, const Grindstone::TagComponent& tag, Grindstone::PointLightComponent& pointLightComponent) {
-				const ECS::Entity entity = ECS::Entity(entityHandle, scene);
+			[this, &renderGraphBuilder, &shadowAtlasRef, &worldContextSet, pushRenderingStatsCallback](const entt::entity entityHandle, const Grindstone::TagComponent& tag, Grindstone::PointLightComponent& pointLightComponent) {
+				const ECS::Entity entity = ECS::Entity(entityHandle, &worldContextSet);
 				Grindstone::Math::IntRect2D renderArea;
 				for (size_t i = 0; i < 6; ++i) {
 					if (GetAtlasRenderArea(renderArea)) {

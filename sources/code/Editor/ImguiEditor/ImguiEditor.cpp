@@ -101,7 +101,7 @@ ImguiEditor::ImguiEditor(EngineCore* engineCore) : engineCore(engineCore) {
 void ImguiEditor::CreateWindows() {
 	imguiRenderer = ImguiRenderer::Create();
 
-	sceneHeirarchyPanel = AllocatorCore::Allocate<SceneHeirarchyPanel>(engineCore->GetSceneManager(), this);
+	sceneHeirarchyPanel = AllocatorCore::Allocate<SceneHeirarchyPanel>(this);
 	inspectorPanel = AllocatorCore::Allocate<InspectorPanel>(engineCore, this);
 	assetBrowserPanel = AllocatorCore::Allocate<AssetBrowserPanel>(imguiRenderer, engineCore, this);
 	userSettingsWindow = AllocatorCore::Allocate<Settings::UserSettingsWindow>();

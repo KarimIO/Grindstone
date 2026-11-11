@@ -27,12 +27,13 @@ namespace Grindstone::ECS {
 		>;
 
 	template<typename ComponentType>
-	void* CreateComponent(entt::registry& registry, entt::entity entity) {
-		return &registry.emplace<ComponentType>(entity);
+	void* CreateComponent(Grindstone::WorldContextSet& worldContextSet, entt::entity entity) {
+		return &worldContextSet.GetEntityRegistry().emplace<ComponentType>(entity);
 	}
 
 	template<typename ComponentType>
-	void RemoveComponent(entt::registry& registry, entt::entity entity) {
+	void RemoveComponent(Grindstone::WorldContextSet& worldContextSet, entt::entity entity) {
+		entt::registry& registry = worldContextSet.GetEntityRegistry();
 		if (registry.any_of<ComponentType>(entity)) {
 			registry.remove<ComponentType>(entity);
 		}
@@ -50,7 +51,8 @@ namespace Grindstone::ECS {
 	}
 
 	template<typename ComponentType>
-	bool TryGetComponent(entt::registry& registry, entt::entity entity, void*& outComponent) {
+	bool TryGetComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity, void*& outComponent) {
+		entt::registry& registry = cxtSet.GetEntityRegistry();
 		ComponentType* foundComp = registry.try_get<ComponentType>(entity);
 		outComponent = foundComp;
 
@@ -58,7 +60,8 @@ namespace Grindstone::ECS {
 	}
 
 	template<typename ComponentType>
-	bool HasComponent(entt::registry& registry, entt::entity entity) {
+	bool HasComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+		entt::registry& registry = cxtSet.GetEntityRegistry();
 		return registry.all_of<ComponentType>(entity);
 	}
 
