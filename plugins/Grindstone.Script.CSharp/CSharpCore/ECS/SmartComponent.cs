@@ -1,4 +1,6 @@
 namespace Grindstone {
+	// Wraps some entity functionality, contains the entity, and provides OnX methods to be called
+	// by HostBridge.
 	public class SmartComponent {
 		public readonly Entity entity;
 		#region Public Methods
@@ -14,7 +16,7 @@ namespace Grindstone {
 			return entity;
 		}
 
-		public T CreateComponent<T>() {
+		public T? CreateComponent<T>() {
 			return entity.CreateComponent<T>();
 		}
 
@@ -24,10 +26,6 @@ namespace Grindstone {
 
 		public void DeleteComponent<T>() {
 			entity.DeleteComponent<T>();
-		}
-
-		public TransformComponent? GetTransformComponent() {
-			return entity.GetTransformComponent();
 		}
 		#endregion
 	}

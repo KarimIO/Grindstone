@@ -5,7 +5,7 @@ namespace Grindstone {
 	public struct Entity {
 		#region Public Fields
 		public uint entityHandle;
-		public Scene scene;
+		public WorldContext worldContext;
 		#endregion
 
 		#region Static Fields
@@ -13,43 +13,31 @@ namespace Grindstone {
 		#endregion
 
 		#region Public Methods
-		public Entity(uint handle, Scene scene) {
+		public Entity(WorldContext worldContext, uint handle) {
 			entityHandle = handle;
-			this.scene = scene;
+			this.worldContext = worldContext;
 		}
 
-		public T CreateComponent<T>() {
-			return default;
+		public void Destroy() {
+			EntityMarkForDeletion(worldContext.GetHandle(), entityHandle);
 		}
 
-		public T? GetComponent<T>() {
-			uint componentType = 4;
-			System.IntPtr ptr = EntityGetComponentByType(scene.sceneIntPtr, entityHandle, componentType);
-			return Marshal.PtrToStructure<T>(ptr);
+		public T? CreateComponent<T>() {
+			return ComponentRegistrar.CreateComponent<T>(worldContext.GetHandle(), entityHandle);
 		}
 
-		public TransformComponent GetTransformComponent() {
-			System.IntPtr ptr = EntityGetTransformComponent(scene.sceneIntPtr, entityHandle);
-			return new TransformComponent(ptr);
+		public readonly T? GetComponent<T>() {
+			return ComponentRegistrar.GetComponent<T>(worldContext.GetHandle(), entityHandle);
 		}
 
-		public TagComponent GetTagComponent() {
-			System.IntPtr ptr = EntityGetTagComponent(scene.sceneIntPtr, entityHandle);
-			return new TagComponent(ptr);
+		public void DeleteComponent<T>() {
+			ComponentRegistrar.DeleteComponent<T>(worldContext.GetHandle(), entityHandle);
 		}
-
-		public void DeleteComponent<T>() {}
 		#endregion
 
 		#region DllImports
 		[DllImport("EngineCore")]
-		static extern System.IntPtr EntityGetTransformComponent(System.IntPtr scene, uint entity);
-
-		[DllImport("EngineCore")]
-		static extern System.IntPtr EntityGetTagComponent(System.IntPtr scene, uint entity);
-
-		[DllImport("EngineCore")]
-		static extern System.IntPtr EntityGetComponentByType(System.IntPtr scene, uint entity, uint componentType);
+		static extern void EntityMarkForDeletion(IntPtr worldContextHandle, uint entity);
 		#endregion
 	}
 }
