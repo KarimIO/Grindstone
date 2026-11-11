@@ -12,9 +12,8 @@ using namespace Grindstone::Events;
 
 bool ImguiInput::OnMouseMove(BaseEvent* ev) {
 	MouseMovedEvent* evCast = (MouseMovedEvent*)ev;
-	io.MousePos.x = (float)evCast->mouseX;
-	io.MousePos.y = (float)evCast->mouseY;
-	return true;
+	io.AddMousePosEvent((float)evCast->mouseX, (float)evCast->mouseY);
+	return false;
 }
 
 bool ImguiInput::OnMousePressed(BaseEvent* ev) {
@@ -27,15 +26,14 @@ bool ImguiInput::OnMousePressed(BaseEvent* ev) {
 		mouseBtn = 2;
 	}
 
-	io.MouseDown[mouseBtn] = evCast->isPressed;
-	return true;
+	io.AddMouseButtonEvent(mouseBtn, evCast->isPressed);
+	return false;
 }
 
 bool ImguiInput::OnMouseScrolled(BaseEvent* ev) {
 	MouseScrolledEvent* evCast = (MouseScrolledEvent*)ev;
-	io.MouseWheel = evCast->scrollY;
-	io.MouseWheelH = evCast->scrollX;
-	return true;
+	io.AddMouseWheelEvent(evCast->scrollX, evCast->scrollY);
+	return false;
 }
 
 static ImGuiKey TranslateKeycodeToImgui(Grindstone::Events::KeyPressCode keycode) {
@@ -81,13 +79,13 @@ bool ImguiInput::OnKeyPressed(BaseEvent* ev) {
 	// io.KeyAlt = io.KeysData[(int)KeyPressCode::LeftAlt] || io.KeysData[(int)KeyPressCode::Alt];
 	// io.KeySuper = io.KeysDown[(int)KeyPressCode:] || io.KeysDown[(int)KeyPressCode::RIGHT_SUPER];
 
-	return true;
+	return false;
 }
 
 bool ImguiInput::OnCharacterTyped(BaseEvent* ev) {
 	CharacterTypedEvent* evCast = (CharacterTypedEvent*)ev;
 	io.AddInputCharacter(evCast->character);
-	return true;
+	return false;
 }
 
 ImguiInput::ImguiInput(ImGuiIO& io, EngineCore* engineCore) : io(io) {

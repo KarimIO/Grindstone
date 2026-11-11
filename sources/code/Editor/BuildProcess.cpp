@@ -307,12 +307,13 @@ namespace Grindstone::Editor {
 		return true;
 	}
 
-	void BuildGame(BuildProcessStats* processStatus) {
+	void BuildGame(BuildProcessStats* processStatus, std::function<void()> onCancel) {
 		GS_ASSERT_ENGINE(processStatus != nullptr);
 
 		const std::filesystem::path targetPath = GetBuildPath();
 
 		if (targetPath.empty()) {
+			onCancel();
 			return;
 		}
 

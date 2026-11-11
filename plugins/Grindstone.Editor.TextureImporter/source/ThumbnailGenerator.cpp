@@ -255,9 +255,9 @@ bool Grindstone::Editor::Importers::InitializeTextureThumbnailGenerator() {
 	Grindstone::GraphicsAPI::Sampler::CreateInfo samplerCreateInfo{
 		.debugName = "Thumbnail Generator Sampler",
 		.options = {
-			.wrapModeU = GraphicsAPI::TextureWrapMode::ClampToBorder,
-			.wrapModeV = GraphicsAPI::TextureWrapMode::ClampToBorder,
-			.wrapModeW = GraphicsAPI::TextureWrapMode::ClampToBorder,
+			.wrapModeU = GraphicsAPI::TextureWrapMode::ClampToEdge,
+			.wrapModeV = GraphicsAPI::TextureWrapMode::ClampToEdge,
+			.wrapModeW = GraphicsAPI::TextureWrapMode::ClampToEdge,
 			.mipFilter = GraphicsAPI::TextureFilter::Nearest,
 			.minFilter = GraphicsAPI::TextureFilter::Linear,
 			.magFilter = GraphicsAPI::TextureFilter::Linear,
