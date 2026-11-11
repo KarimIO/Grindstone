@@ -1,8 +1,9 @@
 #pragma once
 
 #include <atomic>
-#include <string>
+#include <functional>
 #include <mutex>
+#include <string>
 
 namespace Grindstone::Editor {
 	struct BuildProcessStats {
@@ -12,5 +13,5 @@ namespace Grindstone::Editor {
 		std::mutex stringMutex;
 	};
 
-	void BuildGame(BuildProcessStats* buildProcessStats);
+	void BuildGame(BuildProcessStats* buildProcessStats, std::function<void()> onCancel);
 }

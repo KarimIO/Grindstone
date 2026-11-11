@@ -11,7 +11,10 @@ void BuildPopup::StartBuild() {
 	processStatus.detailText = "";
 	buildThread = std::thread(
 		BuildGame,
-		&processStatus
+		&processStatus,
+		[this]() -> void {
+			this->isCompilingAssets = false;
+		}
 	);
 	buildThread.detach();
 }
@@ -23,11 +26,13 @@ void BuildPopup::Render() {
 
 	ImGui::OpenPopup("Compiling Assets...");
 
-	ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize |
+							 ImGuiWindowFlags_NoMove |
+							 ImGuiWindowFlags_NoSavedSettings;
 
-	ImGui::SetNextWindowSize(ImVec2(400.0f, 0.0f));
-	bool isOpen = false;
-	if (ImGui::BeginPopupModal("Compiling Assets...", &isOpen, flags)) {
+	const ImVec2 BUILD_POPUP_WINDOW_SIZE = ImVec2(400.0f, 180.0f);
+	ImGui::SetNextWindowSize(BUILD_POPUP_WINDOW_SIZE);
+	if (ImGui::BeginPopupModal("Compiling Assets...", nullptr, flags)) {
 		float progress = processStatus.progress;
 		ImGui::ProgressBar(progress);
 		{
