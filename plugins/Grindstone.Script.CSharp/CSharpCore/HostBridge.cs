@@ -88,7 +88,7 @@ namespace Grindstone {
 		}
 
 		[UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-		public static IntPtr CreateComponent(int assemblyHashName, IntPtr classNamePtr, uint entity) {
+		public static IntPtr CreateComponent(int assemblyHashName, IntPtr classNamePtr, uint entity, IntPtr worldContextSet) {
 			string className = Marshal.PtrToStringAnsi(classNamePtr)!;
 			Assembly? assembly = null;
 			try {
@@ -129,11 +129,11 @@ namespace Grindstone {
 				else {
 					Type targetEntityType = field.FieldType;
 
-					FieldInfo? sceneField = targetEntityType.GetField("scene", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-					Type targetSceneType = sceneField!.FieldType;
+					FieldInfo? worldContextSetField = targetEntityType.GetField("worldContext", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+					Type targetWorldContextSetType = worldContextSetField!.FieldType;
 
-					object targetSceneInstance = Activator.CreateInstance(targetSceneType, new object[] { (System.IntPtr)0 })!;
-					object targetEntityInstance = Activator.CreateInstance(targetEntityType, new object[] { entity, targetSceneInstance })!;
+					object targetWorldContextSetInstance = Activator.CreateInstance(targetWorldContextSetType, new object[] { worldContextSet })!;
+					object targetEntityInstance = Activator.CreateInstance(targetEntityType, new object[] { targetWorldContextSetInstance, entity })!;
 					
 					field.SetValue(instance, targetEntityInstance);
 				}

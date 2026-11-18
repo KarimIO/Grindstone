@@ -209,7 +209,7 @@ extern "C" {
 		DestroyComponentFn destroyComponent;
 	};
 
-	ComponentAccessBindings GetComponentAccessBindings(const char* componentName) {
+	__declspec(dllexport) ComponentAccessBindings GetComponentAccessBindings(const char* componentName) {
 		Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 		Grindstone::ECS::ComponentRegistrar* compReg = engineCore.GetComponentRegistrar();
 		GS_ASSERT(compReg);

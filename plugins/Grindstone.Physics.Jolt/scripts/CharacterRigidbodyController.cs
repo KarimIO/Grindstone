@@ -1,49 +1,40 @@
 using System.Runtime.InteropServices;
 
 namespace Grindstone.Physics.Jolt {
-	public class CharacterRigidbodyControllerComponent {
-		System.IntPtr componentPtr;
-
-		public CharacterRigidbodyControllerComponent(System.IntPtr componentPtr) {
-			this.componentPtr = componentPtr;
-		}
-
-		public CharacterRigidbodyControllerComponent(Grindstone.Entity entity) {
-			componentPtr = EntityGetCharacterRigidbodyControllerComponent(entity.worldContext.GetHandle(), entity.entityHandle);
-		}
+	[System.Serializable]
+	public struct CharacterRigidbodyControllerComponent {
+		public static string NativeComponentName => "CharacterRigidbodyController";
 
 		public bool IsOnGround {
-			get => CharacterRigidbodyControllerComponentGetIsOnGround(componentPtr);
+			get => CharacterRigidbodyControllerComponentGetIsOnGround(ref this);
 		}
 
 		public Grindstone.Math.Float3 Velocity {
-			get => CharacterRigidbodyControllerComponentGetVelocity(componentPtr);
-			set => CharacterRigidbodyControllerComponentSetVelocity(componentPtr, value);
+			get => CharacterRigidbodyControllerComponentGetVelocity(ref this);
+			set => CharacterRigidbodyControllerComponentSetVelocity(ref this, value);
 		}
 
 		public Grindstone.Math.Quaternion Rotation {
-			get => CharacterRigidbodyControllerComponentGetRotation(componentPtr);
-			set => CharacterRigidbodyControllerComponentSetRotation(componentPtr, value);
+			get => CharacterRigidbodyControllerComponentGetRotation(ref this);
+			set => CharacterRigidbodyControllerComponentSetRotation(ref this, value);
 		}
 
 		#region DllImports
-		[DllImport("PluginJoltPhysics")]
-		public static extern System.IntPtr EntityGetCharacterRigidbodyControllerComponent(System.IntPtr scene, uint entity);
 
 		[DllImport("PluginJoltPhysics")]
-		static extern bool CharacterRigidbodyControllerComponentGetIsOnGround(System.IntPtr comp);
+		static extern bool CharacterRigidbodyControllerComponentGetIsOnGround(ref CharacterRigidbodyControllerComponent comp);
 
 		[DllImport("PluginJoltPhysics")]
-		static extern Grindstone.Math.Float3 CharacterRigidbodyControllerComponentGetVelocity(System.IntPtr comp);
+		static extern Grindstone.Math.Float3 CharacterRigidbodyControllerComponentGetVelocity(ref CharacterRigidbodyControllerComponent comp);
 
 		[DllImport("PluginJoltPhysics")]
-		static extern void CharacterRigidbodyControllerComponentSetVelocity(System.IntPtr comp, Grindstone.Math.Float3 velocity);
+		static extern void CharacterRigidbodyControllerComponentSetVelocity(ref CharacterRigidbodyControllerComponent comp, Grindstone.Math.Float3 velocity);
 
 		[DllImport("PluginJoltPhysics")]
-		static extern Grindstone.Math.Quaternion CharacterRigidbodyControllerComponentGetRotation(System.IntPtr comp);
+		static extern Grindstone.Math.Quaternion CharacterRigidbodyControllerComponentGetRotation(ref CharacterRigidbodyControllerComponent comp);
 
 		[DllImport("PluginJoltPhysics")]
-		static extern void CharacterRigidbodyControllerComponentSetRotation(System.IntPtr comp, Grindstone.Math.Quaternion rotation);
+		static extern void CharacterRigidbodyControllerComponentSetRotation(ref CharacterRigidbodyControllerComponent comp, Grindstone.Math.Quaternion rotation);
 		#endregion
 	}
 }

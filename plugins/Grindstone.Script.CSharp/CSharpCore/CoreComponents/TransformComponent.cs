@@ -1,78 +1,50 @@
 using Grindstone.Math;
 using System.Runtime.InteropServices;
 
-namespace Grindstone
-{
-	public class TransformComponent
-	{
-		System.IntPtr componentPtr;
+namespace Grindstone {
+	[System.Serializable, StructLayout(LayoutKind.Explicit, Size = 632)]
+	public struct TransformComponent {
+		public static string NativeComponentName => "Transform";
 
-		public TransformComponent(System.IntPtr componentPtr)
-		{
-			this.componentPtr = componentPtr;
-		}
+		#region
+		[FieldOffset(0)] Quaternion rotation;
+		[FieldOffset(16)] Float3 position;
+		[FieldOffset(28)] Float3 scale;
+		#endregion
 
-		public Quaternion Rotation
-		{
-			get => TransformComponentGetRotation(componentPtr);
-			set => TransformComponentSetRotation(componentPtr, value);
-		}
+		public Quaternion LocalRotation { get => rotation; set => rotation = value; }
+		public Float3 LocalPosition { get => position; set => position = value; }
+		public Float3 Scale { get => scale; set => scale = value; }
 
-		public Float3 Position
-		{
-			get => TransformComponentGetPosition(componentPtr);
-			set => TransformComponentSetPosition(componentPtr, value);
-		}
-
-		public Float3 Scale
-		{
-			get => TransformComponentGetScale(componentPtr);
-			set => TransformComponentSetScale(componentPtr, value);
-		}
+		// TODO: Get World coordinates
+		public Quaternion Rotation { get => rotation; set => rotation = value; }
+		public Float3 Position { get => position; set => position = value; }
 
 		public Float3 Forward
 		{
-			get => TransformComponentGetForward(componentPtr);
+			get => TransformComponentGetForward(ref this);
 		}
 
 		public Float3 Right
 		{
-			get => TransformComponentGetRight(componentPtr);
+			get => TransformComponentGetRight(ref this);
 		}
 
 		public Float3 Up
 		{
-			get => TransformComponentGetUp(componentPtr);
+			get => TransformComponentGetUp(ref this);
 		}
 
 
 		#region DllImports
 		[DllImport("EngineCore")]
-		static extern Float3 TransformComponentGetForward(System.IntPtr comp);
+		static extern Float3 TransformComponentGetForward(ref TransformComponent comp);
 
 		[DllImport("EngineCore")]
-		static extern Float3 TransformComponentGetRight(System.IntPtr comp);
+		static extern Float3 TransformComponentGetRight(ref TransformComponent comp);
 
 		[DllImport("EngineCore")]
-		static extern Float3 TransformComponentGetUp(System.IntPtr comp);
-
-		[DllImport("EngineCore")]
-		static extern Quaternion TransformComponentGetRotation(System.IntPtr comp);
-
-		[DllImport("EngineCore")]
-		static extern void TransformComponentSetRotation(System.IntPtr comp, Quaternion rotation);
-
-		[DllImport("EngineCore")]
-		static extern Float3 TransformComponentGetPosition(System.IntPtr comp);
-
-		[DllImport("EngineCore")]
-		static extern void TransformComponentSetPosition(System.IntPtr comp, Float3 position);
-
-		[DllImport("EngineCore")]
-		static extern Float3 TransformComponentGetScale(System.IntPtr comp);
-
-		[DllImport("EngineCore")]
-		static extern void TransformComponentSetScale(System.IntPtr comp, Float3 scale);
+		static extern Float3 TransformComponentGetUp(ref TransformComponent comp);
 		#endregion
 	}
 }

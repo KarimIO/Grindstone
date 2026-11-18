@@ -3,6 +3,12 @@ namespace Grindstone {
 	// by HostBridge.
 	public class SmartComponent {
 		public readonly Entity entity;
+
+		#region Properties
+		public Entity Entity => entity;
+		public WorldContext WorldContext => entity.WorldContext;
+		#endregion
+
 		#region Public Methods
 		#region Public Virtual Methods
 		public virtual void OnStart() { }
@@ -12,8 +18,8 @@ namespace Grindstone {
 		public virtual void OnDestroy() { }
 		#endregion
 
-		public Entity GetEntity() {
-			return entity;
+		public NativeComponentRef<T> GetNativeComponentRef<T>() where T : unmanaged {
+			return entity.GetNativeComponentRef<T>();
 		}
 
 		public T? CreateComponent<T>() {

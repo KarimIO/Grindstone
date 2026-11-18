@@ -144,7 +144,7 @@ void SceneHeirarchyPanel::RenderEntity(
 
 	Grindstone::Editor::Selection& selection = Editor::Manager::GetInstance().GetSelection();
 	bool isSelected = selection.IsEntitySelected(entity);
-	auto& colors = ImGui::GetStyle().Colors;
+	const ImVec4* colors = ImGui::GetStyle().Colors;
 	ImGui::PushStyleColor(ImGuiCol_Header, colors[ImGuiCol_Button]);
 
 	const char* entityTag = tagComponent.tag.c_str();

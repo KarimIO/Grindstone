@@ -8,12 +8,12 @@ namespace Grindstone.Input
 		#region Static Methods
 		public static bool IsKeyDown(KeyboardKey keyboardKey)
 		{
-			return InputManagerIsKeyDown((int)keyboardKey);
+			return InputManagerIsKeyDown((int)keyboardKey) != 0;
 		}
 
 		public static bool IsMouseButtonDown(MouseButton mouseButton)
 		{
-			return InputManagerIsMouseButtonDown((int)mouseButton);
+			return InputManagerIsMouseButtonDown((int)mouseButton) != 0;
 		}
 
 		public static Float2 MousePosition
@@ -22,12 +22,12 @@ namespace Grindstone.Input
 			set => InputManagerSetMousePos(value);
 		}
 
-		public static bool IsWindowFocused => InputManagerGetIsWindowFocused();
+		public static bool IsWindowFocused => InputManagerGetIsWindowFocused() != 0;
 
 		public static bool IsMouseRawMotion
 		{
-			get => InputManagerGetMouseIsRawMotion();
-			set => InputManagerSetMouseIsRawMotion(value);
+			get => InputManagerGetMouseIsRawMotion() != 0;
+			set => InputManagerSetMouseIsRawMotion((byte)(value ? 1 : 0));
 		}
 
 		public static CursorMode CursorMode
@@ -45,19 +45,19 @@ namespace Grindstone.Input
 		private static extern void InputManagerSetCursorMode(byte cursorMode);
 
 		[DllImport("EngineCore")]
-		private static extern bool InputManagerGetMouseIsRawMotion();
+		private static extern byte InputManagerGetMouseIsRawMotion();
 
 		[DllImport("EngineCore")]
-		private static extern void InputManagerSetMouseIsRawMotion(bool isRawMotion);
+		private static extern void InputManagerSetMouseIsRawMotion(byte isRawMotion);
 
 		[DllImport("EngineCore")]
-		private static extern bool InputManagerGetIsWindowFocused();
+		private static extern byte InputManagerGetIsWindowFocused();
 
 		[DllImport("EngineCore")]
-		private static extern bool InputManagerIsKeyDown(int keyboardKey);
+		private static extern byte InputManagerIsKeyDown(int keyboardKey);
 
 		[DllImport("EngineCore")]
-		private static extern bool InputManagerIsMouseButtonDown(int mouseButton);
+		private static extern byte InputManagerIsMouseButtonDown(int mouseButton);
 
 		[DllImport("EngineCore")]
 		private static extern Float2 InputManagerGetMousePos();
