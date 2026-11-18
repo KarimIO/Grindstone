@@ -83,7 +83,9 @@ void Grindstone::Editor::RendererFeatures::Grid::Bind(
 ) {
 	auto gizmoRenderingFlagsResponse = context.blackboard.GetValue<uint32_t>("GizmoRenderingFlags");
 	if (gizmoRenderingFlagsResponse.HasError()) {
-		GPRINT_ERROR(LogSource::Rendering, "Grid: Unable to get GizmoRenderingFlags: {}", gizmoRenderingFlagsResponse.GetError());
+		if (gizmoRenderingFlagsResponse.GetError() != Blackboard::BlackboardError::KeyNotFound) {
+			GPRINT_ERROR(LogSource::Rendering, "Grid: Unable to get GizmoRenderingFlags: {}", gizmoRenderingFlagsResponse.GetError());
+		}
 		return;
 	}
 	uint32_t gizmoRenderingFlags = gizmoRenderingFlagsResponse.GetValue();
