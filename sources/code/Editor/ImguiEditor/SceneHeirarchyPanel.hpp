@@ -28,10 +28,10 @@ namespace Grindstone {
 
 			class SceneHeirarchyPanel {
 			public:
-				SceneHeirarchyPanel(SceneManagement::SceneManager* sceneManager, ImguiEditor* editor);
+				SceneHeirarchyPanel(ImguiEditor* editor);
 				void Render();
 			private:
-				void RenderScene(SceneManagement::Scene* scene);
+				void RenderScene(Grindstone::WorldContextSet* cxtSet);
 				void RenderEntity(
 					EntityParentTagView& view,
 					ECS::Entity entity,
@@ -40,7 +40,6 @@ namespace Grindstone {
 				);
 			private:
 				bool isShowingPanel = true;
-				SceneManagement::SceneManager* sceneManager;
 				ImguiEditor* editor;
 				ECS::Entity entityToRename;
 				std::string entityRenameNewName;

@@ -1,38 +1,29 @@
 using System.Runtime.InteropServices;
 
 namespace Grindstone.Ai {
-	public class NavmeshAgentComponent {
-		System.IntPtr componentPtr;
-
-		public NavmeshAgentComponent(System.IntPtr componentPtr) {
-			this.componentPtr = componentPtr;
-		}
-
-		public NavmeshAgentComponent(Grindstone.Entity entity) {
-			this.componentPtr = EntityGetNavmeshAgentComponent(entity.scene.sceneIntPtr, entity.entityHandle);
-		}
+	[System.Serializable]
+	public struct NavmeshAgentComponent {
+		public static string NativeComponentName => "NavigationAgent";
 
 		public float MaxMoveSpeed {
-			get => NavmeshAgentComponentGetMaxMoveSpeed(componentPtr);
-			set => NavmeshAgentComponentSetMaxMoveSpeed(componentPtr, value);
+			get => NavmeshAgentComponentGetMaxMoveSpeed(ref this);
+			set => NavmeshAgentComponentSetMaxMoveSpeed(ref this, value);
 		}
 
 		public void SetMoveTo(Grindstone.Math.Float3 position) {
-			NavmeshAgentComponentMoveTo(0, componentPtr, position);
+			NavmeshAgentComponentMoveTo(ref this, position);
 		}
 
 		#region DllImports
-		[DllImport("PluginNavigationMesh")]
-		static extern System.IntPtr EntityGetNavmeshAgentComponent(System.IntPtr scene, uint entity);
 
 		[DllImport("PluginNavigationMesh")]
-		static extern float NavmeshAgentComponentGetMaxMoveSpeed(System.IntPtr comp);
+		static extern float NavmeshAgentComponentGetMaxMoveSpeed(ref NavmeshAgentComponent comp);
 
 		[DllImport("PluginNavigationMesh")]
-		static extern void NavmeshAgentComponentSetMaxMoveSpeed(System.IntPtr comp, float moveSpeed);
+		static extern void NavmeshAgentComponentSetMaxMoveSpeed(ref NavmeshAgentComponent comp, float moveSpeed);
 
 		[DllImport("PluginNavigationMesh")]
-		static extern void NavmeshAgentComponentMoveTo(uint entity, System.IntPtr comp, Grindstone.Math.Float3 position);
+		static extern void NavmeshAgentComponentMoveTo(ref NavmeshAgentComponent comp, Grindstone.Math.Float3 position);
 		#endregion
 	}
 }

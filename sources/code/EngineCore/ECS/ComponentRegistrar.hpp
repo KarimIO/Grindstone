@@ -69,14 +69,13 @@ namespace Grindstone::ECS {
 		virtual void RegisterComponent(Grindstone::HashedString name, ComponentFunctions componentFunctions);
 		virtual void UnregisterComponent(Grindstone::HashedString name);
 		virtual void* CreateComponentWithSetup(Grindstone::HashedString name, ECS::Entity entity);
-		virtual void* CreateComponentWithSetup(WorldContextSet& worldContextSet, Grindstone::HashedString name, ECS::Entity entity);
 		virtual void* CreateComponent(Grindstone::HashedString name, ECS::Entity entity);
 		virtual void RemoveComponent(Grindstone::HashedString name, ECS::Entity entity);
 		virtual bool HasComponent(Grindstone::HashedString name, ECS::Entity entity);
 		virtual bool TryGetComponent(Grindstone::HashedString name, ECS::Entity entity, void*& outComponent);
 		virtual bool TryGetComponentReflectionData(Grindstone::HashedString name, Grindstone::Reflection::TypeDescriptor_Struct& outReflectionData);
 		virtual void SetupComponent(Grindstone::HashedString componentType, ECS::Entity entity, void* componentPtr);
-		virtual void SetupComponent(WorldContextSet& worldContextSet, Grindstone::HashedString componentType, ECS::Entity entity, void* componentPtr);
+		Grindstone::ECS::ComponentFunctions& GetComponentAccessFunctions(Grindstone::HashedString componentTypeName);
 
 		using ComponentMap = std::unordered_map<Grindstone::HashedString, ComponentFunctions>;
 		virtual ComponentMap::iterator begin();

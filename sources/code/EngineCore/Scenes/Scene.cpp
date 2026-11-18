@@ -37,28 +37,30 @@ Scene::~Scene() {
 }
 
 ECS::Entity Scene::CreateEmptyEntity(entt::entity entityToUse) {
+	Grindstone::WorldContextSet* worldContextSet = Grindstone::EngineCore::GetInstance().GetWorldContextManager()->GetActiveWorldContextSet();
+
 	entt::registry& registry = GetEntityRegistry();
 	if (entityToUse == entt::null) {
 		entt::entity entityId = registry.create();
-		return { entityId, this };
+		return {entityId, worldContextSet};
 	}
 
 	if (registry.valid(entityToUse)) {
 		GPRINT_ERROR(LogSource::EngineCore, "Registry already has entity with ID {}", static_cast<uint32_t>(entityToUse));
 		entt::entity entityId = registry.create();
-		return { entityId, this };
+		return {entityId, worldContextSet};
 	}
 
 	entt::entity entityId = registry.create(entityToUse);
-	return { entityId, this };
+	return {entityId, worldContextSet};
 }
 
 void Scene::DestroyEntity(ECS::EntityHandle entityId) {
-	DestroyEntity(ECS::Entity(entityId, this));
+	DestroyEntity(ECS::Entity(entityId, Grindstone::EngineCore::GetInstance().GetWorldContextManager()->GetActiveWorldContextSet()));
 }
 
 void Scene::DestroyEntity(ECS::Entity entity) {
-	GetComponentRegistrar()->DestroyEntity(entity);
+	entity.GetWorldContextSet()->GetEntityRegistry().destroy(entity.GetHandle());
 }
 
 void Scene::SetName(std::string_view name) {

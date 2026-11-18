@@ -109,8 +109,8 @@ Grindstone::Math::Quaternion CharacterRigidbodyControllerComponent::GetRotation(
 }
 
 extern "C" {
-	JOLT_PHYSICS_EXPORT void* EntityGetCharacterRigidbodyControllerComponent(Grindstone::SceneManagement::Scene* scene, uint32_t entity) {
-		entt::registry& reg = Grindstone::EngineCore::GetInstance().GetEntityRegistry();
+	JOLT_PHYSICS_EXPORT void* EntityGetCharacterRigidbodyControllerComponent(Grindstone::WorldContextSet* worldContextSet, uint32_t entity) {
+	entt::registry& reg = worldContextSet->GetEntityRegistry();
 		const entt::entity entityId = static_cast<entt::entity>(entity);
 		CharacterRigidbodyControllerComponent* comp = reg.try_get<CharacterRigidbodyControllerComponent>(entityId);
 		return comp;

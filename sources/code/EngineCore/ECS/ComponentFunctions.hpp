@@ -13,11 +13,11 @@ namespace Grindstone {
 		using DestroyComponentFn = void(*)(Grindstone::WorldContextSet&, entt::entity);
 		using ClearComponentsFn = void(*)(Grindstone::WorldContextSet&);
 		using GetComponentReflectionDataFn = Grindstone::Reflection::TypeDescriptor_Struct(*)();
-		using TryGetComponentFn = bool(*)(entt::registry&, entt::entity, void*& outEntity);
-		using HasComponentFn = bool(*)(entt::registry&, entt::entity);
-		using CreateComponentFn = void*(*)(entt::registry&, entt::entity);
-		using RemoveComponentFn = void(*)(entt::registry&, entt::entity);
-		using CopyRegistryComponentsFn = void(*)(WorldContextSet& dst, WorldContextSet& src);
+		using TryGetComponentFn = bool(*)(Grindstone::WorldContextSet&, entt::entity, void*& outEntity);
+		using HasComponentFn = bool(*)(Grindstone::WorldContextSet&, entt::entity);
+		using CreateComponentFn = void*(*)(Grindstone::WorldContextSet&, entt::entity);
+		using RemoveComponentFn = void(*)(Grindstone::WorldContextSet&, entt::entity);
+		using CopyRegistryComponentsFn = void(*)(Grindstone::WorldContextSet& dst, Grindstone::WorldContextSet& src);
 		
 		class ComponentFunctions {
 		public:

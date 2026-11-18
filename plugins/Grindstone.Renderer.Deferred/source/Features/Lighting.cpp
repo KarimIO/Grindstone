@@ -1,17 +1,16 @@
 #include <Common/Logger.hpp>
-#include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
+#include <EngineCore/Assets/AssetManager.hpp>
+#include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
 #include <EngineCore/CoreComponents/EnvironmentMap/EnvironmentMapComponent.hpp>
 #include <EngineCore/CoreComponents/Lights/DirectionalLightComponent.hpp>
 #include <EngineCore/CoreComponents/Lights/PointLightComponent.hpp>
 #include <EngineCore/CoreComponents/Lights/SpotLightComponent.hpp>
-#include <EngineCore/Assets/AssetManager.hpp>
-#include <EngineCore/Assets/PipelineSet/GraphicsPipelineAsset.hpp>
+#include <EngineCore/CoreComponents/Transform/TransformComponent.hpp>
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
-#include <EngineCore/Scenes/Manager.hpp>
 
-#include <Grindstone.Renderer.Deferred/include/Features/Lighting.hpp>
 #include <Grindstone.Renderer.Deferred/include/DeferredRendererCommon.hpp>
 #include <Grindstone.Renderer.Deferred/include/Features/Gbuffer.hpp>
+#include <Grindstone.Renderer.Deferred/include/Features/Lighting.hpp>
 
 using namespace Grindstone;
 
@@ -143,10 +142,7 @@ void Renderer::Lighting::Bind(
 			EngineCore& engineCore = EngineCore::GetInstance();
 			entt::registry& registry = cxt.worldContextSet->GetEntityRegistry();
 			GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
-
-			// TODO: We should be able to get transforms below without a scene.
-			Grindstone::SceneManagement::SceneManager* sceneManager = engineCore.GetSceneManager();
-			Grindstone::SceneManagement::Scene* scene = sceneManager->scenes.begin()->second;
+			Grindstone::WorldContextSet* worldContextSet = cxt.worldContextSet;
 
 			const glm::mat4 bias = glm::mat4(
 				0.5f, 0.0f, 0.0f, 0.0f,
@@ -177,7 +173,7 @@ void Renderer::Lighting::Bind(
 					auto view = registry.view<const entt::entity, PointLightComponent>();
 					view.each(
 						[&](const entt::entity entityHandle, PointLightComponent& pointLightComponent) {
-							const ECS::Entity entity(entityHandle, scene);
+							const ECS::Entity entity(entityHandle, worldContextSet);
 							PointLightComponent::UniformStruct lightStruct{
 								.lightPosition = entity.GetWorldPosition(),
 								.lightAttenuationRadius = pointLightComponent.attenuationRadius,
@@ -214,7 +210,7 @@ void Renderer::Lighting::Bind(
 					auto view = registry.view<const entt::entity, SpotLightComponent>();
 					view.each(
 						[&](const entt::entity entityHandle, SpotLightComponent& spotLightComponent) {
-							const ECS::Entity entity(entityHandle, scene);
+							const ECS::Entity entity(entityHandle, worldContextSet);
 
 							const SpotLightComponent::UniformStruct lightStruct{
 								.shadowMatrix = bias * spotLightComponent.shadowMatrix,
@@ -252,7 +248,7 @@ void Renderer::Lighting::Bind(
 					auto view = registry.view<const entt::entity, const TransformComponent, DirectionalLightComponent>();
 					view.each(
 						[&](const entt::entity entityHandle, const TransformComponent& transformComponent, DirectionalLightComponent& directionalLightComponent) {
-							const ECS::Entity entity(entityHandle, scene);
+							const ECS::Entity entity(entityHandle, worldContextSet);
 
 							DirectionalLightComponent::UniformStruct lightStruct{
 								.cameraViewMatrix = directionalLightComponent.debugCameraViewMatrix,

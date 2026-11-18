@@ -1,27 +1,23 @@
 using System.Runtime.InteropServices;
 
 namespace Grindstone {
-	public class TagComponent {
-		System.IntPtr componentPtr;
-
-		public TagComponent(System.IntPtr componentPtr)
-		{
-			this.componentPtr = componentPtr;
-		}
+	[StructLayout(LayoutKind.Sequential)]
+	public struct TagComponent {
+		public static string NativeComponentName => "Tag";
 
 		#region Properties
 		public string? Tag {
-			get => Marshal.PtrToStringAnsi(TagComponentGetTag(componentPtr));
-			set => TagComponentSetTag(componentPtr, value);
+			get => Marshal.PtrToStringAnsi(TagComponentGetTag(ref this));
+			set => TagComponentSetTag(ref this, value);
 		}
 		#endregion
 
 		#region DllImports
 		[DllImport("EngineCore")]
-		static extern System.IntPtr TagComponentGetTag(System.IntPtr comp);
+		private static extern System.IntPtr TagComponentGetTag(ref TagComponent comp);
 
 		[DllImport("EngineCore")]
-		static extern void TagComponentSetTag(System.IntPtr comp, string? tag);
+		private static extern void TagComponentSetTag(ref TagComponent comp, string? tag);
 		#endregion
 	}
 }

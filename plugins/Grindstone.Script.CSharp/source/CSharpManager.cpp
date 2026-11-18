@@ -44,7 +44,7 @@ namespace Grindstone {
 	using CreateAppDomainFnPtr = void (*)(void*);
 	using LoadAssemblyFnPtr = AssemblyHash(*)(void*);
 	using CreateObjectFnPtr = void* (*)(AssemblyHash, void*);
-	using CreateComponentFnPtr = void* (*)(AssemblyHash, void*, uint32_t);
+	using CreateComponentFnPtr = void* (*)(AssemblyHash, void*, uint32_t, void*);
 	using CallLifetimeFnPtr = void (*)(void*);
 	using DestroyObjectFnPtr = void (*)(void*);
 	using VoidFnPtr = void (*)();
@@ -438,7 +438,7 @@ void CSharpManager::SetupComponent(Grindstone::WorldContextSet& cxtSet, entt::en
 		assemblyHash = it->second.assemblyHash;
 	}
 
-	component.csharpObject = csharpGlobals.CreateComponent(assemblyHash, (void*)searchString.c_str(), (uint32_t)entity);
+	component.csharpObject = csharpGlobals.CreateComponent(assemblyHash, (void*)searchString.c_str(), (uint32_t)entity, &cxtSet);
 	if (component.csharpObject != nullptr) {
 		csharpGlobals.CallOnAttach(component.csharpObject);
 		csharpGlobals.CallOnStart(component.csharpObject);
@@ -536,18 +536,6 @@ void CSharpManager::RegisterComponents() {
 
 void CSharpManager::RegisterComponent(const Grindstone::String& componentName, ECS::ComponentFunctions& fns) {
 	std::string csharpClass = "Grindstone." + componentName + "Component";
-}
-
-// TODO: Shouldn't this be !=?
-void CSharpManager::CallCreateComponent(SceneManagement::Scene* scene, entt::entity entity) {
-}
-
-// TODO: Shouldn't this be !=?
-void CSharpManager::CallHasComponent(SceneManagement::Scene* scene, entt::entity entity) {
-}
-
-// TODO: Shouldn't this be !=?
-void CSharpManager::CallRemoveComponent(SceneManagement::Scene* scene, entt::entity entity) {
 }
 
 void CSharpManager::QueueReload() {

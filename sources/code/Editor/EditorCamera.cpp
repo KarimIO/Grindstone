@@ -376,7 +376,7 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 
 	const glm::mat4 transformMatrix = TransformComponent::GetWorldTransformMatrix(entity, registry);
 
-	const glm::vec3 upVector = glm::normalize(-glm::vec3(transformMatrix[1]));
+	const glm::vec3 upVector = glm::normalize(glm::vec3(transformMatrix[1]));
 	const glm::vec3 forwardVector = glm::normalize(glm::vec3(transformMatrix[2]));
 	const glm::vec3 pos = glm::vec3(transformMatrix[3]);
 
@@ -511,24 +511,6 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 		frameCxt.blackboard.SetValue("MousePickCoords", mousePickCoordinates);
 	}
 
-	uint32_t gizmoRenderingFlags = 0;
-	if (isGridEnabled) {
-		gizmoRenderingFlags |= 1;
-	}
-
-	if (isBoundingSphereGizmoEnabled) {
-		gizmoRenderingFlags |= 2;
-	}
-
-	if (isBoundingBoxGizmoEnabled) {
-		gizmoRenderingFlags |= 4;
-	}
-
-	if (isColliderGizmoEnabled) {
-		gizmoRenderingFlags |= 8;
-	}
-
-	frameCxt.blackboard.SetValue<uint32_t>("GizmoRenderingFlags", gizmoRenderingFlags);
 	frameCxt.blackboard.SetValue("RenderMode", renderMode);
 	Grindstone::Renderer::RenderingPipeline* renderPipeline = engineCore.GetRenderingPipeline();
 	renderPipeline->Render(renderGraphBuilder, frameCxt);
