@@ -376,7 +376,7 @@ void EditorCamera::RenderPlayModeCamera(GraphicsAPI::CommandBuffer* commandBuffe
 
 	const glm::mat4 transformMatrix = TransformComponent::GetWorldTransformMatrix(entity, registry);
 
-	const glm::vec3 upVector = glm::normalize(-glm::vec3(transformMatrix[1]));
+	const glm::vec3 upVector = glm::normalize(glm::vec3(transformMatrix[1]));
 	const glm::vec3 forwardVector = glm::normalize(glm::vec3(transformMatrix[2]));
 	const glm::vec3 pos = glm::vec3(transformMatrix[3]);
 
