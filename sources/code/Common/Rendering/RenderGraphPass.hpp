@@ -1,16 +1,17 @@
 #pragma once
 
-#include <vector>
-#include <variant>
 #include <functional>
+#include <variant>
+#include <vector>
 
-#include <Common/HashedString.hpp>
 #include <Common/Graphics/CommandBuffer.hpp>
+#include <Common/Graphics/Core.hpp>
+#include <Common/String.hpp>
 
-#include "GpuPassType.hpp"
-#include "RenderGraphContext.hpp"
 #include "AttachmentInfo.hpp"
 #include "BufferInfo.hpp"
+#include "GpuPassType.hpp"
+#include "RenderGraphContext.hpp"
 #include "RenderGraphFrameResources.hpp"
 
 namespace Grindstone::GraphicsAPI {
@@ -50,7 +51,8 @@ namespace Grindstone::Renderer {
 		std::vector<PassImageDesc> imageDescs;
 		std::vector<PassBufferDesc> bufferDescs;
 		Grindstone::GraphicsAPI::DescriptorSet* passDescriptorSet = nullptr;
-		Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = nullptr;
+		Grindstone::GraphicsAPI::DescriptorSetLayoutRef passDescriptorSetLayout;
+		Grindstone::GraphicsAPI::PipelineLayoutRef pipelineLayout;
 
 		virtual void RealizeResources(
 			Grindstone::Renderer::RenderGraphContext& context,

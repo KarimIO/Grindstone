@@ -197,7 +197,7 @@ void Grindstone::Renderer::Smaa::Initialize() {
 
 		GraphicsAPI::DescriptorSet::CreateInfo smaaDescriptorSetsCreateInfo{
 			.debugName = "SMAA Blending Descriptor Set",
-			.layout = smaaDescriptorSetLayout,
+			.layout = smaaDescriptorSetLayout.Get(),
 			.bindings = bindings.data(),
 			.bindingCount = static_cast<uint32_t>(bindings.size()),
 		};
@@ -264,7 +264,7 @@ void Grindstone::Renderer::Smaa::Bind(
 		renderGraphBuilder,
 		smaaPipelineAsset,
 		litImageRef,
-		pointSampler
+		pointSampler.Get()
 	);
 
 	Grindstone::Renderer::RenderGraphBuilderResourceRef blendImageRef = SmaaBlendWeightCalculationPass(
@@ -272,7 +272,7 @@ void Grindstone::Renderer::Smaa::Bind(
 		smaaDescriptorSet,
 		smaaPipelineAsset,
 		edgesImageRef,
-		linearSampler
+		linearSampler.Get()
 	);
 
 	Grindstone::Renderer::RenderGraphBuilderResourceRef finalAAImageRef = SmaaNeighborhoodBlendingPass(
@@ -281,6 +281,6 @@ void Grindstone::Renderer::Smaa::Bind(
 		tonemappedRef,
 		blendImageRef,
 		context.colorRef,
-		linearSampler
+		linearSampler.Get()
 	);
 }

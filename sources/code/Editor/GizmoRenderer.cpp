@@ -514,7 +514,7 @@ void GizmoRenderer::Initialize() {
 
 	GraphicsAPI::DescriptorSet::CreateInfo gizmoDescriptorSetCreateInfo{};
 	gizmoDescriptorSetCreateInfo.bindingCount = 1u;
-	gizmoDescriptorSetCreateInfo.layout = gizmoDescriptorSetLayout;
+	gizmoDescriptorSetCreateInfo.layout = gizmoDescriptorSetLayout.Get();
 
 	for (uint32_t i = 0; i < maxFramesInFlight; ++i) {
 		std::string debugName = std::vformat("Gizmo Descriptor [{}]", std::make_format_args(i));

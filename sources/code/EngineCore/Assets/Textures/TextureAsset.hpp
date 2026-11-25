@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Common/Graphics/Core.hpp>
 #include "EngineCore/Assets/Asset.hpp"
 
 namespace Grindstone {
@@ -11,7 +12,7 @@ namespace Grindstone {
 	struct TextureAsset : public Asset {
 		TextureAsset(Uuid uuid) : Asset(uuid, uuid.ToString()) {}
 		GraphicsAPI::Image* image = nullptr;
-		GraphicsAPI::Sampler* defaultSampler = nullptr;
+		GraphicsAPI::SamplerRef defaultSampler;
 
 		DEFINE_ASSET_TYPE("Texture", AssetType::Texture)
 	};

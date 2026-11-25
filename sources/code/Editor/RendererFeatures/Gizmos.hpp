@@ -18,7 +18,7 @@ namespace Grindstone::Editor::RendererFeatures {
 		) override;
 
 	private:
-		Grindstone::GraphicsAPI::Sampler* screenSampler = nullptr;
+		Grindstone::GraphicsAPI::SamplerRef screenSampler;
 		Grindstone::Editor::GizmoRenderer gizmoRenderer;
 	};
 }

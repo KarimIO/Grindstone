@@ -20,7 +20,7 @@ static void UnpackComputePipelineDescriptorSetHeaders(
 	std::string_view pipelineName,
 	const Span<V1::ShaderReflectDescriptorSet>& srcDescriptorSets,
 	const Span<V1::ShaderReflectDescriptorBinding>& srcDescriptorBindings,
-	std::vector<Grindstone::GraphicsAPI::DescriptorSetLayout*>& dstDescriptorSets
+	std::vector<Grindstone::GraphicsAPI::DescriptorSetLayoutRef>& dstDescriptorSets
 ) {
 	Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCreateInfo;
 
@@ -112,7 +112,7 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 		maxDescriptorSetIndex = std::max(maxDescriptorSetIndex, d.setIndex + 1u);
 	}
 
-	std::vector<GraphicsAPI::DescriptorSetLayout*> descriptorSetLayouts;
+	auto& descriptorSetLayouts = computePipelineAsset.descriptorSetLayouts;
 	descriptorSetLayouts.resize(maxDescriptorSetIndex);
 
 	UnpackComputePipelineDescriptorSetHeaders(
@@ -136,8 +136,8 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 
 	// Add empty descriptor set layouts to prevent errors.
 	for (uint8_t descriptorSetIndex = 0; descriptorSetIndex < descriptorSetLayoutCount; ++descriptorSetIndex) {
-		GraphicsAPI::DescriptorSetLayout*& descriptorSetLayout = descriptorSetLayouts[descriptorSetIndex];
-		if (descriptorSetLayout == nullptr) {
+		GraphicsAPI::DescriptorSetLayoutRef& descriptorSetLayout = descriptorSetLayouts[descriptorSetIndex];
+		if (!descriptorSetLayout.IsValid()) {
 			GraphicsAPI::DescriptorSetLayout::CreateInfo ci{};
 			ci.debugName = "Unbound descriptor set";
 			ci.bindingCount = 0;
@@ -152,11 +152,11 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 		.descriptorSetLayouts = descriptorSetLayouts.data(),
 		.descriptorSetLayoutCount = static_cast<uint32_t>(descriptorSetLayoutCount),
 	};
-	computePipelineAsset.pipelineLayout = graphicsCore->CreatePipelineLayout(pipelineLayoutCreateInfo);
+	computePipelineAsset.pipelineLayout = graphicsCore->GetOrCreatePipelineLayoutFromCache(pipelineLayoutCreateInfo);
 
 	Grindstone::GraphicsAPI::ComputePipeline::CreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.debugName = computePipelineAsset.name.c_str();
-	pipelineCreateInfo.pipelineLayout = computePipelineAsset.pipelineLayout;
+	pipelineCreateInfo.pipelineLayout = computePipelineAsset.pipelineLayout.Get();
 	pipelineCreateInfo.shaderContent = reinterpret_cast<const char*>(&blobs.GetBegin() + srcStage.shaderCodeOffsetFromBlobStart);
 	pipelineCreateInfo.shaderFileName = computePipelineAsset.name.c_str();
 	pipelineCreateInfo.shaderSize = srcStage.shaderCodeSize;

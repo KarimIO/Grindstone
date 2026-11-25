@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Common/Graphics/Core.hpp>
 #include <Common/Rendering/RendererFeature.hpp>
 #include <Common/Rendering/RenderGraphBuilder.hpp>
 #include <EngineCore/Assets/AssetReference.hpp>
@@ -25,11 +26,11 @@ namespace Grindstone::Renderer {
 		);
 
 		Grindstone::AssetReference<Grindstone::ComputePipelineAsset> ssrPipelineSet;
-		Grindstone::GraphicsAPI::Sampler* screenSampler = nullptr;
+		Grindstone::GraphicsAPI::SamplerRef screenSampler;
 
 		Grindstone::AssetReference<Grindstone::TextureAsset> brdfLut;
 		Grindstone::GraphicsAPI::Image* currentEnvironmentMapImage = nullptr;
-		Grindstone::GraphicsAPI::DescriptorSetLayout* reflectionDescriptorSetLayout = nullptr;
+		Grindstone::GraphicsAPI::DescriptorSetLayoutRef reflectionDescriptorSetLayout;
 		Grindstone::GraphicsAPI::DescriptorSet* reflectionDescriptorSet = nullptr;
 	};
 }

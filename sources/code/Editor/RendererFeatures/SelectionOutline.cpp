@@ -129,7 +129,7 @@ void Grindstone::Editor::RendererFeatures::SelectionOutline::Bind(
 		"Selection Outline",
 		Renderer::MetaRect::Swapchain(),
 		[this, colorImageRef, depthImageRef, selectionIdsRef, selectionDepthRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) {
-			renderPass.ReadExternalSampler(screenSampler);
+			renderPass.ReadExternalSampler(screenSampler.Get());
 			renderPass.ReadSampledImage(selectionIdsRef);
 			renderPass.ReadSampledImage(selectionDepthRef);
 			renderPass.ReadSampledImage(depthImageRef);

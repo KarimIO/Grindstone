@@ -1,9 +1,9 @@
 #pragma once
 
-#include "EngineCore/Reflection/ComponentReflection.hpp"
-#include "EngineCore/ECS/Entity.hpp"
-#include "Common/Math.hpp"
-#include "Common/Rect.hpp"
+#include <Common/Graphics/Core.hpp>
+#include <Common/Math.hpp>
+#include <Common/Rect.hpp>
+#include <EngineCore/Reflection/ComponentReflection.hpp>
 
 namespace Grindstone {
 	class WorldContextSet;
@@ -41,11 +41,11 @@ namespace Grindstone {
 
 		GraphicsAPI::Buffer* uniformBufferObject = nullptr;
 		GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
-		GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSetLayoutRef descriptorSetLayout;
 
 		GraphicsAPI::Buffer* shadowMapUniformBufferObjects[6];
 		GraphicsAPI::DescriptorSet* shadowMapDescriptorSets[6];
-		GraphicsAPI::DescriptorSetLayout* shadowMapDescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSetLayoutRef shadowMapDescriptorSetLayout;
 
 		REFLECT("PointLight")
 	};

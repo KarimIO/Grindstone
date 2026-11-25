@@ -52,7 +52,7 @@ void Grindstone::DirectionalLightComponent::Construct(Grindstone::WorldContextSe
 
 		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{
 			.debugName = "Directional Light Descriptor Set",
-			.layout = directionalLightComponent.descriptorSetLayout,
+			.layout = directionalLightComponent.descriptorSetLayout.Get(),
 			.bindings = lightBindings.data(),
 			.bindingCount = static_cast<uint32_t>(lightBindings.size()),
 		};
@@ -87,7 +87,7 @@ void Grindstone::DirectionalLightComponent::Construct(Grindstone::WorldContextSe
 		directionalLightComponent.shadowMapDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{
-			.layout = directionalLightComponent.shadowMapDescriptorSetLayout,
+			.layout = directionalLightComponent.shadowMapDescriptorSetLayout.Get(),
 			.bindingCount = 1
 		};
 		for (size_t i = 0; i < MAX_CASCADE_COUNT; ++i) {
@@ -114,9 +114,7 @@ void Grindstone::DirectionalLightComponent::Destroy(Grindstone::WorldContextSet&
 				graphicsCore->DeleteBuffer(directionalLightComponent.shadowMapUniformBufferObjects[i]);
 			}
 
-			graphicsCore->DeleteDescriptorSetLayout(directionalLightComponent.shadowMapDescriptorSetLayout);
 			graphicsCore->DeleteDescriptorSet(directionalLightComponent.descriptorSet);
-			graphicsCore->DeleteDescriptorSetLayout(directionalLightComponent.descriptorSetLayout);
 			graphicsCore->DeleteBuffer(directionalLightComponent.uniformBufferObject);
 		}
 	);

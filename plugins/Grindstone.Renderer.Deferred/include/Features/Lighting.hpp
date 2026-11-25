@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Common/Graphics/Core.hpp>
 #include <Common/Rendering/RendererFeature.hpp>
 #include <Common/Rendering/RenderGraphBuilder.hpp>
 #include <EngineCore/Assets/AssetReference.hpp>
@@ -24,8 +25,8 @@ namespace Grindstone::Renderer {
 		Grindstone::AssetReference<Grindstone::TextureAsset> brdfLut;
 
 		Grindstone::GraphicsAPI::Image* currentEnvironmentMapImage = nullptr;
-		Grindstone::GraphicsAPI::DescriptorSetLayout* ambientOcclusionDescriptorSetLayout = nullptr;
+		Grindstone::GraphicsAPI::DescriptorSetLayoutRef ambientOcclusionDescriptorSetLayout;
 		Grindstone::GraphicsAPI::DescriptorSet* ambientOcclusionDescriptorSet = nullptr;
-		Grindstone::GraphicsAPI::Sampler* screenSampler = nullptr;
+		Grindstone::GraphicsAPI::SamplerRef screenSampler;
 	};
 }

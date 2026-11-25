@@ -37,6 +37,7 @@ static VkDescriptorType GetDescriptorType(BindingType bindingType) {
 }
 
 Vulkan::DescriptorSetLayout::DescriptorSetLayout(const CreateInfo& createInfo) {
+	this->createInfo = createInfo;
 	uint32_t count = 0;
 	for (uint32_t i = 0; i < createInfo.bindingCount; ++i) {
 		DescriptorSetLayout::Binding& sourceBinding = createInfo.bindings[i];
@@ -103,4 +104,8 @@ const DescriptorSetLayout::Binding& Vulkan::DescriptorSetLayout::GetBinding(size
 	}
 
 	return bindings[bindingIndex];
+}
+
+DescriptorSetLayout::CreateInfo Grindstone::GraphicsAPI::Vulkan::DescriptorSetLayout::GetCreateInfo() const {
+	return createInfo;
 }

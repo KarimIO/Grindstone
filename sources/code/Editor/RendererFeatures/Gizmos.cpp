@@ -62,7 +62,7 @@ void Grindstone::Editor::RendererFeatures::Gizmos::Bind(
 			"Gizmos Pass",
 			Grindstone::Renderer::MetaRect::Swapchain(),
 			[screenSampler=this->screenSampler, depthImageRef, colorImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) {
-				renderPass.ReadExternalSampler(screenSampler);
+				renderPass.ReadExternalSampler(screenSampler.Get());
 				renderPass.ReadSampledImage(depthImageRef);
 				Renderer::RenderGraphBuilderResourceRef output = renderPass.ReadWriteColorAttachment(colorImageRef);
 

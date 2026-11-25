@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Common/Graphics/Core.hpp>
 #include <Common/Rendering/RendererFeature.hpp>
 #include <Common/Rendering/RenderGraphBuilder.hpp>
 #include <EngineCore/Assets/AssetReference.hpp>
@@ -20,6 +21,6 @@ namespace Grindstone::Editor::RendererFeatures {
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> pipelineSet;
 		std::array<Grindstone::GraphicsAPI::Buffer*, 3> gridUniformBuffers = {};
 		std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> gridDescriptorSets = {};
-		Grindstone::GraphicsAPI::DescriptorSetLayout* gridDescriptorSetLayout = nullptr;
+		Grindstone::GraphicsAPI::DescriptorSetLayoutRef gridDescriptorSetLayout;
 	};
 }

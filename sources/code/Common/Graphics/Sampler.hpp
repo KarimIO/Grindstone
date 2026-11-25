@@ -51,6 +51,14 @@ namespace Grindstone::GraphicsAPI {
 		struct CreateInfo {
 			const char* debugName = nullptr;
 			SamplerOptions options;
+
+			bool operator==(const CreateInfo& o) const {
+				return options == o.options;
+			}
+
+			bool operator!=(const CreateInfo& o) const {
+				return !(*this == o);
+			}
 		};
 
 		virtual ~Sampler() {};
@@ -76,4 +84,17 @@ namespace std {
 			return result;
 		}
 	};
+	
+	template<>
+	struct hash<Grindstone::GraphicsAPI::Sampler::CreateInfo> {
+		std::size_t operator()(const Grindstone::GraphicsAPI::Sampler::CreateInfo& createInfo) const noexcept {
+			size_t result = std::hash<Grindstone::GraphicsAPI::SamplerOptions>{}(createInfo.options);
+			return result;
+		}
+	};
+}
+
+namespace Grindstone::GraphicsAPI {
+	using SamplerCache = Grindstone::Containers::ResourceCache<GraphicsAPI::Sampler::CreateInfo, GraphicsAPI::Sampler*>;
+	using SamplerRef = SamplerCache::Ref;
 }

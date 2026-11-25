@@ -46,7 +46,7 @@ void Grindstone::Renderer::Blur::Bind(
 		"Blur Pass",
 		MetaRect::Swapchain(),
 		[this, &attachmentAmbientOcclusion, ssaoRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) {
-			renderPass.ReadExternalSampler(screenSampler);
+			renderPass.ReadExternalSampler(screenSampler.Get());
 			renderPass.ReadSampledImage(ssaoRef);
 			// TODO: There should be a way to recover the image description from the reference.
 			Renderer::RenderGraphBuilderResourceRef output = renderPass.WriteColorAttachment(attachmentAmbientOcclusion, GraphicsAPI::LoadOp::DontCare, GraphicsAPI::ClearColor{});

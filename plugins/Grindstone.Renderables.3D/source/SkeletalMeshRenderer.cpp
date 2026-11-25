@@ -17,7 +17,7 @@
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
-GraphicsAPI::DescriptorSetLayout* Grindstone::SkeletalMeshRenderer::perDrawDescriptorSetLayout = nullptr;
+GraphicsAPI::DescriptorSetLayoutRef Grindstone::SkeletalMeshRenderer::perDrawDescriptorSetLayout{};
 
 struct RenderTask {
 	GraphicsAPI::DescriptorSet* materialDescriptorSet;
@@ -131,5 +131,5 @@ Grindstone::Rendering::GeometryRenderStats SkeletalMeshRenderer::RenderQueue(
 }
 
 GraphicsAPI::DescriptorSetLayout* SkeletalMeshRenderer::GetPerDrawDescriptorSetLayout() {
-	return perDrawDescriptorSetLayout;
+	return perDrawDescriptorSetLayout.Get();
 }

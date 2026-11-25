@@ -167,8 +167,6 @@ ImguiRendererVulkan::~ImguiRendererVulkan() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
 	GraphicsAPI::Vulkan::Core* graphicsCore = static_cast<Vulkan::Core*>(engineCore.GetGraphicsCore());
 
-	graphicsCore->DeleteDescriptorSetLayout(textureDescriptorLayout);
-
 	VkDevice device = graphicsCore->GetDevice();
 	vkDestroyDescriptorPool(device, imguiPool, nullptr);
 

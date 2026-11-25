@@ -19,7 +19,7 @@
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
-GraphicsAPI::DescriptorSetLayout* Grindstone::Mesh3dRenderer::perDrawDescriptorSetLayout = nullptr;
+GraphicsAPI::DescriptorSetLayoutRef Grindstone::Mesh3dRenderer::perDrawDescriptorSetLayout{};
 
 struct RenderTask {
 	GraphicsAPI::DescriptorSet* materialDescriptorSet;
@@ -133,5 +133,5 @@ Grindstone::Rendering::GeometryRenderStats Mesh3dRenderer::RenderQueue(
 }
 
 GraphicsAPI::DescriptorSetLayout* Mesh3dRenderer::GetPerDrawDescriptorSetLayout() {
-	return perDrawDescriptorSetLayout;
+	return perDrawDescriptorSetLayout.Get();
 }

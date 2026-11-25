@@ -54,7 +54,7 @@ void Grindstone::SpotLightComponent::Construct(Grindstone::WorldContextSet& cxtS
 
 		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 		descriptorSetCreateInfo.debugName = "Spotlight Descriptor Set";
-		descriptorSetCreateInfo.layout = spotLightComponent.descriptorSetLayout;
+		descriptorSetCreateInfo.layout = spotLightComponent.descriptorSetLayout.Get();
 		descriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(lightBindings.size());
 		descriptorSetCreateInfo.bindings = lightBindings.data();
 		spotLightComponent.descriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
@@ -84,7 +84,7 @@ void Grindstone::SpotLightComponent::Construct(Grindstone::WorldContextSet& cxtS
 
 		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 		descriptorSetCreateInfo.debugName = "Spotlight Shadow Descriptor Set";
-		descriptorSetCreateInfo.layout = spotLightComponent.shadowMapDescriptorSetLayout;
+		descriptorSetCreateInfo.layout = spotLightComponent.shadowMapDescriptorSetLayout.Get();
 		descriptorSetCreateInfo.bindingCount = 1;
 		descriptorSetCreateInfo.bindings = &lightUboBinding;
 		spotLightComponent.shadowMapDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
@@ -94,21 +94,17 @@ void Grindstone::SpotLightComponent::Construct(Grindstone::WorldContextSet& cxtS
 void Grindstone::SpotLightComponent::Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	SpotLightComponent& spotLightComponent = cxtSet.GetEntityRegistry().get<SpotLightComponent>(entity);
 
-	/*
 	EngineCore::GetInstance().PushDeletion(
 		[spotLightComponent]() {
 			EngineCore& engineCore = EngineCore::GetInstance();
 			GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
 			graphicsCore->DeleteDescriptorSet(spotLightComponent.shadowMapDescriptorSet);
-			graphicsCore->DeleteDescriptorSetLayout(spotLightComponent.shadowMapDescriptorSetLayout);
 			graphicsCore->DeleteDescriptorSet(spotLightComponent.descriptorSet);
-			graphicsCore->DeleteDescriptorSetLayout(spotLightComponent.descriptorSetLayout);
 			graphicsCore->DeleteBuffer(spotLightComponent.shadowMapUniformBufferObject);
 			graphicsCore->DeleteBuffer(spotLightComponent.uniformBufferObject);
 		}
 	);
-	*/
 
 	spotLightComponent.shadowMapDescriptorSet = nullptr;
 	spotLightComponent.shadowMapDescriptorSetLayout = nullptr;

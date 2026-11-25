@@ -10,14 +10,10 @@
 
 namespace Grindstone::Memory::Allocators {
 	/**
-	 * \brief A dynamic allocator represented by a linked list.
-	 *
-	 * Memory in a dynamic allocator can be allocated and deallocated freely, with no restrictions.
-	 * Allocations have a header that points to the next block of memory, and so free memory can be found
-	 * in between allocated blocks of memory.
+	 * \brief An allocator concept that can allocate and deallocate.
 	 */
-	template <typename Allocator> 
-	concept is_allocator = requires(Allocator a, typename Allocator::value_type* p) {
+	template <typename T> 
+	concept Allocator = requires(T a, typename T::value_type* p) {
 		{ a.allocate(0) } -> std::same_as<decltype(p)>;
 		{ a.deallocate(p, 0) } -> std::same_as<void>;
 	};

@@ -58,7 +58,7 @@ MaterialInspector::MaterialInspector(EngineCore* engineCore, ImguiEditor* imguiE
 	missingImageDescriptorSetCreateInfo.debugName = "MaterialInspector Missing Image Descriptor Set";
 	missingImageDescriptorSetCreateInfo.bindings = &dsetBinding;
 	missingImageDescriptorSetCreateInfo.bindingCount = 1;
-	missingImageDescriptorSetCreateInfo.layout = textureDisplayDescriptorSetLayout;
+	missingImageDescriptorSetCreateInfo.layout = textureDisplayDescriptorSetLayout.Get();
 	missingImageDescriptorSet = graphicsCore->CreateDescriptorSet(missingImageDescriptorSetCreateInfo);
 }
 
@@ -262,12 +262,13 @@ void MaterialInspector::LoadMaterialSamplers(rapidjson::Value& materialSamplers)
 				Grindstone::GraphicsAPI::DescriptorSet::Binding binding =
 					Grindstone::GraphicsAPI::DescriptorSet::Binding::SampledImage(texturePtr);
 
-				Grindstone::GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCi;
 				std::string debugName = "Material Importer Dset " + entry.displayName;
-				descriptorSetCi.debugName = debugName.c_str();
-				descriptorSetCi.layout = textureDisplayDescriptorSetLayout;
-				descriptorSetCi.bindings = &binding;
-				descriptorSetCi.bindingCount = 1;
+				Grindstone::GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCi {
+					.debugName = debugName.c_str(),
+					.layout = textureDisplayDescriptorSetLayout.Get(),
+					.bindings = &binding,
+					.bindingCount = 1,
+				};
 				shaderSampler.textureDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCi);
 			}
 			else {
@@ -331,7 +332,7 @@ void MaterialInspector::OnSelectedTexture(Uuid uuid, std::string name) {
 		Grindstone::GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCi;
 		std::string debugName = "Material Importer Dset " + name;
 		descriptorSetCi.debugName = debugName.c_str();
-		descriptorSetCi.layout = textureDisplayDescriptorSetLayout;
+		descriptorSetCi.layout = textureDisplayDescriptorSetLayout.Get();
 		descriptorSetCi.bindings = &binding;
 		descriptorSetCi.bindingCount = 1;
 		selectedSampler->textureDescriptorSet = engineCore->GetGraphicsCore()->CreateDescriptorSet(descriptorSetCi);

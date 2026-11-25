@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include <Common/Containers/ResourceCache.hpp>
 #include <Common/Hash.hpp>
 #include "Formats.hpp"
 
@@ -58,7 +59,6 @@ namespace Grindstone:: GraphicsAPI {
 
 		std::vector<Binding> bindings;
 		size_t bindingCount = 0;
-
 	};
 }
 
@@ -98,4 +98,9 @@ namespace std {
 			return result;
 		}
 	};
+}
+
+namespace Grindstone::GraphicsAPI {
+	using DescriptorSetLayoutCache = Grindstone::Containers::ResourceCache<GraphicsAPI::DescriptorSetLayout::CreateInfo, GraphicsAPI::DescriptorSetLayout*>;
+	using DescriptorSetLayoutRef = DescriptorSetLayoutCache::Ref;
 }

@@ -104,7 +104,7 @@ void Grindstone::Renderer::ScreenSpaceReflections::Initialize() {
 		ambientOcclusionInputLayoutCreateInfo.debugName = "Reflection Descriptor Set Layout";
 		ambientOcclusionInputLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ambientOcclusionInputLayoutBinding.size());
 		ambientOcclusionInputLayoutCreateInfo.bindings = ambientOcclusionInputLayoutBinding.data();
-		reflectionDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ambientOcclusionInputLayoutCreateInfo);
+		reflectionDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(ambientOcclusionInputLayoutCreateInfo);
 	}
 
 	{
@@ -116,7 +116,7 @@ void Grindstone::Renderer::ScreenSpaceReflections::Initialize() {
 
 		GraphicsAPI::DescriptorSet::CreateInfo aoInputCreateInfo{};
 		aoInputCreateInfo.debugName = "Reflection Descriptor Set";
-		aoInputCreateInfo.layout = reflectionDescriptorSetLayout;
+		aoInputCreateInfo.layout = reflectionDescriptorSetLayout.Get();
 		aoInputCreateInfo.bindingCount = static_cast<uint32_t>(aoInputBinding.size());
 		aoInputCreateInfo.bindings = aoInputBinding.data();
 		reflectionDescriptorSet = graphicsCore->CreateDescriptorSet(aoInputCreateInfo);
@@ -162,7 +162,7 @@ void Grindstone::Renderer::ScreenSpaceReflections::Bind(
 	Grindstone::Renderer::RenderGraphBuilderResourceRef ssrRef = renderGraphBuilder.CreateComputePass<RenderGraphBuilderResourceRef>(
 		"Screen-Space Reflections",
 		[this, inputRef, &gbufferData, ambientOcclusionRef](ComputeRenderGraphBuilderPass<RenderGraphBuilderResourceRef>& pass) -> RenderGraphBuilderResourceRef {
-			pass.ReadExternalSampler(screenSampler);
+			pass.ReadExternalSampler(screenSampler.Get());
 			auto outputRef = pass.WriteStorageImage(resourceDesc);
 			pass.ReadSampledImage(inputRef);
 			pass.ReadSampledImage(gbufferData.depthRef);

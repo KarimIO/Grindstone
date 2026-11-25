@@ -81,7 +81,7 @@ EditorCamera::EditorCamera() {
 
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 	descriptorSetCreateInfo.bindingCount = 1;
-	descriptorSetCreateInfo.layout = descriptorSetLayout;
+	descriptorSetCreateInfo.layout = descriptorSetLayout.Get();
 
 	for (size_t i = 0; i < 3; ++i) {
 		std::string numAsStr = std::to_string(i);
@@ -93,7 +93,7 @@ EditorCamera::EditorCamera() {
 		descriptorSetCreateInfo.debugName = descriptorSetName.c_str();
 		renderTarget[i] = core->CreateImage(renderTargetCreateInfo);
 		depthTarget[i] = core->CreateImage(depthTargetCreateInfo);
-		std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> combinedSamplerPair = { renderTarget[i], sampler };
+		std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> combinedSamplerPair = { renderTarget[i], sampler.Get() };
 		GraphicsAPI::DescriptorSet::Binding descriptorSetBinding = GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler(&combinedSamplerPair);
 		descriptorSetCreateInfo.bindings = &descriptorSetBinding;
 		descriptorSet[i] = core->CreateDescriptorSet(descriptorSetCreateInfo);
@@ -131,7 +131,7 @@ EditorCamera::EditorCamera() {
 	globalDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(globalDescriptorSetLayoutCreateInfo);
 
 	GraphicsAPI::DescriptorSet::CreateInfo globalDescriptorSetsCreateInfo{
-		.layout = globalDescriptorSetLayout,
+		.layout = globalDescriptorSetLayout.Get(),
 		.bindingCount = 1u
 	};
 
@@ -598,7 +598,7 @@ void EditorCamera::ResizeViewport(uint32_t width, uint32_t height) {
 		renderTarget[i]->Resize(width, height);
 		depthTarget[i]->Resize(width, height);
 
-		std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> combinedSamplerPair = { renderTarget[i], sampler};
+		std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> combinedSamplerPair = { renderTarget[i], sampler.Get() };
 		GraphicsAPI::DescriptorSet::Binding descriptorSetBinding = GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler(&combinedSamplerPair);
 
 		descriptorSet[i]->ChangeBindings(&descriptorSetBinding, 1u);

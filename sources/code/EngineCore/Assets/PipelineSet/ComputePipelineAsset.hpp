@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include <Common/Graphics/Core.hpp>
 #include <Common/HashedString.hpp>
 #include <EngineCore/Assets/Asset.hpp>
 #include <EngineCore/Assets/Textures/TextureAsset.hpp>
@@ -19,14 +20,15 @@ namespace Grindstone {
 		ComputePipelineAsset(Uuid uuid) : Asset(uuid, uuid.ToString()) {}
 		
 		Grindstone::GraphicsAPI::ComputePipeline* pipeline = nullptr;
-		Grindstone::GraphicsAPI::PipelineLayout* pipelineLayout = nullptr;
+		Grindstone::GraphicsAPI::PipelineLayoutRef pipelineLayout;
+		std::vector<Grindstone::GraphicsAPI::DescriptorSetLayoutRef> descriptorSetLayouts;
 
 		Grindstone::GraphicsAPI::ComputePipeline* GetPipeline() const {
 			return pipeline;
 		}
 
 		Grindstone::GraphicsAPI::PipelineLayout* GetPipelineLayout() const {
-			return pipelineLayout;
+			return pipelineLayout.Get();
 		}
 
 		DEFINE_ASSET_TYPE("Compute PipelineSet", AssetType::ComputePipelineSet)

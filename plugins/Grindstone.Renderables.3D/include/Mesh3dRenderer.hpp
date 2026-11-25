@@ -1,14 +1,15 @@
 #pragma once
 
+#include <glm/mat4x4.hpp>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
-#include <glm/mat4x4.hpp>
 
-#include <Common/Rendering/RenderViewData.hpp>
-#include "EngineCore/AssetRenderer/BaseAssetRenderer.hpp"
-#include "Components/MeshRendererComponent.hpp"
+#include <Common/Graphics/Core.hpp>
+#include <EngineCore/AssetRenderer/BaseAssetRenderer.hpp>
+
 #include "Assets/Mesh3dAsset.hpp"
+#include "Components/MeshRendererComponent.hpp"
 
 namespace Grindstone {
 	namespace GraphicsAPI {
@@ -34,6 +35,6 @@ namespace Grindstone {
 			EngineCore* engineCore = nullptr;
 			std::string rendererName = "Mesh3d";
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
-			static class GraphicsAPI::DescriptorSetLayout* perDrawDescriptorSetLayout;
+			static GraphicsAPI::DescriptorSetLayoutRef perDrawDescriptorSetLayout;
 	};
 }

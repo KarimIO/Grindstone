@@ -67,7 +67,7 @@ namespace Grindstone {
 		private:
 			GraphicsAPI::Buffer* gpuGlobalUniformBufferObject = nullptr;
 
-			Grindstone::GraphicsAPI::DescriptorSetLayout* globalDescriptorSetLayout;
+			Grindstone::GraphicsAPI::DescriptorSetLayoutRef globalDescriptorSetLayout;
 			Grindstone::GraphicsAPI::Buffer* globalStagingUniformBufferObject;
 			std::array<Grindstone::GraphicsAPI::Buffer*, 3> globalUniformBufferObject;
 			std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> globalDescriptorSet;
@@ -75,8 +75,8 @@ namespace Grindstone {
 			GizmoRenderer gizmoRenderer;
 			std::array<GraphicsAPI::Image*, 3> renderTarget;
 			std::array<GraphicsAPI::Image*, 3> depthTarget;
-			GraphicsAPI::Sampler* sampler = nullptr;
-			GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
+			GraphicsAPI::SamplerRef sampler;
+			GraphicsAPI::DescriptorSetLayoutRef descriptorSetLayout;
 			std::array<GraphicsAPI::DescriptorSet*, 3> descriptorSet;
 
 			glm::mat4 projection;

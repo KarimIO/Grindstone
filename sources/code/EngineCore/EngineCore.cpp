@@ -379,6 +379,10 @@ Renderer::RenderingPipeline* EngineCore::GetRenderingPipeline() const {
 	return renderingPipeline;
 }
 
+DeferredDeletionQueue& EngineCore::GetDeferredDeletionQueue() {
+	return deferredDeletionQueue;
+}
+
 void EngineCore::CalculateDeltaTime() {
 	GRIND_PROFILE_FUNC();
 	const auto now = std::chrono::steady_clock::now();

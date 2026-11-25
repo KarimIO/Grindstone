@@ -12,6 +12,7 @@
 #include "GFSDK_Aftermath_GpuCrashDumpDecoding.h"
 
 #include <Common/Logger.hpp>
+#include <EngineCore/EngineCore.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 
 #include <Grindstone.RHI.Vulkan/include/VulkanWindowGraphicsBinding.hpp>
@@ -178,6 +179,18 @@ bool Vulkan::Core::Initialize(const Base::Core::CreateInfo& ci) {
 	wgb->CreateSyncObjects();
 	CreateCommandPool();
 	CreateDescriptorPool();
+
+	descriptorSetLayoutCache.SetFactory([this](const auto& ci) -> Base::DescriptorSetLayout* { return this->CreateDescriptorSetLayout(ci); });
+	descriptorSetLayoutCache.SetDeleter([this](auto ptr) { return this->DeleteDescriptorSetLayout(ptr); });
+	
+	pipelineLayoutCache.SetFactory([this](const auto& ci) -> Base::PipelineLayout* { return this->CreatePipelineLayout(ci); });
+	pipelineLayoutCache.SetDeleter([this](auto ptr) { return this->DeletePipelineLayout(ptr); });
+	
+	graphicsPipelineCache.SetFactory([this](const auto& ci) -> Base::GraphicsPipeline* { return this->CreateGraphicsPipeline(ci); });
+	graphicsPipelineCache.SetDeleter([this](auto ptr) { return this->DeleteGraphicsPipeline(ptr); });
+	
+	samplerCache.SetFactory([this](const auto& ci) -> Base::Sampler* { return this->CreateSampler(ci); });
+	samplerCache.SetDeleter([this](auto ptr) { return this->DeleteSampler(ptr); });
 
 	return true;
 }
@@ -689,10 +702,6 @@ bool Vulkan::Core::CheckDeviceExtensionSupport(VkPhysicalDevice testPhysicalDevi
 }
 
 Vulkan::Core::~Core() {
-	for (auto& pipeline : graphicsPipelineCache) {
-		DeleteGraphicsPipeline(pipeline.second);
-	}
-
 	vkDestroyCommandPool(device, commandPoolGraphics, allocator->GetAllocationCallbacks());
 	vkDestroyDescriptorPool(device, descriptorPool, allocator->GetAllocationCallbacks());
 
@@ -883,75 +892,39 @@ Base::DescriptorSetLayout* Vulkan::Core::CreateDescriptorSetLayout(const Base::D
 	return static_cast<Base::DescriptorSetLayout*>(AllocatorCore::AllocateNamed<Vulkan::DescriptorSetLayout>(ci.debugName ? ci.debugName : "Vulkan::DescriptorSetLayout", ci));
 }
 
-Base::GraphicsPipeline* Vulkan::Core::GetOrCreateGraphicsPipelineFromCache(
+//==================================
+// Cache Accessors
+//==================================
+Base::GraphicsPipelineRef Vulkan::Core::GetOrCreateGraphicsPipelineFromCache(
 	Base::PipelineLayout* pipelineLayout,
 	const GraphicsPipeline::PipelineData& pipelineData,
 	const VertexInputLayout* vertexInputLayout
 ) {
-	size_t hash = std::hash<GraphicsPipeline::PipelineData>{}(pipelineData);
-	if (vertexInputLayout != nullptr) {
-		hash ^= std::hash<VertexInputLayout>{}(*vertexInputLayout);
-	}
-	auto iterator = graphicsPipelineCache.find(hash);
-	if (iterator != graphicsPipelineCache.end()) {
-		return iterator->second;
-	}
+	Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo createInfo{
+		.pipelineLayout = pipelineLayout,
+		.pipelineData = pipelineData,
+	};
 
-	Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo createInfo{};
-	createInfo.pipelineLayout = pipelineLayout;
-	createInfo.pipelineData = pipelineData;
 	if (vertexInputLayout != nullptr) {
 		createInfo.vertexInputLayout = *vertexInputLayout;
 	}
 
-	Grindstone::GraphicsAPI::GraphicsPipeline* newPipeline = CreateGraphicsPipeline(createInfo);
-
-	graphicsPipelineCache[hash] = newPipeline;
-	return newPipeline;
+	return graphicsPipelineCache.GetOrCreate(createInfo);
 }
 
-Base::PipelineLayout* Vulkan::Core::GetOrCreatePipelineLayoutFromCache(const Grindstone::GraphicsAPI::PipelineLayout::CreateInfo& createInfo) {
-	size_t hash = std::hash<Base::PipelineLayout::CreateInfo>{}(createInfo);
-
-	auto iterator = pipelineLayoutCache.find(hash);
-	if (iterator != pipelineLayoutCache.end()) {
-		return iterator->second;
-	}
-
-	Grindstone::GraphicsAPI::PipelineLayout* newPipelineLayout = CreatePipelineLayout(createInfo);
-
-	pipelineLayoutCache[hash] = newPipelineLayout;
-	return newPipelineLayout;
+Base::PipelineLayoutRef Vulkan::Core::GetOrCreatePipelineLayoutFromCache(const Grindstone::GraphicsAPI::PipelineLayout::CreateInfo& createInfo) {
+	return pipelineLayoutCache.GetOrCreate(createInfo);
 }
 
-Base::DescriptorSetLayout* Vulkan::Core::GetOrCreateDescriptorSetLayoutFromCache(const Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo& createInfo) {
-	size_t hash = std::hash<Base::DescriptorSetLayout::CreateInfo>{}(createInfo);
-
-	auto iterator = descriptorSetLayoutCache.find(hash);
-	if (iterator != descriptorSetLayoutCache.end()) {
-		return iterator->second;
-	}
-
-	Grindstone::GraphicsAPI::DescriptorSetLayout* newDescriptorSetLayout = CreateDescriptorSetLayout(createInfo);
-
-	descriptorSetLayoutCache[hash] = newDescriptorSetLayout;
-	return newDescriptorSetLayout;
+Base::DescriptorSetLayoutRef Vulkan::Core::GetOrCreateDescriptorSetLayoutFromCache(const Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo& createInfo) {
+	return descriptorSetLayoutCache.GetOrCreate(createInfo);
 }
 
-Base::Sampler* Vulkan::Core::GetOrCreateSampler(const Grindstone::GraphicsAPI::Sampler::CreateInfo& createInfo) {
-	size_t hash = std::hash<Base::SamplerOptions>{}(createInfo.options);
-
-	auto iterator = samplerCache.find(hash);
-	if (iterator != samplerCache.end()) {
-		return iterator->second;
-	}
-
-	Grindstone::GraphicsAPI::Sampler* newSampler = CreateSampler(createInfo);
-
-	samplerCache[hash] = newSampler;
-	return newSampler;
+Base::SamplerRef Vulkan::Core::GetOrCreateSampler(const Grindstone::GraphicsAPI::Sampler::CreateInfo& createInfo) {
+	return samplerCache.GetOrCreate(createInfo);
 }
 
+//==================================
 // Deleters
 //==================================
 void Vulkan::Core::DeleteFramebuffer(Base::Framebuffer *ptr) {

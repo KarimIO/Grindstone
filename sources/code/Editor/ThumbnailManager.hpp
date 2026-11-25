@@ -1,12 +1,11 @@
 #pragma once
 
-#include <unordered_map>
 #include <filesystem>
+#include <unordered_map>
 #include <vector>
 
+#include <Common/Graphics/Core.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
-#include <EngineCore/Assets/Asset.hpp>
-#include <Common/Graphics/Image.hpp>
 
 namespace Grindstone::GraphicsAPI {
 	class Image;
@@ -78,6 +77,9 @@ namespace Grindstone::Editor {
 
 		Grindstone::GraphicsAPI::Image* thumbnailAtlasImage = nullptr;
 		Grindstone::GraphicsAPI::DescriptorSet* thumbnailAtlasDescriptorSet = nullptr;
+
+		Grindstone::GraphicsAPI::DescriptorSetLayoutRef descriptorSetLayout;
+		Grindstone::GraphicsAPI::SamplerRef thumbnailAtlasSampler;
 
 		std::vector<uint16_t> freeIndices;
 

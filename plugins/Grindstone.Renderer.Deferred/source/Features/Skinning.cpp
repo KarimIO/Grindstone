@@ -74,6 +74,27 @@ static Grindstone::GraphicsAPI::VertexInputLayout PrepareLayouts() {
 void Grindstone::Renderer::Skinning::Initialize() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
 	skinningPipelineSet = engineCore.assetManager->GetAssetReferenceByAddress<ComputePipelineAsset>("@CORESHADERS/postProcessing/skinning");
+
+	std::array<GraphicsAPI::DescriptorSetLayout::Binding, 10> layoutBindings{
+		GraphicsAPI::DescriptorSetLayout::Binding{ 0, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Compute },
+		GraphicsAPI::DescriptorSetLayout::Binding{ 1, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
+		GraphicsAPI::DescriptorSetLayout::Binding{ 2, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
+		GraphicsAPI::DescriptorSetLayout::Binding{ 3, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
+		GraphicsAPI::DescriptorSetLayout::Binding{ 4, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
+		GraphicsAPI::DescriptorSetLayout::Binding{ 5, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
+		GraphicsAPI::DescriptorSetLayout::Binding{ 6, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
+		GraphicsAPI::DescriptorSetLayout::Binding{ 7, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
+		GraphicsAPI::DescriptorSetLayout::Binding{ 8, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
+		GraphicsAPI::DescriptorSetLayout::Binding{ 9, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
+	};
+
+	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
+	GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCreateInfo{
+		.debugName = "Skinning Descriptor Set Layout",
+		.bindings = layoutBindings.data(),
+		.bindingCount = static_cast<uint32_t>(layoutBindings.size())
+	};
+	descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(layoutCreateInfo);
 }
 
 void Grindstone::Renderer::Skinning::Bind(
@@ -95,7 +116,7 @@ void Grindstone::Renderer::Skinning::Bind(
 
 	entt::registry& registry = worldContextSet.GetEntityRegistry();
 	registry.view<TagComponent, AnimatorComponent, SkeletalMeshComponent>().each(
-		[skinningPipeline, &renderGraphBuilder, &worldContextSet, pipelineLayout](
+		[skinningPipeline, &descriptorSetLayout=this->descriptorSetLayout, &renderGraphBuilder, &worldContextSet, pipelineLayout](
 			TagComponent& tagComp,
 			AnimatorComponent& animatorComp,
 			SkeletalMeshComponent& skeletalMeshComp
@@ -191,7 +212,6 @@ void Grindstone::Renderer::Skinning::Bind(
 
 			if (skeletalMeshComp.skinningDescriptorSet == nullptr) {
 				std::string descriptorSetName = std::vformat("Skinning Descriptor Set '{}'", std::make_format_args(tagComp.tag));
-				std::string descriptorSetLayoutName = std::vformat("Skinning Descriptor Set Layout '{}'", std::make_format_args(tagComp.tag));
 				std::array<GraphicsAPI::DescriptorSet::Binding, 10> bindings{
 					GraphicsAPI::DescriptorSet::Binding::UniformBuffer(skeletalMeshComp.vertexCountBuffer),
 					GraphicsAPI::DescriptorSet::Binding::StorageBuffer(animatorComp.skeletonMatrixBuffer),
@@ -205,29 +225,9 @@ void Grindstone::Renderer::Skinning::Bind(
 					GraphicsAPI::DescriptorSet::Binding::StorageBuffer(skeletalMeshComp.vertexTangentBuffer),
 				};
 
-				std::array<GraphicsAPI::DescriptorSetLayout::Binding, 10> layoutBindings{
-					GraphicsAPI::DescriptorSetLayout::Binding{ 0, 1, GraphicsAPI::BindingType::UniformBuffer, GraphicsAPI::ShaderStageBit::Compute },
-					GraphicsAPI::DescriptorSetLayout::Binding{ 1, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
-					GraphicsAPI::DescriptorSetLayout::Binding{ 2, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
-					GraphicsAPI::DescriptorSetLayout::Binding{ 3, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
-					GraphicsAPI::DescriptorSetLayout::Binding{ 4, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
-					GraphicsAPI::DescriptorSetLayout::Binding{ 5, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
-					GraphicsAPI::DescriptorSetLayout::Binding{ 6, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
-					GraphicsAPI::DescriptorSetLayout::Binding{ 7, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
-					GraphicsAPI::DescriptorSetLayout::Binding{ 8, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
-					GraphicsAPI::DescriptorSetLayout::Binding{ 9, 1, GraphicsAPI::BindingType::StorageBuffer, GraphicsAPI::ShaderStageBit::Compute },
-				};
-
-				GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCreateInfo{
-					.debugName = descriptorSetLayoutName.c_str(),
-					.bindings = layoutBindings.data(),
-					.bindingCount = static_cast<uint32_t>(layoutBindings.size())
-				};
-				GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(layoutCreateInfo);
-
 				GraphicsAPI::DescriptorSet::CreateInfo createInfo{
 					.debugName = descriptorSetName.c_str(),
-					.layout = descriptorSetLayout,
+					.layout = descriptorSetLayout.Get(),
 					.bindings = bindings.data(),
 					.bindingCount = static_cast<uint32_t>(bindings.size())
 				};

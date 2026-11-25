@@ -64,7 +64,7 @@ void Grindstone::Editor::RendererFeatures::Grid::Initialize() {
 	gridDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(gridDescriptorSetLayoutCreateInfo);
 
 	GraphicsAPI::DescriptorSet::CreateInfo gridDescriptorSetCreateInfo{
-		.layout = gridDescriptorSetLayout,
+		.layout = gridDescriptorSetLayout.Get(),
 		.bindingCount = 1u,
 	};
 

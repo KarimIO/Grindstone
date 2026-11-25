@@ -1,13 +1,14 @@
 #pragma once
 
-#include <string>
-#include <vector>
 #include <iostream>
+#include <xhash>
 #include <xkeycheck.h>
+#include <vector>
 
 #include <Common/Hash.hpp>
-#include "DescriptorSetLayout.hpp"
-#include "Formats.hpp"
+
+#include <Common/Containers/ResourceCache.hpp>
+#include <Common/Graphics/DescriptorSetLayout.hpp>
 
 namespace Grindstone::GraphicsAPI {
 	class RenderPass;
@@ -19,7 +20,7 @@ namespace Grindstone::GraphicsAPI {
 	public:
 		struct CreateInfo {
 			const char* debugName;
-			const DescriptorSetLayout* const* descriptorSetLayouts;
+			DescriptorSetLayoutRef* descriptorSetLayouts;
 			uint32_t descriptorSetLayoutCount;
 
 			bool operator==(const PipelineLayout::CreateInfo& o) const {
@@ -28,8 +29,8 @@ namespace Grindstone::GraphicsAPI {
 				}
 
 				for (uint32_t i = 0; i < descriptorSetLayoutCount; ++i) {
-					const DescriptorSetLayout* a = descriptorSetLayouts[i];
-					const DescriptorSetLayout* b = o.descriptorSetLayouts[i];
+					DescriptorSetLayoutRef& a = descriptorSetLayouts[i];
+					DescriptorSetLayoutRef& b = o.descriptorSetLayouts[i];
 					if (a != b) {
 						return false;
 					}
@@ -43,7 +44,7 @@ namespace Grindstone::GraphicsAPI {
 			}
 		};
 
-		std::vector<const DescriptorSetLayout*> descriptorSetLayouts;
+		std::vector<DescriptorSetLayoutRef> descriptorSetLayouts;
 	};
 }
 
@@ -53,10 +54,15 @@ namespace std {
 		std::size_t operator()(const Grindstone::GraphicsAPI::PipelineLayout::CreateInfo& pipelineLayout) const noexcept {
 			size_t result = std::hash<uint32_t>{}(pipelineLayout.descriptorSetLayoutCount);
 			for (uint8_t i = 0; i < pipelineLayout.descriptorSetLayoutCount; ++i) {
-				result ^= std::hash<Grindstone::GraphicsAPI::DescriptorSetLayout>{}(*pipelineLayout.descriptorSetLayouts[i]);
+				result ^= std::hash<Grindstone::GraphicsAPI::DescriptorSetLayout>{}(*pipelineLayout.descriptorSetLayouts[i].Get());
 			}
 
 			return result;
 		}
 	};
+}
+
+namespace Grindstone::GraphicsAPI {
+	using PipelineLayoutCache = Grindstone::Containers::ResourceCache<GraphicsAPI::PipelineLayout::CreateInfo, GraphicsAPI::PipelineLayout*>;
+	using PipelineLayoutRef = PipelineLayoutCache::Ref;
 }

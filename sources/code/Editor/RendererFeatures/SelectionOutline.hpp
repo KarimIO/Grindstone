@@ -17,6 +17,6 @@ namespace Grindstone::Editor::RendererFeatures {
 		) override;
 	protected:
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> outlinePipelineSet;
-		Grindstone::GraphicsAPI::Sampler* screenSampler = nullptr;
+		Grindstone::GraphicsAPI::SamplerRef screenSampler;
 	};
 }

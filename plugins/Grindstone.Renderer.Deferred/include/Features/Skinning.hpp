@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Common/Graphics/Core.hpp>
 #include <Common/Rendering/RendererFeature.hpp>
 #include <Common/Rendering/RenderGraphBuilder.hpp>
 #include <EngineCore/Assets/AssetReference.hpp>
@@ -18,7 +19,6 @@ namespace Grindstone::Renderer {
 
 	private:
 		Grindstone::AssetReference<Grindstone::ComputePipelineAsset> skinningPipelineSet;
-		Grindstone::GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
-
+		Grindstone::GraphicsAPI::DescriptorSetLayoutRef descriptorSetLayout;
 	};
 }

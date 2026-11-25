@@ -38,7 +38,7 @@ void Grindstone::Renderer::Tonemap::Initialize() {
 	descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(postProcessingDescriptorSetLayoutCreateInfo);
 
 	GraphicsAPI::DescriptorSet::CreateInfo postProcessingDescriptorSetsCreateInfo{
-		.layout = descriptorSetLayout,
+		.layout = descriptorSetLayout.Get(),
 		.bindingCount = 1u
 	};
 
@@ -95,7 +95,7 @@ void Grindstone::Renderer::Tonemap::Bind(
 		"Tonemapping",
 		MetaRect::Swapchain(),
 		[this, lightingImageRef, bloomImageRef](Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass) {
-			renderPass.ReadExternalSampler(screenSampler);
+			renderPass.ReadExternalSampler(screenSampler.Get());
 			renderPass.ReadSampledImage(lightingImageRef);
 			renderPass.ReadSampledImage(bloomImageRef);
 			Renderer::RenderGraphBuilderResourceRef output = renderPass.WriteColorAttachment(attachmentOutput, GraphicsAPI::LoadOp::DontCare, GraphicsAPI::ClearColor{});

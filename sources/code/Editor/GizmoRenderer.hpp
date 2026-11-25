@@ -29,7 +29,7 @@ namespace Grindstone::Editor {
 	protected:
 		std::array<Grindstone::GraphicsAPI::Buffer*, 3> gizmoUniformBuffers = {};
 		std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> gizmoDescriptorSets = {};
-		Grindstone::GraphicsAPI::DescriptorSetLayout* gizmoDescriptorSetLayout = nullptr;
+		Grindstone::GraphicsAPI::DescriptorSetLayoutRef gizmoDescriptorSetLayout;
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> gizmoPipelineSet;
 		GraphicsAPI::VertexInputLayout gizmoVertexLayout;
 

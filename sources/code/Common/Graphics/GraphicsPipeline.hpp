@@ -134,13 +134,13 @@ namespace Grindstone::GraphicsAPI {
 			VertexInputLayout vertexInputLayout;
 			PipelineData pipelineData;
 
-			bool operator==(const CreateInfo& o) {
+			bool operator==(const CreateInfo& o) const {
 				return pipelineLayout == o.pipelineLayout
 					&& vertexInputLayout == o.vertexInputLayout
 					&& pipelineData == o.pipelineData;
 			}
 
-			bool operator!=(const CreateInfo& o) {
+			bool operator!=(const CreateInfo& o) const {
 				return !(*this == o);
 			}
 		};
@@ -210,4 +210,21 @@ namespace std {
 			return result;
 		}
 	};
+
+	template<>
+	struct std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo> {
+			std::size_t operator()(
+				const Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo& createInfo) const noexcept {
+				size_t result = static_cast<size_t>(reinterpret_cast<std::uintptr_t>(createInfo.pipelineLayout));
+				result ^= std::hash<Grindstone::GraphicsAPI::GraphicsPipeline::PipelineData>{}(createInfo.pipelineData);
+				result ^= std::hash<Grindstone::GraphicsAPI::VertexInputLayout>{}(createInfo.vertexInputLayout);
+
+				return result;
+			}
+	};
+}
+
+namespace Grindstone::GraphicsAPI {
+	using GraphicsPipelineCache = Grindstone::Containers::ResourceCache<GraphicsAPI::GraphicsPipeline::CreateInfo, GraphicsAPI::GraphicsPipeline*>;
+	using GraphicsPipelineRef = GraphicsPipelineCache::Ref;
 }

@@ -29,9 +29,9 @@ namespace Grindstone::Renderer {
 
 		Grindstone::GraphicsAPI::Buffer* ssaoUniformBuffer = nullptr;
 		Grindstone::GraphicsAPI::Image* ssaoNoiseTexture = nullptr;
-		Grindstone::GraphicsAPI::Sampler* screenSampler = nullptr;
-		Grindstone::GraphicsAPI::Sampler* ssaoNoiseSampler = nullptr;
-		Grindstone::GraphicsAPI::DescriptorSetLayout* ssaoInputDescriptorSetLayout = nullptr;
+		Grindstone::GraphicsAPI::SamplerRef screenSampler;
+		Grindstone::GraphicsAPI::SamplerRef ssaoNoiseSampler;
+		Grindstone::GraphicsAPI::DescriptorSetLayoutRef ssaoInputDescriptorSetLayout;
 		Grindstone::GraphicsAPI::DescriptorSet* ssaoInputDescriptorSet = nullptr;
 	};
 }

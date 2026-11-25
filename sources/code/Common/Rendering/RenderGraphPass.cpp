@@ -265,8 +265,8 @@ void Grindstone::Renderer::PipelineRenderGraphPass::RealizeResources(
 		*/
 	}
 
-	std::vector<Grindstone::GraphicsAPI::DescriptorSetLayout*> descriptorSetLayouts{
-		context.globalDescriptorSetLayout,
+	std::vector<Grindstone::GraphicsAPI::DescriptorSetLayoutRef> descriptorSetLayouts{
+		context.globalDescriptorSetLayout
 	};
 
 	if (layoutBindings.size() > 0) {
@@ -276,11 +276,11 @@ void Grindstone::Renderer::PipelineRenderGraphPass::RealizeResources(
 			.bindingCount = static_cast<uint32_t>(layoutBindings.size())
 		};
 
-		Grindstone::GraphicsAPI::DescriptorSetLayout* passDescriptorSetLayout = context.graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
+		passDescriptorSetLayout = context.graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 		Grindstone::GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{
 			.debugName = passDescriptorSetName.c_str(),
-			.layout = passDescriptorSetLayout,
+			.layout = passDescriptorSetLayout.Get(),
 			.bindings = bindings.data(),
 			.bindingCount = static_cast<uint32_t>(bindings.size())
 		};
@@ -318,7 +318,7 @@ void Grindstone::Renderer::ComputeRenderGraphPassBase::PrepareComputePass(Grinds
 		descriptorSets.emplace_back(passDescriptorSet);
 	}
 
-	context.commandBuffer->BindComputeDescriptorSet(pipelineLayout, descriptorSets.data(), 0, descriptorSets.size());
+	context.commandBuffer->BindComputeDescriptorSet(pipelineLayout.Get(), descriptorSets.data(), 0, descriptorSets.size());
 }
 
 Grindstone::Math::IntRect2D Grindstone::Renderer::GraphicsRenderGraphPassBase::PrepareGraphicsPass(
@@ -379,7 +379,7 @@ Grindstone::Math::IntRect2D Grindstone::Renderer::GraphicsRenderGraphPassBase::P
 		descriptorSets.emplace_back(passDescriptorSet);
 	}
 
-	context.commandBuffer->BindGraphicsDescriptorSet(pipelineLayout, descriptorSets.data(), 0, descriptorSets.size());
+	context.commandBuffer->BindGraphicsDescriptorSet(pipelineLayout.Get(), descriptorSets.data(), 0, descriptorSets.size());
 
 	context.commandBuffer->SetViewport(
 		static_cast<float>(renderingArea.offset.x),

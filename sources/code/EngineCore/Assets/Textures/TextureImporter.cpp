@@ -93,12 +93,10 @@ void TextureImporter::QueueReloadAsset(Uuid uuid) {
 	EngineCore& engineCore = EngineCore::GetInstance();
 	textureIterator->second.assetLoadStatus = AssetLoadStatus::Reloading;
 	GraphicsAPI::Image* image = textureIterator->second.image;
-	GraphicsAPI::Sampler* defaultSampler = textureIterator->second.defaultSampler;
-	engineCore.PushDeletion([image, defaultSampler]() {
+	engineCore.PushDeletion([image]() {
 		EngineCore& engineCore = EngineCore::GetInstance();
 		GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 		graphicsCore->DeleteImage(image);
-		// TODO: Maybe decrement sampler usage
 	});
 	textureIterator->second.image = nullptr;
 	textureIterator->second.defaultSampler = nullptr;
@@ -109,15 +107,15 @@ void TextureImporter::QueueReloadAsset(Uuid uuid) {
 void TextureImporter::OnDeleteAsset(TextureAsset& asset) {
 	EngineCore& engineCore = EngineCore::GetInstance();
 	Grindstone::GraphicsAPI::Image* image = asset.image;
-	Grindstone::GraphicsAPI::Sampler* sampler = asset.defaultSampler;
-	engineCore.PushDeletion([image, sampler]() {
+	asset.defaultSampler = nullptr;
+
+	engineCore.PushDeletion([image]() {
 		EngineCore& engineCore = EngineCore::GetInstance();
 		GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 		graphicsCore->DeleteImage(image);
-		// TODO: Maybe decrement sampler usage
 	});
+
 	asset.image  = nullptr;
-	asset.defaultSampler = nullptr;
 }
 
 TextureImporter::~TextureImporter() {
@@ -126,17 +124,13 @@ TextureImporter::~TextureImporter() {
 
 	for (auto& asset : assets) {
 		Grindstone::GraphicsAPI::Image* image = asset.second.image;
-		Grindstone::GraphicsAPI::Sampler* sampler = asset.second.defaultSampler;
 		graphicsCore->DeleteImage(image);
-		// TODO: Maybe decrement sampler usage
 	}
 	assets.clear();
 
 	for (auto& asset : texturesByAddress) {
 		Grindstone::GraphicsAPI::Image* image = asset.second.image;
-		Grindstone::GraphicsAPI::Sampler* sampler = asset.second.defaultSampler;
 		graphicsCore->DeleteImage(image);
-		// TODO: Maybe decrement sampler usage
 	}
 	texturesByAddress.clear();
 }
