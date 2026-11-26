@@ -29,13 +29,13 @@ jobs:
         uses: actions/checkout@v7.0.1
 
       - name: Get CMake
-        uses: lukka/get-cmake@v4.4.2
+        uses: lukka/get-cmake@v4.5.1
 
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: 'aadc0260e4a9f3bd6c89a3f988c9c8f6de10d286'
+          vcpkgGitCommitId: 'e6d62cc9ce8f8d9687df14521118f2ec3c10ee6a'
           runVcpkgInstall: false
 
       - name: Build with CMake
