@@ -1,7 +1,7 @@
 {
   "name": "grindstone",
   "version": "0.15.2",
-  "builtin-baseline": "aadc0260e4a9f3bd6c89a3f988c9c8f6de10d286",
+  "builtin-baseline": "e6d62cc9ce8f8d9687df14521118f2ec3c10ee6a",
   "dependencies": [
     "assimp",
     "bullet3",
