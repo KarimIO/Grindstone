@@ -702,6 +702,11 @@ bool Vulkan::Core::CheckDeviceExtensionSupport(VkPhysicalDevice testPhysicalDevi
 }
 
 Vulkan::Core::~Core() {
+	graphicsPipelineCache.TrimImmediately();
+	pipelineLayoutCache.TrimImmediately();
+	descriptorSetLayoutCache.TrimImmediately();
+	samplerCache.TrimImmediately();
+
 	vkDestroyCommandPool(device, commandPoolGraphics, allocator->GetAllocationCallbacks());
 	vkDestroyDescriptorPool(device, descriptorPool, allocator->GetAllocationCallbacks());
 

@@ -150,6 +150,19 @@ namespace Grindstone::Containers {
 				}
 			}
 		}
+		
+		// Remove all entries that are unused (where ref count==0).
+		void TrimImmediately() {
+			std::unique_lock lock(mutex);
+			for (auto it = cache.begin(); it != cache.end();) {
+				if (it->second.refs.load() == 0) {
+					destroyCallback(it->second.value);
+					it = cache.erase(it);
+				} else {
+					++it;
+				}
+			}
+		}
 
 		void SetFactory(Factory factory) { constructCallback = factory; }
 		void SetDeleter(Deleter deleter) { destroyCallback = deleter; }
