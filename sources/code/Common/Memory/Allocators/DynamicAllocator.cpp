@@ -274,7 +274,7 @@ static void Coalesce(DynamicAllocator::FreeHeader*& head, DynamicAllocator::Free
 	}
 }
 
-static void FreeBlock(DynamicAllocator::FreeHeader* firstFreeHeader, void* blockStart, size_t blockSize) {
+static void FreeBlock(DynamicAllocator::FreeHeader*& firstFreeHeader, void* blockStart, size_t blockSize) {
 	GS_ASSERT(reinterpret_cast<uintptr_t>(blockStart) % alignof(DynamicAllocator::FreeHeader) == 0);
 	GS_ASSERT(blockSize >= sizeof(DynamicAllocator::FreeHeader));
 
