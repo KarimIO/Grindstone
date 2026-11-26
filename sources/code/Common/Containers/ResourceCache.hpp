@@ -106,7 +106,7 @@ namespace Grindstone::Containers {
 		using Deleter = std::function<void(Value)>;
 
 		~ResourceCache() {
-			GS_ASSERT(cache.empty() && "handles outlive cache");
+			GS_ASSERT_WITH_MESSAGE(cache.empty(), "ResourceCache handles outlive cache.");
 		}
 
 		// If key exists in the cache, return it, if not, create it via factory.

@@ -129,8 +129,7 @@ void Grindstone::Renderer::ScreenSpaceAmbientOcclusion::CreateSsaoKernelAndNoise
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo ssaoDescriptorSetLayoutCreateInfo{};
 		ssaoDescriptorSetLayoutCreateInfo.debugName = "SSAO Input Descriptor Set Layout";
-		ssaoDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ssaoLayoutBindings.size());
-		ssaoDescriptorSetLayoutCreateInfo.bindings = ssaoLayoutBindings.data();
+		ssaoDescriptorSetLayoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, ssaoLayoutBindings.data(), ssaoLayoutBindings.size() };
 		ssaoInputDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(ssaoDescriptorSetLayoutCreateInfo);
 	}
 

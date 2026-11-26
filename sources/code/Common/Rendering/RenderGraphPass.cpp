@@ -273,8 +273,7 @@ void Grindstone::Renderer::PipelineRenderGraphPass::RealizeResources(
 	if (layoutBindings.size() > 0) {
 		Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{
 			.debugName = passDescriptorSetLayoutName.c_str(),
-			.bindings = layoutBindings.data(),
-			.bindingCount = static_cast<uint32_t>(layoutBindings.size())
+			.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, layoutBindings.data(), layoutBindings.size() }
 		};
 
 		passDescriptorSetLayout = context.graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);

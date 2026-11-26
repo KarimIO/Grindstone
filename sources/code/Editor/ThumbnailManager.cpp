@@ -65,8 +65,7 @@ bool ThumbnailManager::Initialize() {
 	GraphicsAPI::DescriptorSetLayout::Binding descriptorLayoutBinding = { 0, 1, GraphicsAPI::BindingType::CombinedImageSampler, GraphicsAPI::ShaderStageBit::Fragment };
 	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorLayoutCreateInfo{
 		.debugName = "Editor Thumbnail Atlas Descriptor Set Layout",
-		.bindings = &descriptorLayoutBinding,
-		.bindingCount = 1
+		.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &descriptorLayoutBinding, 1u }
 	};
 	descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorLayoutCreateInfo);
 

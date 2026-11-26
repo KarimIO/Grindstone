@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
+#include <Common/Containers/DynamicArray.hpp>
 #include <Common/Containers/ResourceCache.hpp>
 #include <Common/Hash.hpp>
 #include "Formats.hpp"
@@ -35,30 +37,18 @@ namespace Grindstone:: GraphicsAPI {
 
 		struct CreateInfo {
 			const char* debugName = nullptr;
-			Binding* bindings = nullptr;
-			uint32_t bindingCount = 0;
+			Grindstone::Containers::DynamicArray<Binding> bindings;
 
-			bool operator==(const CreateInfo& o) const {
-				if (bindingCount != o.bindingCount) {
-					return false;
-				}
-
-				for (uint32_t i = 0; i < bindingCount; ++i) {
-					if (bindings[i] != o.bindings[i]) {
-						return false;
-					}
-				}
-
-				return true;
+			bool operator==(const CreateInfo& other) const {
+				return bindings == other.bindings;
 			}
 
-			bool operator!=(const CreateInfo& o) const {
-				return !(*this == o);
+			bool operator!=(const CreateInfo& other) const {
+				return bindings != other.bindings;
 			}
 		};
 
-		std::vector<Binding> bindings;
-		size_t bindingCount = 0;
+		Grindstone::Containers::DynamicArray<Binding> bindings;
 	};
 }
 
@@ -78,8 +68,8 @@ namespace std {
 	template<>
 	struct hash<Grindstone::GraphicsAPI::DescriptorSetLayout> {
 		std::size_t operator()(const Grindstone::GraphicsAPI::DescriptorSetLayout& descriptorSetLayout) const noexcept {
-			size_t result = std::hash<size_t>{}(descriptorSetLayout.bindingCount);
-			for (uint8_t i = 0; i < descriptorSetLayout.bindingCount; ++i) {
+			size_t result = std::hash<size_t>{}(descriptorSetLayout.bindings.GetSize());
+			for (uint8_t i = 0; i < descriptorSetLayout.bindings.GetSize(); ++i) {
 				result ^= std::hash<Grindstone::GraphicsAPI::DescriptorSetLayout::Binding>{}(descriptorSetLayout.bindings[i]);
 			}
 
@@ -90,8 +80,8 @@ namespace std {
 	template<>
 	struct hash<Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo> {
 		std::size_t operator()(const Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo& createInfo) const noexcept {
-			size_t result = std::hash<size_t>{}(createInfo.bindingCount);
-			for (uint8_t i = 0; i < createInfo.bindingCount; ++i) {
+			size_t result = std::hash<size_t>{}(createInfo.bindings.GetSize());
+			for (uint8_t i = 0; i < createInfo.bindings.GetSize(); ++i) {
 				Grindstone::Hash::Combine<Grindstone::GraphicsAPI::DescriptorSetLayout::Binding>(result, createInfo.bindings[i]);
 			}
 

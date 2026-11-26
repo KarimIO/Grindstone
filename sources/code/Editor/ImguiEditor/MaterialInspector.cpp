@@ -28,8 +28,7 @@ MaterialInspector::MaterialInspector(EngineCore* engineCore, ImguiEditor* imguiE
 
 	Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCreateInfo;
 	layoutCreateInfo.debugName = "Material Inspector Descriptor Layout";
-	layoutCreateInfo.bindings = &binding;
-	layoutCreateInfo.bindingCount = 1;
+	layoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &binding, 1u };
 	textureDisplayDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(layoutCreateInfo);
 
 	std::array<unsigned char, 16> colorData = {

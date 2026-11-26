@@ -247,8 +247,7 @@ bool Grindstone::Editor::Importers::InitializeTextureThumbnailGenerator() {
 	};
 	Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{
 		.debugName = "Thumbnail Generator Descriptor Set Layout",
-		.bindings = layoutBindings.data(),
-		.bindingCount = static_cast<uint32_t>(layoutBindings.size()),
+		.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, layoutBindings.data(), layoutBindings.size() },
 	};
 	thumbnailGeneratorContext.descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 

@@ -182,8 +182,7 @@ void Grindstone::Renderer::Smaa::Initialize() {
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo smaaDescriptorSetLayoutCreateInfo{
 			.debugName = "SMAA Blending Descriptor Set Layout",
-			.bindings = layoutBindings.data(),
-			.bindingCount = static_cast<uint32_t>(layoutBindings.size()),
+				.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, layoutBindings.data(), layoutBindings.size() }
 		};
 
 		smaaDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(smaaDescriptorSetLayoutCreateInfo);

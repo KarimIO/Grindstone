@@ -31,8 +31,7 @@ void Grindstone::Renderer::Tonemap::Initialize() {
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo postProcessingDescriptorSetLayoutCreateInfo{
 		.debugName = "Post Processing Settings Descriptor Set Layout",
-		.bindings = &postProcessingDescriptorSetLayoutBinding,
-		.bindingCount = 1u,
+		.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &postProcessingDescriptorSetLayoutBinding, 1u }
 	};
 
 	descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(postProcessingDescriptorSetLayoutCreateInfo);

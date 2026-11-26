@@ -283,6 +283,10 @@ namespace Grindstone::Containers {
 			return false;
 		}
 
+		bool IsEmpty() const {
+			return size == 0;
+		}
+
 		size_t GetSize() const {
 			return size;
 		}

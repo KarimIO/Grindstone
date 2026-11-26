@@ -86,8 +86,7 @@ Grindstone::SkeletalMeshRenderer::SkeletalMeshRenderer(EngineCore* engineCore) {
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
 	descriptorSetLayoutCreateInfo.debugName = "Per Draw Descriptor Set Layout";
-	descriptorSetLayoutCreateInfo.bindingCount = 1;
-	descriptorSetLayoutCreateInfo.bindings = &descriptorSetUniformBinding;
+	descriptorSetLayoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &descriptorSetUniformBinding, 1u };
 	perDrawDescriptorSetLayout = engineCore->GetGraphicsCore()->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 }

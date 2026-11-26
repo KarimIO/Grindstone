@@ -59,8 +59,7 @@ static void SetupGlobalUbos() {
 
 	Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo globalDescriptorSetLayoutCreateInfo{
 		.debugName = "Global UBO Descriptor Set Layout",
-		.bindings = &globalDescriptorSetLayoutBinding,
-		.bindingCount = 1u,
+		.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &globalDescriptorSetLayoutBinding, 1u }
 	};
 
 	globalDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(globalDescriptorSetLayoutCreateInfo);

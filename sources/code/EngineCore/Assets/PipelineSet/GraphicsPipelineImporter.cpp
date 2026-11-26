@@ -86,8 +86,7 @@ static void UnpackGraphicsPipelineDescriptorSetHeaders(
 
 		std::string setName = std::vformat("{} Descriptor Set {}", std::make_format_args(pipelineName, i));
 		layoutCreateInfo.debugName = setName.c_str();
-		layoutCreateInfo.bindings = dstDescriptorBindings.data();
-		layoutCreateInfo.bindingCount = static_cast<uint32_t>(dstDescriptorBindings.size());
+		layoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, dstDescriptorBindings.data(), dstDescriptorBindings.size() };
 
 		dstDescriptorSets[srcDescriptorSet.setIndex] = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(layoutCreateInfo);
 	}
@@ -214,8 +213,7 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 			if (!descriptorSetLayouts[descriptorSetIndex].IsValid()) {
 				GraphicsAPI::DescriptorSetLayout::CreateInfo ci{};
 				ci.debugName = "Unbound descriptor set";
-				ci.bindingCount = 0;
-				ci.bindings = nullptr;
+				ci.bindings = {};
 				descriptorSetLayouts[descriptorSetIndex] = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(ci);
 			}
 		}

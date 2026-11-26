@@ -102,8 +102,7 @@ void Grindstone::Renderer::ScreenSpaceReflections::Initialize() {
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo ambientOcclusionInputLayoutCreateInfo{};
 		ambientOcclusionInputLayoutCreateInfo.debugName = "Reflection Descriptor Set Layout";
-		ambientOcclusionInputLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ambientOcclusionInputLayoutBinding.size());
-		ambientOcclusionInputLayoutCreateInfo.bindings = ambientOcclusionInputLayoutBinding.data();
+		ambientOcclusionInputLayoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, ambientOcclusionInputLayoutBinding.data(), ambientOcclusionInputLayoutBinding.size() };
 		reflectionDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(ambientOcclusionInputLayoutCreateInfo);
 	}
 

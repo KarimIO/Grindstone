@@ -73,8 +73,7 @@ void Renderer::Lighting::Initialize() {
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo ambientOcclusionInputLayoutCreateInfo{};
 		ambientOcclusionInputLayoutCreateInfo.debugName = "Ambient Occlusion Descriptor Set Layout";
-		ambientOcclusionInputLayoutCreateInfo.bindingCount = 1u;
-		ambientOcclusionInputLayoutCreateInfo.bindings = &ambientOcclusionInputLayoutBinding;
+		ambientOcclusionInputLayoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &ambientOcclusionInputLayoutBinding, 1u };
 		ambientOcclusionDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(ambientOcclusionInputLayoutCreateInfo);
 	}
 

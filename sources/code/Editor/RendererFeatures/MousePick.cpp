@@ -78,8 +78,7 @@ void Grindstone::Editor::RendererFeatures::MousePick::Initialize() {
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo mousePickDescriptorSetLayoutCreateInfo{};
 		mousePickDescriptorSetLayoutCreateInfo.debugName = "Mouse Pick Descriptor Set Layout";
-		mousePickDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(mousePickDescriptorBindingLayouts.size());
-		mousePickDescriptorSetLayoutCreateInfo.bindings = mousePickDescriptorBindingLayouts.data();
+		mousePickDescriptorSetLayoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, mousePickDescriptorBindingLayouts.data(), mousePickDescriptorBindingLayouts.size() };
 		mousePickDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(mousePickDescriptorSetLayoutCreateInfo);
 
 		GraphicsAPI::DescriptorSet::CreateInfo mousePickDescriptorSetCreateInfo{

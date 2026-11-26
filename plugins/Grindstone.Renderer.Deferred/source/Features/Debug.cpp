@@ -38,8 +38,7 @@ void Grindstone::Renderer::Debug::Initialize() {
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo debugDataDescriptorSetLayoutCreateInfo{
 		.debugName = "Debug Data Descriptor Set Layout",
-		.bindings = &postProcessingDescriptorSetLayoutBinding,
-		.bindingCount = 1u,
+		.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &postProcessingDescriptorSetLayoutBinding, 1u } 
 	};
 
 	descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(debugDataDescriptorSetLayoutCreateInfo);

@@ -58,8 +58,7 @@ void Grindstone::Editor::RendererFeatures::Grid::Initialize() {
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo gridDescriptorSetLayoutCreateInfo{
 		.debugName = "Grid Descriptor Layout",
-		.bindings = &gridDescriptorLayoutBinding,
-		.bindingCount = 1u,
+		.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &gridDescriptorLayoutBinding, 1u }
 	};
 	gridDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(gridDescriptorSetLayoutCreateInfo);
 

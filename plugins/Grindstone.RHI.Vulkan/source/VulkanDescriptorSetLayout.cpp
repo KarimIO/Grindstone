@@ -39,8 +39,8 @@ static VkDescriptorType GetDescriptorType(BindingType bindingType) {
 Vulkan::DescriptorSetLayout::DescriptorSetLayout(const CreateInfo& createInfo) {
 	this->createInfo = createInfo;
 	uint32_t count = 0;
-	for (uint32_t i = 0; i < createInfo.bindingCount; ++i) {
-		DescriptorSetLayout::Binding& sourceBinding = createInfo.bindings[i];
+	for (uint32_t i = 0; i < createInfo.bindings.GetSize(); ++i) {
+		const DescriptorSetLayout::Binding& sourceBinding = createInfo.bindings[i];
 		uint32_t testCount = sourceBinding.bindingId + 1;
 		if (testCount > count) {
 			count = testCount;
@@ -48,21 +48,12 @@ Vulkan::DescriptorSetLayout::DescriptorSetLayout(const CreateInfo& createInfo) {
 	}
 
 	std::vector<VkDescriptorSetLayoutBinding> bindingLayouts;
-	bindingLayouts.reserve(createInfo.bindingCount);
+	bindingLayouts.reserve(createInfo.bindings.GetSize());
 
-	bindings.resize(count);
-	bindingCount = count;
+	bindings = createInfo.bindings;
 
-	for (uint32_t i = 0; i < count; ++i) {
-		bindings[i].bindingId = i;
-		bindings[i].count = 0;
-		bindings[i].stages = Grindstone::GraphicsAPI::ShaderStageBit::None;
-		bindings[i].type = Grindstone::GraphicsAPI::BindingType::None;
-	}
-
-	for (uint32_t i = 0; i < createInfo.bindingCount; ++i) {
-		DescriptorSetLayout::Binding& sourceBinding = createInfo.bindings[i];
-		bindings[sourceBinding.bindingId] = sourceBinding;
+	for (uint32_t i = 0; i < createInfo.bindings.GetSize(); ++i) {
+		const DescriptorSetLayout::Binding& sourceBinding = createInfo.bindings[i];
 
 		VkDescriptorSetLayoutBinding binding = {};
 		binding.binding = sourceBinding.bindingId;
@@ -99,7 +90,7 @@ Vulkan::DescriptorSetLayout::~DescriptorSetLayout() {
 }
 
 const DescriptorSetLayout::Binding& Vulkan::DescriptorSetLayout::GetBinding(size_t bindingIndex) const {
-	if (bindings.empty() || bindingIndex >= bindingCount) {
+	if (bindingIndex >= bindings.GetSize()) {
 		GPRINT_FATAL(LogSource::GraphicsAPI, "Invalid bindingIndex in GetBinding!");
 	}
 

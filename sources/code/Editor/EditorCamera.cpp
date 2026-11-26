@@ -74,8 +74,7 @@ EditorCamera::EditorCamera() {
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{
 		.debugName = "Editor Viewport Descriptor Set Layout",
-		.bindings = &descriptorSetLayoutBinding,
-		.bindingCount = 1,
+		.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &descriptorSetLayoutBinding, 1u }
 	};
 	descriptorSetLayout = core->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
@@ -124,8 +123,7 @@ EditorCamera::EditorCamera() {
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo globalDescriptorSetLayoutCreateInfo{
 		.debugName = "Global UBO Descriptor Set Layout",
-		.bindings = &globalDescriptorSetLayoutBinding,
-		.bindingCount = 1u,
+		.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &globalDescriptorSetLayoutBinding, 1u }
 	};
 
 	globalDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(globalDescriptorSetLayoutCreateInfo);

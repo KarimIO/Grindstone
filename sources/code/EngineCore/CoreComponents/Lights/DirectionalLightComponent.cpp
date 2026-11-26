@@ -41,8 +41,7 @@ void Grindstone::DirectionalLightComponent::Construct(Grindstone::WorldContextSe
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{
 			.debugName = "Directional Light Descriptor Set Layout",
-			.bindings = lightLayoutBindings.data(),
-			.bindingCount = static_cast<uint32_t>(lightLayoutBindings.size())
+			.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, lightLayoutBindings.data(), lightLayoutBindings.size() }
 		};
 		directionalLightComponent.descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
@@ -81,8 +80,7 @@ void Grindstone::DirectionalLightComponent::Construct(Grindstone::WorldContextSe
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{
 			.debugName = "Directional Light Shadow Descriptor Set Layout",
-			.bindings = &lightUboBindingLayout,
-			.bindingCount = 1
+			.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &lightUboBindingLayout, 1u }
 		};
 		directionalLightComponent.shadowMapDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 

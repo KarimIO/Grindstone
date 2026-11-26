@@ -3,6 +3,7 @@
 #include <Common/Graphics/Core.hpp>
 #include <EngineCore/Assets/AssetManager.hpp>
 #include <EngineCore/CoreComponents/Tag/TagComponent.hpp>
+#include <EngineCore/Utils/MemoryAllocator.hpp>
 
 #include <Grindstone.Renderer.Deferred/include/Features/Skinning.hpp>
 #include <Grindstone.Renderables.3D/include/Components/AnimatorComponent.hpp>
@@ -91,8 +92,7 @@ void Grindstone::Renderer::Skinning::Initialize() {
 	GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 	GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCreateInfo{
 		.debugName = "Skinning Descriptor Set Layout",
-		.bindings = layoutBindings.data(),
-		.bindingCount = static_cast<uint32_t>(layoutBindings.size())
+		.bindings =  { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, layoutBindings.data(), layoutBindings.size() }
 	};
 	descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(layoutCreateInfo);
 }

@@ -507,8 +507,7 @@ void GizmoRenderer::Initialize() {
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo gizmoDescriptorSetLayoutCreateInfo{};
 	gizmoDescriptorSetLayoutCreateInfo.debugName = "Gizmo Descriptor Layout";
-	gizmoDescriptorSetLayoutCreateInfo.bindingCount = 1u;
-	gizmoDescriptorSetLayoutCreateInfo.bindings = &gizmoDescriptorLayoutBinding;
+	gizmoDescriptorSetLayoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &gizmoDescriptorLayoutBinding, 1u };
 	gizmoDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(gizmoDescriptorSetLayoutCreateInfo);
 
 

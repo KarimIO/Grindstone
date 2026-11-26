@@ -102,8 +102,7 @@ void Grindstone::Renderer::Bloom::Initialize() {
 	};
 	GraphicsAPI::DescriptorSetLayout::CreateInfo bloomDescriptorSetLayoutCreateInfo{
 		.debugName = "Bloom Data Descriptor Set Layout",
-		.bindings = descriptorLayoutBindings.data(),
-		.bindingCount = static_cast<uint32_t>(descriptorLayoutBindings.size())
+		.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, descriptorLayoutBindings.data(), descriptorLayoutBindings.size() }
 	};
 	descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(bloomDescriptorSetLayoutCreateInfo);
 
