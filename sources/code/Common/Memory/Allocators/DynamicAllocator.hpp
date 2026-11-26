@@ -41,6 +41,7 @@ namespace Grindstone::Memory::Allocators {
 		void Initialize(void* ownedMemory, size_t size);
 
 		void* AllocateRaw(size_t size, size_t alignment, const char* debugName);
+		void* ReallocRaw(void* ptr, size_t newSize, size_t alignment, const char* debugName);
 		bool Free(void* memPtr);
 
 		bool IsEmpty() const;

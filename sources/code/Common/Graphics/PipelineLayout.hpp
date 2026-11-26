@@ -1,12 +1,10 @@
 #pragma once
 
-#include <iostream>
+#include <vector>
 #include <xhash>
 #include <xkeycheck.h>
-#include <vector>
 
-#include <Common/Hash.hpp>
-
+#include <Common/Containers/DynamicArray.hpp>
 #include <Common/Containers/ResourceCache.hpp>
 #include <Common/Graphics/DescriptorSetLayout.hpp>
 
@@ -20,27 +18,14 @@ namespace Grindstone::GraphicsAPI {
 	public:
 		struct CreateInfo {
 			const char* debugName;
-			DescriptorSetLayoutRef* descriptorSetLayouts;
-			uint32_t descriptorSetLayoutCount;
+			Grindstone::Containers::DynamicArray<DescriptorSetLayoutRef> descriptorSetLayouts;
 
 			bool operator==(const PipelineLayout::CreateInfo& o) const {
-				if (descriptorSetLayoutCount != o.descriptorSetLayoutCount) {
-					return false;
-				}
-
-				for (uint32_t i = 0; i < descriptorSetLayoutCount; ++i) {
-					DescriptorSetLayoutRef& a = descriptorSetLayouts[i];
-					DescriptorSetLayoutRef& b = o.descriptorSetLayouts[i];
-					if (a != b) {
-						return false;
-					}
-				}
-
-				return true;
+				return descriptorSetLayouts == o.descriptorSetLayouts;
 			}
 
 			bool operator!=(const PipelineLayout::CreateInfo& o) const {
-				return !(*this == o);
+				return descriptorSetLayouts != o.descriptorSetLayouts;
 			}
 		};
 
@@ -52,8 +37,8 @@ namespace std {
 	template<>
 	struct hash<Grindstone::GraphicsAPI::PipelineLayout::CreateInfo> {
 		std::size_t operator()(const Grindstone::GraphicsAPI::PipelineLayout::CreateInfo& pipelineLayout) const noexcept {
-			size_t result = std::hash<uint32_t>{}(pipelineLayout.descriptorSetLayoutCount);
-			for (uint8_t i = 0; i < pipelineLayout.descriptorSetLayoutCount; ++i) {
+			size_t result = std::hash<size_t>{}(pipelineLayout.descriptorSetLayouts.GetSize());
+			for (uint8_t i = 0; i < pipelineLayout.descriptorSetLayouts.GetSize(); ++i) {
 				result ^= std::hash<Grindstone::GraphicsAPI::DescriptorSetLayout>{}(*pipelineLayout.descriptorSetLayouts[i].Get());
 			}
 

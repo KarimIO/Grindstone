@@ -10,11 +10,18 @@
 
 namespace Grindstone::Memory::Allocators {
 	/**
+	 * \brief An allocator concept that can allocate but not deallocate.
+	 */
+	template <typename T> 
+	concept AllocatorOnly = requires(T a) {
+		{ a.AllocateRaw(std::size_t{}, std::size_t{}, "") } -> std::same_as<void*>;
+	};
+	
+	/**
 	 * \brief An allocator concept that can allocate and deallocate.
 	 */
 	template <typename T> 
-	concept Allocator = requires(T a, typename T::value_type* p) {
-		{ a.allocate(0) } -> std::same_as<decltype(p)>;
-		{ a.deallocate(p, 0) } -> std::same_as<void>;
+	concept Allocator = AllocatorOnly<T> && requires(T a) {
+		{ a.Free(nullptr) } -> std::same_as<bool>;
 	};
 }

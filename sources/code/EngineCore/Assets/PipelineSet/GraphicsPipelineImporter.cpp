@@ -255,8 +255,7 @@ static bool ImportGraphicsPipelineAsset(GraphicsPipelineAsset& graphicsPipelineA
 		std::string pipelineLayoutAssetName = result.displayName + " Layout";
 		Grindstone::GraphicsAPI::PipelineLayout::CreateInfo pipelineLayoutCreateInfo{
 			.debugName = pipelineLayoutAssetName.c_str(),
-			.descriptorSetLayouts = descriptorSetLayouts.data(),
-			.descriptorSetLayoutCount = static_cast<uint32_t>(descriptorSetLayoutCount),
+			.descriptorSetLayouts = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, descriptorSetLayouts.data(), descriptorSetLayoutCount },
 		};
 
 		pass.pipelineLayout = graphicsCore->CreatePipelineLayout(pipelineLayoutCreateInfo);

@@ -1,6 +1,7 @@
 #include <EngineCore/EngineCore.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Rendering/RenderGraphPass.hpp>
+#include <Containers/DynamicArray.hpp>
 
 using namespace Grindstone::Renderer;
 
@@ -300,8 +301,7 @@ void Grindstone::Renderer::PipelineRenderGraphPass::RealizeResources(
 
 	Grindstone::GraphicsAPI::PipelineLayout::CreateInfo pipelineLayoutCreateInfo{
 		.debugName = name.c_str(),
-		.descriptorSetLayouts = descriptorSetLayouts.data(),
-		.descriptorSetLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
+		.descriptorSetLayouts = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, descriptorSetLayouts.data(), descriptorSetLayouts.size() }
 	};
 
 	pipelineLayout = context.graphicsCore->GetOrCreatePipelineLayoutFromCache(pipelineLayoutCreateInfo);
