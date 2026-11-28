@@ -5,28 +5,29 @@ set(SRC ${COMMON_DIR}/source)
 set(INC ${COMMON_DIR}/include)
 
 file(
-    GLOB_RECURSE SOURCE_MAIN
-    ${COMMON_DIR}/Assert.hpp
-    ${COMMON_DIR}/Break.hpp
-    ${COMMON_DIR}/Buffer.hpp
-    ${COMMON_DIR}/EnumTraits.hpp
-    ${COMMON_DIR}/Filepath.hpp
-    ${COMMON_DIR}/GameplayTag.cpp
-    ${COMMON_DIR}/GameplayTag.hpp
-    ${COMMON_DIR}/Hash.hpp
-    ${COMMON_DIR}/HashedString.cpp
-    ${COMMON_DIR}/HashedString.hpp
-    ${COMMON_DIR}/IntTypes.hpp
-    ${COMMON_DIR}/Logging.hpp
-    ${COMMON_DIR}/Math.cpp
-    ${COMMON_DIR}/Math.hpp
-    ${COMMON_DIR}/Result.hpp
-    ${COMMON_DIR}/Observable.hpp
-    ${COMMON_DIR}/String.hpp
-    ${COMMON_DIR}/Logger.cpp
-    ${COMMON_DIR}/Logger.hpp
-    ${COMMON_DIR}/DeferredDeletionQueue.cpp
-    ${COMMON_DIR}/DeferredDeletionQueue.hpp
+	GLOB_RECURSE SOURCE_MAIN
+	${COMMON_DIR}/Assert.cpp
+	${COMMON_DIR}/Assert.hpp
+	${COMMON_DIR}/Break.hpp
+	${COMMON_DIR}/Buffer.hpp
+	${COMMON_DIR}/EnumTraits.hpp
+	${COMMON_DIR}/Filepath.hpp
+	${COMMON_DIR}/GameplayTag.cpp
+	${COMMON_DIR}/GameplayTag.hpp
+	${COMMON_DIR}/Hash.hpp
+	${COMMON_DIR}/HashedString.cpp
+	${COMMON_DIR}/HashedString.hpp
+	${COMMON_DIR}/IntTypes.hpp
+	${COMMON_DIR}/Logging.hpp
+	${COMMON_DIR}/Math.cpp
+	${COMMON_DIR}/Math.hpp
+	${COMMON_DIR}/Result.hpp
+	${COMMON_DIR}/Observable.hpp
+	${COMMON_DIR}/String.hpp
+	${COMMON_DIR}/Logger.cpp
+	${COMMON_DIR}/Logger.hpp
+	${COMMON_DIR}/DeferredDeletionQueue.cpp
+	${COMMON_DIR}/DeferredDeletionQueue.hpp
 )
 
 file(GLOB_RECURSE SOURCE_ASSETS "${COMMON_DIR}/Assets/*.cpp")
@@ -105,40 +106,40 @@ source_group("Source Files\\Window" FILES ${SOURCE_WINDOW})
 source_group("Header Files\\Window" FILES ${HEADER_WINDOW})
 
 set(COMMON_SOURCES
-    ${SOURCE_MAIN}
-    ${SOURCE_ASSETS}
-    ${SOURCE_BLACKBOARD}
-    ${SOURCE_CONSOLE}
-    ${SOURCE_CONTAINERS}
-    ${SOURCE_DISPLAY}
-    ${SOURCE_EVENT}
-    ${SOURCE_FORMATS}
-    ${SOURCE_GRAPHICS}
-    ${SOURCE_INPUT}
-    ${SOURCE_MEMORY}
-    ${SOURCE_PLATFORM}
-    ${SOURCE_RENDERING}
-    ${SOURCE_RESOURCE_PIPELINE}
-    ${SOURCE_UTILITIES}
-    ${SOURCE_WINDOW}
+	${SOURCE_MAIN}
+	${SOURCE_ASSETS}
+	${SOURCE_BLACKBOARD}
+	${SOURCE_CONSOLE}
+	${SOURCE_CONTAINERS}
+	${SOURCE_DISPLAY}
+	${SOURCE_EVENT}
+	${SOURCE_FORMATS}
+	${SOURCE_GRAPHICS}
+	${SOURCE_INPUT}
+	${SOURCE_MEMORY}
+	${SOURCE_PLATFORM}
+	${SOURCE_RENDERING}
+	${SOURCE_RESOURCE_PIPELINE}
+	${SOURCE_UTILITIES}
+	${SOURCE_WINDOW}
 )
 
 set(COMMON_HEADERS
-    ${HEADER_ASSETS}
-    ${HEADER_BLACKBOARD}
-    ${HEADER_CONSOLE}
-    ${HEADER_CONTAINERS}
-    ${HEADER_DISPLAY}
-    ${HEADER_EVENT}
-    ${HEADER_FORMATS}
-    ${HEADER_GRAPHICS}
-    ${HEADER_INPUT}
-    ${HEADER_MEMORY}
-    ${HEADER_PLATFORM}
-    ${HEADER_RENDERING}
-    ${HEADER_RESOURCE_PIPELINE}
-    ${HEADER_UTILITIES}
-    ${HEADER_WINDOW}
+	${HEADER_ASSETS}
+	${HEADER_BLACKBOARD}
+	${HEADER_CONSOLE}
+	${HEADER_CONTAINERS}
+	${HEADER_DISPLAY}
+	${HEADER_EVENT}
+	${HEADER_FORMATS}
+	${HEADER_GRAPHICS}
+	${HEADER_INPUT}
+	${HEADER_MEMORY}
+	${HEADER_PLATFORM}
+	${HEADER_RENDERING}
+	${HEADER_RESOURCE_PIPELINE}
+	${HEADER_UTILITIES}
+	${HEADER_WINDOW}
 )
 
 add_library(Common STATIC ${COMMON_SOURCES} ${COMMON_HEADERS})
@@ -177,9 +178,10 @@ file(GLOB_RECURSE SOURCE_SMART_POINTERS "${COMMON_DIR}/Test/Memory/SmartPointers
 source_group("Source Files\\Memory\\SmartPointers" FILES ${SOURCE_SMART_POINTERS})
 
 file(
-    GLOB_RECURSE SOURCE_TEST
-    "${COMMON_DIR}/Test/HashedString.cpp"
-    "${COMMON_DIR}/Test/Result.cpp"
+	GLOB_RECURSE SOURCE_TEST
+	"${COMMON_DIR}/Test/TestAssertSupport.hpp"
+	"${COMMON_DIR}/Test/HashedString.cpp"
+	"${COMMON_DIR}/Test/Result.cpp"
 )
 
 enable_testing()
@@ -190,15 +192,15 @@ include(GoogleTest)
 gtest_discover_tests(Common.Test)
 
 install(
-    TARGETS
-    Common
-    Common.Test
-    LIBRARY DESTINATION bin/$<CONFIG>
-    RUNTIME DESTINATION bin/$<CONFIG>
-    ARCHIVE DESTINATION bin/$<CONFIG>
+	TARGETS
+	Common
+	Common.Test
+	LIBRARY DESTINATION bin/$<CONFIG>
+	RUNTIME DESTINATION bin/$<CONFIG>
+	ARCHIVE DESTINATION bin/$<CONFIG>
 )
 
 install(
-    FILES $<TARGET_RUNTIME_DLLS:Common.Test>
-    DESTINATION bin/$<CONFIG>
+	FILES $<TARGET_RUNTIME_DLLS:Common.Test>
+	DESTINATION bin/$<CONFIG>
 )
