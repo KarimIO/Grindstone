@@ -24,12 +24,16 @@ namespace Grindstone::Containers {
 
 	public:
 		class Ref {
+			friend class ResourceCache;
+
 			Entry* entry = nullptr;
 
 		public:
 			Ref() = default;
 			explicit Ref(Entry* entry) : entry(entry) {
-				entry->refs.fetch_add(1, std::memory_order_relaxed);
+				if (entry) {
+					entry->refs.fetch_add(1, std::memory_order_relaxed);
+				}
 			}
 			explicit Ref(std::nullptr_t) : entry(nullptr) {}
 			Ref(const Ref& other) : Ref(other.entry) {}
@@ -46,10 +50,14 @@ namespace Grindstone::Containers {
 
 			Ref& operator=(const Ref& other) {
 				if (other.entry != entry) {
+					if (other.entry != nullptr) {
+						other.entry->refs.fetch_add(1, std::memory_order_relaxed);
+					}
+
 					if (entry != nullptr) {
 						entry->refs.fetch_sub(1, std::memory_order_acq_rel);
 					}
-					other.entry->refs.fetch_add(1, std::memory_order_relaxed);
+
 					entry = other.entry;
 				}
 
@@ -106,30 +114,24 @@ namespace Grindstone::Containers {
 		using Deleter = std::function<void(Value)>;
 
 		~ResourceCache() {
+			TrimImmediately();
 			GS_ASSERT_WITH_MESSAGE(cache.empty(), "ResourceCache handles outlive cache.");
 		}
 
 		// If key exists in the cache, return it, if not, create it via factory.
 		Ref GetOrCreate(const Key& key) {
-			Entry* entry = nullptr;
+			Ref ref;
 			{
 				std::unique_lock lock(mutex);
 				auto [it, inserted] = cache.try_emplace(key);
-				entry = &it->second;
+				Entry* entry = &it->second;
 				if (inserted) {
 					entry->key = key;
 				}
-
-				// Add one to avoid deallocating this newly created entry during a trim.
-				entry->refs.fetch_add(1);
+				ref = Ref(entry);
 			}
 
-			// Call factory and pin to created to avoid calling it twice. 
-			std::call_once(entry->created, [entry, constructCallback=this->constructCallback, &key] { entry->value = constructCallback(key); });
-
-			// Create a Ref to use, but drop the temporary pin from the fetch_add above so we don't have double pins.
-			Ref ref(entry);
-			entry->refs.fetch_sub(1);
+			std::call_once(ref.entry->created, [&]{ ref.entry->value = constructCallback(key); });
 
 			return ref;
 		}
