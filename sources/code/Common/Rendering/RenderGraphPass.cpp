@@ -1,6 +1,7 @@
 #include <EngineCore/EngineCore.hpp>
 #include <Common/Graphics/Core.hpp>
 #include <Common/Rendering/RenderGraphPass.hpp>
+#include <Containers/DynamicArray.hpp>
 
 using namespace Grindstone::Renderer;
 
@@ -265,22 +266,21 @@ void Grindstone::Renderer::PipelineRenderGraphPass::RealizeResources(
 		*/
 	}
 
-	std::vector<Grindstone::GraphicsAPI::DescriptorSetLayout*> descriptorSetLayouts{
-		context.globalDescriptorSetLayout,
+	std::vector<Grindstone::GraphicsAPI::DescriptorSetLayoutRef> descriptorSetLayouts{
+		context.globalDescriptorSetLayout
 	};
 
 	if (layoutBindings.size() > 0) {
 		Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{
 			.debugName = passDescriptorSetLayoutName.c_str(),
-			.bindings = layoutBindings.data(),
-			.bindingCount = static_cast<uint32_t>(layoutBindings.size())
+			.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, layoutBindings.data(), layoutBindings.size() }
 		};
 
-		Grindstone::GraphicsAPI::DescriptorSetLayout* passDescriptorSetLayout = context.graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
+		passDescriptorSetLayout = context.graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 		Grindstone::GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{
 			.debugName = passDescriptorSetName.c_str(),
-			.layout = passDescriptorSetLayout,
+			.layout = passDescriptorSetLayout.Get(),
 			.bindings = bindings.data(),
 			.bindingCount = static_cast<uint32_t>(bindings.size())
 		};
@@ -300,8 +300,7 @@ void Grindstone::Renderer::PipelineRenderGraphPass::RealizeResources(
 
 	Grindstone::GraphicsAPI::PipelineLayout::CreateInfo pipelineLayoutCreateInfo{
 		.debugName = name.c_str(),
-		.descriptorSetLayouts = descriptorSetLayouts.data(),
-		.descriptorSetLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size()),
+		.descriptorSetLayouts = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, descriptorSetLayouts.data(), descriptorSetLayouts.size() }
 	};
 
 	pipelineLayout = context.graphicsCore->GetOrCreatePipelineLayoutFromCache(pipelineLayoutCreateInfo);
@@ -318,7 +317,7 @@ void Grindstone::Renderer::ComputeRenderGraphPassBase::PrepareComputePass(Grinds
 		descriptorSets.emplace_back(passDescriptorSet);
 	}
 
-	context.commandBuffer->BindComputeDescriptorSet(pipelineLayout, descriptorSets.data(), 0, descriptorSets.size());
+	context.commandBuffer->BindComputeDescriptorSet(pipelineLayout.Get(), descriptorSets.data(), 0, descriptorSets.size());
 }
 
 Grindstone::Math::IntRect2D Grindstone::Renderer::GraphicsRenderGraphPassBase::PrepareGraphicsPass(
@@ -379,7 +378,7 @@ Grindstone::Math::IntRect2D Grindstone::Renderer::GraphicsRenderGraphPassBase::P
 		descriptorSets.emplace_back(passDescriptorSet);
 	}
 
-	context.commandBuffer->BindGraphicsDescriptorSet(pipelineLayout, descriptorSets.data(), 0, descriptorSets.size());
+	context.commandBuffer->BindGraphicsDescriptorSet(pipelineLayout.Get(), descriptorSets.data(), 0, descriptorSets.size());
 
 	context.commandBuffer->SetViewport(
 		static_cast<float>(renderingArea.offset.x),

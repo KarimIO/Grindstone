@@ -19,7 +19,7 @@
 using namespace Grindstone;
 using namespace Grindstone::GraphicsAPI;
 
-GraphicsAPI::DescriptorSetLayout* Grindstone::Mesh3dRenderer::perDrawDescriptorSetLayout = nullptr;
+GraphicsAPI::DescriptorSetLayoutRef Grindstone::Mesh3dRenderer::perDrawDescriptorSetLayout{};
 
 struct RenderTask {
 	GraphicsAPI::DescriptorSet* materialDescriptorSet;
@@ -88,8 +88,7 @@ Grindstone::Mesh3dRenderer::Mesh3dRenderer(EngineCore* engineCore) {
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
 	descriptorSetLayoutCreateInfo.debugName = "Per Draw Descriptor Set Layout";
-	descriptorSetLayoutCreateInfo.bindingCount = 1;
-	descriptorSetLayoutCreateInfo.bindings = &descriptorSetUniformBinding;
+	descriptorSetLayoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &descriptorSetUniformBinding, 1u };
 	perDrawDescriptorSetLayout = engineCore->GetGraphicsCore()->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 }
@@ -133,5 +132,5 @@ Grindstone::Rendering::GeometryRenderStats Mesh3dRenderer::RenderQueue(
 }
 
 GraphicsAPI::DescriptorSetLayout* Mesh3dRenderer::GetPerDrawDescriptorSetLayout() {
-	return perDrawDescriptorSetLayout;
+	return perDrawDescriptorSetLayout.Get();
 }

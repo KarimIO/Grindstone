@@ -129,21 +129,20 @@ void Grindstone::Renderer::ScreenSpaceAmbientOcclusion::CreateSsaoKernelAndNoise
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo ssaoDescriptorSetLayoutCreateInfo{};
 		ssaoDescriptorSetLayoutCreateInfo.debugName = "SSAO Input Descriptor Set Layout";
-		ssaoDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(ssaoLayoutBindings.size());
-		ssaoDescriptorSetLayoutCreateInfo.bindings = ssaoLayoutBindings.data();
+		ssaoDescriptorSetLayoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, ssaoLayoutBindings.data(), ssaoLayoutBindings.size() };
 		ssaoInputDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(ssaoDescriptorSetLayoutCreateInfo);
 	}
 
 	{
 		std::array<GraphicsAPI::DescriptorSet::Binding, 3> ssaoLayoutBindings{
-			GraphicsAPI::DescriptorSet::Binding::Sampler(ssaoNoiseSampler),
+			GraphicsAPI::DescriptorSet::Binding::Sampler(ssaoNoiseSampler.Get()),
 			GraphicsAPI::DescriptorSet::Binding::SampledImage(ssaoNoiseTexture),
 			GraphicsAPI::DescriptorSet::Binding::UniformBuffer(ssaoUniformBuffer)
 		};
 
 		GraphicsAPI::DescriptorSet::CreateInfo engineDescriptorSetCreateInfo{};
 		engineDescriptorSetCreateInfo.debugName = "SSAO Input Descriptor Set";
-		engineDescriptorSetCreateInfo.layout = ssaoInputDescriptorSetLayout;
+		engineDescriptorSetCreateInfo.layout = ssaoInputDescriptorSetLayout.Get();
 		engineDescriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(ssaoLayoutBindings.size());
 		engineDescriptorSetCreateInfo.bindings = ssaoLayoutBindings.data();
 		ssaoInputDescriptorSet = graphicsCore->CreateDescriptorSet(engineDescriptorSetCreateInfo);
@@ -173,7 +172,7 @@ void Grindstone::Renderer::ScreenSpaceAmbientOcclusion::Bind(
 				.imageUsage = Grindstone::GraphicsAPI::ImageUsageFlags::RenderTarget | Grindstone::GraphicsAPI::ImageUsageFlags::Sampled
 			};
 
-			renderPass.ReadExternalSampler(screenSampler);
+			renderPass.ReadExternalSampler(screenSampler.Get());
 			renderPass.ReadSampledImage(gbufferData.depthRef);
 			renderPass.ReadSampledImage(gbufferData.normalRef);
 			RenderGraphBuilderResourceRef ambientOcclusionRef = renderPass.WriteColorAttachment(

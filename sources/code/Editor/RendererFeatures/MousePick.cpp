@@ -78,12 +78,12 @@ void Grindstone::Editor::RendererFeatures::MousePick::Initialize() {
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo mousePickDescriptorSetLayoutCreateInfo{};
 		mousePickDescriptorSetLayoutCreateInfo.debugName = "Mouse Pick Descriptor Set Layout";
-		mousePickDescriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(mousePickDescriptorBindingLayouts.size());
-		mousePickDescriptorSetLayoutCreateInfo.bindings = mousePickDescriptorBindingLayouts.data();
+		mousePickDescriptorSetLayoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, mousePickDescriptorBindingLayouts.data(), mousePickDescriptorBindingLayouts.size() };
 		mousePickDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(mousePickDescriptorSetLayoutCreateInfo);
 
-		GraphicsAPI::DescriptorSet::CreateInfo mousePickDescriptorSetCreateInfo{};
-		mousePickDescriptorSetCreateInfo.layout = mousePickDescriptorSetLayout;
+		GraphicsAPI::DescriptorSet::CreateInfo mousePickDescriptorSetCreateInfo{
+			.layout = mousePickDescriptorSetLayout.Get()
+		};
 
 		for (int i = 0; i < 3; ++i) {
 			std::string mousePickMatrixBufferName = std::vformat("Mouse Pick Uniform Buffer [{}]", std::make_format_args(i));

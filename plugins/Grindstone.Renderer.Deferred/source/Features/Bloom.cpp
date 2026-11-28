@@ -102,10 +102,9 @@ void Grindstone::Renderer::Bloom::Initialize() {
 	};
 	GraphicsAPI::DescriptorSetLayout::CreateInfo bloomDescriptorSetLayoutCreateInfo{
 		.debugName = "Bloom Data Descriptor Set Layout",
-		.bindings = descriptorLayoutBindings.data(),
-		.bindingCount = static_cast<uint32_t>(descriptorLayoutBindings.size())
+		.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, descriptorLayoutBindings.data(), descriptorLayoutBindings.size() }
 	};
-	descriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(bloomDescriptorSetLayoutCreateInfo);
+	descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(bloomDescriptorSetLayoutCreateInfo);
 
 	std::array<GraphicsAPI::DescriptorSet::Binding, 2> descriptorBindings{
 		GraphicsAPI::DescriptorSet::Binding(nullptr, GraphicsAPI::BindingType::UniformBuffer, 1u),
@@ -113,7 +112,7 @@ void Grindstone::Renderer::Bloom::Initialize() {
 	};
 
 	GraphicsAPI::DescriptorSet::CreateInfo bloomDescriptorSetCreateInfo{
-		.layout = descriptorSetLayout,
+		.layout = descriptorSetLayout.Get(),
 		.bindings = descriptorBindings.data(),
 		.bindingCount = static_cast<uint32_t>(descriptorBindings.size())
 	};
@@ -319,16 +318,16 @@ void Grindstone::Renderer::Bloom::Bind(
 	Grindstone::GraphicsAPI::DescriptorSet** ds = imageSet.descriptorSets.data();
 	
 	Renderer::RenderGraphBuilderResourceRef outRef;
-	stageOutputs[0] = outRef = FirstDownscale(mipSizes[1], *(ds++), screenSampler, bloomPipeline, pipelineLayout, renderGraphBuilder, litImageRef);
+	stageOutputs[0] = outRef = FirstDownscale(mipSizes[1], *(ds++), screenSampler.Get(), bloomPipeline, pipelineLayout, renderGraphBuilder, litImageRef);
 
 	for (uint32_t i = 1; i < BLOOM_MIPS; ++i) {
-		stageOutputs[i] = outRef = Downscale(i, mipSizes[i + 1u], *(ds++), screenSampler, bloomPipeline, pipelineLayout, renderGraphBuilder, outRef);
+		stageOutputs[i] = outRef = Downscale(i, mipSizes[i + 1u], *(ds++), screenSampler.Get(), bloomPipeline, pipelineLayout, renderGraphBuilder, outRef);
 	}
 
-	stageOutputs[BLOOM_MIPS] = outRef = FirstUpscale(mipSizes[BLOOM_MIPS - 1u], *(ds++), screenSampler, bloomPipeline, pipelineLayout, renderGraphBuilder, outRef, stageOutputs[BLOOM_MIPS - 2u]);
+	stageOutputs[BLOOM_MIPS] = outRef = FirstUpscale(mipSizes[BLOOM_MIPS - 1u], *(ds++), screenSampler.Get(), bloomPipeline, pipelineLayout, renderGraphBuilder, outRef, stageOutputs[BLOOM_MIPS - 2u]);
 
 	for (uint32_t i = 1; i < BLOOM_MIPS - 1u; ++i) {
-		stageOutputs[BLOOM_MIPS + i] = outRef = Upscale(i, mipSizes[BLOOM_MIPS - i - 1u], *(ds++), screenSampler, bloomPipeline, pipelineLayout, renderGraphBuilder, outRef, stageOutputs[BLOOM_MIPS - 1u - i]);
+		stageOutputs[BLOOM_MIPS + i] = outRef = Upscale(i, mipSizes[BLOOM_MIPS - i - 1u], *(ds++), screenSampler.Get(), bloomPipeline, pipelineLayout, renderGraphBuilder, outRef, stageOutputs[BLOOM_MIPS - 1u - i]);
 	}
 
 	context.blackboard.SetValue<RenderGraphBuilderResourceRef>("BloomOutput", outRef);

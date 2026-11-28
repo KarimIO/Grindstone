@@ -65,10 +65,9 @@ bool ThumbnailManager::Initialize() {
 	GraphicsAPI::DescriptorSetLayout::Binding descriptorLayoutBinding = { 0, 1, GraphicsAPI::BindingType::CombinedImageSampler, GraphicsAPI::ShaderStageBit::Fragment };
 	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorLayoutCreateInfo{
 		.debugName = "Editor Thumbnail Atlas Descriptor Set Layout",
-		.bindings = &descriptorLayoutBinding,
-		.bindingCount = 1
+		.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &descriptorLayoutBinding, 1u }
 	};
-	GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorLayoutCreateInfo);
+	descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorLayoutCreateInfo);
 
 	Grindstone::GraphicsAPI::Sampler::CreateInfo thumbnailAtlasSamplerCreateInfo{
 		.debugName = "Thumbnail Atlas Sampler",
@@ -85,13 +84,13 @@ bool ThumbnailManager::Initialize() {
 			.mipBias = 0.0f,
 		}
 	};
-	GraphicsAPI::Sampler* thumbnailAtlasSampler = graphicsCore->GetOrCreateSampler(thumbnailAtlasSamplerCreateInfo);
+	thumbnailAtlasSampler = graphicsCore->GetOrCreateSampler(thumbnailAtlasSamplerCreateInfo);
 
-	std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> descriptor = { thumbnailAtlasImage, thumbnailAtlasSampler };
+	std::pair<GraphicsAPI::Image*, GraphicsAPI::Sampler*> descriptor = { thumbnailAtlasImage, thumbnailAtlasSampler.Get() };
 	GraphicsAPI::DescriptorSet::Binding descriptorBinding = Grindstone::GraphicsAPI::DescriptorSet::Binding::CombinedImageSampler(&descriptor, 1);
 	GraphicsAPI::DescriptorSet::CreateInfo descriptorCreateInfo{
 		.debugName = "Editor Thumbnail Atlas Descriptor Set",
-		.layout = descriptorSetLayout,
+		.layout = descriptorSetLayout.Get(),
 		.bindings = &descriptorBinding,
 		.bindingCount = 1
 	};

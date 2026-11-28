@@ -5,6 +5,7 @@
 #include <map>
 #include <glm/mat4x4.hpp>
 
+#include <Common/Graphics/Core.hpp>
 #include <Common/Rendering/RenderViewData.hpp>
 #include "EngineCore/AssetRenderer/BaseAssetRenderer.hpp"
 #include "Components/MeshRendererComponent.hpp"
@@ -34,6 +35,6 @@ namespace Grindstone {
 			EngineCore* engineCore = nullptr;
 			std::string rendererName = "SkeletalMesh";
 			GraphicsAPI::DescriptorSet* engineDescriptorSet = nullptr;
-			static class GraphicsAPI::DescriptorSetLayout* perDrawDescriptorSetLayout;
+			static GraphicsAPI::DescriptorSetLayoutRef perDrawDescriptorSetLayout;
 	};
 }

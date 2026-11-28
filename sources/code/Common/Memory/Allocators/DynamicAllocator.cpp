@@ -201,7 +201,15 @@ size_t DynamicAllocator::GetTotalMemorySize() const {
 	return totalMemorySize;
 }
 
+static inline size_t AlignUp(size_t size, size_t align) {
+	return (size + align - 1) & ~(align - 1);
+}
+
 void* DynamicAllocator::AllocateRaw(size_t size, size_t alignment, const char* debugName) {
+	if (size == 0) {
+		return nullptr;
+	}
+
 	DynamicAllocator::FreeHeader* previousNode = nullptr;
 	DynamicAllocator::FreeHeader* selectedNode = nullptr;
 	size_t padding = 0;
@@ -213,7 +221,7 @@ void* DynamicAllocator::AllocateRaw(size_t size, size_t alignment, const char* d
 
 	const std::size_t alignmentPadding = padding - allocationHeaderSize;
 	std::size_t requiredSize = size + padding;
-	requiredSize = (requiredSize + alignof(DynamicAllocator::FreeHeader) - 1) & ~(alignof(DynamicAllocator::FreeHeader) - 1);
+	requiredSize = AlignUp(requiredSize, alignof(DynamicAllocator::FreeHeader));
 
 	const std::size_t rest = selectedNode->blockSize - requiredSize;
 
@@ -227,6 +235,10 @@ void* DynamicAllocator::AllocateRaw(size_t size, size_t alignment, const char* d
 			reinterpret_cast<uintptr_t>(newFreeNode) %
 			alignof(FreeHeader) == 0
 		);
+	}
+	else {
+		// Absordb the rest of the block into the requiredSize
+		requiredSize = selectedNode->blockSize;
 	}
 
 	FreeListRemove(firstFreeHeader, previousNode, selectedNode);
@@ -262,44 +274,115 @@ static void Coalesce(DynamicAllocator::FreeHeader*& head, DynamicAllocator::Free
 	}
 }
 
-bool DynamicAllocator::Free(void* ptr) {
-	size_t currentAddress = reinterpret_cast<size_t>(ptr);
-	AllocationHeader* allocationHeader = reinterpret_cast<AllocationHeader*>(currentAddress - allocationHeaderSize);
+static void FreeBlock(DynamicAllocator::FreeHeader*& firstFreeHeader, void* blockStart, size_t blockSize) {
+	GS_ASSERT(reinterpret_cast<uintptr_t>(blockStart) % alignof(DynamicAllocator::FreeHeader) == 0);
+	GS_ASSERT(blockSize >= sizeof(DynamicAllocator::FreeHeader));
 
-	FreeHeader* freeNode = (FreeHeader*)(allocationHeader);
-	freeNode->blockSize = allocationHeader->blockSize;
+	DynamicAllocator::FreeHeader* freeNode =
+		static_cast<DynamicAllocator::FreeHeader*>(blockStart);
+	freeNode->blockSize = blockSize;
 	freeNode->nextFreeBlock = nullptr;
 
-	FreeHeader* it = firstFreeHeader;
-	FreeHeader* itPrev = nullptr;
-
-	// Find the previous node
-	while (it != nullptr) {
-		if (ptr < it) {
-			FreeListInsert(firstFreeHeader, itPrev, freeNode);
-			GS_ASSERT(
-				reinterpret_cast<uintptr_t>(freeNode) %
-				alignof(FreeHeader) == 0
-			);
-			break;
-		}
-
-		itPrev = it;
+	// Address-ordered insert: find the last free node before freeNode
+	DynamicAllocator::FreeHeader* prev = nullptr;
+	DynamicAllocator::FreeHeader* it = firstFreeHeader;
+	while (it != nullptr && it < freeNode) {
+		prev = it;
 		it = it->nextFreeBlock;
 	}
 
-	if (it == nullptr) {
-		FreeListInsert(firstFreeHeader, itPrev, freeNode);
-		GS_ASSERT(
-			reinterpret_cast<uintptr_t>(freeNode) %
-			alignof(FreeHeader) == 0
-		);
+	FreeListInsert(firstFreeHeader, prev, freeNode);
+	Coalesce(firstFreeHeader, prev, freeNode);
+}
+
+void* DynamicAllocator::ReallocRaw(void* ptr, size_t newSize, size_t alignment, const char* debugName) {
+	if (ptr == nullptr) {
+		return AllocateRaw(newSize, alignment, debugName);
 	}
 
-	usedSize -= freeNode->blockSize;
+	if (newSize == 0) {
+		Free(ptr);
+		return nullptr;
+	}
 
-	Coalesce(firstFreeHeader, itPrev, freeNode);
+	AllocationHeader* header = reinterpret_cast<AllocationHeader*>(reinterpret_cast<uintptr_t>(ptr) - allocationHeaderSize);
 
+	const uintptr_t blockStart   = reinterpret_cast<uintptr_t>(header) - header->padding;
+	const size_t    oldBlockSize = header->blockSize;
+	const uintptr_t blockEnd     = blockStart + oldBlockSize;
+	const size_t    prefix       = reinterpret_cast<uintptr_t>(ptr) - blockStart;
+	const size_t    oldUsable    = oldBlockSize - prefix;
+
+	// Total block size needed with the data address held fixed
+	size_t needed = AlignUp(prefix + newSize, alignof(FreeHeader));
+	needed = std::max(needed, sizeof(FreeHeader));   // Must be able to become a free node later
+
+	// Shrink (or same size): Stay in place, give back the tail
+	if (needed <= oldBlockSize) {
+		const size_t rest = oldBlockSize - needed;
+		if (rest > minBlockSize) {
+			header->blockSize = needed;
+			usedSize -= rest;
+			FreeBlock(firstFreeHeader, reinterpret_cast<void*>(blockStart + needed), rest);
+		}
+		return ptr;
+	}
+
+	// Grow in place: Absorb the free block that directly follows
+	FreeHeader* next = firstFreeHeader;
+	FreeHeader* prev = nullptr;
+
+	while (next != nullptr && reinterpret_cast<uintptr_t>(next) < blockEnd) {
+		prev = next;
+		next = next->nextFreeBlock;
+	}
+
+	if (next != nullptr && reinterpret_cast<uintptr_t>(next) == blockEnd) {
+		const size_t combined = oldBlockSize + next->blockSize;
+		if (combined >= needed) {
+			FreeListRemove(firstFreeHeader, prev, next);
+
+			size_t newBlockSize = combined;
+			const size_t rest = combined - needed;
+			if (rest > minBlockSize) {
+				newBlockSize = needed;
+				FreeBlock(firstFreeHeader, reinterpret_cast<void*>(blockStart + needed), rest);
+			}
+			header->blockSize = newBlockSize;
+			usedSize += newBlockSize - oldBlockSize;
+			peakSize = std::max(peakSize, usedSize);
+			return ptr;
+		}
+	}
+
+	// Fallback: allocate, copy, free
+	void* newPtr = AllocateRaw(newSize, alignment, debugName);
+	if (newPtr == nullptr) {
+		return nullptr;	 // Old block is untouched, like std::realloc
+	}
+
+	std::memcpy(newPtr, ptr, std::min(oldUsable, newSize));
+	Free(ptr);
+
+	return newPtr;
+}
+
+bool DynamicAllocator::Free(void* ptr) {
+	if (ptr == nullptr) return false;
+
+	auto* header = reinterpret_cast<AllocationHeader*>(
+		reinterpret_cast<uintptr_t>(ptr) - allocationHeaderSize);
+
+	const size_t blockSize = header->blockSize;
+	const uintptr_t blockStart =
+		reinterpret_cast<uintptr_t>(header) - header->padding;
+
+#ifdef _DEBUG
+	nameMap.erase(ptr);
+#endif
+
+	usedSize -= blockSize;
+	FreeBlock(firstFreeHeader, reinterpret_cast<void*>(blockStart), blockSize);
 	return true;
 }
 

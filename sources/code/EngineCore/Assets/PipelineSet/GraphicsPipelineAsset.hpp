@@ -34,6 +34,7 @@ namespace Grindstone {
 			std::array<Grindstone::Buffer, GraphicsAPI::numShaderGraphicStage> stageBuffers;
 			std::array<GraphicsAPI::ShaderStage, GraphicsAPI::numShaderGraphicStage> stageTypes;
 			std::array<GraphicsAPI::GraphicsPipeline::AttachmentData, 8> colorAttachmentData;
+			std::vector<GraphicsAPI::DescriptorSetLayoutRef> descriptorSetLayouts;
 		};
 
 		struct MetaData {
@@ -69,7 +70,7 @@ namespace Grindstone {
 				return nullptr;
 			}
 
-			return passes[0].pipelineLayout->descriptorSetLayouts[1];
+			return passes[0].pipelineLayout->descriptorSetLayouts[1].Get();
 		}
 
 		const Grindstone::GraphicsPipelineAsset::Pass* GetFirstPass() const {
@@ -154,7 +155,18 @@ namespace Grindstone {
 			pipelineData.shaderStageCreateInfos = stages.data();
 
 			Grindstone::GraphicsAPI::Core* graphicsCore = Grindstone::EngineCore::GetInstance().GetGraphicsCore();
-			return graphicsCore->GetOrCreateGraphicsPipelineFromCache(pipelineLayout, pipelineData, vertexInputLayout);
+
+			Grindstone::GraphicsAPI::GraphicsPipeline::CreateInfo createInfo{
+				.pipelineLayout = pipelineLayout,
+				.pipelineData = pipelineData,
+			};
+
+			if (vertexInputLayout != nullptr) {
+				createInfo.vertexInputLayout = *vertexInputLayout;
+			}
+
+
+			return graphicsCore->CreateGraphicsPipeline(createInfo);
 		}
 
 		const Grindstone::GraphicsPipelineAsset::Pass* GetPassByName(std::string name) const {

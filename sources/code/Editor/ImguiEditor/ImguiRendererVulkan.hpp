@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <Common/Graphics/Core.hpp>
+
 #include "ImguiRenderer.hpp"
 
 namespace Grindstone::GraphicsAPI {
@@ -42,7 +44,7 @@ namespace Grindstone::Editor::ImguiEditor {
 
 		VkDescriptorPool imguiPool = nullptr;
 		VkDescriptorSet thumbnailDescriptorSet = nullptr;
-		Grindstone::GraphicsAPI::DescriptorSetLayout* textureDescriptorLayout = nullptr;
+		Grindstone::GraphicsAPI::DescriptorSetLayoutRef textureDescriptorLayout;
 		std::vector<GraphicsAPI::CommandBuffer*> commandBuffers;
 
 		bool shouldRebuildSwapchain = false;

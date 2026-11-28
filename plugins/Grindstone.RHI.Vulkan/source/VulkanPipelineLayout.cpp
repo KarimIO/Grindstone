@@ -15,14 +15,13 @@ namespace Vulkan = Grindstone::GraphicsAPI::Vulkan;
 
 Vulkan::PipelineLayout::PipelineLayout(const Grindstone::GraphicsAPI::PipelineLayout::CreateInfo& createInfo) {
 	std::vector<VkDescriptorSetLayout> layouts;
-	layouts.reserve(createInfo.descriptorSetLayoutCount);
+	layouts.reserve(createInfo.descriptorSetLayouts.GetSize());
 
-	const Vulkan::DescriptorSetLayout* const* newDescriptorSetLayouts = reinterpret_cast<const Vulkan::DescriptorSetLayout* const*>(createInfo.descriptorSetLayouts);
-	descriptorSetLayouts.resize(createInfo.descriptorSetLayoutCount);
-	for (uint32_t i = 0; i < createInfo.descriptorSetLayoutCount; ++i) {
-		descriptorSetLayouts[i] = newDescriptorSetLayouts[i];
+	descriptorSetLayouts.resize(createInfo.descriptorSetLayouts.GetSize());
+	for (uint32_t i = 0; i < createInfo.descriptorSetLayouts.GetSize(); ++i) {
+		descriptorSetLayouts[i] = createInfo.descriptorSetLayouts[i];
 
-		const Vulkan::DescriptorSetLayout* descriptorSetLayout = newDescriptorSetLayouts[i];
+		Vulkan::DescriptorSetLayout* descriptorSetLayout = static_cast<Vulkan::DescriptorSetLayout*>(descriptorSetLayouts[i].Get());
 		VkDescriptorSetLayout vkDescriptorSetLayout = descriptorSetLayout->GetInternalLayout();
 		layouts.push_back(vkDescriptorSetLayout);
 	}

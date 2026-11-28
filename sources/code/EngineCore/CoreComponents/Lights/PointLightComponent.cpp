@@ -43,8 +43,7 @@ void Grindstone::PointLightComponent::Construct(Grindstone::WorldContextSet& cxt
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
 		descriptorSetLayoutCreateInfo.debugName = "Pointlight Descriptor Set Layout";
-		descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightLayoutBindings.size());
-		descriptorSetLayoutCreateInfo.bindings = lightLayoutBindings.data();
+		descriptorSetLayoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, lightLayoutBindings.data(), lightLayoutBindings.size() };
 		pointLightComponent.descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 		std::array<GraphicsAPI::DescriptorSet::Binding, 1> lightBindings{
@@ -53,7 +52,7 @@ void Grindstone::PointLightComponent::Construct(Grindstone::WorldContextSet& cxt
 
 		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 		descriptorSetCreateInfo.debugName = "Pointlight Descriptor Set";
-		descriptorSetCreateInfo.layout = pointLightComponent.descriptorSetLayout;
+		descriptorSetCreateInfo.layout = pointLightComponent.descriptorSetLayout.Get();
 		descriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(lightBindings.size());
 		descriptorSetCreateInfo.bindings = lightBindings.data();
 		pointLightComponent.descriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
@@ -68,8 +67,7 @@ void Grindstone::PointLightComponent::Construct(Grindstone::WorldContextSet& cxt
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
 		descriptorSetLayoutCreateInfo.debugName = "Pointlight Shadow Descriptor Set Layout";
-		descriptorSetLayoutCreateInfo.bindingCount = 1;
-		descriptorSetLayoutCreateInfo.bindings = &lightUboBindingLayout;
+		descriptorSetLayoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &lightUboBindingLayout, 1u };
 		pointLightComponent.shadowMapDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 		for (size_t i = 0; i < 6; ++i) {
@@ -84,7 +82,7 @@ void Grindstone::PointLightComponent::Construct(Grindstone::WorldContextSet& cxt
 
 			GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 			descriptorSetCreateInfo.debugName = "Pointlight Shadow Descriptor Set";
-			descriptorSetCreateInfo.layout = pointLightComponent.shadowMapDescriptorSetLayout;
+			descriptorSetCreateInfo.layout = pointLightComponent.shadowMapDescriptorSetLayout.Get();
 			descriptorSetCreateInfo.bindingCount = 1;
 			descriptorSetCreateInfo.bindings = &lightUboBinding;
 			pointLightComponent.shadowMapDescriptorSets[i] = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
@@ -102,7 +100,6 @@ void Grindstone::PointLightComponent::Destroy(Grindstone::WorldContextSet& cxtSe
 			GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
 			graphicsCore->DeleteDescriptorSet(pointLightComponent.descriptorSet);
-			graphicsCore->DeleteDescriptorSetLayout(pointLightComponent.descriptorSetLayout);
 			graphicsCore->DeleteBuffer(pointLightComponent.uniformBufferObject);
 		}
 	);

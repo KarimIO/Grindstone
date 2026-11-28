@@ -6,7 +6,7 @@
 
 #include <entt/entity/registry.hpp>
 
-#include <EngineCore/Utils/DeferredDeletionQueue.hpp>
+#include <Common/DeferredDeletionQueue.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <Common/Logging.hpp>
 
@@ -108,6 +108,7 @@ namespace Grindstone {
 		virtual std::filesystem::path GetEngineBinaryPath() const;
 		virtual entt::registry& GetEntityRegistry();
 		virtual Renderer::RenderingPipeline* GetRenderingPipeline() const;
+		virtual Grindstone::DeferredDeletionQueue& GetDeferredDeletionQueue();
 
 		virtual bool OnTryQuit(Grindstone::Events::BaseEvent* ev);
 		virtual bool OnForceQuit(Grindstone::Events::BaseEvent* ev);

@@ -41,7 +41,7 @@ namespace Grindstone::Renderer {
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> debugPipelineSet;
 		std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> debugDataDescriptorSet{};
 		std::array<Grindstone::GraphicsAPI::Buffer*, 3> debugDataUniformBuffer{};
-		GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
-		Grindstone::GraphicsAPI::Sampler* screenSampler = nullptr;
+		GraphicsAPI::DescriptorSetLayoutRef descriptorSetLayout;
+		Grindstone::GraphicsAPI::SamplerRef screenSampler;
 	};
 }

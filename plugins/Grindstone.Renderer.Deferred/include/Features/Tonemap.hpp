@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Common/Graphics/Core.hpp>
 #include <Common/Rendering/RendererFeature.hpp>
 #include <Common/Rendering/RenderGraphBuilder.hpp>
 #include <EngineCore/Assets/AssetReference.hpp>
@@ -40,7 +41,7 @@ namespace Grindstone::Renderer {
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> tonemapPipelineSet;
 		std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> tonemapSettingsDescriptorSet {};
 		std::array<Grindstone::GraphicsAPI::Buffer*, 3> tonemapSettingsUniformBuffer {};
-		GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
-		GraphicsAPI::Sampler* screenSampler = nullptr;
+		GraphicsAPI::DescriptorSetLayoutRef descriptorSetLayout;
+		GraphicsAPI::SamplerRef screenSampler;
 	};
 }

@@ -1,18 +1,17 @@
 #include <string>
 
-#include <nethost.h>
-#include <hostfxr.h>
+#include <Windows.h>
 #include <coreclr_delegates.h>
+#include <hostfxr.h>
+#include <nethost.h>
 
-#include <EngineCore/EngineCore.hpp>
-#include <EngineCore/ECS/Entity.hpp>
-#include <EngineCore/ECS/ComponentRegistrar.hpp>
 #include <Common/Logger.hpp>
-#include <EngineCore/Utils/Utilities.hpp>
+#include <EngineCore/ECS/ComponentRegistrar.hpp>
+#include <EngineCore/EngineCore.hpp>
+#include <EngineCore/PluginSystem/IPluginManager.hpp>
 #include <EngineCore/Utils/MemoryAllocator.hpp>
 #include <EngineCore/WorldContext/WorldContextManager.hpp>
 #include <EngineCore/WorldContext/WorldContextSet.hpp>
-#include <EngineCore/PluginSystem/IPluginManager.hpp>
 
 #include <Grindstone.Script.CSharp/include/Components/ScriptComponent.hpp>
 #include <Grindstone.Script.CSharp/include/ScriptClass.hpp>
@@ -526,7 +525,7 @@ void CSharpManager::CallFunctionInComponent(ScriptComponent& scriptComponent, si
 
 void CSharpManager::RegisterComponents() {
 	Grindstone::EngineCore& engineCore = Grindstone::EngineCore::GetInstance();
-	auto& componentRegistrar = *engineCore.GetComponentRegistrar();
+	ECS::ComponentRegistrar& componentRegistrar = *engineCore.GetComponentRegistrar();
 	for (auto& component : componentRegistrar) {
 		const Grindstone::String& componentName = component.first.ToString();
 		auto fns = component.second;

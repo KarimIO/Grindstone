@@ -6,6 +6,7 @@
 
 #include <rapidjson/document.h>
 
+#include <Common/Graphics/Core.hpp>
 #include <Common/ResourcePipeline/Uuid.hpp>
 #include <Editor/AssetRegistry.hpp>
 #include <EngineCore/Assets/AssetReference.hpp>
@@ -68,7 +69,7 @@ namespace Grindstone {
 				std::string pipelineSetName;
 				std::vector<Sampler> pipelineSetSamplers;
 				std::vector<MaterialParameter> parameters;
-				Grindstone::GraphicsAPI::DescriptorSetLayout* textureDisplayDescriptorSetLayout = nullptr;
+				Grindstone::GraphicsAPI::DescriptorSetLayoutRef textureDisplayDescriptorSetLayout;
 				Grindstone::GraphicsAPI::Image* missingImage = nullptr;
 				Grindstone::GraphicsAPI::DescriptorSet* missingImageDescriptorSet = nullptr;
 				std::vector<AssetRegistry::Entry> availablePipelineSets;

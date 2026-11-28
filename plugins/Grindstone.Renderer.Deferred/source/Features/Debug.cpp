@@ -38,14 +38,13 @@ void Grindstone::Renderer::Debug::Initialize() {
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo debugDataDescriptorSetLayoutCreateInfo{
 		.debugName = "Debug Data Descriptor Set Layout",
-		.bindings = &postProcessingDescriptorSetLayoutBinding,
-		.bindingCount = 1u,
+		.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &postProcessingDescriptorSetLayoutBinding, 1u } 
 	};
 
 	descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(debugDataDescriptorSetLayoutCreateInfo);
 
 	GraphicsAPI::DescriptorSet::CreateInfo debugDescriptorSetsCreateInfo{
-		.layout = descriptorSetLayout,
+		.layout = descriptorSetLayout.Get(),
 		.bindingCount = 1u
 	};
 
@@ -118,7 +117,7 @@ void Grindstone::Renderer::Debug::Bind(
 			[this, &gbufferData, ambientOcclusionRef, outputRef](
 				Renderer::GraphicsRenderGraphBuilderPass<Grindstone::Renderer::RenderGraphBuilderResourceRef>& renderPass
 			) -> Grindstone::Renderer::RenderGraphBuilderResourceRef {
-				renderPass.ReadExternalSampler(screenSampler);
+				renderPass.ReadExternalSampler(screenSampler.Get());
 				renderPass.ReadSampledImage(gbufferData.depthRef);
 				renderPass.ReadSampledImage(gbufferData.albedoRef);
 				renderPass.ReadSampledImage(gbufferData.normalRef);

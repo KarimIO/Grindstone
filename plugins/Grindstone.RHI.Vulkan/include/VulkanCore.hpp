@@ -112,15 +112,16 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual GraphicsAPI::Image* CreateImage(const GraphicsAPI::Image::CreateInfo& ci) override;
 		virtual GraphicsAPI::DescriptorSet* CreateDescriptorSet(const GraphicsAPI::DescriptorSet::CreateInfo& ci) override;
 		virtual GraphicsAPI::DescriptorSetLayout* CreateDescriptorSetLayout(const GraphicsAPI::DescriptorSetLayout::CreateInfo& ci) override;
-
-		virtual GraphicsAPI::GraphicsPipeline* GetOrCreateGraphicsPipelineFromCache(
+		
+		virtual DescriptorSetLayoutRef GetOrCreateDescriptorSetLayoutFromCache(const Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo& createInfo) override;
+		virtual GraphicsPipelineRef GetOrCreateGraphicsPipelineFromCache(
 			GraphicsAPI::PipelineLayout* pipelineLayout,
 			const GraphicsAPI::GraphicsPipeline::PipelineData& pipelineData,
 			const GraphicsAPI::VertexInputLayout* vertexInputLayout
 		) override;
-		virtual GraphicsAPI::DescriptorSetLayout* GetOrCreateDescriptorSetLayoutFromCache(const Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo& createInfo) override;
-		virtual GraphicsAPI::PipelineLayout* GetOrCreatePipelineLayoutFromCache(const Grindstone::GraphicsAPI::PipelineLayout::CreateInfo& createInfo) override;
-		virtual GraphicsAPI::Sampler* GetOrCreateSampler(const Grindstone::GraphicsAPI::Sampler::CreateInfo& createInfo) override;
+		virtual PipelineLayoutRef GetOrCreatePipelineLayoutFromCache(const Grindstone::GraphicsAPI::PipelineLayout::CreateInfo& createInfo) override;
+		virtual SamplerRef GetOrCreateSampler(const Grindstone::GraphicsAPI::Sampler::CreateInfo& createInfo) override;
+
 
 		virtual inline bool ShouldUseImmediateMode() const override;
 		virtual inline bool SupportsCommandBuffers() const override;
@@ -160,13 +161,9 @@ namespace Grindstone::GraphicsAPI::Vulkan {
 		virtual void BindDefaultFramebufferRead() override;
 		virtual void ResizeViewport(uint32_t w, uint32_t h) override;
 
-		using SamplerHash = size_t;
-		using PipelineHash = size_t;
-		using PipelineLayoutHash = size_t;
-		using DescriptorSetLayoutHash = size_t;
-		std::unordered_map<DescriptorSetLayoutHash, Grindstone::GraphicsAPI::DescriptorSetLayout*> descriptorSetLayoutCache;
-		std::unordered_map<PipelineLayoutHash, Grindstone::GraphicsAPI::PipelineLayout*> pipelineLayoutCache;
-		std::unordered_map<PipelineHash, Grindstone::GraphicsAPI::GraphicsPipeline*> graphicsPipelineCache;
-		std::unordered_map<SamplerHash, Grindstone::GraphicsAPI::Sampler*> samplerCache;
-};
+		DescriptorSetLayoutCache descriptorSetLayoutCache;
+		PipelineLayoutCache pipelineLayoutCache;
+		GraphicsPipelineCache graphicsPipelineCache;
+		SamplerCache samplerCache;
+	};
 }

@@ -8,10 +8,10 @@
 
 static struct ThumbnailGeneratorContext {
 	Grindstone::GraphicsAPI::Image* renderTargetImage = nullptr;
-	Grindstone::GraphicsAPI::Sampler* sampler = nullptr;
+	Grindstone::GraphicsAPI::SamplerRef sampler;
 	Grindstone::GraphicsAPI::CommandBuffer* commandBuffer = nullptr;
 	Grindstone::GraphicsAPI::DescriptorSet* descriptorSet = nullptr;
-	Grindstone::GraphicsAPI::DescriptorSetLayout* descriptorSetLayout = nullptr;
+	Grindstone::GraphicsAPI::DescriptorSetLayoutRef descriptorSetLayout;
 	Grindstone::GraphicsAPI::VertexInputLayout vertexInputLayout;
 	Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> tex2dGraphicsPipelineAsset;
 	Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> cubemapGraphicsPipelineAsset;
@@ -247,8 +247,7 @@ bool Grindstone::Editor::Importers::InitializeTextureThumbnailGenerator() {
 	};
 	Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{
 		.debugName = "Thumbnail Generator Descriptor Set Layout",
-		.bindings = layoutBindings.data(),
-		.bindingCount = static_cast<uint32_t>(layoutBindings.size()),
+		.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, layoutBindings.data(), layoutBindings.size() },
 	};
 	thumbnailGeneratorContext.descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
@@ -270,14 +269,14 @@ bool Grindstone::Editor::Importers::InitializeTextureThumbnailGenerator() {
 	thumbnailGeneratorContext.sampler = graphicsCore->GetOrCreateSampler(samplerCreateInfo);
 
 	std::array<Grindstone::GraphicsAPI::DescriptorSet::Binding, 2> descriptorSetBindings = {
-		Grindstone::GraphicsAPI::DescriptorSet::Binding::Sampler(thumbnailGeneratorContext.sampler, 1),
+		Grindstone::GraphicsAPI::DescriptorSet::Binding::Sampler(thumbnailGeneratorContext.sampler.Get(), 1),
 		Grindstone::GraphicsAPI::DescriptorSet::Binding::SampledImage(nullptr, 1)
 	};
 	Grindstone::GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 	descriptorSetCreateInfo.debugName = "Thumbnail Generator Descriptor Set";
 	descriptorSetCreateInfo.bindings = descriptorSetBindings.data();
 	descriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(descriptorSetBindings.size());
-	descriptorSetCreateInfo.layout = thumbnailGeneratorContext.descriptorSetLayout;
+	descriptorSetCreateInfo.layout = thumbnailGeneratorContext.descriptorSetLayout.Get();
 	thumbnailGeneratorContext.descriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
 
 	return true;
@@ -290,8 +289,6 @@ void Grindstone::Editor::Importers::ReleaseTextureThumbnailGenerator() {
 	thumbnailGeneratorContext.tex2dGraphicsPipelineAsset.Release();
 	thumbnailGeneratorContext.cubemapGraphicsPipelineAsset.Release();
 	graphicsCore->DeleteDescriptorSet(thumbnailGeneratorContext.descriptorSet);
-	graphicsCore->DeleteDescriptorSetLayout(thumbnailGeneratorContext.descriptorSetLayout);
-	graphicsCore->DeleteSampler(thumbnailGeneratorContext.sampler);
 	graphicsCore->DeleteCommandBuffer(thumbnailGeneratorContext.commandBuffer);
 	graphicsCore->DeleteImage(thumbnailGeneratorContext.renderTargetImage);
 }

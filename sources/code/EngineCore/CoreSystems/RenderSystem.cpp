@@ -18,7 +18,7 @@
 std::vector<Grindstone::GraphicsAPI::CommandBuffer*> commandBuffers;
 static std::array<Grindstone::Renderer::TransientResourceManager*, 3> transientResourceManagers{};
 Grindstone::GraphicsAPI::Buffer* gpuGlobalUniformBufferObject = nullptr;
-Grindstone::GraphicsAPI::DescriptorSetLayout* globalDescriptorSetLayout;
+Grindstone::GraphicsAPI::DescriptorSetLayoutRef globalDescriptorSetLayout;
 Grindstone::GraphicsAPI::Buffer* globalStagingUniformBufferObject;
 std::array<Grindstone::GraphicsAPI::Buffer*, 3> globalUniformBufferObject;
 std::array<Grindstone::GraphicsAPI::DescriptorSet*, 3> globalDescriptorSet;
@@ -59,14 +59,13 @@ static void SetupGlobalUbos() {
 
 	Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo globalDescriptorSetLayoutCreateInfo{
 		.debugName = "Global UBO Descriptor Set Layout",
-		.bindings = &globalDescriptorSetLayoutBinding,
-		.bindingCount = 1u,
+		.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &globalDescriptorSetLayoutBinding, 1u }
 	};
 
 	globalDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(globalDescriptorSetLayoutCreateInfo);
 
 	Grindstone::GraphicsAPI::DescriptorSet::CreateInfo globalDescriptorSetsCreateInfo{
-		.layout = globalDescriptorSetLayout,
+		.layout = globalDescriptorSetLayout.Get(),
 		.bindingCount = 1u
 	};
 

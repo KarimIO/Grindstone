@@ -157,17 +157,14 @@ ImguiRendererVulkan::ImguiRendererVulkan() {
 
 	GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
 	descriptorSetLayoutCreateInfo.debugName = "Imgui Texture Layout";
-	descriptorSetLayoutCreateInfo.bindingCount = 1;
-	descriptorSetLayoutCreateInfo.bindings = &layoutBinding;
-	textureDescriptorLayout = Editor::Manager::GetEngineCore().GetGraphicsCore()->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
+	descriptorSetLayoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &layoutBinding, 1u };
+	textureDescriptorLayout = engineCore.GetGraphicsCore()->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 }
 
 ImguiRendererVulkan::~ImguiRendererVulkan() {
 	Grindstone::EngineCore& engineCore = Grindstone::Editor::Manager::GetEngineCore();
 	GraphicsAPI::Vulkan::Core* graphicsCore = static_cast<Vulkan::Core*>(engineCore.GetGraphicsCore());
-
-	graphicsCore->DeleteDescriptorSetLayout(textureDescriptorLayout);
 
 	VkDevice device = graphicsCore->GetDevice();
 	vkDestroyDescriptorPool(device, imguiPool, nullptr);

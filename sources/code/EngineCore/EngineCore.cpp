@@ -205,7 +205,9 @@ void EngineCore::Run() {
 
 void EngineCore::RunEditorLoopIteration() {
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
-	windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding()->WaitForRenderingFence();
+	GraphicsAPI::WindowGraphicsBinding* windowGraphicsBinding = windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	windowGraphicsBinding->WaitForRenderingFence();
+	deferredDeletionQueue.SetCurrentImageIndex(windowGraphicsBinding->GetCurrentImageIndex());
 	deferredDeletionQueue.DeleteForFrame();
 	assetManager->ReloadQueuedAssets();
 	CalculateDeltaTime();
@@ -215,7 +217,9 @@ void EngineCore::RunEditorLoopIteration() {
 
 void EngineCore::RunLoopIteration() {
 	GRIND_PROFILE_BEGIN_SESSION("Grindstone Running", projectPath / "log/grind-profile-run.json");
-	windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding()->WaitForRenderingFence();
+	GraphicsAPI::WindowGraphicsBinding* windowGraphicsBinding = windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding();
+	windowGraphicsBinding->WaitForRenderingFence();
+	deferredDeletionQueue.SetCurrentImageIndex(windowGraphicsBinding->GetCurrentImageIndex());
 	deferredDeletionQueue.DeleteForFrame();
 	CalculateDeltaTime();
 	systemRegistrar->Update(*worldContextManager->GetActiveWorldContextSet());
@@ -377,6 +381,10 @@ entt::registry& EngineCore::GetEntityRegistry() {
 
 Renderer::RenderingPipeline* EngineCore::GetRenderingPipeline() const {
 	return renderingPipeline;
+}
+
+DeferredDeletionQueue& EngineCore::GetDeferredDeletionQueue() {
+	return deferredDeletionQueue;
 }
 
 void EngineCore::CalculateDeltaTime() {

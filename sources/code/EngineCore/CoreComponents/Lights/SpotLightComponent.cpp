@@ -44,8 +44,7 @@ void Grindstone::SpotLightComponent::Construct(Grindstone::WorldContextSet& cxtS
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
 		descriptorSetLayoutCreateInfo.debugName = "Spotlight Descriptor Set Layout";
-		descriptorSetLayoutCreateInfo.bindingCount = static_cast<uint32_t>(lightLayoutBindings.size());
-		descriptorSetLayoutCreateInfo.bindings = lightLayoutBindings.data();
+		descriptorSetLayoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, lightLayoutBindings.data(), lightLayoutBindings.size() };
 		spotLightComponent.descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 		std::array<GraphicsAPI::DescriptorSet::Binding, 1> lightBindings{
@@ -54,7 +53,7 @@ void Grindstone::SpotLightComponent::Construct(Grindstone::WorldContextSet& cxtS
 
 		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 		descriptorSetCreateInfo.debugName = "Spotlight Descriptor Set";
-		descriptorSetCreateInfo.layout = spotLightComponent.descriptorSetLayout;
+		descriptorSetCreateInfo.layout = spotLightComponent.descriptorSetLayout.Get();
 		descriptorSetCreateInfo.bindingCount = static_cast<uint32_t>(lightBindings.size());
 		descriptorSetCreateInfo.bindings = lightBindings.data();
 		spotLightComponent.descriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
@@ -76,15 +75,14 @@ void Grindstone::SpotLightComponent::Construct(Grindstone::WorldContextSet& cxtS
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo descriptorSetLayoutCreateInfo{};
 		descriptorSetLayoutCreateInfo.debugName = "Spotlight Shadow Descriptor Set Layout";
-		descriptorSetLayoutCreateInfo.bindingCount = 1;
-		descriptorSetLayoutCreateInfo.bindings = &lightUboBindingLayout;
+		descriptorSetLayoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &lightUboBindingLayout, 1u };
 		spotLightComponent.shadowMapDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(descriptorSetLayoutCreateInfo);
 
 		GraphicsAPI::DescriptorSet::Binding lightUboBinding = GraphicsAPI::DescriptorSet::Binding::UniformBuffer( spotLightComponent.shadowMapUniformBufferObject );
 
 		GraphicsAPI::DescriptorSet::CreateInfo descriptorSetCreateInfo{};
 		descriptorSetCreateInfo.debugName = "Spotlight Shadow Descriptor Set";
-		descriptorSetCreateInfo.layout = spotLightComponent.shadowMapDescriptorSetLayout;
+		descriptorSetCreateInfo.layout = spotLightComponent.shadowMapDescriptorSetLayout.Get();
 		descriptorSetCreateInfo.bindingCount = 1;
 		descriptorSetCreateInfo.bindings = &lightUboBinding;
 		spotLightComponent.shadowMapDescriptorSet = graphicsCore->CreateDescriptorSet(descriptorSetCreateInfo);
@@ -94,21 +92,17 @@ void Grindstone::SpotLightComponent::Construct(Grindstone::WorldContextSet& cxtS
 void Grindstone::SpotLightComponent::Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	SpotLightComponent& spotLightComponent = cxtSet.GetEntityRegistry().get<SpotLightComponent>(entity);
 
-	/*
 	EngineCore::GetInstance().PushDeletion(
 		[spotLightComponent]() {
 			EngineCore& engineCore = EngineCore::GetInstance();
 			GraphicsAPI::Core* graphicsCore = engineCore.GetGraphicsCore();
 
 			graphicsCore->DeleteDescriptorSet(spotLightComponent.shadowMapDescriptorSet);
-			graphicsCore->DeleteDescriptorSetLayout(spotLightComponent.shadowMapDescriptorSetLayout);
 			graphicsCore->DeleteDescriptorSet(spotLightComponent.descriptorSet);
-			graphicsCore->DeleteDescriptorSetLayout(spotLightComponent.descriptorSetLayout);
 			graphicsCore->DeleteBuffer(spotLightComponent.shadowMapUniformBufferObject);
 			graphicsCore->DeleteBuffer(spotLightComponent.uniformBufferObject);
 		}
 	);
-	*/
 
 	spotLightComponent.shadowMapDescriptorSet = nullptr;
 	spotLightComponent.shadowMapDescriptorSetLayout = nullptr;

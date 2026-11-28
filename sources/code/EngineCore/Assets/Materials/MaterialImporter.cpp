@@ -347,20 +347,25 @@ static bool LoadMaterial(
 		return false;
 	}
 
-	Grindstone::GraphicsAPI::Sampler::CreateInfo samplerCreateInfo{};
-	samplerCreateInfo.debugName = "Material Sampler";
-	samplerCreateInfo.options.anistropy = 16.0f;
-	samplerCreateInfo.options.mipMin = -1000.0f;
-	samplerCreateInfo.options.mipMax = 1000.0f;
-	samplerCreateInfo.options.mipFilter = GraphicsAPI::TextureFilter::Linear;
-	samplerCreateInfo.options.minFilter = GraphicsAPI::TextureFilter::Linear;
-	samplerCreateInfo.options.magFilter = GraphicsAPI::TextureFilter::Linear;
-	samplerCreateInfo.options.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat;
-	samplerCreateInfo.options.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat;
-	samplerCreateInfo.options.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat;
+	Grindstone::GraphicsAPI::Sampler::CreateInfo samplerCreateInfo{
+		.debugName = "Material Sampler",
+		.options = {
+			.wrapModeU = GraphicsAPI::TextureWrapMode::Repeat,
+			.wrapModeV = GraphicsAPI::TextureWrapMode::Repeat,
+			.wrapModeW = GraphicsAPI::TextureWrapMode::Repeat,
+			.mipFilter = GraphicsAPI::TextureFilter::Linear,
+			.minFilter = GraphicsAPI::TextureFilter::Linear,
+			.magFilter = GraphicsAPI::TextureFilter::Linear,
+			.anistropy = 16.0f,
+			.mipMin = -1000.0f,
+			.mipMax = 1000.0f,
+		}
+	};
+
+	material.sampler = graphicsCore->GetOrCreateSampler(samplerCreateInfo);
 
 	std::vector<GraphicsAPI::DescriptorSet::Binding> bindings;
-	bindings.emplace_back(GraphicsAPI::DescriptorSet::Binding::Sampler(graphicsCore->GetOrCreateSampler(samplerCreateInfo)));
+	bindings.emplace_back(GraphicsAPI::DescriptorSet::Binding::Sampler(material.sampler.Get()));
 	// SetupUniformBuffer(document, *pipelineSetAsset, bindings, displayName, material);
 	SetupSamplers(document, *pipelineSetAsset, missingTexture, bindings, material);
 

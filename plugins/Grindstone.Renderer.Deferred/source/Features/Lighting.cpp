@@ -73,9 +73,8 @@ void Renderer::Lighting::Initialize() {
 
 		GraphicsAPI::DescriptorSetLayout::CreateInfo ambientOcclusionInputLayoutCreateInfo{};
 		ambientOcclusionInputLayoutCreateInfo.debugName = "Ambient Occlusion Descriptor Set Layout";
-		ambientOcclusionInputLayoutCreateInfo.bindingCount = 1u;
-		ambientOcclusionInputLayoutCreateInfo.bindings = &ambientOcclusionInputLayoutBinding;
-		ambientOcclusionDescriptorSetLayout = graphicsCore->CreateDescriptorSetLayout(ambientOcclusionInputLayoutCreateInfo);
+		ambientOcclusionInputLayoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, &ambientOcclusionInputLayoutBinding, 1u };
+		ambientOcclusionDescriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(ambientOcclusionInputLayoutCreateInfo);
 	}
 
 	{
@@ -85,7 +84,7 @@ void Renderer::Lighting::Initialize() {
 
 		GraphicsAPI::DescriptorSet::CreateInfo aoInputCreateInfo{};
 		aoInputCreateInfo.debugName = "Ambient Occlusion Descriptor Set";
-		aoInputCreateInfo.layout = ambientOcclusionDescriptorSetLayout;
+		aoInputCreateInfo.layout = ambientOcclusionDescriptorSetLayout.Get();
 		aoInputCreateInfo.bindingCount = 1u;
 		aoInputCreateInfo.bindings = &aoInputBinding;
 		ambientOcclusionDescriptorSet = graphicsCore->CreateDescriptorSet(aoInputCreateInfo);
@@ -121,7 +120,7 @@ void Renderer::Lighting::Bind(
 		"Lighting Pass",
 		MetaRect::Swapchain(),
 		[this, shadowAtlasRef, ambientOcclusionRef, &gbufferData](Renderer::GraphicsRenderGraphBuilderPass<Renderer::RenderGraphBuilderResourceRef>& renderPass) -> Renderer::RenderGraphBuilderResourceRef {
-			renderPass.ReadExternalSampler(screenSampler);
+			renderPass.ReadExternalSampler(screenSampler.Get());
 			renderPass.ReadSampledImage(gbufferData.depthRef);
 			renderPass.ReadSampledImage(gbufferData.albedoRef);
 			renderPass.ReadSampledImage(gbufferData.normalRef);

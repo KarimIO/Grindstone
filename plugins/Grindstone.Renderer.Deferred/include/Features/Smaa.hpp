@@ -27,9 +27,9 @@ namespace Grindstone::Renderer {
 		Grindstone::AssetReference<Grindstone::GraphicsPipelineAsset> smaaPipelineSet;
 		Grindstone::AssetReference<Grindstone::TextureAsset> smaaAreaTexture;
 		Grindstone::AssetReference<Grindstone::TextureAsset> smaaSearchTexture;
-		GraphicsAPI::DescriptorSetLayout* smaaDescriptorSetLayout = nullptr;
+		GraphicsAPI::DescriptorSetLayoutRef smaaDescriptorSetLayout;
 		Grindstone::GraphicsAPI::DescriptorSet* smaaDescriptorSet = nullptr;
-		GraphicsAPI::Sampler* pointSampler = nullptr;
-		GraphicsAPI::Sampler* linearSampler = nullptr;
+		GraphicsAPI::SamplerRef pointSampler;
+		GraphicsAPI::SamplerRef linearSampler;
 	};
 }

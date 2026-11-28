@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <functional>
 #include <map>
-#include <string>
+#include <memory>
 #include <utility>
 
 #include <Common/Memory/SmartPointers.hpp>
@@ -41,6 +41,7 @@ namespace Grindstone::Memory::Allocators {
 		void Initialize(void* ownedMemory, size_t size);
 
 		void* AllocateRaw(size_t size, size_t alignment, const char* debugName);
+		void* ReallocRaw(void* ptr, size_t newSize, size_t alignment, const char* debugName);
 		bool Free(void* memPtr);
 
 		bool IsEmpty() const;
@@ -105,6 +106,58 @@ namespace Grindstone::Memory::Allocators {
 			return ptr;
 		}
 
+		template <typename T, typename... Args>
+		T* AllocateArray(size_t count, const Args&... args) {
+			static_assert(
+				std::is_constructible_v<T, const Args&...>,
+				"Type T must be constructible from the given arguments.");
+
+			if (count == 0) {
+				return nullptr;
+			}
+
+			if (count > (std::numeric_limits<size_t>::max)() / sizeof(T)) {
+				return nullptr;
+			}
+
+			T* ptr = static_cast<T*>(AllocateRaw(sizeof(T) * count, alignof(T), typeid(T).name()));
+			if (ptr == nullptr) {
+				return nullptr;
+			}
+
+			if constexpr (sizeof...(Args) == 0) {
+				try {
+					std::uninitialized_value_construct_n(ptr, count);
+				} catch (...) {
+					Free(ptr);
+					throw;
+				}
+			} else {
+				size_t constructed = 0;
+				try {
+					for (; constructed < count; ++constructed) {
+						new (ptr + constructed) T(args...);
+					}
+				} catch (...) {
+					DestroyRange(ptr, constructed);
+					Free(ptr);
+					throw;
+				}
+			}
+
+			return ptr;
+		}
+
+		template <typename T>
+		void FreeArray(T* ptr, size_t count) {
+			if (ptr == nullptr) {
+				return;
+			}
+
+			DestroyRange(ptr, count);
+			Free(ptr);
+		}
+
 		template<typename T>
 		bool Free(void* memPtr) {
 			if (memPtr != nullptr) {
@@ -118,6 +171,15 @@ namespace Grindstone::Memory::Allocators {
 		}
 
 	private:
+		template <typename T>
+		static void DestroyRange(T* ptr, size_t count) {
+			if constexpr (!std::is_trivially_destructible_v<T>) {
+				for (size_t i = count; i-- > 0;) {
+					ptr[i].~T();
+				}
+			}
+		}
+
 		void InitializeImpl(void* ownedMemory, size_t size);
 
 		void* startMemory = nullptr;

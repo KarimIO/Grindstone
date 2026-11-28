@@ -20,7 +20,7 @@ static void UnpackComputePipelineDescriptorSetHeaders(
 	std::string_view pipelineName,
 	const Span<V1::ShaderReflectDescriptorSet>& srcDescriptorSets,
 	const Span<V1::ShaderReflectDescriptorBinding>& srcDescriptorBindings,
-	std::vector<Grindstone::GraphicsAPI::DescriptorSetLayout*>& dstDescriptorSets
+	std::vector<Grindstone::GraphicsAPI::DescriptorSetLayoutRef>& dstDescriptorSets
 ) {
 	Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo layoutCreateInfo;
 
@@ -44,8 +44,7 @@ static void UnpackComputePipelineDescriptorSetHeaders(
 
 		std::string setName = std::vformat("{} Descriptor Set {}", std::make_format_args(pipelineName, i));
 		layoutCreateInfo.debugName = setName.c_str();
-		layoutCreateInfo.bindings = dstDescriptorBindings.data();
-		layoutCreateInfo.bindingCount = static_cast<uint32_t>(dstDescriptorBindings.size());
+		layoutCreateInfo.bindings = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, dstDescriptorBindings.data(), dstDescriptorBindings.size() };
 
 		dstDescriptorSets[srcDescriptorSet.setIndex] = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(layoutCreateInfo);
 	}
@@ -112,7 +111,7 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 		maxDescriptorSetIndex = std::max(maxDescriptorSetIndex, d.setIndex + 1u);
 	}
 
-	std::vector<GraphicsAPI::DescriptorSetLayout*> descriptorSetLayouts;
+	auto& descriptorSetLayouts = computePipelineAsset.descriptorSetLayouts;
 	descriptorSetLayouts.resize(maxDescriptorSetIndex);
 
 	UnpackComputePipelineDescriptorSetHeaders(
@@ -136,12 +135,11 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 
 	// Add empty descriptor set layouts to prevent errors.
 	for (uint8_t descriptorSetIndex = 0; descriptorSetIndex < descriptorSetLayoutCount; ++descriptorSetIndex) {
-		GraphicsAPI::DescriptorSetLayout*& descriptorSetLayout = descriptorSetLayouts[descriptorSetIndex];
-		if (descriptorSetLayout == nullptr) {
+		GraphicsAPI::DescriptorSetLayoutRef& descriptorSetLayout = descriptorSetLayouts[descriptorSetIndex];
+		if (!descriptorSetLayout.IsValid()) {
 			GraphicsAPI::DescriptorSetLayout::CreateInfo ci{};
 			ci.debugName = "Unbound descriptor set";
-			ci.bindingCount = 0;
-			ci.bindings = nullptr;
+			ci.bindings = {};
 			descriptorSetLayout = graphicsCore->GetOrCreateDescriptorSetLayoutFromCache(ci);
 		}
 	}
@@ -149,14 +147,13 @@ static bool ImportComputeAsset(ComputePipelineAsset& computePipelineAsset) {
 	std::string pipelineLayoutAssetName = computePipelineAsset.name + " Layout";
 	Grindstone::GraphicsAPI::PipelineLayout::CreateInfo pipelineLayoutCreateInfo{
 		.debugName = pipelineLayoutAssetName.c_str(),
-		.descriptorSetLayouts = descriptorSetLayouts.data(),
-		.descriptorSetLayoutCount = static_cast<uint32_t>(descriptorSetLayoutCount),
+		.descriptorSetLayouts = { &Grindstone::Memory::AllocatorCore::GetAllocatorState()->dynamicAllocator, descriptorSetLayouts.data(), descriptorSetLayouts.size() },
 	};
-	computePipelineAsset.pipelineLayout = graphicsCore->CreatePipelineLayout(pipelineLayoutCreateInfo);
+	computePipelineAsset.pipelineLayout = graphicsCore->GetOrCreatePipelineLayoutFromCache(pipelineLayoutCreateInfo);
 
 	Grindstone::GraphicsAPI::ComputePipeline::CreateInfo pipelineCreateInfo{};
 	pipelineCreateInfo.debugName = computePipelineAsset.name.c_str();
-	pipelineCreateInfo.pipelineLayout = computePipelineAsset.pipelineLayout;
+	pipelineCreateInfo.pipelineLayout = computePipelineAsset.pipelineLayout.Get();
 	pipelineCreateInfo.shaderContent = reinterpret_cast<const char*>(&blobs.GetBegin() + srcStage.shaderCodeOffsetFromBlobStart);
 	pipelineCreateInfo.shaderFileName = computePipelineAsset.name.c_str();
 	pipelineCreateInfo.shaderSize = srcStage.shaderCodeSize;

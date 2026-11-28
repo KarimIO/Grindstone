@@ -1,19 +1,19 @@
 #pragma once
 
-#include <Common/Window/Window.hpp>
+#include <Common/Containers/ResourceCache.hpp>
 
 #include "Buffer.hpp"
-#include "RenderPass.hpp"
-#include "Framebuffer.hpp"
-#include "GraphicsPipeline.hpp"
-#include "ComputePipeline.hpp"
-#include "PipelineLayout.hpp"
 #include "CommandBuffer.hpp"
-#include "VertexArrayObject.hpp"
-#include "Image.hpp"
-#include "Sampler.hpp"
+#include "ComputePipeline.hpp"
 #include "DescriptorSet.hpp"
 #include "DescriptorSetLayout.hpp"
+#include "Framebuffer.hpp"
+#include "GraphicsPipeline.hpp"
+#include "Image.hpp"
+#include "PipelineLayout.hpp"
+#include "RenderPass.hpp"
+#include "Sampler.hpp"
+#include "VertexArrayObject.hpp"
 
 namespace Grindstone {
 	class Window;
@@ -37,7 +37,7 @@ namespace Grindstone::GraphicsAPI {
 		Qualcomm,
 		Intel
 	};
-
+	
 	class Core {
 	public:
 		struct CreateInfo {
@@ -88,14 +88,14 @@ namespace Grindstone::GraphicsAPI {
 		virtual GraphicsAPI::DescriptorSet* CreateDescriptorSet(const DescriptorSet::CreateInfo& ci) = 0;
 		virtual GraphicsAPI::DescriptorSetLayout* CreateDescriptorSetLayout(const DescriptorSetLayout::CreateInfo& ci) = 0;
 
-		virtual GraphicsAPI::DescriptorSetLayout* GetOrCreateDescriptorSetLayoutFromCache(const Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo& createInfo) = 0;
-		virtual GraphicsAPI::GraphicsPipeline* GetOrCreateGraphicsPipelineFromCache(
+		virtual DescriptorSetLayoutRef GetOrCreateDescriptorSetLayoutFromCache(const Grindstone::GraphicsAPI::DescriptorSetLayout::CreateInfo& createInfo) = 0;
+		virtual GraphicsPipelineRef GetOrCreateGraphicsPipelineFromCache(
 			GraphicsAPI::PipelineLayout* pipelineLayout,
 			const GraphicsAPI::GraphicsPipeline::PipelineData& pipelineData,
 			const GraphicsAPI::VertexInputLayout* vertexInputLayout
 		) = 0;
-		virtual Grindstone::GraphicsAPI::PipelineLayout* GetOrCreatePipelineLayoutFromCache(const Grindstone::GraphicsAPI::PipelineLayout::CreateInfo& createInfo) = 0;
-		virtual GraphicsAPI::Sampler* GetOrCreateSampler(const Grindstone::GraphicsAPI::Sampler::CreateInfo& createInfo) = 0;
+		virtual PipelineLayoutRef GetOrCreatePipelineLayoutFromCache(const Grindstone::GraphicsAPI::PipelineLayout::CreateInfo& createInfo) = 0;
+		virtual SamplerRef GetOrCreateSampler(const Grindstone::GraphicsAPI::Sampler::CreateInfo& createInfo) = 0;
 
 		virtual void CopyDepthBufferFromReadToWrite(uint32_t srcWidth, uint32_t srcHeight, uint32_t dstWidth, uint32_t dstHeight) = 0;
 
