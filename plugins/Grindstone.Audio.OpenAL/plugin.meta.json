@@ -5,7 +5,7 @@
 	"description": "Provides the OpenAL Audio System, AudioSource asset, and the AudioListenerComponent and AudioSourceComponent.",
 	"author": "Grindstone Foundation",
 	"assets": [],
-	"requiresPlugins": [],
+	"requiresPlugins": [{"name": "Grindstone.Script.CSharp"}],
 	"binaries": [
 		{
 			"name": "Audio",
@@ -13,6 +13,14 @@
 			"loadStage": "EndOfEngineSetup",
 			"buildType": "CMake",
 			"buildTarget": "PluginAudioOpenAL"
+		},
+		{
+			"name": "CSharpIntegration",
+			"path": "scripts/bin/{Configuration}/net10.0/Grindstone.Audio.OpenAL.CSharpIntegration",
+			"loadStage": "EndOfEngineSetup",
+			"buildType": "Dotnet",
+			"buildTarget": "scripts/CSharpIntegration.json",
+			"dependencies": ["Audio", "Grindstone.Script.CSharp:CSharpCore"]
 		}
 	],
 	"cmake": "CMakeLists.txt"

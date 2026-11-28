@@ -27,6 +27,10 @@ void Source::Pause() {
 	alSourcePause(source);
 }
 
+void Source::Stop() {
+	alSourceStop(source);
+}
+
 void Source::SetPitch(float pitch) {
 	alSourcef(source, AL_PITCH, pitch);
 }

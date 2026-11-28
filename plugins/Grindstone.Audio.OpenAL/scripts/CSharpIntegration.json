@@ -1,0 +1,6 @@
+{
+	"name": "Grindstone.Audio.OpenAL.CSharpIntegration",
+	"references": [
+		"Grindstone.Script.CSharpCore"
+	]
+}

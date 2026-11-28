@@ -22,6 +22,7 @@ namespace Grindstone {
 			~Source();
 			void Play();
 			void Pause();
+			void Stop();
 			void SetVolume(float volume);
 			void SetPitch(float pitch);
 			void SetPosition(float x, float y, float z);
