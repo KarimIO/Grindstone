@@ -21,7 +21,7 @@ namespace Grindstone::Containers {
 			allocator(allocator),
 			capacity(GetStaticRequestCapacity(list.size())),
 			size(list.size()),
-			contents(Allocate(sizeof(T) * capacity)) {
+			contents(Allocate(capacity)) {
 			size_t i = 0;
 			for (auto val : list) {
 				new (&contents[i++]) T(val);
@@ -32,10 +32,10 @@ namespace Grindstone::Containers {
 			allocator(allocator),
 			capacity(GetStaticRequestCapacity(size)),
 			size(size),
-			contents(Allocate(sizeof(T) * size)) {
+			contents(Allocate(size)) {
 			size_t i = 0;
 			for (size_t i = 0; i < size; ++i) {
-				contents[i] = data[i];
+				new (&contents[i]) T(data[i]);
 			}
 		}
 
@@ -94,8 +94,7 @@ namespace Grindstone::Containers {
 
 		void Clear() {
 			if (contents != nullptr) {
-				for (size_t i = 0; i < size; ++i) contents[i].~T();
-				allocator->Free(contents);
+				allocator->FreeArray(contents, size);
 				contents = nullptr;
 			}
 			capacity = 0;
@@ -182,8 +181,7 @@ namespace Grindstone::Containers {
 
 		T& PushBack(T&& val) {
 			IncrementAndResize();
-			T& newValue = contents[size];
-			newValue = std::move(val);
+			T& newValue = *new (&contents[size]) T(std::move(val));
 			++size;
 			return newValue;
 		}
@@ -206,34 +204,35 @@ namespace Grindstone::Containers {
 		}
 
 		void AppendList(std::initializer_list<T> list, size_t offset) {
-			size_t currentSize = size;
-			size_t countToAdd = list.size();
-			size += countToAdd;
-			if (size >= capacity) {
-				size_t newCapacity = GetRequestCapacity(size);
-				ResizeBuffer(newCapacity);
+			GS_ASSERT_ENGINE_WITH_MESSAGE(offset <= size, "Insert offset out of range.");
+			const size_t count = list.size(), oldSize = size;
+			if (count == 0) {
+				return;
 			}
 
-			for (size_t index = currentSize - 1; index >= offset; --index) {
-				new (&contents[index + countToAdd]) T(std::move(contents[index]));
+			if (oldSize + count > capacity) {
+				ResizeBuffer(GetRequestCapacity(oldSize + count));
+			}
+
+			// Shift the tail up. Slots at or beyond oldSize are raw memory, the rest are live objects.
+			for (size_t i = oldSize; i-- > offset; ) {
+				T* dst = &contents[i + count];
+				if (i + count >= oldSize) new (dst) T(std::move(contents[i]));
+				else *dst = std::move(contents[i]);
 			}
 
 			size_t i = offset;
-			for (auto& val : list) {
-				new (&contents[i++]) T(std::move(val));
+			for (const T& v : list) {
+				T* dst = &contents[i];
+				if (i < oldSize) *dst = v; else new (dst) T(v);
+				++i;
 			}
+
+			size = oldSize + count;
 		}
 
 		void AppendListBack(std::initializer_list<T> list) {
-			size_t currentSize = size;
-			size += list.size();
-			size_t newCapacity = GetRequestCapacity(size);
-			ResizeBuffer(newCapacity);
-
-			size_t i = currentSize;
-			for (auto val : list) {
-				new (&contents[i++]) T(val);
-			}
+			AppendList(list, size);
 		}
 
 		[[nodiscard]] const T& GetBegin() const {
@@ -252,31 +251,28 @@ namespace Grindstone::Containers {
 			return contents[size];
 		}
 
-		void Remove(T& first, T& last) {
-			size_t firstIndex = (&first - contents);
-			size_t lastIndex = (&last - contents);
-			for (size_t index = firstIndex; index <= lastIndex; ++index) {
-				contents[index].~T();
+		void Remove(size_t first, size_t last) {
+			GS_ASSERT_ENGINE_WITH_MESSAGE(first <= last && last < size, "Remove range invalid.");
+
+			const size_t count = last - first + 1;
+			for (size_t i = last + 1; i < size; ++i) {
+				contents[i - count] = std::move(contents[i]);
 			}
 
-			for (size_t index = 0; index < size - lastIndex - 1; ++index) {
-				contents[firstIndex + index] = std::move(contents[lastIndex + index + 1]);
+			for (size_t i = size - count; i < size; ++i) {
+				contents[i].~T();
 			}
-			
-			size -= 1 + lastIndex - firstIndex;
+
+			size -= count;
 		}
 
-		void Remove(T& first) {
-			Remove(first, first);
-		}
-
-		void Remove(size_t index) {
-			Remove(contents[index], contents[index]);
-		}
+		void Remove(T& first, T& last) { Remove(size_t(&first - contents), size_t(&last - contents)); }
+		void Remove(T& first)          { Remove(first, first); }
+		void Remove(size_t index)      { Remove(index, index); }
 
 		bool TryGet(T& outValue, size_t index) {
 			if (index < size) {
-				contents[index];
+				outValue = contents[index];
 				return true;
 			}
 
@@ -344,7 +340,7 @@ namespace Grindstone::Containers {
 		}
 
 		[[nodiscard]] constexpr ConstIterator end() const noexcept {
-			return ConstIterator(&contents[size - 1]);
+			return ConstIterator(&contents[size]);
 		}
 
 		[[nodiscard]] constexpr ReverseIterator rbegin() noexcept {
@@ -356,11 +352,11 @@ namespace Grindstone::Containers {
 		}
 
 		[[nodiscard]] constexpr ReverseIterator rend() noexcept {
-			return ReverseIterator(contents - 1);
+			return ReverseIterator(&contents[-1]);
 		}
 
 		[[nodiscard]] constexpr ConstReverseIterator rend() const noexcept {
-			return ConstReverseIterator(contents - 1);
+			return ConstReverseIterator(&contents[-1]);
 		}
 
 		[[nodiscard]] constexpr ConstIterator cbegin() const noexcept {
@@ -376,13 +372,13 @@ namespace Grindstone::Containers {
 		}
 
 		[[nodiscard]] constexpr ConstReverseIterator crend() const noexcept {
-			return ConstReverseIterator(contents - 1);
+			return ConstReverseIterator(&contents[-1]);
 		}
 	protected:
 		DynamicArray(size_t initialCapacity, size_t initialSize) :
 			capacity(initialCapacity),
 			size(initialSize),
-			contents(Allocate(sizeof(T) * initialCapacity)) {
+			contents(Allocate(initialCapacity)) {
 			for (size_t i = 0; i < initialSize; ++i) {
 				new (&contents[i]) T();
 			}
@@ -396,12 +392,11 @@ namespace Grindstone::Containers {
 
 		void ResizeBuffer(size_t newCapacity) {
 			if (capacity == 0) {
-				contents = Allocate(sizeof(T) * newCapacity);
+				contents = Allocate(newCapacity);
 				GS_ASSERT_ENGINE_WITH_MESSAGE(contents != nullptr, "Unable to allocate memory for DynamicArray.");
 				capacity = newCapacity;
 			}
 			else {
-				// TODO: Switch to realloc
 				void* newContents = allocator->ReallocRaw(contents, sizeof(T) * newCapacity, alignof(T), "DynamicArray<>");
 				GS_ASSERT_ENGINE_WITH_MESSAGE(newContents != nullptr, "Unable to allocate memory for DynamicArray.");
 				contents = reinterpret_cast<T*>(newContents);
@@ -453,6 +448,10 @@ namespace Grindstone::Containers {
 			}
 
 			return testCapacity;
+		}
+
+		static void Construct(T* ptr, size_t count) {
+			std::uninitialized_value_construct_n(ptr, count);
 		}
 
 		inline T* Allocate(size_t cap) {
