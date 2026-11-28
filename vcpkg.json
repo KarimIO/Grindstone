@@ -27,6 +27,7 @@
     "joltphysics",
     "libgit2",
     "nethost",
+    "openal-soft",
     "opengl",
     "opengl-registry",
     "pcre",

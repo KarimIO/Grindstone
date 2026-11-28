@@ -17,7 +17,7 @@ REFLECT_STRUCT_BEGIN(AudioSourceComponent)
 	REFLECT_NO_SUBCAT()
 REFLECT_STRUCT_END()
 
-void Grindstone::SetupAudioSourceComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::AudioSourceComponent::Construct(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	Grindstone::Assets::AssetManager* assetManager = EngineCore::GetInstance().assetManager;
 
 	Grindstone::AudioSourceComponent& audioSource = cxtSet.GetEntityRegistry().get<AudioSourceComponent>(entity);
@@ -37,7 +37,7 @@ void Grindstone::SetupAudioSourceComponent(Grindstone::WorldContextSet& cxtSet, 
 	audioSource.source->Play();
 }
 
-void Grindstone::DestroyAudioSourceComponent(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
+void Grindstone::AudioSourceComponent::Destroy(Grindstone::WorldContextSet& cxtSet, entt::entity entity) {
 	Grindstone::AudioSourceComponent& audioSource = cxtSet.GetEntityRegistry().get<AudioSourceComponent>(entity);
 	AllocatorCore::Free<Audio::Source>(audioSource.source);
 }

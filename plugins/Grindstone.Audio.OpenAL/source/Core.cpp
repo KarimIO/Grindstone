@@ -12,7 +12,7 @@ Grindstone::Audio::Core* Grindstone::Audio::Core::instance = nullptr;
 static bool CheckOpenALErrors(const std::string& filename, const std::uint_fast32_t line) {
 	ALenum error = alGetError();
 	if (error != AL_NO_ERROR) {
-		GPRINT_ERROR_V(LogSource::Audio, "***ERROR*** ({0}: {1})", filename, line);
+		GPRINT_ERROR(LogSource::Audio, "***ERROR*** ({0}: {1})", filename, line);
 		switch (error) {
 		case AL_INVALID_NAME:
 			GPRINT_ERROR(LogSource::Audio, "AL_INVALID_NAME: a bad name (ID) was passed to an OpenAL function");
@@ -30,7 +30,7 @@ static bool CheckOpenALErrors(const std::string& filename, const std::uint_fast3
 			GPRINT_ERROR(LogSource::Audio, "AL_OUT_OF_MEMORY: the requested operation resulted in OpenAL running out of memory");
 			break;
 		default:
-			GPRINT_ERROR_V(LogSource::Audio, "UNKNOWN AL ERROR: {0}", error);
+			GPRINT_ERROR(LogSource::Audio, "UNKNOWN AL ERROR: {0}", error);
 		}
 		return false;
 	}

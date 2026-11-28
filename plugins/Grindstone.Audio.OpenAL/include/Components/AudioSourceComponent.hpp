@@ -10,6 +10,10 @@ namespace Grindstone {
 	class WorldContextSet;
 
 	struct AudioSourceComponent {
+		
+		static void Construct(Grindstone::WorldContextSet& worldContextSet, entt::entity entity);
+		static void Destroy(Grindstone::WorldContextSet& worldContextSet, entt::entity entity);
+
 		AssetReference<Audio::AudioClipAsset> audioClip;
 		bool isLooping = false;
 		float volume = 1.f;
@@ -18,7 +22,4 @@ namespace Grindstone {
 
 		REFLECT("AudioSource")
 	};
-
-	void SetupAudioSourceComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
-	void DestroyAudioSourceComponent(Grindstone::WorldContextSet& cxtSet, entt::entity);
 }

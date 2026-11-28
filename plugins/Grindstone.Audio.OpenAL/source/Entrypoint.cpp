@@ -27,7 +27,7 @@ extern "C" {
 		audioClipImporter = AllocatorCore::Allocate<Audio::AudioClipImporter>();
 
 		pluginInterface->RegisterComponent<AudioListenerComponent>();
-		pluginInterface->RegisterComponent<AudioSourceComponent>(SetupAudioSourceComponent, DestroyAudioSourceComponent);
+		pluginInterface->RegisterComponent<AudioSourceComponent>();
 		pluginInterface->RegisterAssetType(AssetType::AudioClip, "AudioClip", audioClipImporter);
 	}
 
