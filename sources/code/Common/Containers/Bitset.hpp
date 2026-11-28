@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limits.h>
+#include <fstream>
 
 #include "../Assert.hpp"
 #include "../EnumTraits.hpp"

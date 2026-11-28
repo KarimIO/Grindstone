@@ -114,7 +114,7 @@ TEST(DynamicAllocator, FreeAndAllocatesFromSameSpotWithOneAlloc) {
 	ASSERT_EQ(allocator.GetUsedSize(), size);
 }
 
-// This is a test of free - we verify that oncee we free we get a new value
+// This is a test of free - we verify that once we free we get a new value
 // from the same spot. It's the only real way to check free.
 TEST(DynamicAllocator, FreeAndAllocatesFromSameSpotWithMultipleAllocs) {
 	Grindstone::Memory::Allocators::DynamicAllocator allocator;
