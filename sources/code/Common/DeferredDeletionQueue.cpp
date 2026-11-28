@@ -4,6 +4,10 @@
 
 #include "DeferredDeletionQueue.hpp"
 
+Grindstone::DeletionQueue::DeletionQueue(uint32_t poolSize) {
+	Initialize(poolSize);
+}
+
 Grindstone::DeletionQueue::~DeletionQueue() {
 	DeleteAll();
 	queue.clear();
@@ -30,6 +34,10 @@ Grindstone::DeferredDeletionQueue::~DeferredDeletionQueue() {
 	queues.clear();
 }
 
+Grindstone::DeferredDeletionQueue::DeferredDeletionQueue(uint8_t frameCount, uint32_t poolSize) {
+	Initialize(frameCount, poolSize);
+}
+
 void Grindstone::DeferredDeletionQueue::Initialize(uint8_t frameCount, uint32_t poolSize) {
 	if (queues.size() > frameCount) {
 		for (size_t i = frameCount; i < queues.size(); ++i) {
@@ -44,8 +52,11 @@ void Grindstone::DeferredDeletionQueue::Initialize(uint8_t frameCount, uint32_t 
 	}
 }
 
+void Grindstone::DeferredDeletionQueue::SetCurrentImageIndex(size_t newFrameIndex) {
+	frameIndex = newFrameIndex;
+}
+
 void Grindstone::DeferredDeletionQueue::PushDeletion(std::function<void()> fn) {
-	size_t frameIndex = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding()->GetCurrentImageIndex();
 	queues[frameIndex].PushDeletion(fn);
 }
 
@@ -56,6 +67,5 @@ void Grindstone::DeferredDeletionQueue::DeleteAll() {
 }
 
 void Grindstone::DeferredDeletionQueue::DeleteForFrame() {
-	size_t frameIndex = EngineCore::GetInstance().windowManager->GetWindowByIndex(0)->GetWindowGraphicsBinding()->GetCurrentImageIndex();
 	queues[frameIndex].DeleteAll();
 }

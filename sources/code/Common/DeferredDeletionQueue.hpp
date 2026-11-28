@@ -13,6 +13,12 @@ namespace Grindstone {
 	 */
 	class DeletionQueue {
 	public:
+		DeletionQueue() = default;
+		DeletionQueue(uint32_t poolSize);
+		DeletionQueue(const DeletionQueue& other) = default;
+		DeletionQueue(DeletionQueue&& other) noexcept = default;
+		DeletionQueue& operator=(const DeletionQueue& other) = default;
+		DeletionQueue& operator=(DeletionQueue&& other) noexcept = default;
 		~DeletionQueue();
 		void Initialize(uint32_t poolSize);
 		void PushDeletion(std::function<void()> fn);
@@ -32,11 +38,19 @@ namespace Grindstone {
 	class DeferredDeletionQueue {
 	public:
 		~DeferredDeletionQueue();
+		DeferredDeletionQueue() = default;
+		DeferredDeletionQueue(uint8_t frameCount, uint32_t poolSize);
+		DeferredDeletionQueue(const DeferredDeletionQueue& other) = default;
+		DeferredDeletionQueue(DeferredDeletionQueue&& other) noexcept = default;
+		DeferredDeletionQueue& operator=(const DeferredDeletionQueue& other) = default;
+		DeferredDeletionQueue& operator=(DeferredDeletionQueue&& other) noexcept = default;
 		void Initialize(uint8_t frameCount, uint32_t poolSize);
 		void PushDeletion(std::function<void()> fn);
 		void DeleteAll();
 		void DeleteForFrame();
+		void SetCurrentImageIndex(size_t newFrameIndex);
 	protected:
 		std::vector<DeletionQueue> queues;
+		size_t frameIndex = 0;
 	};
 }
